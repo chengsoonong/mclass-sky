@@ -1,7 +1,8 @@
 #!/usr/bin/python
-""" >> sqlcl << command line query tool by Tamas Budavari <budavari@jhu.edu>
+""" >> sqlcl << command line SkyServer query tool
     
-    Modified by Alasdair Tran (25 Jan 2015)
+    Written by Tamas Budavari <budavari@jhu.edu>
+    Modified by Alasdair Tran <github.com/alasdairtran> on 25 Jan 2015
     Usage: sqlcl [options] sqlfile(s)
     Currenty only works with one query at a time.
     Options:
@@ -92,7 +93,7 @@ def sqlcl_main(argv):
 
     # Run all queries sequentially
     for qry in queries:
-        with open(filename, 'w') as f:
+        with open(os.path.normpath(filename), 'w') as f:
             ofp = sys.stdout
             if verbose:
                 sqlcl_write_header(ofp,'#',url,qry)

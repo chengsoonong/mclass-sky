@@ -1,0 +1,5 @@
+# IPython notebooks checkpoints
+.ipynb_checkpoints/
+
+# the datasets are too large to be stored in GitHub
+data/

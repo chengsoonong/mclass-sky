@@ -16,39 +16,42 @@
 
 """
 
+import os
+import time
+import getopt, string
+    
+
 sqlcl_formats = ['csv','xml','html']
 
-astro_url='http://skyserver.sdss3.org/public/en/tools/search/x_sql.aspx'
-public_url='http://skyserver.sdss3.org/public/en/tools/search/x_sql.aspx'
+astro_url = 'http://skyserver.sdss3.org/public/en/tools/search/x_sql.aspx'
+public_url = 'http://skyserver.sdss3.org/public/en/tools/search/x_sql.aspx'
 
-default_url=public_url
-default_fmt='csv'
-default_file='output.csv'
+default_url = public_url
+default_fmt = 'csv'
+default_file = 'output.csv'
 
 def sqlcl_usage(status, msg=''):
-    "Error message and usage"
+    """Error message and usage"""
     print(__doc__)
     if msg:
         print('-- ERROR: %s' % msg)
     sys.exit(status)
 
 def sqlcl_filtercomment(sql):
-    "Get rid of comments starting with --"
-    import os
+    """Get rid of comments starting with --"""
     fsql = ''
     for line in sql.split('\n'):
         fsql += line.split('--')[0] + ' ' + os.linesep;
     return fsql
 
-def sqlcl_query(sql,url=default_url,fmt=default_fmt):
-    "Run query and return file object"
+def sqlcl_query(sql, url=default_url, fmt=default_fmt):
+    """Run query and return file object"""
     import urllib.request, urllib.parse, urllib.error
     fsql = sqlcl_filtercomment(sql)
     params = urllib.parse.urlencode({'cmd': fsql, 'format': fmt})
     return urllib.request.urlopen(url+'?%s' % params)    
 
-def sqlcl_write_header(ofp,pre,url,qry):
-    import  time
+def sqlcl_write_header(ofp, pre, url, qry):
     ofp.write('%s SOURCE: %s\n' % (pre,url))
     ofp.write('%s TIME: %s\n' % (pre,time.asctime()))    
     ofp.write('%s QUERY:\n' % pre)
@@ -56,9 +59,7 @@ def sqlcl_write_header(ofp,pre,url,qry):
         ofp.write('%s   %s\n' % (pre,l))
     
 def sqlcl_main(argv):
-    "Parse command line and do it..."
-    import os, getopt, string
-    
+    """Parse command line and do it..."""
     queries = []
     url = os.getenv("SQLCLURL",default_url)
     fmt = default_fmt

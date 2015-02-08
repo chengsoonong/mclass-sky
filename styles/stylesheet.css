@@ -1,0 +1,109 @@
+<link href='<link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:400,700|Droid+Serif:400,700,400italic|Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
+
+<style>
+	body {
+		font-family: 'Open Sans', sans-serif;
+	}
+    
+    
+    /* limit cell width
+	div.cell { 
+		max-width: 1000px;
+		margin-left: auto;
+		margin-right: auto;
+	} */
+    
+    /* More space between Markdown bullet points */
+	#notebook li { 
+		margin-top: 0.5em;
+	} 
+
+	/* draw border around running cells */
+	div.cell.border-box-sizing.code_cell.running { 
+		border-width: thin;
+		border-style: solid;
+		border-color: red;
+		border-radius: 10px;
+	}
+
+	/* Put a solid color box around each cell and its output, visually linking
+    them together */
+	div.cell.code_cell {
+		border-radius: 10px; /* rounded borders */
+		padding: 1em;
+	}
+
+	/* Markdown cells */
+	div.text_cell_render {
+        background: #fff;
+        color: #444;
+        font-family: 'Open Sans', sans-serif;
+        line-height: 1.75;
+	}
+    
+	/* Formatting code in markdown cells */
+	div.rendered_html code {
+		font-family: 'Source Code Pro', monospace;
+        line-height: 1.5;
+	}
+    
+	/* Formatting for header cells */
+    .text_cell_render h1, .text_cell_render h2, .text_cell_render h3,
+    .text_cell_render h4, .text_cell_render h5, .text_cell_render h6 {
+        font-family: 'Droid Serif', serif;
+        display: block;
+        font-weight: normal;
+    }
+    
+	.text_cell_render h1 {
+		font-size: 250%;
+        text-align: center;
+		color: #c65c3f;
+	}
+    
+	.text_cell_render h2 {
+        font-size: 200%;
+        color: #c65c3f;
+	}	
+
+	.text_cell_render h3 {
+        font-size: 180%;
+        color: rgb(12,85,97);
+        font-weight: normal;
+	}
+
+	.text_cell_render h4 {
+        font-size: 150%;
+        color: rgb(12,85,97);
+	}
+
+	.text_cell_render h5 {
+        font-size: 110%;
+        color: #b2b888;
+        text-transform: uppercase;
+	}
+
+	.text_cell_render h6 {
+        font-size: 100%;
+		color: #b2b888;
+        text-transform: uppercase;
+	}
+
+	.CodeMirror{
+		font-family: 'Inconsolata', monospace;
+        line-height: 1.5;
+	}
+
+	/* Hide the prompts, e.g. In[1], Out[1] */
+    .prompt{
+        display: None;
+    }
+	
+	/* Usage: <div class=warning> message here </div> */
+	.warning{
+		background-color: #fcf2f2;
+		border-color: #dFb5b4;
+		border-left: 5px solid #dfb5b4;
+		padding: 0.5em;
+	}
+</style>

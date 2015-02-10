@@ -3,7 +3,27 @@
 """
 
 import pandas as pd
+import numpy as np
 from sklearn.cross_validation import ShuffleSplit
+
+
+def normalise_z(data):
+    """ Standardise features to have zero mean and unit variance """
+    
+    mu = np.mean(data)
+    sigma = np.std(data)
+    
+    return (data - mu) / sigma
+    
+
+def normalise_01(data):
+    """ Normalise features to unit interval. """
+    
+    minimum = np.min(data)
+    maximum = np.max(data)
+    
+    return (data - minimum) / (maximum - minimum)
+
 
 def draw_random_sample(data, train_size, test_size, random_state=None):
     m = len(data)    

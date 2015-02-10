@@ -7,22 +7,34 @@ import numpy as np
 from sklearn.cross_validation import ShuffleSplit
 
 
-def normalise_z(data):
-    """ Standardise features to have zero mean and unit variance """
+def normalise_z(features):
+    """ Standardise features to have zero mean and unit variance
+        Input is a feature matrix
+    """
     
-    mu = np.mean(data)
-    sigma = np.std(data)
+    mu = np.mean(features, axis=0)
+    sigma = np.std(features, axis=0)
     
-    return (data - mu) / sigma
+    return (features - mu) / sigma
     
 
-def normalise_01(data):
-    """ Normalise features to unit interval. """
+def normalise_unit_var(features):
+    """ Standardise features to have unit variance
+        Input is a feature matrix
+    """
     
-    minimum = np.min(data)
-    maximum = np.max(data)
+    sigma = np.std(features, axis=0)
     
-    return (data - minimum) / (maximum - minimum)
+    return features / sigma
+    
+    
+def normalise_01(features):
+    """ Normalise features to unit interval.  Input is a feature matrix"""
+    
+    minimum = np.min(features, axis=0)
+    maximum = np.max(features, axis=0)
+    
+    return (features - minimum) / (maximum - minimum)
 
 
 def draw_random_sample(data, train_size, test_size, random_state=None):

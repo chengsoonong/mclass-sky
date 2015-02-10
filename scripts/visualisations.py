@@ -44,6 +44,11 @@ def plot_balanced_accuracy_violin(balanced_accuracy_samples, names):
     fig, ax = plt.subplots(figsize=(11, 9))
     sns.violinplot(DataFrame(balanced_accuracy_samples, columns=names), ax=ax,
                    names=[1, 2, 3, 4, 5, 6, 7])
+    ax.set_title("Posterior Balanced Accuracy")
+    
+    format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
+    ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
+    
     handles = []
     colours = sns.color_palette("husl", 7)
     

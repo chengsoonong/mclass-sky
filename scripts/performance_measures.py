@@ -29,14 +29,14 @@ def get_beta_parameters(confusion):
     alphas, betas = [], []
     
     # number of classes
-    k = len(confusions[name])
+    k = len(confusion)
     
     for i in range(k):
         # alpha is 1 plus the number of objects that are correctly classified
-        alphas.append(1 + confusions[name][i, i])
+        alphas.append(1 + confusion[i, i])
         
         # beta is 1 plus the number of objects that are incorrectly classified
-        betas.append(1 + confusions[name].sum(axis=1)[i] - confusions[name][i, i])
+        betas.append(1 + confusion.sum(axis=1)[i] - confusion[i, i])
         
     parameters = list(zip(alphas, betas))
     

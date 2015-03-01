@@ -116,6 +116,7 @@ def balanced_accuracy_expected(confusion):
     parameters = get_beta_parameters(confusion)
     
     # convolve the distributions and compute the expected value
+    k = len(confusion)
     res = 0.001
     x = np.arange(0, k + res, res)
     bal_accuracy = convolve_betas(parameters, res)

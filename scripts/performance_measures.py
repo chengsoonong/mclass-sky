@@ -1,6 +1,4 @@
-""" Classifier Performance
-
-"""
+""" Miscellaneous performance measures for a classifier """
 
 import numpy as np
 from scipy.stats import beta
@@ -9,23 +7,38 @@ from scipy.optimize import brentq
 from pandas import DataFrame
 
 
-def naive_accuracy(confusions, classifiers):
+def naive_accuracy(confusion):
+    """ Compute the naive accuracy rate.
+        
+        Parameters
+        ----------
+        confusion : array, shape = [n_classes, n_classes]
+            Where entry c_{ij} is the number of observations in class i but
+            are classified as class j.
+        
+        Returns
+        -------
+        naive_accuracy : float
     """
-    Input: confusion matrix and array of classifier names (column index)
-    """
     
-    results_dict = {}
-    
-    for clf, conf in confusions.items():
-        results_dict[clf] = np.trace(conf) / np.sum(conf)
-
-    results_df = DataFrame(results_dict, index=["Accuray"])
-    results_df = results_df.reindex(columns=classifiers, copy=False)
-    
-    return results_df
+    return p.trace(confusion) / np.sum(confusion)
     
 
 def get_beta_parameters(confusion):
+    """ Extract the beta parameters from a confusion matrix.
+    
+        Parameter
+        ---------
+        confusion : array, shape = [n_classes, n_classes]
+            Where entry c_{ij} is the number of observations in class i but
+            are classified as class j.
+        
+        Returns
+        -------
+        parameters: array of tuples
+            Each tuple (alpha_i, beta_i) is the parameters of a Beta distribution
+            that corresponds to class i.
+    """
     alphas, betas = [], []
     
     # number of classes
@@ -37,15 +50,28 @@ def get_beta_parameters(confusion):
         
         # beta is 1 plus the number of objects that are incorrectly classified
         betas.append(1 + confusion.sum(axis=1)[i] - confusion[i, i])
-        
-    parameters = list(zip(alphas, betas))
     
-    return parameters
-    
+    return list(zip(alphas, betas))
     
 
 def convolve_betas(parameters, res=0.001):
-    """ Convolves k Beta distributions. Parameters is a list of tuples (alpha_i, beta_i)"""
+    """ Convolves k Beta distributions.
+    
+        Parameters
+        ----------
+        parameters : array of tuples
+            Each tuple (alpha_i, beta_i) is the parameters of a Beta distribution.
+        
+        res : float, optional (default=0.001)
+            The precision of the resulting convolution, measured as step size in
+            the support.
+        
+        Returns
+        -------
+        convolution : array, shape = [k / res]
+            The resulting convultion of the k Beta distributions, given the
+            specified presicion `res`.
+    """
     
     # number of convolution
     k = len(parameters)
@@ -72,23 +98,25 @@ def convolve_betas(parameters, res=0.001):
     return convolution
     
     
-    
 def balanced_accuracy_expected(confusion):
-    """ Compute the expected value of the posterior balanced accuracy. Input is a numpy matrix"""
+    """ Compute the expected value of the posterior balanced accuracy.
     
-    alphas, betas = [], []
-    k = len(confusion) # number of classes
-    
-    for i in range(k):
-        # alpha is 1 plus the number of objects that are correctly classified
-        alphas.append(1 + confusion[i, i])
+        Parameter
+        ---------
+        confusion : array, shape = [n_classes, n_classes]
+            Where entry c_{ij} is the number of observations in class i but
+            are classified as class j.
         
-        # beta is 1 plus the number of objects that are incorrectly classified
-        betas.append(1 + confusion.sum(axis=1)[i] - confusion[i, i])
+        Returns
+        -------
+        bal_accuracy_expected: float
+    """
     
-    parameters = list(zip(alphas, betas))
+    # extract beta distribution parameters from the confusion matrix 
+    parameters = get_beta_parameters(confusion)
     
     # convolve the distributions and compute the expected value
+    k = len(confusion)
     res = 0.001
     x = np.arange(0, k + res, res)
     bal_accuracy = convolve_betas(parameters, res)
@@ -96,10 +124,27 @@ def balanced_accuracy_expected(confusion):
     
     return bal_accuracy_expected
     
-    
 
 def beta_sum_pdf(x, parameters, res=0.001):
-    """ input x is an array """
+    """ Compute the pdf of the sum of beta distributions.
+    
+        Parameters
+        ----------
+        x : array
+            A subset of the domain where we want evaluate the pdf.
+            
+        parameters : array of tuples
+            Each tuple (alpha_i, beta_i) is the parameters of a Beta distribution.
+        
+        res : float, optional (default=0.001)
+            The precision of the convolution, measured as step size in
+            the support.
+        
+        Returns
+        -------
+        y : array
+            The pdf evaulated at x.
+    """
     
     convolution = convolve_betas(parameters, res)
     
@@ -123,10 +168,27 @@ def beta_sum_pdf(x, parameters, res=0.001):
     
     return y
 
-
     
 def beta_avg_pdf(x, parameters, res=0.001):
-    """ input x is an array """
+    """ Compute the pdf of the average of the k beta distributions.
+    
+        Parameters
+        ----------
+        x : array
+            A subset of the domain where we want evaluate the pdf.
+            
+        parameters : array of tuples
+            Each tuple (alpha_i, beta_i) is the parameters of a Beta distribution.
+        
+        res : float, optional (default=0.001)
+            The precision of the convolution, measured as step size in
+            the support.
+        
+        Returns
+        -------
+        y : array
+            The pdf evaulated at x.
+    """
     
     k = len(parameters)
     y = beta_sum_pdf(k * np.array(x), parameters, res)
@@ -135,9 +197,26 @@ def beta_avg_pdf(x, parameters, res=0.001):
     return y
     
     
-    
 def beta_sum_cdf(x, parameters, res=0.001):
-    """ input x is an array """
+    """ Compute the cdf of the sum of the k beta distributions.
+    
+        Parameters
+        ----------
+        x : array
+            A subset of the domain where we want evaluate the cdf.
+            
+        parameters : array of tuples
+            Each tuple (alpha_i, beta_i) is the parameters of a Beta distribution.
+        
+        res : float, optional (default=0.001)
+            The precision of the convolution, measured as step size in
+            the support.
+        
+        Returns
+        -------
+        y : array
+            The cdf evaulated at x.
+    """
     
     convolution = convolve_betas(parameters, res)
     
@@ -154,9 +233,27 @@ def beta_sum_cdf(x, parameters, res=0.001):
     return y
     
     
-    
 def beta_avg_cdf(x, parameters, res=0.001):
-    """ input x is an array """
+    """ Compute the cdf of the average of the k beta distributions.
+    
+        Parameters
+        ----------
+        x : array
+            A subset of the domain where we want evaluate the cdf.
+            
+        parameters : array of tuples
+            Each tuple (alpha_i, beta_i) is the parameters of a Beta distribution.
+        
+        res : float, optional (default=0.001)
+            The precision of the convolution, measured as step size in
+            the support.
+        
+        Returns
+        -------
+        y : array
+            The cdf evaulated at x.
+    """
+    
     x = np.array(x)
     k = len(parameters)
     y = beta_sum_cdf(k * x, parameters, res)
@@ -165,49 +262,77 @@ def beta_avg_cdf(x, parameters, res=0.001):
     
 
 def beta_avg_inv_cdf(y, parameters, res=0.001):
+    """ Compute the inverse cdf of the average of the k beta distributions.
+    
+        Parameters
+        ----------
+        y : float
+            A float between 0 and 1 (the range of the cdf)
+            
+        parameters : array of tuples
+            Each tuple (alpha_i, beta_i) is the parameters of a Beta distribution.
+        
+        res : float, optional (default=0.001)
+            The precision of the convolution, measured as step size in
+            the support.
+        
+        Returns
+        -------
+        x : float
+            the inverse cdf of y
+    """
+    
     return brentq(lambda x: beta_avg_cdf([x], parameters, res)[0] - y, 0, 1)
     
  
-def recall(confusion, classes, classifiers):
+def recall(confusion):
+    """ Compute the recall from a confusion matrix.
+        
+        Parameters
+        ----------
+        confusion : array, shape = [n_classes, n_classes]
+            Where entry c_{ij} is the number of observations in class i but
+            are classified as class j.
+        
+        Returns
+        -------
+        recalls : array
+            A list of recalls, one for each class.
     """
-    Input: confusion matrix
-           array of class names (row index)
-           array of classifier names (column index)
-    """
-
-    # initialise dict to store results
-    results_dict = {c: {} for c in classes}
     
+    # number of classes
+    k = len(confusion)
+
     # extract recall from confusion matrix
-    for clf, conf in confusions.items():
-        for i in range(len(classes)):
-            results_dict[classes[i]] = conf[i, i] / conf.sum(axis=1)[i]
+    recalls = []
+    for i in range(k):
+        recalls.append(confusion[i, i] / confusion.sum(axis=1)[i])
 
-    # organise as DataFrame
-    results_df = DataFrame.from_dict(results_dict, orient="index")
-    results_df = results.df.reindex(columns=classifiers, copy=False)
-    
-    return results_df
-    
+    return recalls
     
     
 def precision(confusion, classes, classifiers):
-    """
-    Input: confusion matrix
-           array of class names (row index)
-           array of classifier names (column index)
+    """ Compute the precision from a confusion matrix.
+        
+        Parameters
+        ----------
+        confusion : array, shape = [n_classes, n_classes]
+            Where entry c_{ij} is the number of observations in class i but
+            are classified as class j.
+        
+        Returns
+        -------
+        precisions : array
+            A list of precisions, one for each class.
     """
 
-    # initialise dict to store results
-    results_dict = {c: {} for c in classes}
-    
+    # number of classes
+    k = len(confusion)
+
     # extract recall from confusion matrix
-    for clf, conf in confusions.items():
-        for i in range(len(classes)):
-            results_dict[classes[i]] = conf[i, i] / conf.sum(axis=0)[i]
+    precisions = []
+    for i in range(k):
+        precisions.append(confusion[i, i] / confusion.sum(axis=0)[i])
 
-    # organise as DataFrame
-    results_df = DataFrame.from_dict(results_dict, orient="index")
-    results_df = results.df.reindex(columns=classifiers, copy=False)
-    
-    return results_df
+    return precisions
+

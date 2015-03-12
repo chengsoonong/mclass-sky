@@ -9,6 +9,7 @@ for the [SkyMapper Southern Sky Survey](http://rsaa.anu.edu.au/research/projects
 
 
 ### Implementation Details
+* <a href="http://nbviewer.ipython.org/github/alasdairtran/mclass-sky/blob/master/data_processing.ipynb" target="_blank">Data Processing</a>: Some useful procedures (e.g. normalisation, splitting data into training and test set) that we might want to call before feeding the data to the classifier.
 * <a href="http://nbviewer.ipython.org/github/alasdairtran/mclass-sky/blob/master/performance_measures.ipynb" target="_blank">Performance Measures</a>: This notebook explains the implementation of various performance measures, including the posterior balanced accuracy.
 
 ### SDSS Classification

@@ -3,3 +3,6 @@
 
 # the datasets are too large to be stored in GitHub
 data/
+
+# source files for reports and presentations
+reports/source/

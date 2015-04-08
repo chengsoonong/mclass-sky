@@ -126,6 +126,9 @@ def plot_learning_curve(sample_sizes, scores, title):
     
     ax.set_xlabel('Sample Size')
     ax.set_ylabel('Mean Balanced Accuracy')
+    ax.set_xscale('log')
     
     plt.show()
+    
+    return (fig, ax)
 

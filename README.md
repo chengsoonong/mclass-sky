@@ -17,6 +17,8 @@ for the [SkyMapper Southern Sky Survey](http://rsaa.anu.edu.au/research/projects
 * <a href="http://nbviewer.ipython.org/github/alasdairtran/mclass-sky/blob/master/sdss_classification.ipynb" target="_blank">SDSS - Classification</a>: We apply some of the standard classifiers on the SDSS dataset.
 * <a href="http://nbviewer.ipython.org/github/alasdairtran/mclass-sky/blob/master/sdss_dim_reduction.ipynb" target="_blank">SDSS - Dimensionality Reduction</a>: We reduce the
 data down to 2 features to visualise the classes.
+* <a href="http://nbviewer.ipython.org/github/alasdairtran/mclass-sky/blob/master/sdss_active_learning.ipynb" target="_blank">SDSS - Active Learning</a>
+
 
 ### Datasets
 The datasets are too big for GitHub. They can be downloaded from

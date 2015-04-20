@@ -112,6 +112,9 @@ def balanced_accuracy_expected(confusion):
         bal_accuracy_expected: float
     """
     
+    # number of classes
+    k = len(confusion)
+    
     # extract beta distribution parameters from the confusion matrix 
     parameters = get_beta_parameters(confusion)
     

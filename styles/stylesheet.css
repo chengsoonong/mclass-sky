@@ -5,14 +5,7 @@
 		font-family: 'Open Sans', sans-serif;
 	}
     
-    
-    /* limit cell width
-	div.cell { 
-		max-width: 1000px;
-		margin-left: auto;
-		margin-right: auto;
-	} */
-    
+
     /* More space between Markdown bullet points */
 	#notebook li { 
 		margin-top: 0.5em;
@@ -38,13 +31,11 @@
         background: #fff;
         color: #444;
         font-family: 'Open Sans', sans-serif;
-        line-height: 1.75;
 	}
     
 	/* Formatting code in markdown cells */
 	div.rendered_html code {
 		font-family: 'Source Code Pro', monospace;
-        line-height: 1.5;
 	}
     
 	/* Formatting for header cells */

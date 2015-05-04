@@ -82,13 +82,12 @@
 
 	.CodeMirror{
 		font-family: 'Source Code Pro', monospace;
-        line-height: 1.5;
 	}
 
-	/* Hide the prompts, e.g. In[1], Out[1] */
+	/* Hide the prompts, e.g. In[1], Out[1]
     .prompt{
         display: None;
-    }
+    } */
 	
 	/* Usage: <div class=warning> message here </div> */
 	.warning{

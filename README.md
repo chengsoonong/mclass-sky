@@ -21,5 +21,5 @@ data down to 2 features to visualise the classes.
 * <a href="http://nbviewer.ipython.org/github/alasdairtran/mclass-sky/blob/master/sdss_features.ipynb" target="_blank">Improving the Features</a>
 
 ### Datasets
-The datasets are too big for GitHub. They can be downloaded from
-[my Dropbox folder](https://www.dropbox.com/sh/yrhifi5s1qikfh8/AAAZg6BouEalG1yjbUJK4gvea?dl=0).
+The datasets are too big for GitHub. They can be downloaded from the
+[NICTA filestore](http://filestore.nicta.com.au/mlrg-data/astro/sdss_dr7_photometry.csv.gz).

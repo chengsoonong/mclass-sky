@@ -26,7 +26,7 @@ Here is the approporiate SQL query for a ~22 MB FITS file: (I use FITS tables a 
 -- (SpecObj) tables and includes the necessary columns in the SELECT to upload
 -- the results to the SAS (Science Archive Server) for FITS file retrieval.
 
-```
+```sql
 SELECT 
  p.ra,p.dec,p.psfMag_u,p.psfMag_g,p.psfMag_r,p.psfMag_i,p.psfMag_z,p.psfMagErr_u,p.psfMagErr_g,p.psfMagErr_r,p.psfMagErr_i,p.psfMagErr_z,p.petroMag_u,p.petroMag_g,p.petroMag_r,p.petroMag_i,p.petroMag_z,p.petroMagErr_u,p.petroMagErr_g,p.petroMagErr_r,p.petroMagErr_i,p.petroMagErr_z,p.petroRad_r,
  s.class, ISNULL(s.z,-1) as Redshift, ISNULL(s.zErr,0) as Red_Err

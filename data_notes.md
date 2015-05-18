@@ -105,3 +105,44 @@ Calculate next the W14 estimates using
   A_z = Ecorr_B-V * 1.263
 
 To be honest, the main change introduced by W14 is the remapping of the E_B-V scale, not so much the change in the A_band factors. The latter alone should have little effect, but the former would have a bit more effect.
+
+
+## All SDSS data
+
+```sql
+-- SQL Query for DR12
+SELECT
+    p.ra, p.dec,
+
+    CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
+                 WHEN 'STAR' THEN 'Star'
+                 WHEN 'QSO' THEN 'Quasar'
+                 END AS class,
+    
+    s.subclass,
+    s.z AS redshift,
+    s.zErr AS redshiftErr,
+    s.zWarning,
+    
+    p.type, p.clean, p.flags, p.probPSF,
+
+    p.psfMag_u, p.psfMagErr_u,
+    p.psfMag_g, p.psfMagErr_g,
+    p.psfMag_r, p.psfMagErr_r,
+    p.psfMag_i, p.psfMagErr_i,
+    p.psfMag_z, p.psfMagErr_z,
+
+    p.petroMag_u, p.petroMagErr_u,
+    p.petroMag_g, p.petroMagErr_g,
+    p.petroMag_r, p.petroMagErr_r,
+    p.petroMag_i, p.petroMagErr_i,
+    p.petroMag_z, p.petroMagErr_z,
+    
+    p.extinction_u, p.extinction_g, p.extinction_r, p.extinction_i, p.extinction_z,
+
+    p.petroRad_r, p.petroRadErr_r
+
+FROM PhotoObj AS p
+    LEFT JOIN SpecObj AS s
+    ON s.bestobjid = p.objid
+```

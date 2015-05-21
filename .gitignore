@@ -7,4 +7,8 @@ data/
 # source files for reports and presentations
 reports/source/
 
+# result files that are too large
+results/sdss_whole_dataset
+
+# other miscellaneous files
 misc/

@@ -1,0 +1,1 @@
+mclearn is a Python package that implement selected multiclass active learning algorithms, with a special focus in astronomical data.

@@ -8,7 +8,7 @@ before_install:
   - pip install coveralls
 # command to install dependencies
 install:
-  - pip install -q -e pandas matplotlib scikit-learn
+  - pip install -q pandas matplotlib scikit-learn
 # command to run tests
 script:
   - nosetests

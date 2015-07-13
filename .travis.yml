@@ -10,7 +10,7 @@ before_install:
   - pip install coveralls
 # command to install dependencies
 install:
-  - pip install -q -e .
+  - pip install -e .
 # command to run tests
 script:
   - nosetests

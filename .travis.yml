@@ -4,10 +4,11 @@ python:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y -qq python-numpy python-scipy
+  - pip install --upgrade pip
   - pip install coveralls
 # command to install dependencies
 install:
-  - "pip install -q -e ."
+  - pip install -q -e pandas matplotlib scikit-learn
 # command to run tests
 script:
   - nosetests

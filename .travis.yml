@@ -16,13 +16,12 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION nose python-coveralls nose-cov
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy pandas matplotlib scikit-learn
+  - conda install --yes -c dan_blanchard python-coveralls nose-cov
 
-# command to install dependencies
 install:
   - python setup.py install
-# command to run tests
+
 script:
   - nosetests
 after_success:

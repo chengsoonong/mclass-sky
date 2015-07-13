@@ -7,6 +7,9 @@ mclearn
 :Source: `<https://github.com/alasdairtran/mclearn>`_
 :Docs: `<http://pythonhosted.org/mclearn/>`_
 
+.. image:: https://travis-ci.org/chengsoonong/mclass-sky.svg?branch=master
+    :target: https://travis-ci.org/chengsoonong/mclass-sky
+       
 Introduction
 ------------------------------
 **mclearn** is a Python package that implement selected multiclass active learning

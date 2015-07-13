@@ -9,7 +9,12 @@ mclearn
 
 .. image:: https://travis-ci.org/chengsoonong/mclass-sky.svg?branch=master
     :target: https://travis-ci.org/chengsoonong/mclass-sky
-       
+
+.. image:: https://coveralls.io/repos/chengsoonong/mclass-sky/badge.svg?branch=master&service=github
+  :target: https://coveralls.io/github/chengsoonong/mclass-sky?branch=master
+
+
+	     
 Introduction
 ------------------------------
 **mclearn** is a Python package that implement selected multiclass active learning

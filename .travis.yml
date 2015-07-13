@@ -1,9 +1,13 @@
 language: python
 python:
   - "3.4"
+before_install:
+  - pip install coveralls
 # command to install dependencies
 install:
   - "pip install -q -e ."
 # command to run tests
 script:
   - nosetests
+after_success:
+  - coveralls

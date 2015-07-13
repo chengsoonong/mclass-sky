@@ -16,6 +16,7 @@ before_install:
 
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy pandas matplotlib scikit-learn
   - conda install --yes -c dan_blanchard python-coveralls
+  - conda install --yes seaborn
 
 install:
   - python setup.py install

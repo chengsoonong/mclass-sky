@@ -3,12 +3,14 @@ python:
   - "3.4"
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y -qq python-numpy python-scipy
+  - sudo apt-get build-essential python3-dev python3-setuptools libatlas-dev libatlas3gf-base
+  - sudo apt-get install -y -qq python-numpy python-scipy python-pandas python-matplotlib
+  - sudo apt-get install python-sklearn
   - pip install --upgrade pip
   - pip install coveralls
 # command to install dependencies
 install:
-  - pip install -q pandas matplotlib scikit-learn
+  - pip install -q -e .
 # command to run tests
 script:
   - nosetests

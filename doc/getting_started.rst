@@ -34,16 +34,16 @@ can do:
 
 
 .. _About the SDSS Dataset:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/about_sdss.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/about_sdss.ipynb
 .. _Dimensionality Reduction in SDSS:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/dimensionality_reduction.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/dimensionality_reduction.ipynb
 .. _Feature Selection of Photometric Measurements:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/feature_selection.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/feature_selection.ipynb
 .. _Implementing Standard Classifiers:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/standard classifiers.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/standard classifiers.ipynb
 .. _Active Learning with Contextual Bandits:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/contextual_bandits.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/contextual_bandits.ipynb
 .. _Active Learning with Logistic Regression:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/logistic_active_learning.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/logistic_active_learning.ipynb
 .. _Making Photometric Prediction:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/predicting_unknowns.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/predicting_unknowns.ipynb

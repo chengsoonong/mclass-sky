@@ -8,29 +8,57 @@ the light into some number of bins).
 
 
 Dust Extinction
-------------------------------
-(notes from Chris)
+---------------
 
-The SDSS dataset contains five columns, which specify 
-the estimated absorption of light due to dust in units of magnitudes. We denote them in astronomy as “A_u”, “A_g”, etc. — these need to be subtracted from the ugriz filter magnitudes, such that the filter mag value gets smaller, corresponding to (in the astronomical system) a brighter true flux compared to the fainter dust-absorbed appearance. Obviously, if you already have formed colour indices from the magnitudes such as u-g, you can also express the dust extinction in terms of colour indices, which we then call “reddening”. The reddening in u-g due to dust is denoted in astronomy with “E_u-g = A_u - A_g”.
+As light travels through space to Earth, some of it get absorbed and scattered
+by the galatic dust. Light in the higher frequency is more affected, hence
+extinction causes an object to become redder. This gives the phonomena the
+name *interstallar reddening*.
 
-The version of this set of five A_band numbers (or four E_band1-band2) we can denote “SFD98”, and it is one specific estimate of the dust extinction long held to be the default choice. Using this should already show ‘some' improvement in distinguishing the classes.
+The amount of extinction varies across the sky. For example, there is a lot of
+dust in the Milky Way band, as can be seen from the following reddening map,
+where red indicates a high level of extinction:
 
-Then we will want to investigate variations of this version and see whether the second-order effect of further improvement is visible or not. Additional versions are explored in Wolf (2014), pdf attached below. These additional versions all have one free parameter because the analysis trying to refine our estimate of dust extinction constrain not the A_band's directly, but they constrain the E_b1-b2’s instead.
+.. figure:: _static/galatic_reddening_ebv_map_sfd98.png
+    :align: center
 
-So, version 2, called “SF11” is obtained by calculating a reference reddening and then applying a new “extinction curve” to get all the A_band’s:
+    Figure 1: Galatic reddening map (Source: LAMBDA)
 
-Calculate first a reference value of   E_{B-V} = A_r/2.751   from the A_r value in the SFD98 estimate retrieved from the SDSS database
-Calculate next the SF11 estimates using
+Thus we need to correct the photometric data for this bias.
+
+
+SFD98 Correction Set
+~~~~~~~~~~~~~~~~~~~~
+
+In the SDSS dataset
+(which will be used throughout the example notebooks), there are four columns
+labelled :math:`A_u`, :math:`A_g`, :math:`A_r`, :math:`A_i`, and :math:`A_z`.
+We will need to subtract these from the ugriz filter magnitudes. The corrected
+magnitudes will become smaller, corresponding a brighter flux (yes, the astronomical
+magnitude system is weird!). This set of correction is called SFD98,
+which has been the default choice in the astronomical community for a long time.
+
+
+SF11 Correction Set
+~~~~~~~~~~~~~~~~~~~
+
+There is another variation called SF11, where there is one free paramter. In
+trying to refine the dust extinction estimates, we need to turn our attention
+to the :math:`E_{b1-b2}` band instead of the A-band. Define the reference value
 
 .. math::
-    A_u = E_{B-V} * 4.239 \\
-    A_g = E_{B-V} * 3.303 \\
-    A_r = E_{B-V} * 2.285 \\
-    A_i = E_{B-V} * 1.698 \\
-    A_z = E_{B-V} * 1.263
+    E_{B-V} = \dfrac{A_r}{2.751}
 
-(just for completeness, you should be able to recover the SFD98 A_band’s from your newly obtained E_{B-V} using
+where :math:`A_r` is from the SFD98 set. Then we can retrieve the SF11 estimates:
+
+.. math::
+    A'_u = E_{B-V} * 4.239 \\
+    A'_g = E_{B-V} * 3.303 \\
+    A'_r = E_{B-V} * 2.285 \\
+    A'_i = E_{B-V} * 1.698 \\
+    A'_z = E_{B-V} * 1.263
+
+As an aside, we can also recover the SFD98 estimates:
 
 .. math::
     A_u = E_{B-V} * 5.155 \\
@@ -39,29 +67,34 @@ Calculate next the SF11 estimates using
     A_i = E_{B-V} * 2.086 \\
     A_z = E_{B-V} * 1.479
 
-this was version 1)
 
-Version 3 we might call W14 for now. It is a tad more complicated. We assume we already have E_{B-V} calculated in the previous step. Now:
+W14 Correction Set
+~~~~~~~~~~~~~~~~~~
+In the most recent correction set from [W2014]_, we again start with
 
-Remap E_{B-V} onto a new value using     
+.. math::
+    E_{B-V} = \dfrac{A_r}{2.751}
+
+We now need to remap the :math:`E_{B-V}` scale:
 
 .. math::
     E_{B-V} \in [0,0.04]
-        &\rightarrow Ecorr_{B-V} = E_{B-V} \\
+        &\rightarrow E'_{B-V} = E_{B-V} \\
     E_{B-V} \in [0.04,0.08]
-        &\rightarrow   Ecorr_{B-V} = E_{B-V} + 0.5 * (E_{B-V} - 0.04) \\
+        &\rightarrow   E'_{B-V} = E_{B-V} + 0.5 * (E_{B-V} - 0.04) \\
     E_{B-V} \in [0.08,+\infty]
-        &\rightarrow Ecorr_{B-V} = E_{B-V} + 0.02
+        &\rightarrow E'_{B-V} = E_{B-V} + 0.02
 
-Calculate next the W14 estimates using
+This allows us to calculate the W14 estimates:
 
 .. math::
-    A_u = Ecorr_{B-V} * 4.305 \\
-    A_g = Ecorr_{B-V} * 3.288 \\
-    A_r = Ecorr_{B-V} * 2.261 \\
-    A_i = Ecorr_{B-V} * 1.714 \\
-    A_z = Ecorr_{B-V} * 1.263
+    A''_u = E'_{B-V} * 4.305 \\
+    A''_g = E'_{B-V} * 3.288 \\
+    A''_r = E'_{B-V} * 2.261 \\
+    A''_i = E'_{B-V} * 1.714 \\
+    A''_z = E'_{B-V} * 1.263
 
-To be honest, the main change introduced by W14 is the remapping of the E_{B-V} scale, not so much the change in the A_band factors. The latter alone should have little effect, but the former would have a bit more effect.
+.. topic:: References
 
-
+    .. [W2014] Wolf, Christian. "Milky Way dust extinction measured with QSOs".
+       `arXiv:1410.0109 [astro-ph.GA] <http://arxiv.org/abs/1410.0109>`_

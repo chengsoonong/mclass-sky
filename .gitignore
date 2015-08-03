@@ -1,17 +1,18 @@
 # IPython notebooks checkpoints
-examples/.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
 
 # the datasets are too large to be stored in GitHub
-examples/data/
+notebooks/data/
 
 # result files that are too large
-examples/results/sdss_whole_dataset/
+notebooks/results/sdss_whole_dataset/
 
 # source files for reports and presentations
 reports/source/
 
 # others
 .DS_Store
+media/
 dist/
 doc/_build/
 mclearn/__pycache__/

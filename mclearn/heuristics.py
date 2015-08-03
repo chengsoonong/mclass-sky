@@ -1,5 +1,6 @@
 """ Heuristics used to query the most uncertain candidate out of the unlabelled pool. """
 
+import numpy as np
 
 def random_h(X_training_candidates, **kwargs):
     """ Return a random candidate. """

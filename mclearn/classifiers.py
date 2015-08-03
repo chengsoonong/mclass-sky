@@ -20,31 +20,48 @@ from sklearn.utils import shuffle
 
 
 def train_classifier(data, feature_names, class_name, train_size, test_size,
-    random_state=None, coords=True, recall_maps=True, classifier=None, correct_baseline=None,
-    store_covariances=False):
+    random_state=None, coords=True, recall_maps=True, classifier=None, correct_baseline=None):
     """ Standard classifier routine.
 
         Parameters
         ----------
-        X_train : array, shape = [n_samples, n_features]
-            Feature matrix of the training examples.
+        data : DataFrame
+            The DataFrame containing all the data.
 
-        X_test : array, shape = [n_samples, n_features]
-            Feature matrix of the test examples.
+        feature_names : array
+            A list of column names in data that are used as features.
 
-        y_train : array, shape = [n_samples]
-            The array of class labels corresponding to the training examples.
+        class_name : str
+            The column name of the target.
 
-        y_test : array, shape = [n_samples]
-            The array of class labels corresponding to the test examples.
+        train_size : int
+            The size of the training set.
 
-        classifier : Classifier
+        test_size : int
+            The size of the test set.
+
+        random_state : int
+            The value of the random state (used for reproducibility).
+
+        coords : bool
+            Whehter coordinates are part of the features.
+
+        recall_maps : bool
+            Wheter to make a map of recall scores.
+
+        classifier : Classifier object
             An initialised scikit-learn Classifier object.
+
+        correct_baseline : array
+            If we want to compare our results to some baseline, supply the default predicted data here.
 
         Returns
         -------
-        classifier : Classifier
-            Return the trained scikit-learn Classifier object.
+        correct_boolean : array
+            The boolean array indicating which test exmaples were correctly predicted.
+
+        confusion_test : array
+            The confusion matrix on the test examples.
 
     """
 
@@ -69,12 +86,45 @@ def train_classifier(data, feature_names, class_name, train_size, test_size,
 
 
 def print_classification_result(X_train, X_test, y_train, y_test,
-    recall_maps=True, classifier=None, correct_baseline=None, store_covariances=False):
-    """
+    recall_maps=True, classifier=None, correct_baseline=None):
+    """ Train the specified classifier and print out the results.
+
+        Parameters
+        ----------
+        X_train : array
+            The feature vectors (stored as columns) in the training set.
+            
+        X_test : array
+            The feature vectors (stored as columns) in the test set.
+            
+        y_train : array
+            The target vector in the training set.
+            
+        y_test : array
+            The target vector in the test set.
+
+        recall_maps : bool
+            Wheter to make a map of recall scores.
+
+        classifier : Classifier object
+            A classifier object that will be used to train and test the data.
+            It should have the same interface as scikit-learn classifiers.
+
+        correct_baseline : array
+            If we want to compare our results to some baseline, supply the default
+            predicted data here.
+
+        Returns
+        -------
+        correct_boolean : array
+            The boolean array indicating which test exmaples were correctly predicted.
+
+        confusion_test : array
+            The confusion matrix on the test examples.
     """
 
     # train and test
-    classifier.fit(X_train, y_train, store_covariances=store_covariances)
+    classifier.fit(X_train, y_train)
     y_pred_test = classifier.predict(X_test)
     confusion_test = metrics.confusion_matrix(y_test, y_pred_test)
     balanced_accuracy = mclearn.balanced_accuracy_expected(confusion_test)
@@ -112,7 +162,44 @@ def print_classification_result(X_train, X_test, y_train, y_test,
 
 def learning_curve(sample_sizes, data, feature_cols, class_col, classifier, random_state=None,
     normalise=True, degree=1, pickle_path='learning_curve.pickle'):
-    """
+    """ Compute the learning curve of a classiifer.
+
+        Parameters
+        ----------
+        sample_sizes : array
+            The list of the sample sizes that the classifier will be trained on.
+
+        data : DataFrame
+            The DataFrame containing all the data.
+
+        feature_names : array
+            A list of column names in data that are used as features.
+
+        class_name : str
+            The column name of the target.
+
+        classifier : Classifier object
+            A classifier object that will be used to train and test the data.
+            It should have the same interface as scikit-learn classifiers.
+
+        random_state : int
+            The value of the Random State (used for reproducibility).
+
+        normalise : boolean
+            Whether we should first normalise the data to zero mean and unit variance.
+
+        degree : int
+            If greater than 1, the data will first be polynomially transformed
+            with the given degree.
+
+        pickle_path : str
+            The path where the values of the learning curve will be saved.
+
+        Returns
+        -------
+        lc_accuracy_test : array
+            The list of balanced accuracy scores for the given sample sizes.
+
     """
 
     lc_accuracy_test = []
@@ -151,7 +238,18 @@ def learning_curve(sample_sizes, data, feature_cols, class_col, classifier, rand
 
 
 def compute_all_learning_curves(data, feature_cols, target_col):
-    """
+    """ Compute the learning curves with the most popular classifiers.
+
+        Parameters
+        ----------
+        data : DataFrame
+            The DataFrame containing all the features and target.
+
+        feature_cols : array
+            The list of column names of the features.
+
+        target_col: array
+            The name of the target column in the DataFrame.
     """
 
     # define the range of the sample sizes
@@ -200,7 +298,35 @@ def compute_all_learning_curves(data, feature_cols, target_col):
 
 def grid_search(X, y, classifier, param_grid, train_size=300, test_size=300, clf_name=None,
     report=True):
-    """
+    """ A general grid search routine.
+
+        Parameters
+        ----------
+        X : array
+            The feature matrix of the data.
+
+        y : array
+            The target column.
+
+        classifier : Classifier object
+            A classifier object that will be used to train and test the data.
+            It should have the same interface as scikit-learn classifiers.
+
+        param_grid : dict
+            Dictionary containing the names of the hyperparameters and their
+            associated values which the classifier will be trained with.
+
+        train_size : int
+            The size of the training set in each iteration.
+
+        test_size : int
+            The size of the test set in each iteration.
+
+        clf_name : str
+            The name of the classifier (used for printing of the results).
+
+        report : boolean
+            Whether the results (the best hyperparameters) will be printed out.
     """
 
     cv = StratifiedShuffleSplit(y, n_iter=5, train_size=train_size,
@@ -219,7 +345,24 @@ def grid_search(X, y, classifier, param_grid, train_size=300, test_size=300, clf
 
 
 def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
-    """
+    """ Do a grid search on SVM wih an RBF kernel.
+
+        Parameters
+        ----------
+        X : array
+            The feature matrix of the data.
+
+        y : array
+            The target column.
+
+        train_size : int
+            The size of the training set in each iteration.
+
+        test_size : int
+            The size of the test set in each iteration.
+
+        fig_path : str
+            The path where the heat map plot can be saved.
     """
 
     # define search domain
@@ -245,7 +388,24 @@ def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path='heat.pdf'
 
 
 def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
-    """
+    """ Do a grid search on SVM wih a sigmoid kernel.
+
+        Parameters
+        ----------
+        X : array
+            The feature matrix of the data.
+
+        y : array
+            The target column.
+
+        train_size : int
+            The size of the training set in each iteration.
+
+        test_size : int
+            The size of the test set in each iteration.
+
+        fig_path : str
+            The path where the heat map plot can be saved.
     """
 
     # define search domain
@@ -271,7 +431,30 @@ def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path='heat.
 
 
 def grid_search_svm_poly_degree(X, y, param_grid, degree=2, train_size=300, test_size=300):
-    """
+    """ Do a grid search on a Linear SVM given the specified polynomial transformation.
+
+        Parameters
+        ----------
+        X : array
+            The feature matrix of the data.
+
+        y : array
+            The target column.
+
+        param_grid : dict
+            Dictionary containing the names of the hyperparameters and their
+            associated values which the classifier will be trained with.
+
+        train_size : int
+            The size of the training set in each iteration.
+
+        test_size : int
+            The size of the test set in each iteration.
+
+        Returns
+        -------
+        scores_flat : array
+            List of scores of all possible cominbations of the hyperparameters.
     """
 
     # transform features to polynomial space
@@ -307,7 +490,24 @@ def grid_search_svm_poly_degree(X, y, param_grid, degree=2, train_size=300, test
 
 
 def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
-    """
+    """ Do a grid search on SVM with polynomial transformation of the features.
+
+        Parameters
+        ----------
+        X : array
+            The feature matrix of the data.
+
+        y : array
+            The target column.
+
+        train_size : int
+            The size of the training set in each iteration.
+
+        test_size : int
+            The size of the test set in each iteration.
+
+        fig_path : str
+            The path where the heat map plot can be saved.
     """
 
     # define search domain
@@ -350,7 +550,30 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path='heat.pdf
 
 
 def grid_search_logistic_degree(X, y, param_grid, degree=2, train_size=300, test_size=300):
-    """
+    """ Do a grid search on Logistic Regression given the specified polynomial transformation.
+
+        Parameters
+        ----------
+        X : array
+            The feature matrix of the data.
+
+        y : array
+            The target column.
+
+        param_grid : dict
+            Dictionary containing the names of the hyperparameters and their
+            associated values which the classifier will be trained with.
+
+        train_size : int
+            The size of the training set in each iteration.
+
+        test_size : int
+            The size of the test set in each iteration.
+
+        Returns
+        -------
+        scores_flat : array
+            List of scores of all possible cominbations of the hyperparameters.
     """
 
     # transform features to polynomial space
@@ -377,7 +600,24 @@ def grid_search_logistic_degree(X, y, param_grid, degree=2, train_size=300, test
 
 
 def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
-    """
+    """ Do a grid search on Logistic Regression.
+
+        Parameters
+        ----------
+        X : array
+            The feature matrix of the data.
+
+        y : array
+            The target column.
+
+        train_size : int
+            The size of the training set in each iteration.
+
+        test_size : int
+            The size of the test set in each iteration.
+
+        fig_path : str
+            The path where the heat map plot can be saved.
     """
 
     # define search domain

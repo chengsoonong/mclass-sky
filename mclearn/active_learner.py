@@ -154,6 +154,32 @@ def run_active_learning_with_heuristic(heursitic, classifier,
 
         Parameters
         ----------
+        heuristic : function
+            This is the function that implements the active learning rule. Given a set
+            of training candidates and the classifier as inputs, the function will
+            return index array of candidate(s) with the highest score(s).
+
+        classifier : Classifier object
+            A classifier object that will be used to train and test the data.
+            It should have the same interface as scikit-learn classifiers.
+
+        training_pool : array, shape = [n_samples, n_features]
+            The feature matrix of all the training examples. Throughout the training phase,
+            the active learner will select an oject from this pool to query to oracle.
+            
+        testing_pool : array, shape = [n_samples, n_features]
+            The feature matrix of the test examples, which will be used to assess the accuracy
+            rate of the active learner.
+            
+        training_oracle : array, shape = [n_samples]
+            The array of class labels corresponding to the training examples.
+            
+        testing_oracle : array, shape = [n_samples]
+            The array of class labels corresponding to the test examples.
+
+        balanced_pool : boolean
+            Whether the class disribution in the training pool should be uniform.
+
         full_sample_size : int
             The size of the training pool in each trial of the experiment.
 
@@ -173,7 +199,20 @@ def run_active_learning_with_heuristic(heursitic, classifier,
             highest score according to the active learning rule. If random_n is set to 0,
             the entire training pool will be sampled (which can be inefficient with large
             datasets).
+        
+        committee : list of Classifier object
+            A list that contains the committee of classifiers used by the query by bagging heuristics.
+        
+        bag_size : int
+            The number of training examples used by each member in the committee.
 
+        pickle_paths : array
+            List of paths where the learning curves can be saved.
+
+        Returns
+        -------
+        learning_curves : array
+            If no pickle paths are provided, the learning curves will be returned.
     """
     
     sub_sample_size = full_sample_size // 3
@@ -230,7 +269,41 @@ def run_active_learning_with_heuristic(heursitic, classifier,
 
 def active_learning_experiment(data, feature_cols, target_col, classifier,
     heuristics, committee, pickle_paths, degree=1, balanced_pool=False):
-    """
+    """ Run an active learning experiment with specified heuristics.
+
+        Parameters
+        ----------
+        data : DataFrame
+            The DataFrame containing all the features and target.
+
+        feature_cols : array
+            The list of column names of the features.
+
+        target_col: array
+            The name of the target column in the DataFrame.
+
+        classifier : Classifier object
+            A classifier object that will be used to train and test the data.
+            It should have the same interface as scikit-learn classifiers.
+
+        heuristics : array
+            The list of heuristics to be experimented on. Each heuristic is
+            a function that implements the active learning rule. Given a set
+            of training candidates and the classifier as inputs, the function will
+            return index array of candidate(s) with the highest score(s).
+
+        committee : list of Classifier objects
+            A list that contains the committee of classifiers used by the query by bagging heuristics.
+
+        pickle_paths : array
+            List of paths where the learning curves can be saved.
+
+        degree : int
+            If greater than 1, the data will be transformed polynomially with the given degree.
+
+        balanced_pool : boolean
+            Whether the class disribution in the training pool should be uniform.
+
     """
 
     # 70/30 split of training and test sets

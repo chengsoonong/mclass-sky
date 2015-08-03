@@ -25,7 +25,7 @@ for i in range(len(tableau20)):
     tableau20[i] = (r / 255., g / 255., b / 255.)  
 
 
-def plot_class_distribution(classes, ax=None):
+def plot_class_distribution(target, ax=None):
     """ Plot the distribution of the classes.
         
         Parameters
@@ -33,14 +33,19 @@ def plot_class_distribution(classes, ax=None):
         target : array
             The target column of the dataset.
             
-        title : str
-            Title of the plot.
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
 
     if not ax:
         ax = plt.gca()
     
-    counts = DataFrame(classes).apply(pd.value_counts)
+    counts = DataFrame(target).apply(pd.value_counts)
     counts.plot(ax=ax, kind="bar", fontsize=12, legend=False)
     ax.set_xticklabels(labels=counts.index, rotation=0)
     
@@ -90,10 +95,14 @@ def plot_balanced_accuracy_violin(balanced_accuracy_samples, ax=None):
         balanced_accuracy_samples : dict
             Where the keys are the classifier names and the each value is an array
             of sample points from which an empirical pdf can be approxmiated.
-            
-        classifier_names : array
-            List of classifier names, the order of which will be used
-            to order the bars.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
 
     if not ax:
@@ -115,11 +124,19 @@ def plot_learning_curve(sample_sizes, learning_curves, curve_labels, ax=None):
         sample_sizes : array
             The sample sizes in which the classifier is run.
             
-        scores : array
-            The corresponding score for each sample size.
+        learning_curves : array
+            List of learning_curves to be plotted
             
-        title : str
-            The title of the plot.
+        curve_labels : array
+            The labels of the learning curves.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
     
     if not ax:
@@ -140,7 +157,30 @@ def plot_learning_curve(sample_sizes, learning_curves, curve_labels, ax=None):
 
 
 def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, no_trials=10, ax=None):
-    """
+    """ Plot the average learning curve from many trials.
+
+        Parameters
+        ----------
+        sample_sizes : array
+            The sample sizes in which the classifier is run.
+            
+        learning_curves : array
+            List of learning_curves to be plotted
+            
+        curve_labels : array
+            The labels of the learning curves.
+
+        no_trials : int
+            The number of trials that were run for each learning curve.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
+
     """
 
     mean_curves = []
@@ -290,7 +330,41 @@ def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide',
 
 def plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
     correct_boolean, vmin=0, vmax=1, mincnt=None, cmap=plt.cm.YlGn):
-    """
+    """ Plot the recall map.
+
+        Parameters
+        ----------
+        coords_test : array
+            The ra and dec coordinates
+
+        y_test : array
+            The column of predicted values.
+
+        y_pred_test : array
+            The column of predicted values.
+
+        class_names = array
+            Names of the target (e.g. Galaxy, Star, Quasar)
+
+        output : str
+            The suffix on the saved figure.
+
+        correct_boolean : array
+            A boolean array indicating whehter a test exmaple was correctly predicted.
+
+        vmin : scalar
+            vmin is the value that sits at the bottom end of the colour bar.
+            If None, the min of array C is used.
+
+        vmax : scalar
+            vmax is the value that sits at the top end of the colour bar.
+            If None, the max of array C is used.
+
+        mincnt : int
+            If not None, only display cells with more than mincnt number of points in the cell.
+
+        cmap : Matplotlib ColorMap object
+            The color scheme to be used.
     """
 
     
@@ -313,6 +387,20 @@ def plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
 
 def plot_filters_and_spectrum(filter_url, spectrum_url, ax=None):
     """ Plot ugriz filters and spectrum in the same figure.
+
+        filter_url : str
+            The url where the ugriz filters can be obtained.
+
+        spectrum_url : str
+            The url where the spectrum data can be obtained.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
     
     if not ax:
@@ -345,7 +433,21 @@ def plot_filters_and_spectrum(filter_url, spectrum_url, ax=None):
     return ax
 
 def plot_scatter_with_classes(data, classes, ax=None):
-    """
+    """ Plot a scater plot of the classes.
+
+        data : array
+            The target array.
+
+        classes : array
+            The list of class names used in the target array.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
 
     if not ax:
@@ -370,7 +472,24 @@ def plot_scatter_with_classes(data, classes, ax=None):
 
 
 def reshape_grid_socres(grid_scores, row_length, col_length, transpose=False):
-    """
+    """ Reshape the scores to be used as input for the heathap.
+
+        grid_scores : array
+            The grid scores obtain from the GridSearch insteance.
+
+        row_length : int
+            The width of the heatmap.
+
+        col_length : int
+            The height of the heatmap.
+
+        transpose : boolean
+            Whether to tranpose the heatmap (e.g. for easier viewing).
+
+        Returns
+        -------
+        scores : array
+            The array of scores, shaped appropriately.
     """
 
     scores = [x[1] for x in grid_scores]
@@ -382,8 +501,36 @@ def reshape_grid_socres(grid_scores, row_length, col_length, transpose=False):
 
 
 def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
-    x_label=None, y_label=None, ax=None, power10='both'):
+    x_label=None, y_label=None, power10='both', ax=None):
     """ Plot heatmap of the validation accuracy from a grid search.
+
+        Parameters
+        ----------
+        scores : array
+            List of scores that has been shaped appropriately.
+
+        x_range : array or None
+            The range on the x-axis which will replace the default numbering.
+
+        y_range : array or None
+            The range on the y-axis which will replace the default numbering.
+
+        x_label : str
+            Label of the x-axis
+
+        y_label : str
+            Label of the y-axis
+
+        power10 : 'x' or 'y' or 'both'
+            Whether to format the numbering on the axes as powers of 10.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
     
     if not ax:

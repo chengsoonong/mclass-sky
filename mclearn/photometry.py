@@ -5,8 +5,29 @@ import numpy as np
 from urllib.request import urlopen
 
 def reddening_correction_sfd98(extinction_r):
-    """ sf
+    """ Compute the reddening values using the SFD98 correction set.
 
+        Parameters
+        ----------
+        extinction_r : array
+            The uncorrected extinction values in the r-band.
+
+        Returns
+        -------
+        A_u : array
+            The corrected extinction values in the u-band.
+
+        A_g : array
+            The corrected extinction values in the g-band.
+
+        A_r : array
+            The corrected extinction values in the r-band.
+
+        A_i : array
+            The corrected extinction values in the i-band.
+
+        A_z : array
+            The corrected extinction values in the z-band.
     """
 
     E_BV = extinction_r / 2.751
@@ -20,8 +41,29 @@ def reddening_correction_sfd98(extinction_r):
 
 
 def reddening_correction_sf11(extinction_r):
-    """ adf
+    """ Compute the reddening values using the SF11 correction set.
 
+        Parameters
+        ----------
+        extinction_r : array
+            The uncorrected extinction values in the r-band.
+
+        Returns
+        -------
+        A_u : array
+            The corrected extinction values in the u-band.
+
+        A_g : array
+            The corrected extinction values in the g-band.
+
+        A_r : array
+            The corrected extinction values in the r-band.
+
+        A_i : array
+            The corrected extinction values in the i-band.
+
+        A_z : array
+            The corrected extinction values in the z-band.
     """
 
     E_BV = extinction_r / 2.751
@@ -34,8 +76,29 @@ def reddening_correction_sf11(extinction_r):
     return (A_u, A_g, A_r, A_i, A_z)
 
 def reddening_correction_w14(extinction_r):
-    """ adf
+    """ Compute the reddening values using the W14 correction set.
 
+        Parameters
+        ----------
+        extinction_r : array
+            The uncorrected extinction values in the r-band.
+
+        Returns
+        -------
+        A_u : array
+            The corrected extinction values in the u-band.
+
+        A_g : array
+            The corrected extinction values in the g-band.
+
+        A_r : array
+            The corrected extinction values in the r-band.
+
+        A_i : array
+            The corrected extinction values in the i-band.
+
+        A_z : array
+            The corrected extinction values in the z-band.
     """
 
     E_BV = extinction_r / 2.751
@@ -56,7 +119,18 @@ def reddening_correction_w14(extinction_r):
 
 
 def correct_magnitudes(data, magnitudes, corrections, suffix):
-    """
+    """ Correct the values of magntidues given a correction set.
+
+        Parameters
+        ----------
+        data : DataFrame
+            The DataFrame containing the magnitudes.
+
+        magnitudes : array
+            The column names of the magnitudes.
+
+        corrections : array
+            The set of correction values in the same order as `magnitudes`.
     """
 
     for mag, cor in zip(magnitudes, corrections):
@@ -64,7 +138,18 @@ def correct_magnitudes(data, magnitudes, corrections, suffix):
 
 
 def compute_colours(data, colours, suffix):
-    """
+    """ Compute specified combinations of colours.
+
+        Parameters
+        ----------
+        data : DataFrame
+            The DataFrame containing the magnitudes.
+
+        colours : array
+            The list of colour combinations to be computed.
+
+        suffix : array
+            A suffix is added to the colour name to distinguish between correction sets.
     """
     
     for colour in colours:
@@ -76,7 +161,21 @@ def compute_colours(data, colours, suffix):
 
 
 def fetch_filter(filter, download_url):
-    """
+    """ Get a filter from the internet.
+
+        Parameters
+        ----------
+        filter : char
+            Name of the filters. Must be one of u, g, r, i, and z.
+
+        download_url : str
+            The URL where the filter can be downloaded.
+
+        Returns
+        -------
+        data : array
+            The downloaded filter data.
+
     """
     
     assert filter in 'ugriz'
@@ -100,7 +199,17 @@ def fetch_filter(filter, download_url):
 
 
 def fetch_spectrum(spectrum_url):
-    """
+    """ Get a spectrum from the internet.
+
+        Parameters
+        ----------
+        spectrum_url : str
+            The URL where the spectrum can be downloaded.
+
+        Returns
+        -------
+        data : array
+            The downloaded spectrum data.
     """
 
     if not os.path.exists('data/spectra'):
@@ -120,7 +229,15 @@ def fetch_spectrum(spectrum_url):
 
 
 def clean_up_subclasses(classes, subclasses):
-    """
+    """ Clean up the names of the subclasses in the SDSS dataset.
+
+        Parameters
+        ----------
+        classes : array
+            The array containing the classes. This will be prepended to the sublcasses.
+
+        subclasses : array
+            The array containing the subclasses.
     """
 
     # remove null references

@@ -345,7 +345,25 @@ def precision(confusion, classes, classifiers):
 
 
 def compute_balanced_accuracy(classifier, testing_pool, testing_oracle):
-    """ Compute the accuracy of a classifier based on some test set. """
+    """ Compute the accuracy of a classifier based on some test set.
+
+        Parameters
+        ----------
+        classifier : Classifier object
+            A trained instance of the Classifier object.
+
+        testing_pool : array
+            The feature matrix of the test examples.
+
+        testing_oracle : array
+            The target vector of the test examples.
+
+        Returns
+        -------
+        balanced_accuracy_expected : float
+            The expected balanced accuracy rate on the test set.
+
+    """
     
     y_pred = classifier.predict(testing_pool)
     confusion_test = metrics.confusion_matrix(testing_oracle, y_pred)

@@ -1,6 +1,6 @@
-mclearn.photometry.dust_extinction_w14
+mclearn.photometry.clean_up_subclasses
 ======================================
 
 .. currentmodule:: mclearn.photometry
 
-.. autofunction:: dust_extinction_w14
+.. autofunction:: clean_up_subclasses

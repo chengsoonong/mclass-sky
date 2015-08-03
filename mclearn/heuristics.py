@@ -3,14 +3,38 @@
 import numpy as np
 
 def random_h(X_training_candidates, **kwargs):
-    """ Return a random candidate. """
+    """ Return a random candidate.
+
+        Parameters
+        ----------
+        X_training_candidates : array
+            The feature matrix of the potential training candidates.
+
+        Returns
+        -------
+        best_candidate : int
+            The index of the best candidate (here it is random).
+
+    """
     
     random_index = np.random.choice(np.arange(0, len(X_training_candidates)), 1, replace=False)
     return random_index
 
 
 def entropy_h(X_training_candidates, **kwargs):
-    """ Return the candidate whose prediction vector displays the greatest Shannon entropy. """
+    """ Return the candidate whose prediction vector displays the greatest Shannon entropy.
+
+        Parameters
+        ----------
+        X_training_candidates : array
+            The feature matrix of the potential training candidates.
+
+        Returns
+        -------
+        best_candidate : int
+            The index of the best candidate.
+
+    """
     
     # get the classifier
     classifier = kwargs['classifier']
@@ -32,6 +56,16 @@ def margin_h(X_training_candidates, **kwargs):
     
         The margin is defined as the difference between the two largest values
         in the prediction vector.
+
+        Parameters
+        ----------
+        X_training_candidates : array
+            The feature matrix of the potential training candidates.
+
+        Returns
+        -------
+        best_candidate : int
+            The index of the best candidate.
     """
     
     # get the classifier
@@ -57,6 +91,16 @@ def qbb_margin_h(X_training_candidates, **kwargs):
     
         We first use bagging to train k classifiers. The margin is then defined as
         the average difference between the two largest values in the prediction vector.
+
+        Parameters
+        ----------
+        X_training_candidates : array
+            The feature matrix of the potential training candidates.
+
+        Returns
+        -------
+        best_candidate : int
+            The index of the best candidate.
     """
     
     # extract parameters
@@ -119,7 +163,17 @@ def qbb_kl_h(X_training_candidates, **kwargs):
     """ Return the candidate with the largest average KL divergence from the mean.
     
         We first use bagging to train k classifiers. We then choose the candidate
-        that has the largest Kullback–Leibler divergence from the average
+        that has the largest Kullback–Leibler divergence from the average.
+
+        Parameters
+        ----------
+        X_training_candidates : array
+            The feature matrix of the potential training candidates.
+
+        Returns
+        -------
+        best_candidate : int
+            The index of the best candidate.
     """
     
     # extract parameters

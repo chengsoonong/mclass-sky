@@ -7,11 +7,11 @@ mclearn
 :Source: `<https://github.com/alasdairtran/mclearn>`_
 :Docs: `<http://pythonhosted.org/mclearn/>`_
 
-.. image:: https://travis-ci.org/chengsoonong/mclass-sky.svg?branch=master
-    :target: https://travis-ci.org/chengsoonong/mclass-sky
+.. image:: https://travis-ci.org/alasdairtran/mclearn.svg
+    :target: https://travis-ci.org/alasdairtran/mclearn
 
-.. image:: https://coveralls.io/repos/chengsoonong/mclass-sky/badge.svg?branch=master&service=github
-  :target: https://coveralls.io/github/chengsoonong/mclass-sky?branch=master
+.. image:: https://coveralls.io/repos/alasdairtran/mclearn/badge.svg?branch=master&service=github
+	:target: https://coveralls.io/github/alasdairtran/mclearn?branch=master
 
 
 	     
@@ -31,8 +31,11 @@ To install using pip::
 
 
 
-Example Notebooks
+Experiment Protocol
 ------------------------------
+Throughout the experiment, we will be using the dataset from the Sloan Digital Sky Survey.
+ c
+
 As a quick start, have a look at the following Jupyter notebooks and see what mclearn
 can do:
 
@@ -47,19 +50,19 @@ can do:
 
 
 .. _About the SDSS Dataset:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/about_sdss.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/about_sdss.ipynb
 .. _Dimensionality Reduction in SDSS:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/dimensionality_reduction.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/dimensionality_reduction.ipynb
 .. _Feature Selection of Photometric Measurements:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/feature_selection.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/feature_selection.ipynb
 .. _Implementing Standard Classifiers:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/standard classifiers.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/standard classifiers.ipynb
 .. _Active Learning with Contextual Bandits:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/contextual_bandits.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/contextual_bandits.ipynb
 .. _Active Learning with Logistic Regression:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/logistic_active_learning.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/logistic_active_learning.ipynb
 .. _Making Photometric Prediction:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/examples/predicting_unknowns.ipynb
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/predicting_unknowns.ipynb
 
 
 

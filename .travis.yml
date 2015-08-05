@@ -18,6 +18,7 @@ before_install:
   - conda install --yes -c dan_blanchard python-coveralls
   - conda install --yes seaborn
   - conda install --yes ephem
+  - conda install --yes coverage
 
 install:
   - python setup.py install

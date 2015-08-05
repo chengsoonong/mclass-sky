@@ -16,4 +16,5 @@ media/
 dist/
 doc/_build/
 mclearn/__pycache__/
+mclearn/tests/__pycache__/
 mclearn.egg-info/

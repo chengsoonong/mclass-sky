@@ -1,7 +1,9 @@
 """ Selected plots commonly used in astronomy and active learning. """
 
+import mclearn
 import pandas as pd
 import numpy as np
+import ephem
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -22,7 +24,7 @@ for i in range(len(tableau20)):
     tableau20[i] = (r / 255., g / 255., b / 255.)  
 
 
-def plot_class_distribution(targets, title):
+def plot_class_distribution(target, ax=None):
     """ Plot the distribution of the classes.
         
         Parameters
@@ -30,22 +32,27 @@ def plot_class_distribution(targets, title):
         target : array
             The target column of the dataset.
             
-        title : str
-            Title of the plot.
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
+
+    if not ax:
+        ax = plt.gca()
     
-    target_df = DataFrame(targets)
-    fig, ax = plt.subplots(figsize=(9, 5))
-    counts = target_df.apply(pd.value_counts)
+    counts = DataFrame(target).apply(pd.value_counts)
     counts.plot(ax=ax, kind="bar", fontsize=12, legend=False)
-    ax.set_title(title)
     ax.set_xticklabels(labels=counts.index, rotation=0)
     
     format_thousands = lambda x, pos: format(int(x), ',')
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_thousands))
+    ax.xaxis.grid(False)
     
-    plt.show()
-    
+    return ax
     
 def plot_scores(scores, title, x_label, classifier_names):
     """ Make a barplot of the scores of some performance measure.
@@ -79,7 +86,7 @@ def plot_scores(scores, title, x_label, classifier_names):
     plt.show()
     
     
-def plot_balanced_accuracy_violin(balanced_accuracy_samples, classifier_names):
+def plot_balanced_accuracy_violin(balanced_accuracy_samples, ax=None):
     """ Make a violin plot of the balanced posterior accuracy.
         
         Parameters
@@ -87,32 +94,28 @@ def plot_balanced_accuracy_violin(balanced_accuracy_samples, classifier_names):
         balanced_accuracy_samples : dict
             Where the keys are the classifier names and the each value is an array
             of sample points from which an empirical pdf can be approxmiated.
-            
-        classifier_names : array
-            List of classifier names, the order of which will be used
-            to order the bars.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
     """
 
-    fig, ax = plt.subplots(figsize=(11, 9))
-    sns.violinplot(DataFrame(balanced_accuracy_samples, columns=classifier_names),
-                   inner=None, ax=ax, names=[1, 2, 3, 4, 5, 6, 7])
-    ax.set_title("Posterior Balanced Accuracy")
+    if not ax:
+        ax = plt.gca()
+
+    sns.violinplot(data=balanced_accuracy_samples, ax=ax, inner='box')
     
-    format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
+    format_as_percent_plot = lambda x, pos: "{:.2f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
     
-    handles = []
-    colours = sns.color_palette("husl", 7)
-    
-    for c, n in zip(colours, classifier_names):
-        handles.append(mpatches.Patch(color=c, label=n))
-    
-    ax.legend(handles=handles, bbox_to_anchor = (1.4, 0.6))
-    
-    plt.show()
+    return ax
     
     
-def plot_learning_curve(sample_sizes, scores, title):
+def plot_learning_curve(sample_sizes, learning_curves, curve_labels, ax=None):
     """ Plot the learning curve.
         
         Parameters
@@ -120,36 +123,159 @@ def plot_learning_curve(sample_sizes, scores, title):
         sample_sizes : array
             The sample sizes in which the classifier is run.
             
-        scores : array
-            The corresponding score for each sample size.
+        learning_curves : array
+            List of learning_curves to be plotted
+            
+        curve_labels : array
+            The labels of the learning curves.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
+    """
+    
+    if not ax:
+        ax = plt.gca()
+
+    for curve, label in zip(learning_curves, curve_labels):
+        ax.plot(sample_sizes[:len(curve)], curve, label=label)
+
+    format_as_percent_plot = lambda x, pos: "{:.1f}%".format(x * 100)
+    ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
+    ax.legend(loc='lower right', frameon=True)
+    ax.set_xlabel('Sample Size')
+    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.set_xscale('log')
+    ax.grid(False)
+    
+    return ax
+
+
+def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, no_trials=10, ax=None):
+    """ Plot the average learning curve from many trials.
+
+        Parameters
+        ----------
+        sample_sizes : array
+            The sample sizes in which the classifier is run.
+            
+        learning_curves : array
+            List of learning_curves to be plotted
+            
+        curve_labels : array
+            The labels of the learning curves.
+
+        no_trials : int
+            The number of trials that were run for each learning curve.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
+
+    """
+
+    mean_curves = []
+    for learning_curve in learning_curves:
+        learning_curve = np.array(learning_curve)
+        mean_curve = np.zeros(len(sample_sizes))
+        for i in range(len(sample_sizes)):
+            mean_curve[i] = np.mean(learning_curve[:, i])
+        mean_curves.append(mean_curve)
+
+    if not ax:
+        ax = plt.gca()
+
+    for mean_curve, curve_label in zip(mean_curves, curve_labels):
+        ax.plot(sample_sizes, mean_curve, label=curve_label)
+
+    ax.set_xlabel('Number of Training Examples')
+    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.legend(loc='lower right', frameon=True)
+    ax.grid(False)
+
+    return ax
+
+
+def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsize=100,
+    milky_way=True, C=None, reduce_C_function=np.mean, vmin=0, vmax=1500, mincnt=1,
+    cmap=plt.cm.bone_r, axisbg='white', colorbar=True, labels=False, ax=None):
+    """ Plot the density of objects on a hex map.
+
+        Parameters
+        ----------
+        ra : array
+            The array containing the ra coordinates.
+            
+        dec : array
+            The array containing the dec coordinates.
+
+        origin : int
+            The ra value in the middle of the map.
             
         title : str
             The title of the plot.
+
+        projection : str
+            The projection mode to be used. Default is 'mollweide'.
+
+        gridsize : int
+            The number of hexagons in the *x*-direction, default is
+            100. The corresponding number of hexagons in the
+            *y*-direction is chosen such that the hexagons are
+            approximately regular. Alternatively, gridsize can be a
+            tuple with two elements specifying the number of hexagons
+            in the *x*-direction and the *y*-direction.
+
+        milky_way : boolean
+            Whether the plane of the Milky Way is plotted. Default is True.
+
+        C : array
+            If C is specified, it specifies values at the coordinate (ra[i],dec[i]).
+            These values are accumulated for each hexagonal bin and then reduced according
+            to reduce_C_function, which defaults to numpy’s mean function (np.mean).
+            (If C is specified, it must also be a 1-D sequence of the same length as ra and dec.)
+
+        reduce_C_function : function
+            The function to be applied to the C values (or the count values) on each
+            hexagon bin.
+
+        vmin : scalar
+            vmin is the value that sits at the bottom end of the colour bar.
+            If None, the min of array C is used.
+
+        vmax : scalar
+            vmax is the value that sits at the top end of the colour bar.
+            If None, the max of array C is used.
+
+        mincnt : int
+            If not None, only display cells with more than mincnt number of points in the cell.
+
+        cmap : Colormap
+            a matplotlib.colors.Colormap instance.
+
+        axisbg : str
+            The background colour of the map. Default is 'white'.
+
+        colorbar : boolean
+            Whether to render the color bar (i.e. legend). Default is True.
+
+        labels : boolean
+            Whether to render the axis labels. Default to False (to avoid clutter).
+
+        Parameters
+        ----------
+        ax : matplotlib Axes
+            Returns the Axes object with the hex map drawn onto it.
+
     """
-    
-    fig, ax = plt.subplots(figsize=(9, 5))
-    plt.plot(sample_sizes, scores)
-    ax.set_title(title)
-    
-    format_as_percent_plot = lambda x, pos: "{:.1f}%".format(x * 100)
-    ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
-    
-    format_thousands = lambda x, pos: format(int(x), ',')
-    ax.get_xaxis().set_major_formatter(FuncFormatter(format_thousands))
-    
-    ax.set_xlabel('Sample Size')
-    ax.set_ylabel('Mean Balanced Accuracy')
-    ax.set_xscale('log')
-    
-    plt.show()
-    
-    return (fig, ax)
-
-
-
-def plot_hex_map(ra, dec, origin=0, title='Distribution of Objects', projection='mollweide', milky_way=True,
-                C=None, reduce_C_function=np.mean, vmin=0, vmax=1500, mincnt=1, cmap=plt.cm.bone_r):
-    """ Plot density of objects on a map. """
     
     # shift ra values to range [-180, +180]
     ra = np.remainder(ra + 360 - origin, 360)
@@ -163,17 +289,27 @@ def plot_hex_map(ra, dec, origin=0, title='Distribution of Objects', projection=
     tick_labels = np.remainder(tick_labels + 360 + origin, 360)
     
     # plot data on map
-    fig = plt.figure(figsize=(20,10))
-    ax = fig.add_subplot(111, projection=projection, axisbg='white')
-    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), cmap=cmap, mincnt=mincnt,
+    if not ax:
+        ax = plt.gca(projection=projection, axisbg=axisbg)
+    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), gridsize=gridsize, cmap=cmap, mincnt=mincnt,
                            zorder=-1, vmin=vmin, vmax=vmax, C=C, reduce_C_function=reduce_C_function)
-    fig.colorbar(hex_quasar)
-    ax.set_xticklabels(tick_labels)
-    ax.set_title(title)
-    ax.set_xlabel('ra')
-    ax.set_ylabel('dec')
+    if colorbar:
+        plt.gcf().colorbar(hex_quasar)
+    
+    if title:
+        ax.set_title(title)
+
+    if labels:
+        ax.set_xlabel('ra')
+        ax.set_ylabel('dec')
+        ax.set_xticklabels(tick_labels)
+    else:
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+    
     for spine in ax.spines.values():
         spine.set_edgecolor('black')
+    
     ax.grid(True)
     
     # draw the Milky Way
@@ -196,4 +332,239 @@ def plot_hex_map(ra, dec, origin=0, title='Distribution of Objects', projection=
         milky_dec_sorted = milky_dec[sort_index]
         
         ax.plot(np.radians(milky_ra_sorted), np.radians(milky_dec_sorted))
-    plt.show()
+    
+    return ax
+
+def plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
+    correct_boolean, vmin=0, vmax=1, mincnt=None, cmap=plt.cm.YlGn):
+    """ Plot the recall map.
+
+        Parameters
+        ----------
+        coords_test : array
+            The ra and dec coordinates
+
+        y_test : array
+            The column of predicted values.
+
+        y_pred_test : array
+            The column of predicted values.
+
+        class_names = array
+            Names of the target (e.g. Galaxy, Star, Quasar)
+
+        output : str
+            The suffix on the saved figure.
+
+        correct_boolean : array
+            A boolean array indicating whehter a test exmaple was correctly predicted.
+
+        vmin : scalar
+            vmin is the value that sits at the bottom end of the colour bar.
+            If None, the min of array C is used.
+
+        vmax : scalar
+            vmax is the value that sits at the top end of the colour bar.
+            If None, the max of array C is used.
+
+        mincnt : int
+            If not None, only display cells with more than mincnt number of points in the cell.
+
+        cmap : Matplotlib ColorMap object
+            The color scheme to be used.
+    """
+
+    
+    C_func = lambda c: np.sum(c) / len(c) if c else 0
+
+    is_class = {}
+    for class_name in class_names:
+        is_class[class_name] = y_test == class_name
+        ra = coords_test[:,0][is_class[class_name]]
+        dec = coords_test[:,1][is_class[class_name]]
+        C = correct_boolean[is_class[class_name]]
+
+        fig = plt.figure(figsize=(10,5))
+        ax = plot_hex_map(ra, dec, C=C, reduce_C_function=C_func,
+             vmin=vmin, vmax=vmax, mincnt=mincnt, cmap=cmap)
+
+        file_name = r'plots/map_recall_' + output + r'_' + class_name + r'.png'
+        fig.savefig(file_name, bbox_inches='tight', dpi=300)
+
+
+def plot_filters_and_spectrum(filter_url, spectrum_url, ax=None):
+    """ Plot ugriz filters and spectrum in the same figure.
+
+        filter_url : str
+            The url where the ugriz filters can be obtained.
+
+        spectrum_url : str
+            The url where the spectrum data can be obtained.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
+    """
+    
+    if not ax:
+        ax = plt.gca()
+        
+    Xref = mclearn.photometry.fetch_spectrum(spectrum_url)
+    Xref[:, 1] /= 2.1 * Xref[:, 1].max()
+    
+    ax.plot(Xref[:, 0], Xref[:, 1], '-k', lw=1)
+
+    for f,c in zip('ugriz', 'bgrmk'):
+        X = mclearn.photometry.fetch_filter(f, filter_url)
+        plt.fill(X[:, 0], X[:, 1], ec=c, fc=c, alpha=0.4)
+
+    kwargs = dict(fontsize=20, ha='center', va='center', alpha=0.5)
+    ax.text(3500, 0.02, 'u', color='b', **kwargs)
+    ax.text(4600, 0.02, 'g', color='g', **kwargs)
+    ax.text(6100, 0.02, 'r', color='r', **kwargs)
+    ax.text(7500, 0.02, 'i', color='m', **kwargs)
+    ax.text(8800, 0.02, 'z', color='k', **kwargs)
+
+    ax.set_xlim(3000, 11000)
+
+    #ax1a.set_title('SDSS Filters and Reference Spectrum')
+    ax.set_xlabel('Wavelength (Å)')
+    ax.set_ylabel('Normalised Flux / Filter Transmission')
+    ax.tick_params(top='off', right='off')
+    ax.grid(False)
+
+    return ax
+
+def plot_scatter_with_classes(data, classes, ax=None):
+    """ Plot a scater plot of the classes.
+
+        data : array
+            The target array.
+
+        classes : array
+            The list of class names used in the target array.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
+    """
+
+    if not ax:
+        ax = plt.gca()
+
+    galaxies = data[classes == 'Galaxy']
+    stars = data[classes == 'Star']
+    quasars = data[classes == 'Quasar']
+
+    s_galaxies = ax.scatter(galaxies[:,0], galaxies[:,1], s=2, alpha=0.01, c='b', label='Galaxies')
+    s_stars = ax.scatter(stars[:,0], stars[:,1], s=2, alpha=0.01, c='r', label='Stars')
+    s_quasars = ax.scatter(quasars[:,0], quasars[:,1], s=2, alpha=0.01, c='k', label='Quasars')
+    ax.legend((s_galaxies, s_stars, s_quasars),
+               ('Galaxies', 'Stars', 'Quasars'),
+               scatterpoints=1000,
+               loc='upper right',
+               frameon=True,
+               ncol=1)
+    ax.set_xlim(-15, 15)
+    ax.set_ylim(-5, 10)
+    ax.grid(False)
+
+
+def reshape_grid_socres(grid_scores, row_length, col_length, transpose=False):
+    """ Reshape the scores to be used as input for the heathap.
+
+        grid_scores : array
+            The grid scores obtain from the GridSearch insteance.
+
+        row_length : int
+            The width of the heatmap.
+
+        col_length : int
+            The height of the heatmap.
+
+        transpose : boolean
+            Whether to tranpose the heatmap (e.g. for easier viewing).
+
+        Returns
+        -------
+        scores : array
+            The array of scores, shaped appropriately.
+    """
+
+    scores = [x[1] for x in grid_scores]
+    scores = np.array(scores).reshape(row_length, col_length)
+    if transpose:
+        scores = scores.transpose()
+    return scores
+
+
+
+def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
+    x_label=None, y_label=None, power10='both', ax=None):
+    """ Plot heatmap of the validation accuracy from a grid search.
+
+        Parameters
+        ----------
+        scores : array
+            List of scores that has been shaped appropriately.
+
+        x_range : array or None
+            The range on the x-axis which will replace the default numbering.
+
+        y_range : array or None
+            The range on the y-axis which will replace the default numbering.
+
+        x_label : str
+            Label of the x-axis
+
+        y_label : str
+            Label of the y-axis
+
+        power10 : 'x' or 'y' or 'both'
+            Whether to format the numbering on the axes as powers of 10.
+
+        ax : Matplotlib Axes object
+            A matplotlib Axes instance.
+
+        Returns
+        -------
+        ax : Matplotlib Axes object
+            The matplotlib Axes instance where the figure is drawn.
+    """
+    
+    if not ax:
+        ax = plt.gca()
+    
+    heat_ax = ax.imshow(scores, interpolation='nearest', cmap=plt.cm.summer)
+    plt.colorbar(heat_ax)
+
+    format_power = lambda x, pos, p_range: "$10^{%d}$" % int(np.log10(p_range[pos]))
+
+    if power10 == 'x' or power10 == 'both':
+        plt.xticks(np.arange(len(x_range)), x_range, rotation=45)
+        formatter = FuncFormatter(lambda x, pos: format_power(x, pos, x_range))
+        ax.xaxis.set_major_formatter(formatter)
+
+    if power10 == 'y' or power10 == 'both':
+        plt.yticks(np.arange(len(y_range)), y_range)
+        formatter = FuncFormatter(lambda x, pos: format_power(x, pos, y_range))
+        ax.yaxis.set_major_formatter(formatter)
+    
+    if x_label:
+        ax.set_xlabel(x_label)
+    
+    if y_label:
+        ax.set_ylabel(y_label)
+    
+    ax.grid(False)
+
+    return ax
+

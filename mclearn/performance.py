@@ -5,6 +5,7 @@ from scipy.stats import beta
 from scipy.integrate import trapz
 from scipy.optimize import brentq
 from pandas import DataFrame
+from sklearn import metrics
 
 
 def naive_accuracy(confusion):
@@ -340,3 +341,30 @@ def precision(confusion, classes, classifiers):
 
     return precisions
 
+
+
+
+def compute_balanced_accuracy(classifier, testing_pool, testing_oracle):
+    """ Compute the accuracy of a classifier based on some test set.
+
+        Parameters
+        ----------
+        classifier : Classifier object
+            A trained instance of the Classifier object.
+
+        testing_pool : array
+            The feature matrix of the test examples.
+
+        testing_oracle : array
+            The target vector of the test examples.
+
+        Returns
+        -------
+        balanced_accuracy_expected : float
+            The expected balanced accuracy rate on the test set.
+
+    """
+    
+    y_pred = classifier.predict(testing_pool)
+    confusion_test = metrics.confusion_matrix(testing_oracle, y_pred)
+    return balanced_accuracy_expected(confusion_test)

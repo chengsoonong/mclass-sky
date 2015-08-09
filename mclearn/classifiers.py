@@ -14,13 +14,16 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 
 
-def train_classifier(data, feature_names, class_name, train_size, test_size,
-    random_state=None, coords=True, recall_maps=True, classifier=None, correct_baseline=None):
+def train_classifier(data, feature_names, class_name, train_size, test_size, output='',
+    random_state=None, coords=True, recall_maps=True, classifier=None, correct_baseline=None,
+    balanced=True, returns=['correct_boolean', 'confusion_test'],
+    pickle_path=None):
     """ Standard classifier routine.
 
         Parameters
@@ -40,6 +43,9 @@ def train_classifier(data, feature_names, class_name, train_size, test_size,
         test_size : int
             The size of the test set.
 
+        output : str
+            The name that will be attached to the path of the saved plots.
+
         random_state : int
             The value of the random state (used for reproducibility).
 
@@ -55,6 +61,9 @@ def train_classifier(data, feature_names, class_name, train_size, test_size,
         correct_baseline : array
             If we want to compare our results to some baseline, supply the default predicted data here.
 
+        balanced : bool
+            Whether to make the training and test set balanced.
+
         Returns
         -------
         correct_boolean : array
@@ -64,13 +73,16 @@ def train_classifier(data, feature_names, class_name, train_size, test_size,
             The confusion matrix on the test examples.
 
     """
-
-    X_train, X_test, y_train, y_test = mclearn.balanced_train_test_split(
-        data, feature_names, class_name, train_size, test_size, random_state=random_state)
+    if balanced:
+        X_train, X_test, y_train, y_test = mclearn.balanced_train_test_split(
+            data, feature_names, class_name, train_size, test_size, random_state=random_state)
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(np.array(data[feature_names]),
+            np.array(data[class_name]), train_size=train_size, test_size=test_size, random_state=random_state)
 
     if not classifier:
         classifier = RandomForestClassifier(
-            n_estimators=100, n_jobs=-1, class_weight='auto', random_state=random_state)
+            n_estimators=300, n_jobs=-1, class_weight='subsample', random_state=random_state)
 
     if coords:
         coords_train = X_train[:, 0:2]
@@ -80,13 +92,26 @@ def train_classifier(data, feature_names, class_name, train_size, test_size,
 
 
     correct_boolean, confusion_test = print_classification_result(X_train, X_test, y_train,
-        y_test, recall_maps, classifier, correct_baseline, store_covariances)
+        y_test, recall_maps, classifier, correct_baseline, coords_test, output)
 
-    return correct_boolean, confusion_test
+
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(classifier, f, protocol=4) 
+
+    results = []
+    if 'classifier' in returns:
+        results.append(classifier)
+    if 'correct_boolean' in returns:
+        results.append(correct_boolean)
+    if 'confusion_test' in returns:
+        results.append(confusion_test)
+
+    return results
 
 
 def print_classification_result(X_train, X_test, y_train, y_test,
-    recall_maps=True, classifier=None, correct_baseline=None):
+    recall_maps=True, classifier=None, correct_baseline=None, coords_test=None, output=''):
     """ Train the specified classifier and print out the results.
 
         Parameters
@@ -113,6 +138,12 @@ def print_classification_result(X_train, X_test, y_train, y_test,
         correct_baseline : array
             If we want to compare our results to some baseline, supply the default
             predicted data here.
+
+        coords_test : array
+            The coordinates of the test examples used in mapping.
+
+        output : str
+            The name that will be attached to the path of the saved plots.
 
         Returns
         -------
@@ -652,4 +683,73 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path='heat.pdf
 
     # pickle scores
     with open('pickle/04_learning_curves/grid_scores_logistic.pickle', 'wb') as f:
-        pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
+        pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL)
+
+
+def predict_unlabelled_objects(file_path, table, classifier,
+    data_cols, feature_cols, chunksize, pickle_paths, fig_paths):
+    """ Predict the classes of unlabelled objects given a classifier.
+
+        Parameters
+        ----------
+        file_path : str
+            The path of the HDF5 table that contains the feature matrix.
+    """
+
+    sdss_chunks = pd.read_hdf(file_path, table, columns=data_cols, chunksize=chunksize)
+
+    galaxy_map = np.zeros((3600, 3600), dtype=int)
+    quasar_map = np.zeros((3600, 3600), dtype=int)
+    star_map = np.zeros((3600, 3600), dtype=int)
+    object_maps = [galaxy_map, quasar_map, star_map]
+
+    for chunk in sdss_chunks:
+        # apply reddening correction and compute key colours
+        mclearn.optimise_sdss_features(chunk)
+        chunk['prediction'] = forest.predict(chunk[feature_cols])
+        
+        chunk['ra'] = np.remainder(np.round(chunk['ra'] * 10) + 3600, 3600)
+        chunk['dec'] = np.remainder(np.round(chunk['dec'] * 10) + 3600, 3600)
+        
+        for index, row in chunk.iterrows():
+            if row['prediction'] == 'Galaxy':
+                galaxy_map[row['ra']][row['dec']] += 1
+            elif row['prediction'] == 'Quasar':
+                quasar_map[row['ra']][row['dec']] += 1
+            elif row['prediction'] == 'Star':
+                star_map[row['ra']][row['dec']] += 1
+            else:
+                print('Invalid prediction.')
+
+    # save our predictions
+    for object_map, pickle_path in zip(object_maps, pickle_paths):
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(object_map, f, protocol=4)
+
+    # print out results
+    whole_map = galaxy_map + star_map + quasar_map
+    total_galaxies = np.sum(galaxy_map)
+    total_quasars = np.sum(quasar_map)
+    total_stars = np.sum(star_map)
+    total = np.sum(whole_map)
+    print('Total number of objects:', total)
+    print('Number of predicted as galaxies: {:,} ({:.1%})'.format(total_galaxies, total_galaxies/total))
+    print('Number of predicted as quasars: {:,} ({:.1%})'.format(total_quasars, total_quasars/total))
+    print('Number of predicted as stars: {:,} ({:.1%})'.format(total_stars, total_stars/total))
+
+    # construct ra-dec coordinates
+    ra = np.arange(0, 360, 0.1)
+    dec = np.arange(0, 360, 0.1)
+    decs, ras = np.meshgrid(dec, ra)
+    decs = decs.flatten()
+    ras = ras.flatten()
+
+
+    # plot prediction on ra-dec maps
+    object_maps = [whole_map, galaxy_map, quasar_map, star_map]
+    for obj_map, fig_path in zip(object_maps, fig_paths):
+        fig = plt.figure(figsize=(10,5))
+        ax = mclearn.viz.plot_hex_map(ras, decs, C=obj_map.flatten(), gridsize=360,
+            reduce_C_function=np.sum, vmin=0, vmax=50000, origin=180,
+            milky_way=True)
+        fig.savefig(fig_path, bbox_inches='tight', dpi=300)

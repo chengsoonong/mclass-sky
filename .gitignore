@@ -2,10 +2,14 @@
 notebooks/.ipynb_checkpoints/
 
 # the datasets are too large to be stored in GitHub
-notebooks/data/
+notebooks/data/sdss_full/
+notebooks/data/sdss.h5
+notebooks/data/sdss_dr7_photometry_source.csv.gz
+notebooks/data/sdss_full.h5
+notebooks/data/sdss_subclass.h5
 
-# result files that are too large
-notebooks/results/sdss_whole_dataset/
+# pickled outputs files that are too large
+notebooks/pickle/06_predicting_unlabelled_objects/
 
 # source files for reports and presentations
 reports/source/

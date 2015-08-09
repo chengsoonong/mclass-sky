@@ -30,6 +30,7 @@ Classifiers
     grid_search_svm_poly
     grid_search_logistic_degree
     grid_search_logistic
+    predict_unlabelled_objects
 
 
 
@@ -59,6 +60,13 @@ Active Learning Heuristics
     margin_h
     qbb_margin_h
     qbb_kl_h
+    compute_A
+    compute_F
+    compute_pool_variance
+    pool_variance_h
+    compute_pool_entropy
+    pool_entropy_h
+
 
 
 Performance Measures
@@ -115,6 +123,7 @@ Data Preprocessing
     normalise_01
     draw_random_sample
     balanced_train_test_split
+    csv_to_hdf
 
 
 Visualisations

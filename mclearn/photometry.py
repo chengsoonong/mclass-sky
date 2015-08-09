@@ -264,3 +264,30 @@ def clean_up_subclasses(classes, subclasses):
 
     not_empty = subclasses != ''
     subclasses.loc[not_empty] = classes[not_empty] + ' ' + subclasses[not_empty] 
+
+
+def optimise_sdss_features(sdss):
+    """ Apply the SF11 reddening correction and compute key colours in the SDSS dataset.
+
+        Parameters
+        ----------
+        sdss : DataFrame
+            The DataFrame containing photometric features.
+    """
+
+    # compute the three sets of reddening correction
+    A_u_sf11, A_g_sf11, A_r_sf11, A_i_sf11, A_z_sf11 = reddening_correction_sf11(sdss['extinction_r'])
+
+    # useful variables
+    psf_magnitudes = ['psfMag_u', 'psfMag_g', 'psfMag_r', 'psfMag_i', 'psfMag_z']
+    petro_magnitudes = ['petroMag_u', 'petroMag_g', 'petroMag_r', 'petroMag_i', 'petroMag_z']
+    sf11_corrections = [A_u_sf11, A_g_sf11, A_r_sf11, A_i_sf11, A_z_sf11]
+    colours = [('psfMag_u', 'psfMag_g'), ('psfMag_g', 'psfMag_r'), ('psfMag_g', 'psfMag_i'),
+               ('psfMag_r', 'psfMag_i'), ('psfMag_i', 'psfMag_z'), ('petroMag_i', 'petroMag_z')]
+
+    # calculate the corrected magnitudes
+    correct_magnitudes(sdss, psf_magnitudes, sf11_corrections, '_sf11')
+    correct_magnitudes(sdss, petro_magnitudes, sf11_corrections, '_sf11')
+
+    # calculate the corrected magnitudes
+    compute_colours(sdss, colours, '_sf11')

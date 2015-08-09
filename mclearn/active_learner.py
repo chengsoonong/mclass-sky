@@ -4,11 +4,14 @@ import mclearn
 import pickle
 import numpy as np
 from sklearn import metrics
+from sklearn.cross_validation import train_test_split
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.utils import shuffle
 
 
 def active_learn(training_pool, testing_pool, training_oracle, testing_oracle, total_n, initial_n,
-                    random_n, active_learning_heuristic, classifier, compute_accuracy, n_classes,
-                    committee=None, bag_size=None, verbose=False):
+                    random_n, active_learning_heuristic, classifier, compute_accuracy, classes,
+                    committee=None, bag_size=None, C=None, pool_sample_size=300, verbose=False):
     """ Conduct active learning and return a learning curve.
     
         Parameters
@@ -54,14 +57,20 @@ def active_learn(training_pool, testing_pool, training_oracle, testing_oracle, t
             Given a trained classifier, a test set, and a test oracle, this function
             will return the accuracy rate.
         
-        n_classes : int
-            The number of classes.
+        classes : int
+            The name of classes.
         
         committee : list of Classifier object
             A list that contains the committee of classifiers used by the query by bagging heuristics.
         
         bag_size : int
             The number of training examples used by each member in the committee.
+
+        C : float
+            The regularisation parameter of Logistic Regression.
+
+        pool_sample_size : int
+            The size of the sample which will be used to estimate the variance/entropy.
         
         verbose : boolean
             If set to True, progress is printed to standard output after every 100 iterations.
@@ -117,8 +126,9 @@ def active_learn(training_pool, testing_pool, training_oracle, testing_oracle, t
 
         # pick the best candidate using an active learning heuristic
         best_index = active_learning_heuristic(
-            X_train_candidates, X_train=X_train, y_train=y_train, n_classes=n_classes,
-            classifier=classifier, committee=committee, bag_size=bag_size)
+            X_train_candidates, X_train=X_train, y_train=y_train, classes=classes,
+            classifier=classifier, committee=committee, bag_size=bag_size, C=C,
+            pool_sample_size=pool_sample_size)
 
         # add candidate to current training pool
         X_train = np.append(X_train, X_train_candidates[best_index], axis=0)
@@ -148,8 +158,9 @@ def active_learn(training_pool, testing_pool, training_oracle, testing_oracle, t
 
 def run_active_learning_with_heuristic(heursitic, classifier,
     training_pool, testing_pool, training_oracle, testing_oracle, balanced_pool=False,
-    full_sample_size=60000, no_trials=10, total_n=1000, initial_n=20, random_n=60000,
-    committee=None, bag_size=10000, pickle_path=None):
+    full_sample_size=60000, n_trials=10, total_n=1000, initial_n=20, random_n=60000,
+    committee=None, bag_size=10000, classes=['Galaxy', 'Star', 'Quasar'], C=None,
+    pool_sample_size=300, pickle_path=None):
     """ Experiment routine with a partciular classifier heuristic.
 
         Parameters
@@ -183,7 +194,7 @@ def run_active_learning_with_heuristic(heursitic, classifier,
         full_sample_size : int
             The size of the training pool in each trial of the experiment.
 
-        no_trials : int
+        n_trials : int
             The number trials the experiment will be run.
 
         total_n : int
@@ -206,6 +217,12 @@ def run_active_learning_with_heuristic(heursitic, classifier,
         bag_size : int
             The number of training examples used by each member in the committee.
 
+        classes : array
+            The names of the targets.
+
+        C : float
+            The regularisation parameter of Logistic Regression.
+
         pickle_paths : array
             List of paths where the learning curves can be saved.
 
@@ -219,10 +236,10 @@ def run_active_learning_with_heuristic(heursitic, classifier,
     learning_curves = []
 
     if balanced_pool:
-        i_max = sub_sample_size * no_trials
+        i_max = sub_sample_size * n_trials
         i_step = sub_sample_size
     else:
-        i_max = full_sample_size * no_trials
+        i_max = full_sample_size * n_trials
         i_step = full_sample_size
 
     for i in np.arange(0, i_max, i_step):
@@ -252,7 +269,8 @@ def run_active_learning_with_heuristic(heursitic, classifier,
             total_n=total_n, initial_n=initial_n, random_n=random_n,
             active_learning_heuristic=heursitic, classifier=classifier,
             compute_accuracy=mclearn.performance.compute_balanced_accuracy,
-            n_classes=3, committee=committee, bag_size=bag_size, verbose=True)
+            classes=classes, committee=committee, bag_size=bag_size, C=C,
+            pool_sample_size=pool_sample_size, verbose=True)
 
         learning_curves.append(learning_curve)
     
@@ -268,7 +286,8 @@ def run_active_learning_with_heuristic(heursitic, classifier,
 
 
 def active_learning_experiment(data, feature_cols, target_col, classifier,
-    heuristics, committee, pickle_paths, degree=1, balanced_pool=False):
+    heuristics, committee, pickle_paths, degree=1, n_trials=10, balanced_pool=False, C=None,
+    pool_sample_size=300, random_n=60000):
     """ Run an active learning experiment with specified heuristics.
 
         Parameters
@@ -301,25 +320,39 @@ def active_learning_experiment(data, feature_cols, target_col, classifier,
         degree : int
             If greater than 1, the data will be transformed polynomially with the given degree.
 
+        n_trials : int
+            The number trials the experiment will be run.
+
         balanced_pool : boolean
             Whether the class disribution in the training pool should be uniform.
+
+        C : float
+            The regularisation parameter of Logistic Regression.
+
+        random_n : int
+            At each iteration, the active learner will pick a random of sample of examples.
+            It will then compute a score for each of example and query the one with the
+            highest score according to the active learning rule. If random_n is set to 0,
+            the entire training pool will be sampled (which can be inefficient with large
+            datasets).
 
     """
 
     # 70/30 split of training and test sets
     training_pool, testing_pool, training_oracle, testing_oracle = train_test_split(
-        np.array(sdss[feature_cols]), np.array(sdss['class']), train_size=0.7)
+        np.array(data[feature_cols]), np.array(data[target_col]), train_size=0.7)
 
     # shuffle and randomise data
     training_pool, training_oracle = shuffle(training_pool, training_oracle, random_state=14)
 
     # do a polynomial transformation
     if degree > 1:
-        poly_features = PolynomialFeatures(degree=2, interaction_only=False, include_bias=True)
+        poly_features = PolynomialFeatures(degree=degree, interaction_only=False, include_bias=True)
         training_pool = poly_features.fit_transform(training_pool)
         testing_pool = poly_features.transform(testing_pool)
 
     for heuristic, pickle_path in zip(heuristics, pickle_paths):
-        run_active_learning_with_heuristic(heuristic, classifer, training_pool,
-            testing_pool, training_oracle, testing_oracle,
-            committee=committee, pickle_path=pickle_path, balanced_pool=balanced_pool)
+        run_active_learning_with_heuristic(heuristic, classifier, training_pool,
+            testing_pool, training_oracle, testing_oracle, n_trials=n_trials,
+            committee=committee, pickle_path=pickle_path, balanced_pool=balanced_pool, C=C,
+            pool_sample_size=pool_sample_size, random_n=random_n)

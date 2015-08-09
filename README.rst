@@ -41,17 +41,11 @@ Due to their size, the following datasets are not included in this repo: ::
   notebooks/data/
   │   sdss.h5
   │   sdss_dr7_photometry_source.csv.gz
+  │   sdss_full.h5  
   │   sdss_subclass.h5
-  │
-  └───sdss_full/
-      │   sdss_full_00.h5
-      │   sdss_full_00.h5
-      │   ...
-      │   sdss_full_99.h5
 
-The original dataset `sdss_dr7_photometry_source.csv.gz` can be downloaded from the
-`NICTA
-filestore <http://filestore.nicta.com.au/mlrg-data/astro/sdss_dr7_photometry.csv.gz>`__.
+Currently the above datasets (except for `sdss_full.h5`)
+can be downloaded from my `DropBox <https://www.dropbox.com/sh/koivdbxf2a3zivt/AABA7AJnR6DwipWIwtN2rCXCa?dl=0>`__.
 
 Protocol
 ~~~~~~~~
@@ -62,7 +56,7 @@ Protocol
 
 2. `Exploratory Data Analysis`_
     To get a feel for the data, we plot the distributions of the classes (Galaxy, Quasar, Star).
-    We will see that the data is quite unbalanced, with three times as many galaxies and quasars.
+    We will see that the data is quite unbalanced, with three times as many galaxies as quasars.
     A distinction is made between photometry and spectroscopy. We also use PCA to reduce the
     data down to two dimensions.
 
@@ -71,18 +65,23 @@ Protocol
     logistic regression to assign a score to each feature. We then select the 17 best features, 
     which included the original magnitudes plus a few colours. Dust extinction is a potential
     problem in photometry, so we compare three sets of reddening corrections (SFD98, SF11, and
-    W14) to see which set is best at removing the bias. It turns out there is not much different
-    between the three.
+    W14) to see which set is best at removing the bias. The SF11 set performs the best, however
+    the difference is very small.
 
 4. `Learning Curves`_
     To see how random sampling performs, we construct learning curves for SVMs, Logistic
     Regression, and Random Forest. A grid search with a 5-fold cross validation
     is performed to choose the best hyperparameters for the SVM and Logistic Regression.
+    We also do a polynomial transformation of degree 2 and 3 on the features.
 
 5. `Logistic Active Learning`_
     Let's see if we can be smarter at choosing our training set. Various active learning
     heuristics are looked at, including uncertainty sampling, query by bagging, and
     minimising the entropy and the variance of the example pool.
+
+5. `Predicting Unlabelled Objects`_
+    We predict the classes of the 800,000 million unlabelled objects using a random
+    forest.
 
 
 
@@ -97,3 +96,5 @@ Protocol
    http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/04_learning_curves.ipynb
 .. _Logistic Active Learning:
    http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/05_logistic_active_learning.ipynb
+.. _Predicting Unlabelled Objects:
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/06_predicting_unlabelled_objects.ipynb

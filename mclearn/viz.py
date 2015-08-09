@@ -204,7 +204,7 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, no_
     return ax
 
 
-def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide',
+def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsize=100,
     milky_way=True, C=None, reduce_C_function=np.mean, vmin=0, vmax=1500, mincnt=1,
     cmap=plt.cm.bone_r, axisbg='white', colorbar=True, labels=False, ax=None):
     """ Plot the density of objects on a hex map.
@@ -225,6 +225,14 @@ def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide',
 
         projection : str
             The projection mode to be used. Default is 'mollweide'.
+
+        gridsize : int
+            The number of hexagons in the *x*-direction, default is
+            100. The corresponding number of hexagons in the
+            *y*-direction is chosen such that the hexagons are
+            approximately regular. Alternatively, gridsize can be a
+            tuple with two elements specifying the number of hexagons
+            in the *x*-direction and the *y*-direction.
 
         milky_way : boolean
             Whether the plane of the Milky Way is plotted. Default is True.
@@ -283,7 +291,7 @@ def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide',
     # plot data on map
     if not ax:
         ax = plt.gca(projection=projection, axisbg=axisbg)
-    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), cmap=cmap, mincnt=mincnt,
+    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), gridsize=gridsize, cmap=cmap, mincnt=mincnt,
                            zorder=-1, vmin=vmin, vmax=vmax, C=C, reduce_C_function=reduce_C_function)
     if colorbar:
         plt.gcf().colorbar(hex_quasar)

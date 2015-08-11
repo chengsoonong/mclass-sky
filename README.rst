@@ -45,7 +45,7 @@ Due to their size, the following datasets are not included in this repo: ::
   │   sdss_subclass.h5
 
 Currently the above datasets (except for `sdss_full.h5`)
-can be downloaded from my `DropBox <https://www.dropbox.com/sh/koivdbxf2a3zivt/AABA7AJnR6DwipWIwtN2rCXCa?dl=0>`__.
+can be downloaded from the `NICTA filestore <http://filestore.nicta.com.au/mlrg-data/astro/>`__.
 
 Protocol
 ~~~~~~~~

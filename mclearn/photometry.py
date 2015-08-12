@@ -3,6 +3,7 @@
 import os
 import numpy as np
 from urllib.request import urlopen
+from urllib.parse import urlencode
 
 def reddening_correction_sfd98(extinction_r):
     """ Compute the reddening values using the SFD98 correction set.
@@ -156,6 +157,53 @@ def compute_colours(data, colours, suffix):
         prefix = 'psf' if colour[0].startswith('psf') else 'petro'
         colour_name = prefix + colour[0][-2:] + colour[1][-2:]
         data[colour_name + suffix] = data[colour[0] + suffix] - data[colour[1] + suffix]
+
+
+def fetch_sloan_data(sql, output, url=None, fmt='csv', verbose=True):
+    """ Run an SQL query on the Sloan Sky Server.
+
+        Parameters
+        ----------
+        sql : str
+            The sql query.
+
+        output : str
+            The path where the queried data will be stored.
+
+        url : str
+            The url that will be used for fetching.
+
+        fmt : str
+            The format of the output, one of 'csv', 'xml', 'html'.
+    """
+
+    assert fmt in ['csv','xml','html'], "Wrong format!"
+
+    if not url:
+        url = 'http://skyserver.sdss.org/dr10/en/tools/search/x_sql.aspx'
+
+    # filter out the comments in the sql query
+    fsql = ''
+    for line in sql.split('\n'):
+        fsql += line.split('--')[0] + ' ' + os.linesep
+
+    # make the sql query
+    if verbose:
+        print('Connecting to the server...')
+    params = urlencode({'cmd': fsql, 'format': fmt})
+    query = urlopen(url + '?{}'.format(params))
+
+    # ignore the first line (the name of table)
+    query.readline()
+
+    if verbose:
+        print('Writing to file...')
+
+    with open(output, 'wb') as f:
+        f.write(query.read())
+    if verbose:
+        print('Success!')
+
 
 
 

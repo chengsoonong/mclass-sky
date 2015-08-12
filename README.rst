@@ -18,8 +18,8 @@ mclearn
 Introduction
 ------------
 **mclearn** is a Python package that implement selected multiclass active learning
-algorithms, with a focus in astronomical data.
-
+algorithms, with a focus in astronomical data. For a quick overview of how
+**mclearn** work, have a look at the `Getting Started`_ notebook.
 
 
 Installation
@@ -44,11 +44,11 @@ Due to their size, the following datasets are not included in this repo: ::
   │   sdss_full.h5  
   │   sdss_subclass.h5
 
-Currently the above datasets (except for `sdss_full.h5`)
+The above datasets (except for `sdss_full.h5`)
 can be downloaded from the `NICTA filestore <http://filestore.nicta.com.au/mlrg-data/astro/>`__.
 
-Protocol
-~~~~~~~~
+Notebooks
+~~~~~~~~~
 
 1. `Getting the SDSS Dataset`_
     We provide instruction on how to obtain the SDSS dataset from the Sloan SkySever.
@@ -85,7 +85,8 @@ Protocol
 
 
 
-
+.. _Getting Started:
+   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/getting_started.ipynb
 .. _Getting the SDSS Dataset:
    http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/01_getting_sdss_dataset.ipynb
 .. _Exploratory Data Analysis:

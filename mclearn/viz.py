@@ -12,16 +12,14 @@ from pandas import DataFrame
 from matplotlib.ticker import FuncFormatter
 
 # These are the "Tableau 20" colors as RGB.  
-tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),  
-             (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),  
-             (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),  
-             (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),  
-             (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)]  
+tableau10 = [(214, 39, 40), (31, 119, 180), (44, 160, 44),
+             (255, 127, 14), (148, 103, 189), (140, 86, 75),
+             (127, 127, 127), (23, 190, 207), (188, 189, 34), (227, 119, 194)]
   
 # Scale the RGB values to the [0, 1] range, which is the format matplotlib accepts.  
-for i in range(len(tableau20)):  
-    r, g, b = tableau20[i]  
-    tableau20[i] = (r / 255., g / 255., b / 255.)  
+for i in range(len(tableau10)):  
+    r, g, b = tableau10[i]  
+    tableau10[i] = (r / 255., g / 255., b / 255.)  
 
 
 def plot_class_distribution(target, ax=None):
@@ -115,7 +113,7 @@ def plot_balanced_accuracy_violin(balanced_accuracy_samples, ax=None):
     return ax
     
     
-def plot_learning_curve(sample_sizes, learning_curves, curve_labels, ax=None):
+def plot_learning_curve(sample_sizes, learning_curves, curve_labels, xscale='log', ax=None):
     """ Plot the learning curve.
         
         Parameters
@@ -128,6 +126,9 @@ def plot_learning_curve(sample_sizes, learning_curves, curve_labels, ax=None):
             
         curve_labels : array
             The labels of the learning curves.
+
+        xscale : str
+            The scale of the x-axis. Default is 'log'.
 
         ax : Matplotlib Axes object
             A matplotlib Axes instance.
@@ -149,7 +150,7 @@ def plot_learning_curve(sample_sizes, learning_curves, curve_labels, ax=None):
     ax.legend(loc='lower right', frameon=True)
     ax.set_xlabel('Sample Size')
     ax.set_ylabel('Balanced Accuracy Rate')
-    ax.set_xscale('log')
+    ax.set_xscale(xscale)
     ax.grid(False)
     
     return ax
@@ -439,13 +440,14 @@ def plot_filters_and_spectrum(filter_url, spectrum_url, ax=None):
 
     return ax
 
-def plot_scatter_with_classes(data, classes, ax=None):
+def plot_scatter_with_classes(data, targets, classes, size=2, alpha=0.01,
+    scatterpoints=1000, ax=None):
     """ Plot a scater plot of the classes.
 
         data : array
             The target array.
 
-        classes : array
+        targets : array
             The list of class names used in the target array.
 
         ax : Matplotlib Axes object
@@ -460,22 +462,19 @@ def plot_scatter_with_classes(data, classes, ax=None):
     if not ax:
         ax = plt.gca()
 
-    galaxies = data[classes == 'Galaxy']
-    stars = data[classes == 'Star']
-    quasars = data[classes == 'Quasar']
+    class_data = {}
+    cls_scatters = []
+    for i, cls in enumerate(classes):
+        class_data[cls] = data[targets == cls]
+        cls_scatter = ax.scatter(class_data[cls][:,0], class_data[cls][:,1], s=size,
+            alpha=alpha, c=tableau10[i], label=cls)
+        cls_scatters.append(cls_scatter)
 
-    s_galaxies = ax.scatter(galaxies[:,0], galaxies[:,1], s=2, alpha=0.01, c='b', label='Galaxies')
-    s_stars = ax.scatter(stars[:,0], stars[:,1], s=2, alpha=0.01, c='r', label='Stars')
-    s_quasars = ax.scatter(quasars[:,0], quasars[:,1], s=2, alpha=0.01, c='k', label='Quasars')
-    ax.legend((s_galaxies, s_stars, s_quasars),
-               ('Galaxies', 'Stars', 'Quasars'),
-               scatterpoints=1000,
-               loc='upper right',
-               frameon=True,
-               ncol=1)
-    ax.set_xlim(-15, 15)
-    ax.set_ylim(-5, 10)
+    ax.legend(cls_scatters, classes, scatterpoints=scatterpoints, loc='upper right',
+        frameon=True, ncol=1)
     ax.grid(False)
+
+    return ax
 
 
 def reshape_grid_socres(grid_scores, row_length, col_length, transpose=False):

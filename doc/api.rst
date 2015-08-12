@@ -13,8 +13,8 @@ top-level module.
 
 Classifiers
 --------------------------------
-.. currentmodule:: mclearn.classifiers
-.. automodule:: mclearn.classifiers
+.. currentmodule:: mclearn.classifier
+.. automodule:: mclearn.classifier
 .. autosummary::
     :nosignatures:
     :toctree: generated/
@@ -36,8 +36,8 @@ Classifiers
 
 Active Learner
 --------------------------------
-.. currentmodule:: mclearn.active_learner
-.. automodule:: mclearn.active_learner
+.. currentmodule:: mclearn.active
+.. automodule:: mclearn.active
 .. autosummary::
     :nosignatures:
     :toctree: generated/
@@ -104,6 +104,7 @@ Photometric Data
     reddening_correction_w14
     correct_magnitudes
     compute_colours
+    fetch_sloan_data
     fetch_filter
     fetch_spectrum
     clean_up_subclasses

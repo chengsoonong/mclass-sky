@@ -22,7 +22,7 @@ from sklearn.utils import shuffle
 
 def train_classifier(data, feature_names, class_name, train_size, test_size, output='',
     random_state=None, coords=True, recall_maps=True, classifier=None, correct_baseline=None,
-    balanced=True, returns=['correct_boolean', 'confusion_test'],
+    balanced=True, returns=['correct_boolean', 'confusion_test'], report=True,
     pickle_path=None):
     """ Standard classifier routine.
 
@@ -64,6 +64,15 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
         balanced : bool
             Whether to make the training and test set balanced.
 
+        returns : array
+            The list of variables to be retuned by the function.
+
+        report : bool
+            Whether to print out the classification report.
+
+        pickle_path : str
+            If a pickle path is supplied, the classifier will be saved in the specified location.
+
         Returns
         -------
         correct_boolean : array
@@ -84,6 +93,7 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
         classifier = RandomForestClassifier(
             n_estimators=300, n_jobs=-1, class_weight='subsample', random_state=random_state)
 
+    coords_test = None
     if coords:
         coords_train = X_train[:, 0:2]
         coords_test = X_test[:, 0:2]
@@ -92,7 +102,7 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
 
     correct_boolean, confusion_test = print_classification_result(X_train, X_test, y_train,
-        y_test, recall_maps, classifier, correct_baseline, coords_test, output)
+        y_test, report, recall_maps, classifier, correct_baseline, coords_test, output)
 
 
     if pickle_path:
@@ -110,7 +120,7 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
     return results
 
 
-def print_classification_result(X_train, X_test, y_train, y_test,
+def print_classification_result(X_train, X_test, y_train, y_test, report=True,
     recall_maps=True, classifier=None, correct_baseline=None, coords_test=None, output=''):
     """ Train the specified classifier and print out the results.
 
@@ -127,6 +137,9 @@ def print_classification_result(X_train, X_test, y_train, y_test,
             
         y_test : array
             The target vector in the test set.
+
+        report : bool
+            Whether to print out the classification report.
 
         recall_maps : bool
             Wheter to make a map of recall scores.
@@ -171,8 +184,9 @@ def print_classification_result(X_train, X_test, y_train, y_test,
     print('Here\'s the confusion matrix:')
     display(confusion_features_df)
     print('The balanced accuracy rate is {:.2%}.'.format(balanced_accuracy))
-    print('Classification report:')
-    print(classification_report(y_test, y_pred_test, class_names, digits=4))
+    if report:
+        print('Classification report:')
+        print(classification_report(y_test, y_pred_test, class_names, digits=4))
 
     correct_boolean = y_test == y_pred_test
 
@@ -191,27 +205,30 @@ def print_classification_result(X_train, X_test, y_train, y_test,
     return correct_boolean, confusion_test
 
 
-def learning_curve(sample_sizes, data, feature_cols, class_col, classifier, random_state=None,
-    normalise=True, degree=1, pickle_path='learning_curve.pickle'):
+def learning_curve(data, feature_cols, target_col, classifier, train_sizes, test_sizes=200000,
+    random_state=None, balanced=True, normalise=True, degree=1, pickle_path=None):
     """ Compute the learning curve of a classiifer.
 
         Parameters
         ----------
-        sample_sizes : array
-            The list of the sample sizes that the classifier will be trained on.
-
         data : DataFrame
             The DataFrame containing all the data.
 
-        feature_names : array
+        feature_cols : array
             A list of column names in data that are used as features.
 
-        class_name : str
+        target_col : str
             The column name of the target.
 
         classifier : Classifier object
             A classifier object that will be used to train and test the data.
             It should have the same interface as scikit-learn classifiers.
+
+        train_sizes : array
+            The list of the sample sizes that the classifier will be trained on.
+
+        test_sizes : int or list of ints
+            The sizes of the test set.
 
         random_state : int
             The value of the Random State (used for reproducibility).
@@ -235,11 +252,19 @@ def learning_curve(sample_sizes, data, feature_cols, class_col, classifier, rand
 
     lc_accuracy_test = []
 
-    for i in sample_sizes:
+    if type(test_sizes) is int:
+        test_sizes = [test_sizes] * len(train_sizes)
+
+    for i, j in zip(train_sizes, test_sizes):
         gc.collect()
-        # split data into test set and training set (balanced classes are not enforced)
-        X_train, X_test, y_train, y_test = mclearn.balanced_train_test_split(
-            data, feature_cols, class_col, train_size=i, test_size=200000, random_state=random_state)
+        # split data into test set and training set
+        if balanced:
+            X_train, X_test, y_train, y_test = mclearn.preprocessing.balanced_train_test_split(
+                data, feature_cols, target_col, train_size=i, test_size=j, random_state=random_state)
+        else:
+            X_train, X_test, y_train, y_test = train_test_split(np.array(data[feature_cols]),
+                np.array(data[target_col]), train_size=i, test_size=j, random_state=random_state)
+
         X_train, y_train = shuffle(X_train, y_train, random_state=random_state*2)
         X_test, y_test = shuffle(X_test, y_test, random_state=random_state*3)
 
@@ -262,8 +287,9 @@ def learning_curve(sample_sizes, data, feature_cols, class_col, classifier, rand
         lc_accuracy_test.append(mclearn.performance.balanced_accuracy_expected(confusion_test))
 
     # pickle learning curve
-    with open(pickle_path, 'wb') as f:
-        pickle.dump(lc_accuracy_test, f, pickle.HIGHEST_PROTOCOL) 
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(lc_accuracy_test, f, pickle.HIGHEST_PROTOCOL) 
     
     return lc_accuracy_test
 
@@ -302,27 +328,27 @@ def compute_all_learning_curves(data, feature_cols, target_col):
     forest = RandomForestClassifier(n_estimators=100, n_jobs=-1, class_weight='auto', random_state=21)
 
     # train SVM with RBF kernel (this will take a few hours)
-    lc_svm_rbf = learning_curve(sample_sizes_per_class, data, feature_cols, target_col, svm_rbf, random_state=2,
+    lc_svm_rbf = learning_curve(data, feature_cols, target_col, svm_rbf, sample_sizes_small_per_class, random_state=2,
         normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_rbf.pickle')
 
     # train SVM with polynomial kernel of degree 2
-    lc_svm_poly_2 = learning_curve(sample_sizes_per_class, data, feature_cols, target_col, svm_poly, degree=2,
+    lc_svm_poly_2 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes_small_per_class, degree=2,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_poly_2.pickle')
 
     # train SVM with polynomial kernel of degree 3
-    lc_svm_poly_3 = learning_curve(sample_sizes_small_per_class, data, feature_cols, target_col, svm_poly, degree=3,
+    lc_svm_poly_3 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes_small_per_class, degree=3,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_poly_3.pickle')
 
     # train logistic regression with polynomial kernel of degree 2
-    lc_logistic_2 = learning_curve(sample_sizes_per_class, data, feature_cols, target_col, logistic, degree=2,
+    lc_logistic_2 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes_small_per_class, degree=2,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_logistic_2.pickle')
 
     # train logistic regression with polynomial kernel of degree 3
-    lc_logistic_3 = learning_curve(sample_sizes_small_per_class, data, feature_cols, target_col, logistic, degree=3,
+    lc_logistic_3 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes_small_per_class, degree=3,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_logistic_3.pickle')
 
     # train a random forest
-    lc_forest = learning_curve(sample_sizes_per_class, data, feature_cols, target_col, forest,
+    lc_forest = learning_curve(data, feature_cols, target_col, forest, sample_sizes_small_per_class,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_forest.pickle')
 
 
@@ -375,7 +401,7 @@ def grid_search(X, y, classifier, param_grid, train_size=300, test_size=300, clf
 
 
 
-def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
+def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path=None, pickle_path=None):
     """ Do a grid search on SVM wih an RBF kernel.
 
         Parameters
@@ -394,6 +420,9 @@ def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path='heat.pdf'
 
         fig_path : str
             The path where the heat map plot can be saved.
+
+        pickle_path : str
+            The path where the pickled scores can be saved.
     """
 
     # define search domain
@@ -403,22 +432,26 @@ def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path='heat.pdf'
 
     # run grid search
     classifier = SVC(kernel='rbf')
-    grid = mclearn.grid_search(X, y, classifier, param_grid_svm, clf_name='SVM RBF')
-    scores = mclearn.reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
+    grid = grid_search(X, y, classifier, param_grid_svm,
+        train_size=train_size, test_size=test_size, clf_name='SVM RBF')
+    scores = mclearn.viz.reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
 
     # plot scores in a heat map
     fig = plt.figure(figsize=(10, 5))
     ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=gamma_range,
         y_range=C_range, y_label='$C$', x_label='$\gamma$', power10='both')
-    fig.savefig(fig_path, bbox_inches='tight')
+
+    if fig_path:
+        fig.savefig(fig_path, bbox_inches='tight')
 
     # pickle scores
-    with open('pickle/04_learning_curves/grid_scores_svm_rbf.pickle', 'wb') as f:
-        pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
 
 
 
-def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
+def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path=None, pickle_path=None):
     """ Do a grid search on SVM wih a sigmoid kernel.
 
         Parameters
@@ -437,6 +470,9 @@ def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path='heat.
 
         fig_path : str
             The path where the heat map plot can be saved.
+
+        pickle_path : str
+            The path where the pickled scores can be saved.
     """
 
     # define search domain
@@ -446,18 +482,22 @@ def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path='heat.
 
     # run grid search
     classifier = SVC(kernel='sigmoid')
-    grid = mclearn.grid_search(X, y, classifier, param_grid_svm, clf_name='SVM Sigmoid')
+    grid = mclearn.grid_search(X, y, classifier, param_grid_svm,
+        train_size=train_size, test_size=test_size, clf_name='SVM Sigmoid')
     scores = mclearn.reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
 
     # plot scores in a heat map
     fig = plt.figure(figsize=(10, 5))
     ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=gamma_range,
         y_range=C_range, y_label='$C$', x_label='$\gamma$', power10='both')
-    fig.savefig(fig_path, bbox_inches='tight')
+
+    if fig_path:
+        fig.savefig(fig_path, bbox_inches='tight')
 
     # pickle scores
-    with open('pickle/04_learning_curves/grid_scores_svm_sigmoid.pickle', 'wb') as f:
-        pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
 
 
 
@@ -520,7 +560,7 @@ def grid_search_svm_poly_degree(X, y, param_grid, degree=2, train_size=300, test
 
 
 
-def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
+def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path=None, pickle_path=None):
     """ Do a grid search on SVM with polynomial transformation of the features.
 
         Parameters
@@ -539,6 +579,9 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path='heat.pdf
 
         fig_path : str
             The path where the heat map plot can be saved.
+
+        pickle_path : str
+            The path where the pickled scores can be saved.
     """
 
     # define search domain
@@ -572,11 +615,14 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path='heat.pdf
     fig = plt.figure(figsize=(10, 5))
     ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
     plt.yticks(np.arange(0, 12), ylabels)
-    fig.savefig(fig_path, bbox_inches='tight')
+
+    if fig_path:
+        fig.savefig(fig_path, bbox_inches='tight')
 
     # pickle scores
-    with open('pickle/04_learning_curves/grid_scores_svm_poly.pickle', 'wb') as f:
-        pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
 
 
 
@@ -630,7 +676,7 @@ def grid_search_logistic_degree(X, y, param_grid, degree=2, train_size=300, test
     return scores_flat
 
 
-def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path='heat.pdf'):
+def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path=None, pickle_path=None):
     """ Do a grid search on Logistic Regression.
 
         Parameters
@@ -649,6 +695,9 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path='heat.pdf
 
         fig_path : str
             The path where the heat map plot can be saved.
+
+        pickle_path : str
+            The path where the pickled scores can be saved.
     """
 
     # define search domain
@@ -679,11 +728,14 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path='heat.pdf
     fig = plt.figure(figsize=(10, 5))
     ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
     plt.yticks(np.arange(0, 9), ylabels)
-    fig.savefig(fig_path, bbox_inches='tight')
+
+    if fig_path:
+        fig.savefig(fig_path, bbox_inches='tight')
 
     # pickle scores
-    with open('pickle/04_learning_curves/grid_scores_logistic.pickle', 'wb') as f:
-        pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL)
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL)
 
 
 def predict_unlabelled_objects(file_path, table, classifier,

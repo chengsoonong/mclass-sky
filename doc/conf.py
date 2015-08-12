@@ -20,7 +20,7 @@ import mock
 
 # this allows sphinx documentation compile with ReadTheDocs 
 MOCK_MODULES = ['numpy', 'numpy.random', 'scipy', 'scipy.stats', 'scipy.integrate',
-                'scipy.optimize', 'matplotlib', 'matplotlib.pyplot',
+                'scipy.optimize', 'pandas', 'matplotlib', 'matplotlib.pyplot',
                 'matplotlib.patches', 'matplotlib.ticker', 'seaborn',
                 'sklearn', 'sklearn.cross_validation', 'sklearn.preprocessing',
                 'sklearn.utils', 'sklearn.metrics', 'sklearn.ensemble', 'sklearn.svm',

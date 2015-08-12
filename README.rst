@@ -19,7 +19,7 @@ Introduction
 ------------
 **mclearn** is a Python package that implement selected multiclass active learning
 algorithms, with a focus in astronomical data. For a quick overview of how
-**mclearn** work, have a look at the `Getting Started`_ notebook.
+**mclearn** works, have a look at the `Getting Started`_ notebook.
 
 
 Installation

@@ -16,6 +16,19 @@
 import sys
 import os
 import shlex
+import mock
+
+# this allows sphinx documentation compile with ReadTheDocs 
+MOCK_MODULES = ['numpy', 'numpy.random', 'scipy', 'scipy.stats', 'scipy.integrate',
+                'scipy.optimize', 'matplotlib', 'matplotlib.pyplot',
+                'matplotlib.patches', 'matplotlib.ticker', 'seaborn',
+                'sklearn', 'sklearn.cross_validation', 'sklearn.preprocessing',
+                'sklearn.utils', 'sklearn.metrics', 'sklearn.ensemble', 'sklearn.svm',
+                'sklearn.linear_model', 'sklearn.grid_search']
+
+for mod_name in MOCK_MODULES:
+	sys.modules[mod_name] = mock.Mock()
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

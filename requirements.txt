@@ -1,8 +1,1 @@
-numpy
-scipy
-pandas
-matplotlib
-scikit-learn
-seaborn
-ephem
-ipython
+-e git+https://github.com/ipython/traitlets.git#egg=traitlets

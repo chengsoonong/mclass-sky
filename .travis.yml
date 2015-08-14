@@ -24,6 +24,8 @@ install:
   - python setup.py install
 
 script:
-  - nosetests --with-coverage --cover-package=mclearn
+  - cd $HOME/build/alasdairtran/mclearn
+  - python tests.py -v --with-coverage --cover-package=mclearn
+
 after_success:
   - coveralls

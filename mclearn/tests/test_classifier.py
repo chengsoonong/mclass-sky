@@ -47,9 +47,5 @@ class TestNormalise(object):
         mclearn.photometry.correct_magnitudes(self.sdss, psf_magnitudes, w14_corrections, '_w14')
         mclearn.photometry.correct_magnitudes(self.sdss, petro_magnitudes, w14_corrections, '_w14')
 
-    def test_train_classifier(self):
-        correct_predictions, confusion_baseline = mclearn.classifier.train_classifier(
-            self.sdss, self.uncorrected_features, self.target_col, train_size=0.3, test_size=0.1,
-            balanced=False, recall_maps=False, coords=False, report=False, random_state=2)
 
 

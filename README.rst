@@ -5,7 +5,7 @@ mclearn
 :Author: `Alasdair Tran <http://alasdairtran.com>`_
 :License: This package is distributed under a a 3-clause ("Simplified" or "New") BSD license.
 :Source: `<https://github.com/alasdairtran/mclearn>`_
-:Docs: `<http://pythonhosted.org/mclearn/>`_
+:Doc: `<https://mclearn.readthedocs.org/en/latest/>`_
 
 .. image:: https://travis-ci.org/alasdairtran/mclearn.svg
     :target: https://travis-ci.org/alasdairtran/mclearn
@@ -19,7 +19,7 @@ Introduction
 ------------
 **mclearn** is a Python package that implement selected multiclass active learning
 algorithms, with a focus in astronomical data. For a quick overview of how
-**mclearn** work, have a look at the `Getting Started`_ notebook.
+**mclearn** works, have a look at the `Getting Started`_ notebook.
 
 
 Installation

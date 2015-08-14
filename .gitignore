@@ -14,11 +14,26 @@ notebooks/pickle/06_predicting_unlabelled_objects/
 # source files for reports and presentations
 reports/source/
 
-# others
-.DS_Store
-media/
-dist/
+# sphinx build directory
 doc/_build/
-**/__pycache__/
-mclearn.egg-info/
+
+# documentation generated files
+doc/generated/
+
+# egg metadata
+*.egg-info
+.eggs
+
+
+# OS generated files
+.DS_Store
+
+
+# setup.py distribution directory
+dist/
+
+# coverage
 .coverage
+
+# pycache directories
+**/__pycache__/

@@ -286,8 +286,8 @@ def run_active_learning_with_heuristic(heursitic, classifier,
 
 
 def active_learning_experiment(data, feature_cols, target_col, classifier,
-    heuristics, committee, pickle_paths, degree=1, n_trials=10, balanced_pool=False, C=None,
-    pool_sample_size=300, random_n=60000):
+    heuristics, committee, pickle_paths, degree=1, n_trials=10, total_n=1000, balanced_pool=False,
+    C=None, pool_sample_size=300, random_n=60000):
     """ Run an active learning experiment with specified heuristics.
 
         Parameters
@@ -323,6 +323,9 @@ def active_learning_experiment(data, feature_cols, target_col, classifier,
         n_trials : int
             The number trials the experiment will be run.
 
+        total_n : int
+            The total number of samples that the active learner will query.
+
         balanced_pool : boolean
             Whether the class disribution in the training pool should be uniform.
 
@@ -353,6 +356,6 @@ def active_learning_experiment(data, feature_cols, target_col, classifier,
 
     for heuristic, pickle_path in zip(heuristics, pickle_paths):
         run_active_learning_with_heuristic(heuristic, classifier, training_pool,
-            testing_pool, training_oracle, testing_oracle, n_trials=n_trials,
+            testing_pool, training_oracle, testing_oracle, n_trials=n_trials, total_n=total_n,
             committee=committee, pickle_path=pickle_path, balanced_pool=balanced_pool, C=C,
             pool_sample_size=pool_sample_size, random_n=random_n)

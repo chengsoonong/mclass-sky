@@ -12,7 +12,7 @@ notebooks/data/sdss_subclass.h5
 notebooks/pickle/06_predicting_unlabelled_objects/
 
 # source files for reports and presentations
-reports/source/
+reports/alasdair/source/
 
 # sphinx build directory
 doc/_build/
@@ -24,10 +24,8 @@ doc/generated/
 *.egg-info
 .eggs
 
-
 # OS generated files
 .DS_Store
-
 
 # setup.py distribution directory
 dist/
@@ -37,3 +35,25 @@ dist/
 
 # pycache directories
 **/__pycache__/
+
+# latex auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+
+## bibliography auxiliary files
+*.bbl
+*.blg
+
+# build tool auxiliary files
+*.synctex.gz
+
+# makeidx
+*.idx
+*.ilg
+*.ind
+
+# beamer
+*.nav
+*.snm

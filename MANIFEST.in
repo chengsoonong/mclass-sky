@@ -1,0 +1,5 @@
+# long description file
+include DESCRIPTION.rst
+
+#data used for testing
+recursive-include mclearn/tests/data *

@@ -79,10 +79,12 @@ Notebooks
     heuristics are looked at, including uncertainty sampling, query by bagging, and
     minimising the entropy and the variance of the example pool.
 
-5. `Predicting Unlabelled Objects`_
+6. `Predicting Unlabelled Objects`_
     We predict the classes of the 800,000 million unlabelled objects using a random
     forest.
 
+6. `VST ATLAS Dataset`_
+    We run active learning on the VST ATLAS dataset.
 
 
 .. _Getting Started:
@@ -99,3 +101,5 @@ Notebooks
    notebooks/05_logistic_active_learning.ipynb
 .. _Predicting Unlabelled Objects:
    notebooks/06_predicting_unlabelled_objects.ipynb
+.. _VST ATLAS Dataset:
+   notebooks/07_vstatlas.ipynb

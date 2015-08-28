@@ -1,6 +1,7 @@
 """ Heuristics used to query the most uncertain candidate out of the unlabelled pool. """
 
 import numpy as np
+import copy
 from numpy.random import permutation
 from sklearn.preprocessing import LabelBinarizer
 
@@ -129,23 +130,13 @@ def qbb_margin_h(X_training_candidates, **kwargs):
         prob = member.predict_proba(X_training_candidates)
         
         # make sure all class predictions are present
-        prob_full = np.zeros((prob.shape[0], n_classes))
-        
-        # case 1: only galaxy predictions are generated
-        if prob.shape[1] == 1:
-            prob_full[:,0] += prob
-            
-        # case 2: only galaxy and star predictions are generated
-        if prob.shape[1] == 2:
-            prob_full[:,0] += prob[:,0]
-            prob_full[:,2] += prob[:,1]
-            
-        # case 3: all class predictions are generated
-        else:
-            prob_full += prob
+        if prob.shape[1] != n_classes:
+            for idx, obj in enumerate(classes):
+                if obj not in member.classes_:
+                    prob = np.insert(prob, idx, 0, axis=1)
             
         # accumulate probabilities
-        probs += prob_full
+        probs += prob
             
     # average out the probabilities
     probs /= len(committee)
@@ -204,23 +195,13 @@ def qbb_kl_h(X_training_candidates, **kwargs):
         prob = member.predict_proba(X_training_candidates)
         
         # make sure all class predictions are present
-        prob_full = np.zeros((prob.shape[0], n_classes))
-        
-        # case 1: only galaxy predictions are generated
-        if prob.shape[1] == 1:
-            prob_full[:,0] += prob
-            
-        # case 2: only galaxy and star predictions are generated
-        if prob.shape[1] == 2:
-            prob_full[:,0] += prob[:,0]
-            prob_full[:,2] += prob[:,1]
-            
-        # case 3: all class predictions are generated
-        else:
-            prob_full += prob
+        if prob.shape[1] != n_classes:
+            for idx, obj in enumerate(classes):
+                if obj not in member.classes_:
+                    prob = np.insert(prob, idx, 0, axis=1)
             
         # accumulate probabilities
-        probs.append(prob_full)
+        probs.append(prob)
         avg_probs += probs[-1]
         
     # average out the probabilities

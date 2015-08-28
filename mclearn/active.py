@@ -156,7 +156,7 @@ def active_learn(training_pool, testing_pool, training_oracle, testing_oracle, t
 
 
 
-def run_active_learning_with_heuristic(heursitic, classifier,
+def run_active_learning_with_heuristic(heuristic, classifier,
     training_pool, testing_pool, training_oracle, testing_oracle, balanced_pool=False,
     full_sample_size=60000, n_trials=10, total_n=1000, initial_n=20, random_n=60000,
     committee=None, bag_size=10000, classes=['Galaxy', 'Star', 'Quasar'], C=None,
@@ -267,7 +267,7 @@ def run_active_learning_with_heuristic(heursitic, classifier,
         learning_curve = active_learn(
             training_sub_pool, testing_pool, training_sub_oracle, testing_oracle,
             total_n=total_n, initial_n=initial_n, random_n=random_n,
-            active_learning_heuristic=heursitic, classifier=classifier,
+            active_learning_heuristic=heuristic, classifier=classifier,
             compute_accuracy=mclearn.performance.compute_balanced_accuracy,
             classes=classes, committee=committee, bag_size=bag_size, C=C,
             pool_sample_size=pool_sample_size, verbose=True)

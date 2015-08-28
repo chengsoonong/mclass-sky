@@ -79,23 +79,27 @@ Notebooks
     heuristics are looked at, including uncertainty sampling, query by bagging, and
     minimising the entropy and the variance of the example pool.
 
-5. `Predicting Unlabelled Objects`_
+6. `Predicting Unlabelled Objects`_
     We predict the classes of the 800,000 million unlabelled objects using a random
     forest.
 
+6. `VST ATLAS Dataset`_
+    We run active learning on the VST ATLAS dataset.
 
 
 .. _Getting Started:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/getting_started.ipynb
+   notebooks/getting_started.ipynb
 .. _Getting the SDSS Dataset:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/01_getting_sdss_dataset.ipynb
+   notebooks/01_getting_sdss_dataset.ipynb
 .. _Exploratory Data Analysis:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/02_exploratory_analysis.ipynb
+   notebooks/02_exploratory_analysis.ipynb
 .. _Colours and Dust Extinction:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/03_colours_and_dust_extinction.ipynb
+   notebooks/03_colours_and_dust_extinction.ipynb
 .. _Learning Curves:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/04_learning_curves.ipynb
+   notebooks/04_learning_curves.ipynb
 .. _Logistic Active Learning:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/05_logistic_active_learning.ipynb
+   notebooks/05_logistic_active_learning.ipynb
 .. _Predicting Unlabelled Objects:
-   http://nbviewer.ipython.org/github/alasdairtran/mclearn/blob/master/notebooks/06_predicting_unlabelled_objects.ipynb
+   notebooks/06_predicting_unlabelled_objects.ipynb
+.. _VST ATLAS Dataset:
+   notebooks/07_vstatlas.ipynb

@@ -100,6 +100,12 @@ def qbb_margin_h(X_training_candidates, **kwargs):
         X_training_candidates : array
             The feature matrix of the potential training candidates.
 
+        committee : list of Classifier object
+            A list that contains the committee of classifiers used by the query by bagging heuristics.
+        
+        bag_size : int
+            The number of training examples used by each member in the committee.
+
         Returns
         -------
         best_candidate : int
@@ -357,6 +363,12 @@ def pool_variance_h(X_training_candidates, **kwargs):
         X_training_candidates : array
             The feature matrix of the potential training candidates.
 
+        C : float
+            The regularisation parameter of Logistic Regression.
+
+        pool_sample_size : int
+            The size of the sample which will be used to estimate the variance/entropy.
+
         Returns
         -------
         best_candidate : int
@@ -432,6 +444,9 @@ def pool_entropy_h(X_training_candidates, **kwargs):
         ----------
         X_training_candidates : array
             The feature matrix of the potential training candidates.
+
+        classes : int
+            The name of classes.
 
         Returns
         -------

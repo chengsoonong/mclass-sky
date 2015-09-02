@@ -1,59 +1,34 @@
-# IPython notebooks checkpoints
-notebooks/.ipynb_checkpoints/
-
-# the datasets are too large to be stored in GitHub
-notebooks/data/sdss_full/
-notebooks/data/sdss.h5
-notebooks/data/sdss_dr7_photometry_source.csv.gz
-notebooks/data/sdss_full.h5
-notebooks/data/sdss_subclass.h5
-
-# pickled outputs files that are too large
-notebooks/pickle/06_predicting_unlabelled_objects/
-
-# source files for reports and presentations
-reports/alasdair/source/
-
-# sphinx build directory
-doc/_build/
-
-# documentation generated files
-doc/generated/
-
-# egg metadata
-*.egg-info
-.eggs
-
-# OS generated files
+.ipynb_checkpoints
 .DS_Store
-
-# setup.py distribution directory
-dist/
-
-# coverage
 .coverage
+*.egg-info
+doc/_build
+doc/generated
+dist
+__pycache__
 
-# pycache directories
-**/__pycache__/
-
-# latex auxiliary files
+# latex files
 *.aux
 *.log
 *.out
 *.toc
-
-## bibliography auxiliary files
 *.bbl
 *.blg
-
-# build tool auxiliary files
 *.synctex.gz
-
-# makeidx
 *.idx
 *.ilg
 *.ind
-
-# beamer
 *.nav
 *.snm
+*.run.xml
+*.bcf
+*.txss
+
+# project-specific exclusions
+projects/alasdair/data/sdss.h5
+projects/alasdair/data/sdss_dr7_photometry_source.csv.gz
+projects/alasdair/data/sdss_full.h5
+projects/alasdair/data/sdss_subclass.h5
+projects/alasdair/pickle/06_predicting_unlabelled_objects
+projects/alasdair/thesis/thesis.pdf
+_sandbox*

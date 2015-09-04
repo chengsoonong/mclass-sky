@@ -1,6 +1,7 @@
 """ Useful general-purpose preprocessing functions. """
 
 import gc
+import os.path
 import pandas as pd
 import numpy as np
 from sklearn.cross_validation import ShuffleSplit
@@ -179,6 +180,10 @@ def csv_to_hdf(csv_path, no_files=1, hdf_path='store.h5', data_cols=None, expect
             The name of the HDF5 table.
     """
     
+    if os.path.isfile(hdf_path):
+        print('HDF5 Table already exists. No changes were made.')
+        return
+
     store = pd.HDFStore(hdf_path, complevel=9, complib='zlib', fletcher32=True)
     
     for i in np.arange(no_files):
@@ -195,3 +200,4 @@ def csv_to_hdf(csv_path, no_files=1, hdf_path='store.h5', data_cols=None, expect
         gc.collect()
         
     store.close()
+

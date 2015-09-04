@@ -1,12 +1,11 @@
 """ Some general standard classifier routines for astronomical data. """
 
-import mclearn
 import pickle
 import gc
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn import metrics
 from pandas import DataFrame, MultiIndex
-import matplotlib.pyplot as plt
 from IPython.display import display
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import RandomForestClassifier
@@ -18,6 +17,9 @@ from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
+
+from .photometry import optimise_sdss_features
+from .viz import plot_validation_accuracy_heatmap, reshape_grid_socres, plot_hex_map
 
 
 def train_classifier(data, feature_names, class_name, train_size, test_size, output='',
@@ -434,11 +436,11 @@ def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path=None, pick
     classifier = SVC(kernel='rbf')
     grid = grid_search(X, y, classifier, param_grid_svm,
         train_size=train_size, test_size=test_size, clf_name='SVM RBF')
-    scores = mclearn.viz.reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
+    scores = reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
 
     # plot scores in a heat map
     fig = plt.figure(figsize=(10, 5))
-    ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=gamma_range,
+    ax = plot_validation_accuracy_heatmap(scores, x_range=gamma_range,
         y_range=C_range, y_label='$C$', x_label='$\gamma$', power10='both')
 
     if fig_path:
@@ -482,13 +484,13 @@ def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path=None, 
 
     # run grid search
     classifier = SVC(kernel='sigmoid')
-    grid = mclearn.grid_search(X, y, classifier, param_grid_svm,
+    grid = grid_search(X, y, classifier, param_grid_svm,
         train_size=train_size, test_size=test_size, clf_name='SVM Sigmoid')
-    scores = mclearn.reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
+    scores = reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
 
     # plot scores in a heat map
     fig = plt.figure(figsize=(10, 5))
-    ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=gamma_range,
+    ax = plot_validation_accuracy_heatmap(scores, x_range=gamma_range,
         y_range=C_range, y_label='$C$', x_label='$\gamma$', power10='both')
 
     if fig_path:
@@ -535,22 +537,22 @@ def grid_search_svm_poly_degree(X, y, param_grid, degree=2, train_size=300, test
     # run grid search on various combinations
     classifier = LinearSVC(dual=False, fit_intercept=True, multi_class='ovr',
         loss='squared_hinge', penalty='l1', random_state=13)
-    grid1 = mclearn.grid_search(X_poly, y, classifier, param_grid,
+    grid1 = grid_search(X_poly, y, classifier, param_grid,
         train_size=train_size, test_size=test_size, report=False)
 
     classifier = LinearSVC(dual=False, fit_intercept=True, multi_class='ovr',
         loss='squared_hinge', penalty='l2', random_state=13)
-    grid2 = mclearn.grid_search(X_poly, y, classifier, param_grid,
+    grid2 = grid_search(X_poly, y, classifier, param_grid,
         train_size=train_size, test_size=test_size, report=False)
 
     classifier = LinearSVC(dual=True, fit_intercept=True, multi_class='ovr',
         loss='hinge', penalty='l2', random_state=13)
-    grid3 = mclearn.grid_search(X_poly, y, classifier, param_grid,
+    grid3 = grid_search(X_poly, y, classifier, param_grid,
         train_size=train_size, test_size=test_size, report=False)
 
     classifier = LinearSVC(fit_intercept=True, multi_class='crammer_singer',
         random_state=13)
-    grid4 = mclearn.grid_search(X_poly, y, classifier, param_grid,
+    grid4 = grid_search(X_poly, y, classifier, param_grid,
         train_size=train_size, test_size=test_size, report=False)
 
     # construct the scores
@@ -588,11 +590,11 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path=None, pic
     C_range = np.logspace(-6, 6, 13)
     param_grid = dict(C=C_range)
 
-    scores_1 = mclearn.grid_search_svm_poly_degree(
+    scores_1 = grid_search_svm_poly_degree(
         X, y, param_grid, degree=1, train_size=train_size, test_size=test_size)
-    scores_2 = mclearn.grid_search_svm_poly_degree(
+    scores_2 = grid_search_svm_poly_degree(
         X, y, param_grid, degree=2, train_size=train_size, test_size=test_size)
-    scores_3 = mclearn.grid_search_svm_poly_degree(
+    scores_3 = grid_search_svm_poly_degree(
         X, y, param_grid, degree=3, train_size=train_size, test_size=test_size)
 
     scores = scores_1 + scores_2 + scores_3
@@ -613,7 +615,7 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path=None, pic
 
     # plot scores on heat map
     fig = plt.figure(figsize=(10, 5))
-    ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
+    ax = plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
     plt.yticks(np.arange(0, 12), ylabels)
 
     if fig_path:
@@ -660,15 +662,15 @@ def grid_search_logistic_degree(X, y, param_grid, degree=2, train_size=300, test
     # run grid search
     classifier = LogisticRegression(fit_intercept=True, dual=False, solver='liblinear',
         multi_class='ovr', penalty='l1', random_state=51)
-    grid1 = mclearn.grid_search(X_poly, y, classifier, param_grid, report=False)
+    grid1 = grid_search(X_poly, y, classifier, param_grid, report=False)
 
     classifier = LogisticRegression(fit_intercept=True, dual=False, solver='liblinear',
         multi_class='ovr', penalty='l2', random_state=51)
-    grid2 = mclearn.grid_search(X_poly, y, classifier, param_grid, report=False)
+    grid2 = grid_search(X_poly, y, classifier, param_grid, report=False)
 
     classifier = LogisticRegression(fit_intercept=True, dual=False, solver='lbfgs',
         multi_class='multinomial', penalty='l2', random_state=51)
-    grid3 = mclearn.grid_search(X_poly, y, classifier, param_grid, report=False)
+    grid3 = grid_search(X_poly, y, classifier, param_grid, report=False)
 
     # construct the scores
     scores_flat = grid1.grid_scores_ + grid2.grid_scores_ + grid3.grid_scores_
@@ -704,15 +706,15 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path=None, pic
     C_range = np.logspace(-6, 6, 13)
     param_grid = dict(C=C_range)
 
-    scores_1 = mclearn.grid_search_logistic_degree(
+    scores_1 = grid_search_logistic_degree(
         X, y, param_grid, degree=1, train_size=train_size, test_size=test_size)
-    scores_2 = mclearn.grid_search_logistic_degree(
+    scores_2 = grid_search_logistic_degree(
         X, y, param_grid, degree=2, train_size=train_size, test_size=test_size)
-    scores_3 = mclearn.grid_search_logistic_degree(
+    scores_3 = grid_search_logistic_degree(
         X, y, param_grid, degree=3, train_size=train_size, test_size=test_size)
 
     scores = scores_1 + scores_2 + scores_3
-    scores = mclearn.reshape_grid_socres(scores, 9, len(C_range))
+    scores = reshape_grid_socres(scores, 9, len(C_range))
 
     ylabels = ['Degree 1, OVR, L1-norm',
                'Degree 1, OVR, L2-norm',
@@ -726,7 +728,7 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path=None, pic
 
     # plot scores on heat map
     fig = plt.figure(figsize=(10, 5))
-    ax = mclearn.plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
+    ax = plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
     plt.yticks(np.arange(0, 9), ylabels)
 
     if fig_path:
@@ -757,7 +759,7 @@ def predict_unlabelled_objects(file_path, table, classifier,
 
     for chunk in sdss_chunks:
         # apply reddening correction and compute key colours
-        mclearn.optimise_sdss_features(chunk)
+        optimise_sdss_features(chunk)
         chunk['prediction'] = forest.predict(chunk[feature_cols])
         
         chunk['ra'] = np.remainder(np.round(chunk['ra'] * 10) + 3600, 3600)
@@ -801,7 +803,7 @@ def predict_unlabelled_objects(file_path, table, classifier,
     object_maps = [whole_map, galaxy_map, quasar_map, star_map]
     for obj_map, fig_path in zip(object_maps, fig_paths):
         fig = plt.figure(figsize=(10,5))
-        ax = mclearn.viz.plot_hex_map(ras, decs, C=obj_map.flatten(), gridsize=360,
+        ax = viz.plot_hex_map(ras, decs, C=obj_map.flatten(), gridsize=360,
             reduce_C_function=np.sum, vmin=0, vmax=50000, origin=180,
             milky_way=True)
         fig.savefig(fig_path, bbox_inches='tight', dpi=300)

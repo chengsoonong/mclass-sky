@@ -2,9 +2,9 @@ mclearn
 =======
 **Multiclass Active Learning Algorithms with Application in Astronomy.**
 
-:Author: `Alasdair Tran <http://alasdairtran.com>`_
+:Contributors: `Alasdair Tran <http://alasdairtran.com>`_
 :License: This package is distributed under a a 3-clause ("Simplified" or "New") BSD license.
-:Source: `<https://github.com/alasdairtran/mclearn>`_
+:Source: `<https://github.com/chengsoonong/mclass-sky>`_
 :Doc: `<https://mclearn.readthedocs.org/en/latest/>`_
 
 .. image:: https://travis-ci.org/alasdairtran/mclearn.svg
@@ -38,7 +38,7 @@ Datasets
 Throughout the experiments, we will be using the dataset from the Sloan Digital Sky Survey.
 Due to their size, the following datasets are not included in this repo: ::
 
-  notebooks/data/
+  projects/alasdair/data/
   │   sdss.h5
   │   sdss_dr7_photometry_source.csv.gz
   │   sdss_full.h5  
@@ -88,18 +88,18 @@ Notebooks
 
 
 .. _Getting Started:
-   notebooks/getting_started.ipynb
+   projects/alasdair/notebooks/getting_started.ipynb
 .. _Getting the SDSS Dataset:
-   notebooks/01_getting_sdss_dataset.ipynb
+   projects/alasdair/notebooks/01_getting_sdss_dataset.ipynb
 .. _Exploratory Data Analysis:
-   notebooks/02_exploratory_analysis.ipynb
+   projects/alasdair/notebooks/02_exploratory_analysis.ipynb
 .. _Colours and Dust Extinction:
-   notebooks/03_colours_and_dust_extinction.ipynb
+   projects/alasdair/notebooks/03_colours_and_dust_extinction.ipynb
 .. _Learning Curves:
-   notebooks/04_learning_curves.ipynb
+   projects/alasdair/notebooks/04_learning_curves.ipynb
 .. _Logistic Active Learning:
-   notebooks/05_logistic_active_learning.ipynb
+   projects/alasdair/notebooks/05_logistic_active_learning.ipynb
 .. _Predicting Unlabelled Objects:
-   notebooks/06_predicting_unlabelled_objects.ipynb
+   projects/alasdair/notebooks/06_predicting_unlabelled_objects.ipynb
 .. _VST ATLAS Dataset:
-   notebooks/07_vstatlas.ipynb
+   projects/alasdair/notebooks/07_vstatlas.ipynb

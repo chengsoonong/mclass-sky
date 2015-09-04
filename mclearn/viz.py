@@ -1,6 +1,5 @@
 """ Selected plots commonly used in astronomy and active learning. """
 
-import mclearn
 import pandas as pd
 import numpy as np
 import ephem
@@ -10,6 +9,7 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 from pandas import DataFrame
 from matplotlib.ticker import FuncFormatter
+from mclearn.photometry import fetch_spectrum, fetch_filter
 
 # These are the "Tableau 20" colors as RGB.  
 tableau10 = [(214, 39, 40), (31, 119, 180), (44, 160, 44),
@@ -414,13 +414,13 @@ def plot_filters_and_spectrum(filter_url, spectrum_url, ax=None):
     if not ax:
         ax = plt.gca()
         
-    Xref = mclearn.photometry.fetch_spectrum(spectrum_url)
+    Xref = fetch_spectrum(spectrum_url)
     Xref[:, 1] /= 2.1 * Xref[:, 1].max()
     
     ax.plot(Xref[:, 0], Xref[:, 1], '-k', lw=1)
 
     for f,c in zip('ugriz', 'bgrmk'):
-        X = mclearn.photometry.fetch_filter(f, filter_url)
+        X = fetch_filter(f, filter_url)
         plt.fill(X[:, 0], X[:, 1], ec=c, fc=c, alpha=0.4)
 
     kwargs = dict(fontsize=20, ha='center', va='center', alpha=0.5)

@@ -1,0 +1,129 @@
+\documentclass{beamer}
+\mode<presentation>
+\usetheme[compress]{Berlin}
+\usecolortheme{beaver}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+\usepackage{hyperref}
+\hypersetup{linkcolor=}
+
+\title{Novelty Detection in SkyMapper}
+\subtitle{Developing an Open-World Classifier}
+\institute{Australian National Univerity}
+\author[Alasdair Tran]{Alasdair Tran \\
+	\texttt{u4921817@anu.edu.au}}
+\date{13 March 2015}
+\setbeamertemplate{headline}{} % hide header
+
+\begin{document}
+	
+\begin{frame}
+	\titlepage
+\end{frame}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\section{Motivation}
+\subsection{}
+\begin{frame}{What Is This?}
+	\begin{center}
+	\includegraphics<1>[height=7cm]{images/oldest_star}
+	\end{center}
+\end{frame}
+
+\subsection{}
+\begin{frame}{SkyMapper Survey}
+	\begin{columns}[T]
+	  	\begin{column}{.5\textwidth}
+  			\begin{itemize}
+  				\item A comprehensive survey of the entire southern sky.
+  				\item Huge amount of data.
+  				\item Need an automatic large-scale classifier.
+  			\end{itemize}
+	  	\end{column}
+	  	\begin{column}{.5\textwidth}
+		  	\includegraphics<1>[height=4cm]{images/skymapper}
+	  	\end{column}
+	\end{columns}
+\end{frame}
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\section{Project}
+\subsection{}
+\begin{frame}{What Computers Actually See}
+	\begin{align*}
+		\begin{pmatrix}
+		18.34817 \\ 
+		16.99189 \\ 
+		16.51436 \\ 
+		16.28606 \\ 
+		16.10466 \\ 
+		18.22762 \\ 
+		16.84973 \\ 
+		16.33935 \\ 
+		16.09515 \\ 
+		15.96056 \\ 
+		1.545161
+		\end{pmatrix}
+		\uncover<2->{
+		\implies
+		\includegraphics[height=3cm, trim=0 10cm 0 -10cm]{images/black_box}}
+		\uncover<3->{
+		\implies
+		\text{Star}}
+	\end{align*}
+\end{frame}
+
+\begin{frame}{Classification Task}
+	$$\text{Photometric Measurements} \implies \text{Classifier} \implies \text{Class Prediction}$$
+\end{frame}
+
+
+\begin{frame}{Easy Problem}
+	Easy if we have info about all classes during the training phase.
+	\begin{center}
+		\includegraphics<1>[height=6cm]{images/posterior}
+	\end{center}
+\end{frame}
+
+
+\begin{frame}{Example Training Data}
+Subset of the Sloan dataset (30,000 data points and 3 classes).
+	\begin{center}
+		\includegraphics<1>[height=7cm]{images/sdss_pca}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Training the Classifier}
+	One approach: Fit a Gaussian distribution to each class.
+	\begin{center}
+		\includegraphics<1>[height=7cm]{images/sdss_pca_qda}
+	\end{center}
+\end{frame}
+
+
+
+\begin{frame}{Detecting Unknown Classes}
+	Are these the best decision boundaries?
+	\begin{center}
+		\includegraphics<1>[height=7cm]{images/sdss_pca_unknown}
+	\end{center}
+\end{frame}
+
+
+\begin{frame}{Further Information}
+	My project is hosted at \href{https://github.com/alasdairtran/mclass-sky}{\texttt{github.com/alasdairtran}}.
+	\vspace{2em}
+	
+	My supervisors:
+	\begin{itemize}
+		\item Cheng Soon Ong, NICTA
+		\item Justin Domke, NICTA
+		\item Christian Wolf, RSAA 
+	\end{itemize}
+\end{frame}
+
+
+
+
+\end{document}

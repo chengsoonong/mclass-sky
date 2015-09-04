@@ -5,56 +5,84 @@ import copy
 from numpy.random import permutation
 from sklearn.preprocessing import LabelBinarizer
 
-def random_h(X_training_candidates, **kwargs):
+
+def random_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
     """ Return a random candidate.
 
         Parameters
         ----------
-        X_training_candidates : array
-            The feature matrix of the potential training candidates.
+        X_train : array
+                The feature matrix of all the data points.
+
+        y_train : array
+            The target vector of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
 
         Returns
         -------
-        best_candidate : int
-            The index of the best candidate (here it is random).
-
+        best_candidates : int
+            The indices of the best candidates (here it is random).
     """
     
-    random_index = np.random.choice(np.arange(0, len(X_training_candidates)), 1, replace=False)
+    candidate_index = np.where(candidate_mask)[0]
+    random_index = np.random.choice(candidate_index, n_candidates, replace=False)
     return random_index
 
 
-def entropy_h(X_training_candidates, **kwargs):
+def entropy_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
     """ Return the candidate whose prediction vector displays the greatest Shannon entropy.
 
         Parameters
         ----------
-        X_training_candidates : array
-            The feature matrix of the potential training candidates.
+        X_train : array
+                The feature matrix of all the data points.
+
+        y_train : array
+            The target vector of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
 
         Returns
         -------
-        best_candidate : int
-            The index of the best candidate.
+        best_candidates : int
+            The indices of the best candidates.
 
     """
     
-    # get the classifier
-    classifier = kwargs['classifier']
-    
     # predict probabilities
-    probs = classifier.predict_proba(X_training_candidates)
+    probs = classifier.predict_proba(X_train[candidate_mask])
     
     # comptue Shannon entropy
-    shannon = -np.sum(probs * np.log(probs), axis=1)
+    candidate_shannon = -np.sum(probs * np.log(probs), axis=1)
+
+    # index the results properly
+    shannon = np.empty(len(candidate_mask))
+    shannon[:] = -np.inf
+    shannon[candidate_mask] = candidate_shannon
     
     # pick the candidate with the greatest Shannon entropy
-    greatest_shannon = np.argmax(shannon)
-    
-    return [greatest_shannon]
+    best_candidates = np.argsort(-shannon)[:n_candidates]
+    return best_candidates
 
 
-def margin_h(X_training_candidates, **kwargs):
+def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
     """ Return the candidate with the smallest margin.
     
         The margin is defined as the difference between the two largest values
@@ -62,34 +90,49 @@ def margin_h(X_training_candidates, **kwargs):
 
         Parameters
         ----------
-        X_training_candidates : array
-            The feature matrix of the potential training candidates.
+        X_train : array
+                The feature matrix of all the data points.
+
+        y_train : array
+            The target vector of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
 
         Returns
         -------
-        best_candidate : int
-            The index of the best candidate.
+        best_candidates : int
+            The indices of the best candidates.
     """
     
-    # get the classifier
-    classifier = kwargs['classifier']
-    
     # predict probabilities
-    probs = classifier.predict_proba(X_training_candidates)
+    probs = classifier.predict_proba(X_train[candidate_mask])
     
     # sort the probabilities from smallest to largest
     probs = np.sort(probs, axis=1)
     
     # compute the margin (difference between two largest values)
-    margins = np.abs(probs[:,-1] - probs[:,-2])
+    candidate_margin = np.abs(probs[:,-1] - probs[:,-2])
+
+    # index the results properly
+    margin = np.empty(len(candidate_mask))
+    margin[:] = +np.inf
+    margin[candidate_mask] = candidate_margin
     
     # pick the candidate with the smallest margin
-    smallest_margin = np.argmin(margins)
-    
-    return [smallest_margin]
+    best_candidates = np.argsort(margin)[:n_candidates]
+    return best_candidates
 
 
-def qbb_margin_h(X_training_candidates, **kwargs):
+def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask,
+                 committee, **kwargs):
     """ Return the candidate with the smallest average margin.
     
         We first use bagging to train k classifiers. The margin is then defined as
@@ -97,69 +140,75 @@ def qbb_margin_h(X_training_candidates, **kwargs):
 
         Parameters
         ----------
-        X_training_candidates : array
-            The feature matrix of the potential training candidates.
+        X_train : array
+                The feature matrix of all the data points.
 
-        committee : list of Classifier object
-            A list that contains the committee of classifiers used by the query by bagging heuristics.
-        
-        bag_size : int
-            The number of training examples used by each member in the committee.
+        y_train : array
+            The target vector of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        train_mask : boolean array
+                The boolean array that tells us which data points are currently in the training set.
+
+        committee : BaggingClassifier object
+            The committee should have the same interface as scikit-learn BaggingClassifier.
 
         Returns
         -------
-        best_candidate : int
-            The index of the best candidate.
+        best_candidates : int
+            The indices of the best candidates.
     """
     
-    # extract parameters
-    committee = kwargs['committee']
-    bag_size = kwargs['bag_size']
-    X_train = kwargs['X_train']
-    y_train = kwargs['y_train']
-    classes = kwargs['classes']
-    n_classes = len(classes)
+    # check that the max bagging sample is not too big
+    committee.max_sample = min(committee.max_sample, len(y_candidates))
+
+    # train and predict
+    committee.fit(X_train[train_mask], y_train[train_mask])
+
+    # predict
+    n_samples = len(X_train[candidate_mask])
+    n_classes = len(committee.classes_)
+    probs = np.zeros((n_samples, n_classes))
     
-    # intialise probability matrix
-    probs = np.zeros((len(X_training_candidates), n_classes))
-    
-    # train each member of the committee
-    for member in committee:
-        
-        # randomly select a bag of samples
-        member_train_index = np.random.choice(np.arange(0, len(y_train)), bag_size, replace=True)
-        member_X_train = X_train[member_train_index]
-        member_y_train = y_train[member_train_index]
-        
-        # train member and predict
-        member.fit(member_X_train, member_y_train)
-        prob = member.predict_proba(X_training_candidates)
-        
-        # make sure all class predictions are present
-        if prob.shape[1] != n_classes:
-            for idx, obj in enumerate(classes):
-                if obj not in member.classes_:
-                    prob = np.insert(prob, idx, 0, axis=1)
-            
-        # accumulate probabilities
-        probs += prob
-            
+    for member in committee.estimators_:
+        memeber_prob = member.predict_proba(X_train[candidate_mask])
+
+        if n_classes == len(member.classes_):
+            probs += memeber_prob
+
+        else:
+            probs[:, member.classes_] += memeber_prob[:, range(len(member.classes_))]
+
     # average out the probabilities
-    probs /= len(committee)
+    probs /= len(committee.estimators_)
     
     # sort the probabilities from smallest to largest
     probs = np.sort(probs, axis=1)
     
     # compute the margin (difference between two largest values)
-    margins = np.abs(probs[:,-1] - probs[:,-2])
+    candidate_margin = np.abs(probs[:,-1] - probs[:,-2])
 
-    # pick the candidate with the smallest margin
-    smallest_margin = np.argmin(margins)
+    # index the results properly
+    margin = np.empty(len(candidate_mask))
+    margin[:] = +np.inf
+    margin[candidate_mask] = candidate_margin
     
-    return [smallest_margin]
+    # pick the candidate with the smallest margin
+    best_candidates = np.argsort(margin)[:n_candidates]
+    return best_candidates
 
 
-def qbb_kl_h(X_training_candidates, **kwargs):
+def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask,
+             committee, **kwargs):
     """ Return the candidate with the largest average KL divergence from the mean.
     
         We first use bagging to train k classifiers. We then choose the candidate
@@ -167,65 +216,79 @@ def qbb_kl_h(X_training_candidates, **kwargs):
 
         Parameters
         ----------
-        X_training_candidates : array
-            The feature matrix of the potential training candidates.
+        X_train : array
+                The feature matrix of all the data points.
+
+        y_train : array
+            The target vector of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        train_mask : boolean array
+                The boolean array that tells us which data points are currently in the training set.
+
+        committee : BaggingClassifier object
+            The committee should have the same interface as scikit-learn BaggingClassifier.
 
         Returns
         -------
-        best_candidate : int
-            The index of the best candidate.
+        best_candidates : int
+            The indices of the best candidates.
     """
+
+    # check that the max bagging sample is not too big
+    committee.max_sample = min(committee.max_sample, len(y_candidates))
+
+    # train the committee
+    committee.fit(X_train[train_mask], y_train[train_mask])
+
+    # predict
+    n_samples = len(X_train[candidate_mask])
+    n_classes = len(committee.classes_)
+    avg_probs = np.zeros((n_samples, n_classes))
+    prob_list = []
     
-    # extract parameters
-    committee = kwargs['committee']
-    bag_size = kwargs['bag_size']
-    X_train = kwargs['X_train']
-    y_train = kwargs['y_train']
-    classes = kwargs['classes']
-    n_classes = len(classes)
-    
-    # intialise probability matrix
-    avg_probs = np.zeros((len(X_training_candidates), n_classes))
-    probs = []
-    
-    # train each member of the committee
-    for member in committee:
-        
-        # randomly select a bag of samples
-        member_train_index = np.random.choice(np.arange(0, len(y_train)), bag_size, replace=True)
-        member_X_train = X_train[member_train_index]
-        member_y_train = y_train[member_train_index]
-        
-        # train member and predict
-        member.fit(member_X_train, member_y_train)
-        prob = member.predict_proba(X_training_candidates)
-        
-        # make sure all class predictions are present
-        if prob.shape[1] != n_classes:
-            for idx, obj in enumerate(classes):
-                if obj not in member.classes_:
-                    prob = np.insert(prob, idx, 0, axis=1)
-            
-        # accumulate probabilities
-        probs.append(prob)
-        avg_probs += probs[-1]
-        
+    for member in committee.estimators_:
+        memeber_prob = member.predict_proba(X_train[candidate_mask])
+
+        if n_classes == len(member.classes_):
+            avg_probs += memeber_prob
+            prob_list.append(prob)
+
+        else:
+            avg_probs[:, member.classes_] += memeber_prob[:, range(len(member.classes_))]
+            prob_list.append(prob)
+
     # average out the probabilities
-    avg_probs /= len(committee)
-    
+    avg_probs /= len(committee.estimators_)
+
     # compute the KL divergence
     avg_kl = np.zeros(avg_probs.shape[0])
     for p in probs:
-        kl = np.sum(p * np.log(p / avg_probs), axis=1)
-        avg_kl += kl
+        member_kl = np.sum(p * np.log(p / avg_probs), axis=1)
+        avg_kl += member_kl
     
     # average out the KL divergence
     avg_kl /= len(committee)
+
+    # index the results properly
+    kl = np.empty(len(candidate_mask))
+    kl[:] = -np.inf
+    kl[candidate_mask] = avg_kl
     
-    # extract the candidate with the largest average divergence
-    largest_kl = np.argmax(avg_kl)
-    
-    return [largest_kl]
+    # pick the candidate with the smallest margin
+    best_candidates = np.argsort(-kl)[:n_candidates]
+    return best_candidates
+
+
 
 
 

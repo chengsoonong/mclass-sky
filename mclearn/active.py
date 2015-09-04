@@ -1,12 +1,14 @@
 """ The main routine of all active learning algorithms. """
 
-import mclearn
 import pickle
 import numpy as np
 from sklearn import metrics
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.utils import shuffle
+
+from .heuristics import random_h
+from .performance import compute_balanced_accuracy
 
 
 class ActiveLearner(object):
@@ -60,8 +62,8 @@ class ActiveLearner(object):
     """
 
     def __init__(self, classifier,
-                 heuristic=mclearn.heuristics.random,
-                 accuracy_fn=mclearn.performance.compute_balanced_accuracy,
+                 heuristic=random_h,
+                 accuracy_fn=compute_balanced_accuracy,
                  initial_n=20,
                  training_size=100,
                  sample_size=20,
@@ -78,19 +80,64 @@ class ActiveLearner(object):
         self.n_candidates = n_candidates
         self.sample_size = sample_size
         self.verbose = verbose
-        self.learning_curves_ = []
+        self.learning_curve_ = []
+        self.kwargs = kwargs
 
 
-    def best_candidates(self, X_candidates, y_train, candidate_mask, classifier, n_candidates=1, **kwargs):
+    def best_candidates(self, X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
         """ Return the indices of the best candidates.
+
+            Parameters
+            ----------
+            X_train : array
+                The feature matrix of all the data points.
+
+            y_train : array
+                The target vector of all the data points.
+
+            candidate_mask : boolean array
+                The boolean array that tells us which data points the heuristic should look at.
+
+            classifier : Classifier object
+                A classifier object that will be used to make predictions.
+                It should have the same interface as scikit-learn classifiers.
+
+            n_candidates : int
+                The number of best candidates to be selected at each iteration.
+
+            **kwargs : other keyword arguments
+                All other keyword arguments will be passed onto the heuristic function.
+
+
+            Returns
+            -------
+            best_candidates : array
+                The list of indices of the best candidates.
         """
 
-        return self.heuristic(X_train, y_train, candidate_mask, classifier, n_candidates, **kwargs)
+        return self.heuristic(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs)
 
 
-    def _random_sample(pool_size, train_mask, sample_size):
+    def _random_sample(self, pool_size, train_mask, sample_size):
+        """ Select a random sample from the pool.
+
+            Parameters
+            ----------
+            pool_size : int
+                The total number of data points (both queried and unlabelled)
+
+            train_mask : boolean array
+                The boolean array that tells us which data points are currently in the training set.
+
+            sample_size : int
+                The size of the random sample
+
+            Returns
+            -------
+            candidate_mask : boolean array
+                The boolean array that tells us which data points the heuristic should look at.
         """
-        """
+
         candidate_mask = -train_mask
 
         if 0 < self.sample_size < np.sum(candidate_mask):
@@ -105,6 +152,20 @@ class ActiveLearner(object):
 
     def fit(self, X_train, y_train, X_test=None, y_test=None):
         """ Conduct active learning.
+
+            Parameters
+            ----------
+            X_train : array
+                The feature matrix of all the data points.
+
+            y_train : array
+                The target vector of all the data points.
+
+            X_test : array
+                If supplied, this will be used to compute an accuracy score for the learning curve.
+
+            y_test : array
+                If supplied, this will be used to compute an accuracy score for the learning curve.
         """
 
         pool_size = X_train.shape[0]
@@ -122,30 +183,31 @@ class ActiveLearner(object):
         # obtain the first data point of the learning curve
         if X_test is not None and y_test is not None:
             accuracy = self.accuracy_fn(self.classifier, X_test, y_test)
-            self.learning_curves_.append(accuracy)
+            self.learning_curve_.append(accuracy)
 
         # keep training the classifier until we have a desired sample size
-        while np.sum(-unlabelled) < self.training_size:
+        while np.sum(train_mask) < self.training_size:
             
             # select a random sample from the unlabelled pool
             candidate_mask = self._random_sample(pool_size, train_mask, self.sample_size)
 
             # pick the index of the best candidates
             best_candidates = self.best_candidates(X_train, y_train, candidate_mask,
-                                                   classifier, n_candidates, **kwargs)
+                                                   self.classifier, self.n_candidates, train_mask,
+                                                   **self.kwargs)
 
             # retrain the classifier
             train_mask[best_candidates] = True
             self.classifier.fit(X_train[train_mask], y_train[train_mask])
-            self.current_training_size += len(sample)
+            self.current_training_size += len(best_candidates)
 
             # obtain the next data point of the learning curve
             if X_test is not None and y_test is not None:
                 accuracy = self.accuracy_fn(self.classifier, X_test, y_test)
-                self.learning_curves_.append(accuracy)
+                self.learning_curve_.append(accuracy)
 
             # print progress after every 100 queries
-            if verbose:
+            if self.verbose:
                 if self.current_training_size % 1000 == 0:
                     print(self.current_training_size, end='')
                 elif self.current_training_size % 100 == 0:
@@ -154,7 +216,17 @@ class ActiveLearner(object):
 
 
     def predict(self, X):
-        """ Predict
+        """ Predict the target values of X given the model.
+
+            Parameters
+            ----------
+            X : array
+                The feature matrix
+
+            Returns
+            -------
+            y : array
+                Predicted values.
         """
         return classifier.predict(X)
 
@@ -272,15 +344,15 @@ def run_active_learning_with_heuristic(heuristic, classifier,
             training_sub_oracle = training_oracle[i:i+full_sample_size]
     
         # train the active learner
-        learning_curve = active_learn(
-            training_sub_pool, testing_pool, training_sub_oracle, testing_oracle,
-            total_n=total_n, initial_n=initial_n, random_n=random_n,
-            active_learning_heuristic=heuristic, classifier=classifier,
-            compute_accuracy=mclearn.performance.compute_balanced_accuracy,
-            classes=classes, committee=committee, bag_size=bag_size, C=C,
-            pool_sample_size=pool_sample_size, verbose=True)
-
-        learning_curves.append(learning_curve)
+        active_learner = ActiveLearner(classifier=classifier,
+                                       heuristic=heuristic,
+                                       initial_n=initial_n,
+                                       training_size=total_n,
+                                       sample_size=random_n,
+                                       verbose=True,
+                                       committee=committee)
+        active_learner.fit(training_pool, training_oracle, testing_pool, testing_oracle)        
+        learning_curves.append(active_learner.learning_curve_)
     
     print('\n')
     

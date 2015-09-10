@@ -83,5 +83,6 @@ class TestHDF:
 
     @classmethod
     def teardown_class(cls):
-        os.remove(cls.hdf_path)
+        if os.path.isfile(self.hdf_path):
+            os.remove(cls.hdf_path)
 

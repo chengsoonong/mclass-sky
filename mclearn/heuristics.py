@@ -4,6 +4,7 @@ import numpy as np
 import copy
 from numpy.random import permutation
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.base import clone
 
 
 def random_h(candidate_mask, n_candidates, **kwargs):
@@ -392,7 +393,8 @@ def compute_pool_variance(X, pi, classes, C=1):
     return np.trace(np.dot(A, np.linalg.inv(F)))
 
 
-def pool_variance_h(X_training_candidates, **kwargs):
+def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
+                   pool_n, C, **kwargs):
     """ Return the candidate that will minimise the expected variance of the predictions.
 
         Parameters
@@ -412,49 +414,55 @@ def pool_variance_h(X_training_candidates, **kwargs):
             The index of the best candidate.
     """
     
-    # extract parameters
-    classifier = kwargs['classifier']
-    X_train = kwargs['X_train'].copy()
-    y_train = kwargs['y_train'].copy()
-    classes = kwargs['classes']
-    pool_sample_size = kwargs['pool_sample_size']
-    C = kwargs['C']
-    n_candidates = X_training_candidates.shape[0]
-    n_features = X_training_candidates.shape[1]
+    train_mask_plus = train_mask.copy()
+    classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    sigmas = np.zeros(n_candidates)
+    candidate_size = np.sum(train_mask_plus)
+    n_features = X.shape[1]
+    variance = np.empty(len(candidate_mask))
+    variance[:] = np.inf
 
-    # add an extra dummy example to the training set
-    dummy_feature = np.zeros(n_features)
-    X_train = np.vstack((X_train, dummy_feature))
-    y_train = np.concatenate((y_train, ['None']))
+    # the probabilities used to calculate expected value of pool
+    probs = classifier.predict_proba(X[candidate_mask])
 
-    # predict probabilities
-    probs = classifier.predict_proba(X_training_candidates)
+    # copy the classifier (avoid modifying the original classifier)
+    classifier_plus = clone(classifier)
 
-    # construct the sample pool
-    sample_pool_index = permutation(n_candidates)[:pool_sample_size]
-    sample_pool = X_training_candidates[sample_pool_index]
+    # construct the sample pool (used to estimate the variance)
+    unlabelled_indices = np.where(-train_mask)[0]
+    pool_indices = permutation(unlabelled_indices)[:pool_n]
+    pool_mask = np.zeros(pool_size, dtype=bool)
+    pool_mask[pool_indices] = True
 
-    for i in np.arange(n_candidates):
-        candidate_features = X_training_candidates[i]
-        candidate_sigmas = np.zeros(n_classes)
-        X_train[-1] = candidate_features
+    # let's look at each candidate
+    candidate_indices = np.where(candidate_mask)[0]
+    for i, index in enumerate(candidate_indices):
 
-        # assume the candidate is in each of the classes
-        for j in np.arange(n_classes):
-            assumed_class = classes[j]
-            y_train[-1] = assumed_class
+        # add the candidate the to training set
+        assert train_mask_plus[index] == False
+        train_mask_plus[index] = True
 
-            # re-train the classifier
-            classifier.fit(X_train, y_train)
-            pi = classifier.predict_proba(sample_pool)
-            candidate_sigmas[j] = compute_pool_variance(sample_pool, pi, classes, C=C)
+        # store the true class away (no peeking allowed)
+        true_class = y[index]
 
-        sigmas[i] = np.dot(probs[i], candidate_sigmas)
+        # assume a label and compute variance
+        potential_variance = np.zeros(n_classes)
+        for cls_idx, cls in enumerate(classes):
+            y[index] = cls
+            classifier_plus.fit(X[train_mask_plus], y[train_mask_plus])
+            pi = classifier_plus.predict_proba(X[pool_mask])
+            potential_variance[cls_idx] = compute_pool_variance(X[pool_mask], pi, classes, C)
 
-    best_candidate = np.argmin(sigmas)
-    return [best_candidate]
+        # restore the training set and the true class of the candidate
+        train_mask_plus[index] = False
+        y[index] = true_class
+
+        # calculate expected variance and save result
+        variance[index] = np.dot(probs[i], potential_variance)
+
+    # pick the candidate with the smallest expected variance
+    best_candidates = np.argsort(variance)[:n_candidates]
+    return best_candidates
 
 
 def compute_pool_entropy(pi):
@@ -474,7 +482,8 @@ def compute_pool_entropy(pi):
     return -np.sum(pi * np.log(pi))
 
 
-def pool_entropy_h(X_training_candidates, **kwargs):
+def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
+                   pool_n, **kwargs):
     """ Return the candidate that will minimise the expected entropy of the predictions.
 
         Parameters
@@ -485,51 +494,61 @@ def pool_entropy_h(X_training_candidates, **kwargs):
         classes : int
             The name of classes.
 
+        pool_n : int
+            The size of the sampel pool used in estimating the entropy
+
         Returns
         -------
         best_candidate : int
             The index of the best candidate.
     """
     
-    # extract parameters
-    classifier = kwargs['classifier']
-    X_train = kwargs['X_train'].copy()
-    y_train = kwargs['y_train'].copy()
-    classes = kwargs['classes']
-    pool_sample_size = kwargs['pool_sample_size']
-    n_candidates = X_training_candidates.shape[0]
-    n_features = X_training_candidates.shape[1]
+    train_mask_plus = train_mask.copy()
+    classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    entropy = np.zeros(n_candidates)
+    candidate_size = np.sum(train_mask_plus)
+    n_features = X.shape[1]
+    entropy = np.empty(len(candidate_mask))
+    entropy[:] = np.inf
 
-    # add an extra dummy example to the training set
-    dummy_feature = np.zeros(n_features)
-    X_train = np.vstack((X_train, dummy_feature))
-    y_train = np.concatenate((y_train, ['None']))
+    # the probabilities used to calculate expected value of pool
+    probs = classifier.predict_proba(X[candidate_mask])
 
-    # predict probabilities
-    probs = classifier.predict_proba(X_training_candidates)
+    # copy the classifier (avoid modifying the original classifier)
+    classifier_plus = clone(classifier)
 
-    # construct the sample pool
-    sample_pool_index = permutation(n_candidates)[:pool_sample_size]
-    sample_pool = X_training_candidates[sample_pool_index]
+    # construct the sample pool (used to estimate the entropy)
+    unlabelled_indices = np.where(-train_mask)[0]
+    pool_indices = permutation(unlabelled_indices)[:pool_n]
+    pool_mask = np.zeros(pool_size, dtype=bool)
+    pool_mask[pool_indices] = True
 
-    for i in np.arange(n_candidates):
-        candidate_features = X_training_candidates[i]
-        candidate_entropy = np.zeros(n_classes)
-        X_train[-1] = candidate_features
+    # let's look at each candidate
+    candidate_indices = np.where(candidate_mask)[0]
+    for i, index in enumerate(candidate_indices):
 
-        # assume the candidate is in each of the classes
-        for j in np.arange(n_classes):
-            assumed_class = classes[j]
-            y_train[-1] = assumed_class
+        # add the candidate the to training set
+        assert train_mask_plus[index] == False
+        train_mask_plus[index] = True
 
-            # re-train the classifier
-            classifier.fit(X_train, y_train)
-            pi = classifier.predict_proba(sample_pool)
-            candidate_entropy[j] = compute_pool_entropy(pi)
+        # store the true class away (no peeking allowed)
+        true_class = y[index]
 
-        entropy[i] = np.dot(probs[i], candidate_entropy)
+        # assume a label and compute entropy
+        potential_entropy = np.zeros(n_classes)
+        for cls_idx, cls in enumerate(classes):
+            y[index] = cls
+            classifier_plus.fit(X[train_mask_plus], y[train_mask_plus])
+            pi = classifier_plus.predict_proba(X[pool_mask])
+            potential_entropy[cls_idx] = compute_pool_entropy(pi)
 
-    best_candidate = np.argmin(entropy)
-    return [best_candidate]
+        # restore the training set and the true class of the candidate
+        train_mask_plus[index] = False
+        y[index] = true_class
+
+        # calculate expected entropy and save result
+        entropy[index] = np.dot(probs[i], potential_entropy)
+
+    # pick the candidate with the smallest expected entropy
+    best_candidates = np.argsort(entropy)[:n_candidates]
+    return best_candidates

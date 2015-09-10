@@ -585,8 +585,8 @@ def plot_heuristic_selections(sample_sizes, selections, labels, ax=None):
     for curve, label in zip(cumulatives, labels):
         ax.plot(sample_sizes, curve, label=label)
 
-    ax.set_xlabel('Number of Training Examples')
-    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.set_xlabel('Training Size')
+    ax.set_ylabel('Number of Selections')
     ax.legend(loc='lower right', frameon=True)
     ax.grid(False)
 

@@ -4,7 +4,8 @@ import gc
 import os.path
 import pandas as pd
 import numpy as np
-from sklearn.cross_validation import ShuffleSplit
+import nose.tools
+from numpy.random import RandomState
 
 
 def normalise_z(features):
@@ -60,45 +61,31 @@ def normalise_01(features):
     return (features - minimum) / (maximum - minimum)
 
 
-def draw_random_sample(data, train_size, test_size, random_state=None):
-    """ Split the data into a train set and test set of a given size.
-        
-        Parameters
-        ----------
-        data : DataFrame, shape = [n_samples, n_features]
-            Where each row is a sample point and each column is a feature.
-            
-        train_size : int
-            Number of sample points in the training set.
-            
-        test_size : int
-            Number of sample points in the test set.
-            
-        random_state : int, optional (default=None)
-            Random seed.
-        
-        Returns
-        -------
-        combined_train_test : DataFrame
-            Where each sample point (row) is indexed with either 'train' or 'test'.
-    """
-    
-    m = len(data)    
-    
-    cv = ShuffleSplit(m, n_iter=1, train_size=train_size, test_size=test_size,
-                      random_state=random_state)
+def _get_train_test_size(train_size, test_size, n_samples):
+    """ Convert user train and test size inputs to integers. """
 
-    train, test = next(iter(cv))
-    train_set = data.iloc[train]
-    test_set = data.iloc[test]
+    if test_size is None and train_size is None:
+        test_size = 0.3
+        train_size = 1.0 - test_size
+
+    if isinstance(test_size, float):
+        test_size = np.round(test_size * n_samples).astype(int)
+
+    if isinstance(train_size, float):
+        train_size = np.round(train_size * n_samples).astype(int)
+
+    if test_size is None:
+        test_size = n_samples - train_size
     
-    combined_train_test = pd.concat([train_set, test_set],
-                                    keys=['train', 'test'], names=['set'])
-    
-    return combined_train_test
-    
-    
-def balanced_train_test_split(data, features, target, train_size, test_size, random_state=None):
+    if train_size is None:
+        train_size = n_samples - test_size
+
+    return train_size, test_size
+
+
+@nose.tools.nottest
+def balanced_train_test_split(X, y, test_size=None, train_size=None, bootstrap=False,
+                              random_state=None):
     """ Split the data into a balanced training set and test set of some given size.
 
         For a dataset with an unequal numer of samples in each class, one useful procedure
@@ -107,23 +94,25 @@ def balanced_train_test_split(data, features, target, train_size, test_size, ran
         
         Parameters
         ----------
-        data : DataFrame, shape = [n_samples, n_features]
-            Where each row is a sample point and each column is a feature.
+        X : array, shape = [n_samples, n_features]
+            Feature matrix.
         
-        features : array, shape = [n_features]
-            The names of the columns in `data` that are used as feature vectors.
-            
-        target : str
-            The name of the column in `data` that is used as the traget vector
+        y : array, shape = [n_features]
+            Target vector.
+
+        test_size : float or int (default=0.3)
+            If float, should be between 0.0 and 1.0 and represent the proportion of the dataset
+            to include in the test split. If int, represents the absolute number of test samples.
+            If None, the value is automatically set to the complement of the train size.
+            If train size is also None, test size is set to 0.3.
         
-        train_size : int
-            Number of sample points from each class in the training set.
-            
-        test_size : int
-            Number of sample points from each class in the test set.
+        train_size : float or int (default=1-test_size)
+            If float, should be between 0.0 and 1.0 and represent the proportion of the dataset
+            to include in the train split. If int, represents the absolute number of train samples.
+            If None, the value is automatically set to the complement of the test size.
             
         random_state : int, optional (default=None)
-            Random seed.
+            Pseudo-random number generator state used for random sampling.
         
         Returns
         -------
@@ -140,16 +129,52 @@ def balanced_train_test_split(data, features, target, train_size, test_size, ran
             The target vector in the test set.
     """
     
-    grouped = data.groupby(data[target])
-    train_test = grouped.apply(lambda x: draw_random_sample(x, train_size, test_size, random_state))
-    train_test = train_test.swaplevel(0, 1)
+    # initialise the random number generator
+    rng = RandomState(random_state)
+
+    # make sure X and y are numpy arrays
+    X = np.asarray(X)
+    y = np.asarray(y)
     
-    X_train = train_test.loc['train', features].as_matrix()
-    X_test =  train_test.loc['test', features].as_matrix()
-    y_train = train_test.loc['train'][target].as_matrix()
-    y_test =  train_test.loc['test'][target].as_matrix()
+    # get information about the class distribution
+    classes, y_indices = np.unique(y, return_inverse=True)
+    n_classes = len(classes)
+    cls_count = np.bincount(y_indices)
+
+    # get the training and test size
+    train_size, test_size = _get_train_test_size(train_size, test_size, len(y))
+
+    # number of samples in each class that is included in the training and test set
+    n_train = np.round(train_size / n_classes).astype(int)
+    n_test = np.round(test_size / n_classes).astype(int)
+    n_total = n_train + n_test
     
-    return X_train, X_test, y_train, y_test
+    # make sure we have enough samples to create a balanced split
+    min_count = min(cls_count)
+    if min_count < (n_train + n_test) and not bootstrap:
+        raise ValueError('The smallest class contains {} examples, which is not '
+                         'enough to create a balanced split. Choose a smaller size '
+                         'or enable bootstraping.'.format(min_count))
+    
+    # selected indices are stored here
+    train = []
+    test = []
+    
+    # get the desired sample from each class
+    for i, cls in enumerate(classes):
+        if bootstrap:
+            shuffled = rng.choice(cls_count[i], n_total, replace=True)
+        else:
+            shuffled = rng.permutation(cls_count[i])
+        
+        cls_i = np.where(y == cls)[0][shuffled]
+        train.extend(cls_i[:n_train])
+        test.extend(cls_i[n_train:n_total])
+        
+    train = list(rng.permutation(train))
+    test = list(rng.permutation(test))
+    
+    return X[train], X[test], y[train], y[test]
 
 
 def csv_to_hdf(csv_path, no_files=1, hdf_path='store.h5', data_cols=None, expectedrows=7569900,
@@ -194,7 +219,8 @@ def csv_to_hdf(csv_path, no_files=1, hdf_path='store.h5', data_cols=None, expect
         else:
             data = pd.io.api.read_csv(csv_file, header=None, names=data_cols)
             
-        store.append(table_name, data, index=False, expectedrows=expectedrows, min_itemsize=min_itemsize)
+        store.append(table_name, data, index=False, expectedrows=expectedrows,
+                     min_itemsize=min_itemsize)
 
         del data
         gc.collect()

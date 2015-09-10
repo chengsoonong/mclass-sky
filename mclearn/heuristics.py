@@ -6,23 +6,13 @@ from numpy.random import permutation
 from sklearn.preprocessing import LabelBinarizer
 
 
-def random_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
+def random_h(candidate_mask, n_candidates, **kwargs):
     """ Return a random candidate.
 
         Parameters
         ----------
-        X_train : array
-                The feature matrix of all the data points.
-
-        y_train : array
-            The target vector of all the data points.
-
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
-
-        classifier : Classifier object
-            A classifier object that will be used to make predictions.
-            It should have the same interface as scikit-learn classifiers.
 
         n_candidates : int
             The number of best candidates to be selected at each iteration.
@@ -38,16 +28,13 @@ def random_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     return random_index
 
 
-def entropy_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
+def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     """ Return the candidate whose prediction vector displays the greatest Shannon entropy.
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
-
-        y_train : array
-            The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
@@ -67,7 +54,7 @@ def entropy_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_
     """
     
     # predict probabilities
-    probs = classifier.predict_proba(X_train[candidate_mask])
+    probs = classifier.predict_proba(X[candidate_mask])
     
     # comptue Shannon entropy
     candidate_shannon = -np.sum(probs * np.log(probs), axis=1)
@@ -82,7 +69,7 @@ def entropy_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_
     return best_candidates
 
 
-def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
+def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     """ Return the candidate with the smallest margin.
     
         The margin is defined as the difference between the two largest values
@@ -90,11 +77,8 @@ def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
-
-        y_train : array
-            The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
@@ -113,7 +97,7 @@ def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     """
     
     # predict probabilities
-    probs = classifier.predict_proba(X_train[candidate_mask])
+    probs = classifier.predict_proba(X[candidate_mask])
     
     # sort the probabilities from smallest to largest
     probs = np.sort(probs, axis=1)
@@ -131,8 +115,7 @@ def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     return best_candidates
 
 
-def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask,
-                 committee, **kwargs):
+def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kwargs):
     """ Return the candidate with the smallest average margin.
     
         We first use bagging to train k classifiers. The margin is then defined as
@@ -140,24 +123,20 @@ def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, tra
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
 
-        y_train : array
+        y : array
             The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
 
-        classifier : Classifier object
-            A classifier object that will be used to make predictions.
-            It should have the same interface as scikit-learn classifiers.
+        train_mask : boolean array
+                The boolean array that tells us which data points are currently in the training set.
 
         n_candidates : int
             The number of best candidates to be selected at each iteration.
-
-        train_mask : boolean array
-                The boolean array that tells us which data points are currently in the training set.
 
         committee : BaggingClassifier object
             The committee should have the same interface as scikit-learn BaggingClassifier.
@@ -169,18 +148,18 @@ def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, tra
     """
     
     # check that the max bagging sample is not too big
-    committee.max_sample = min(committee.max_sample, len(y_candidates))
+    committee.max_samples = min(committee.max_samples, len(y[train_mask]))
 
     # train and predict
-    committee.fit(X_train[train_mask], y_train[train_mask])
+    committee.fit(X[train_mask], y[train_mask])
 
     # predict
-    n_samples = len(X_train[candidate_mask])
+    n_samples = len(X[candidate_mask])
     n_classes = len(committee.classes_)
     probs = np.zeros((n_samples, n_classes))
     
     for member in committee.estimators_:
-        memeber_prob = member.predict_proba(X_train[candidate_mask])
+        memeber_prob = member.predict_proba(X[candidate_mask])
 
         if n_classes == len(member.classes_):
             probs += memeber_prob
@@ -207,8 +186,7 @@ def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, tra
     return best_candidates
 
 
-def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask,
-             committee, **kwargs):
+def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kwargs):
     """ Return the candidate with the largest average KL divergence from the mean.
     
         We first use bagging to train k classifiers. We then choose the candidate
@@ -216,24 +194,20 @@ def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
 
-        y_train : array
+        y : array
             The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
 
-        classifier : Classifier object
-            A classifier object that will be used to make predictions.
-            It should have the same interface as scikit-learn classifiers.
+        train_mask : boolean array
+                The boolean array that tells us which data points are currently in the training set.
 
         n_candidates : int
             The number of best candidates to be selected at each iteration.
-
-        train_mask : boolean array
-                The boolean array that tells us which data points are currently in the training set.
 
         committee : BaggingClassifier object
             The committee should have the same interface as scikit-learn BaggingClassifier.
@@ -245,37 +219,41 @@ def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     """
 
     # check that the max bagging sample is not too big
-    committee.max_sample = min(committee.max_sample, len(y_candidates))
+    committee.max_samples = min(committee.max_samples, len(y[train_mask]))
 
     # train the committee
-    committee.fit(X_train[train_mask], y_train[train_mask])
+    committee.fit(X[train_mask], y[train_mask])
 
     # predict
-    n_samples = len(X_train[candidate_mask])
+    n_samples = len(X[candidate_mask])
     n_classes = len(committee.classes_)
     avg_probs = np.zeros((n_samples, n_classes))
     prob_list = []
     
     for member in committee.estimators_:
-        memeber_prob = member.predict_proba(X_train[candidate_mask])
+        member_prob = member.predict_proba(X[candidate_mask])
 
         if n_classes == len(member.classes_):
-            avg_probs += memeber_prob
-            prob_list.append(prob)
+            avg_probs += member_prob
+            prob_list.append(member_prob)
 
         else:
-            avg_probs[:, member.classes_] += memeber_prob[:, range(len(member.classes_))]
-            prob_list.append(prob)
+            full_member_prob = np.zeros((n_samples, n_classes))
+            full_member_prob[:, member.classes_] += member_prob[:, range(len(member.classes_))]
+            avg_probs += full_member_prob
+            prob_list.append(full_member_prob)
 
     # average out the probabilities
     avg_probs /= len(committee.estimators_)
 
     # compute the KL divergence
     avg_kl = np.zeros(avg_probs.shape[0])
-    for p in probs:
-        member_kl = np.sum(p * np.log(p / avg_probs), axis=1)
-        avg_kl += member_kl
     
+    for p in prob_list:
+        inner = np.nan_to_num(p * np.log(p / avg_probs))
+        member_kl = np.sum(inner, axis=1)
+        avg_kl += member_kl
+        
     # average out the KL divergence
     avg_kl /= len(committee)
 
@@ -289,10 +267,7 @@ def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     return best_candidates
 
 
-
-
-
-def compute_A(X, pi, classes):
+def _compute_A(X, pi, classes):
     """ Compute the A matrix in the variance estimation technique.
 
         Parameters
@@ -336,7 +311,7 @@ def compute_A(X, pi, classes):
     return outer
 
 
-def compute_F(X, pi, classes, C=1):
+def _compute_F(X, pi, classes, C=1):
     """ Compute the F matrix in the variance estimation technqiue.
 
         Parameters
@@ -412,10 +387,9 @@ def compute_pool_variance(X, pi, classes, C=1):
             The estimated variance on the pool X.
     """
 
-    A = compute_A(X, pi, classes)
-    F = compute_F(X, pi, classes, C=C)
+    A = _compute_A(X, pi, classes)
+    F = _compute_F(X, pi, classes, C=C)
     return np.trace(np.dot(A, np.linalg.inv(F)))
-
 
 
 def pool_variance_h(X_training_candidates, **kwargs):

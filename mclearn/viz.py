@@ -9,7 +9,8 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 from pandas import DataFrame
 from matplotlib.ticker import FuncFormatter
-from mclearn.photometry import fetch_spectrum, fetch_filter
+
+from .photometry import fetch_spectrum, fetch_filter
 
 # These are the "Tableau 20" colors as RGB.  
 tableau10 = [(214, 39, 40), (31, 119, 180), (44, 160, 44),
@@ -156,7 +157,7 @@ def plot_learning_curve(sample_sizes, learning_curves, curve_labels, xscale='log
     return ax
 
 
-def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, no_trials=10, ax=None):
+def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, ax=None):
     """ Plot the average learning curve from many trials.
 
         Parameters
@@ -169,9 +170,6 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, no_
             
         curve_labels : array
             The labels of the learning curves.
-
-        no_trials : int
-            The number of trials that were run for each learning curve.
 
         ax : Matplotlib Axes object
             A matplotlib Axes instance.
@@ -393,7 +391,7 @@ def plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
 
-def plot_filters_and_spectrum(filter_url, spectrum_url, ax=None):
+def plot_filters_and_spectrum(filter_url, spectrum_url, filter_dir='', spectra_dir='', ax=None):
     """ Plot ugriz filters and spectrum in the same figure.
 
         filter_url : str
@@ -414,13 +412,13 @@ def plot_filters_and_spectrum(filter_url, spectrum_url, ax=None):
     if not ax:
         ax = plt.gca()
         
-    Xref = fetch_spectrum(spectrum_url)
+    Xref = fetch_spectrum(spectrum_url, spectra_dir)
     Xref[:, 1] /= 2.1 * Xref[:, 1].max()
     
     ax.plot(Xref[:, 0], Xref[:, 1], '-k', lw=1)
 
     for f,c in zip('ugriz', 'bgrmk'):
-        X = fetch_filter(f, filter_url)
+        X = fetch_filter(f, filter_url, filter_dir)
         plt.fill(X[:, 0], X[:, 1], ec=c, fc=c, alpha=0.4)
 
     kwargs = dict(fontsize=20, ha='center', va='center', alpha=0.5)
@@ -563,6 +561,60 @@ def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
     if y_label:
         ax.set_ylabel(y_label)
     
+    ax.grid(False)
+
+    return ax
+
+
+def plot_heuristic_selections(sample_sizes, selections, labels, ax=None):
+    """ Plot the heuristic selections from active bandit.
+    """
+
+    cumulatives = []
+    selections = np.asarray(selections)
+    n_labels = len(labels)
+    for i in range(n_labels):
+        cumulative_i = selections == i
+        cumulative_i = np.cumsum(cumulative_i, axis=1)
+        cumulative_i = np.mean(cumulative_i, axis=0)
+        cumulatives.append(cumulative_i)
+        
+    if not ax:
+        ax = plt.gca()
+
+    for curve, label in zip(cumulatives, labels):
+        ax.plot(sample_sizes, curve, label=label)
+
+    ax.set_xlabel('Number of Training Examples')
+    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.legend(loc='lower right', frameon=True)
+    ax.grid(False)
+
+    return ax
+
+def plot_bandit_parameters(sample_sizes, parameters, labels, xlabel='Training Size',
+    ylabel='', ax=None):
+    """ Plot the parameters from the bandit experiment.
+    """
+
+    n_samples = len(sample_sizes)
+    n_labels = len(labels)
+    param_avg = np.zeros((n_samples, n_labels))
+
+    for param in parameters:
+        param_avg += np.vstack(param)
+
+    param_avg /= len(parameters)
+
+    if not ax:
+        ax = plt.gca()
+
+    for i, label in enumerate(labels):
+        ax.plot(sample_sizes, param_avg[:,i], label=label)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend(loc='upper right', frameon=True)
     ax.grid(False)
 
     return ax

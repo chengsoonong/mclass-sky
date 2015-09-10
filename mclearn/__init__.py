@@ -1,2 +1,2 @@
 __all__ = ['active', 'classifier', 'heuristics', 'performance',
-           'photometry', 'preprocessing', 'viz']
+           'photometry', 'preprocessing', 'tools', 'viz']

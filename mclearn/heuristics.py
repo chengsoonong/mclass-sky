@@ -4,25 +4,16 @@ import numpy as np
 import copy
 from numpy.random import permutation
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.base import clone
 
 
-def random_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
+def random_h(candidate_mask, n_candidates, **kwargs):
     """ Return a random candidate.
 
         Parameters
         ----------
-        X_train : array
-                The feature matrix of all the data points.
-
-        y_train : array
-            The target vector of all the data points.
-
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
-
-        classifier : Classifier object
-            A classifier object that will be used to make predictions.
-            It should have the same interface as scikit-learn classifiers.
 
         n_candidates : int
             The number of best candidates to be selected at each iteration.
@@ -38,16 +29,13 @@ def random_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     return random_index
 
 
-def entropy_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
+def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     """ Return the candidate whose prediction vector displays the greatest Shannon entropy.
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
-
-        y_train : array
-            The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
@@ -67,7 +55,7 @@ def entropy_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_
     """
     
     # predict probabilities
-    probs = classifier.predict_proba(X_train[candidate_mask])
+    probs = classifier.predict_proba(X[candidate_mask])
     
     # comptue Shannon entropy
     candidate_shannon = -np.sum(probs * np.log(probs), axis=1)
@@ -82,7 +70,7 @@ def entropy_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_
     return best_candidates
 
 
-def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask, **kwargs):
+def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     """ Return the candidate with the smallest margin.
     
         The margin is defined as the difference between the two largest values
@@ -90,11 +78,8 @@ def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
-
-        y_train : array
-            The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
@@ -113,7 +98,7 @@ def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     """
     
     # predict probabilities
-    probs = classifier.predict_proba(X_train[candidate_mask])
+    probs = classifier.predict_proba(X[candidate_mask])
     
     # sort the probabilities from smallest to largest
     probs = np.sort(probs, axis=1)
@@ -131,8 +116,7 @@ def margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     return best_candidates
 
 
-def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask,
-                 committee, **kwargs):
+def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kwargs):
     """ Return the candidate with the smallest average margin.
     
         We first use bagging to train k classifiers. The margin is then defined as
@@ -140,24 +124,20 @@ def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, tra
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
 
-        y_train : array
+        y : array
             The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
 
-        classifier : Classifier object
-            A classifier object that will be used to make predictions.
-            It should have the same interface as scikit-learn classifiers.
+        train_mask : boolean array
+                The boolean array that tells us which data points are currently in the training set.
 
         n_candidates : int
             The number of best candidates to be selected at each iteration.
-
-        train_mask : boolean array
-                The boolean array that tells us which data points are currently in the training set.
 
         committee : BaggingClassifier object
             The committee should have the same interface as scikit-learn BaggingClassifier.
@@ -169,18 +149,18 @@ def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, tra
     """
     
     # check that the max bagging sample is not too big
-    committee.max_sample = min(committee.max_sample, len(y_candidates))
+    committee.max_samples = min(committee.max_samples, len(y[train_mask]))
 
     # train and predict
-    committee.fit(X_train[train_mask], y_train[train_mask])
+    committee.fit(X[train_mask], y[train_mask])
 
     # predict
-    n_samples = len(X_train[candidate_mask])
+    n_samples = len(X[candidate_mask])
     n_classes = len(committee.classes_)
     probs = np.zeros((n_samples, n_classes))
     
     for member in committee.estimators_:
-        memeber_prob = member.predict_proba(X_train[candidate_mask])
+        memeber_prob = member.predict_proba(X[candidate_mask])
 
         if n_classes == len(member.classes_):
             probs += memeber_prob
@@ -207,8 +187,7 @@ def qbb_margin_h(X_train, y_train, candidate_mask, classifier, n_candidates, tra
     return best_candidates
 
 
-def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_mask,
-             committee, **kwargs):
+def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kwargs):
     """ Return the candidate with the largest average KL divergence from the mean.
     
         We first use bagging to train k classifiers. We then choose the candidate
@@ -216,24 +195,20 @@ def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
 
         Parameters
         ----------
-        X_train : array
+        X : array
                 The feature matrix of all the data points.
 
-        y_train : array
+        y : array
             The target vector of all the data points.
 
         candidate_mask : boolean array
             The boolean array that tells us which data points the heuristic should look at.
 
-        classifier : Classifier object
-            A classifier object that will be used to make predictions.
-            It should have the same interface as scikit-learn classifiers.
+        train_mask : boolean array
+                The boolean array that tells us which data points are currently in the training set.
 
         n_candidates : int
             The number of best candidates to be selected at each iteration.
-
-        train_mask : boolean array
-                The boolean array that tells us which data points are currently in the training set.
 
         committee : BaggingClassifier object
             The committee should have the same interface as scikit-learn BaggingClassifier.
@@ -245,37 +220,41 @@ def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     """
 
     # check that the max bagging sample is not too big
-    committee.max_sample = min(committee.max_sample, len(y_candidates))
+    committee.max_samples = min(committee.max_samples, len(y[train_mask]))
 
     # train the committee
-    committee.fit(X_train[train_mask], y_train[train_mask])
+    committee.fit(X[train_mask], y[train_mask])
 
     # predict
-    n_samples = len(X_train[candidate_mask])
+    n_samples = len(X[candidate_mask])
     n_classes = len(committee.classes_)
     avg_probs = np.zeros((n_samples, n_classes))
     prob_list = []
     
     for member in committee.estimators_:
-        memeber_prob = member.predict_proba(X_train[candidate_mask])
+        member_prob = member.predict_proba(X[candidate_mask])
 
         if n_classes == len(member.classes_):
-            avg_probs += memeber_prob
-            prob_list.append(prob)
+            avg_probs += member_prob
+            prob_list.append(member_prob)
 
         else:
-            avg_probs[:, member.classes_] += memeber_prob[:, range(len(member.classes_))]
-            prob_list.append(prob)
+            full_member_prob = np.zeros((n_samples, n_classes))
+            full_member_prob[:, member.classes_] += member_prob[:, range(len(member.classes_))]
+            avg_probs += full_member_prob
+            prob_list.append(full_member_prob)
 
     # average out the probabilities
     avg_probs /= len(committee.estimators_)
 
     # compute the KL divergence
     avg_kl = np.zeros(avg_probs.shape[0])
-    for p in probs:
-        member_kl = np.sum(p * np.log(p / avg_probs), axis=1)
-        avg_kl += member_kl
     
+    for p in prob_list:
+        inner = np.nan_to_num(p * np.log(p / avg_probs))
+        member_kl = np.sum(inner, axis=1)
+        avg_kl += member_kl
+        
     # average out the KL divergence
     avg_kl /= len(committee)
 
@@ -289,10 +268,7 @@ def qbb_kl_h(X_train, y_train, candidate_mask, classifier, n_candidates, train_m
     return best_candidates
 
 
-
-
-
-def compute_A(X, pi, classes):
+def _compute_A(X, pi, classes):
     """ Compute the A matrix in the variance estimation technique.
 
         Parameters
@@ -336,7 +312,7 @@ def compute_A(X, pi, classes):
     return outer
 
 
-def compute_F(X, pi, classes, C=1):
+def _compute_F(X, pi, classes, C=1):
     """ Compute the F matrix in the variance estimation technqiue.
 
         Parameters
@@ -412,13 +388,13 @@ def compute_pool_variance(X, pi, classes, C=1):
             The estimated variance on the pool X.
     """
 
-    A = compute_A(X, pi, classes)
-    F = compute_F(X, pi, classes, C=C)
+    A = _compute_A(X, pi, classes)
+    F = _compute_F(X, pi, classes, C=C)
     return np.trace(np.dot(A, np.linalg.inv(F)))
 
 
-
-def pool_variance_h(X_training_candidates, **kwargs):
+def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
+                   pool_n, C, **kwargs):
     """ Return the candidate that will minimise the expected variance of the predictions.
 
         Parameters
@@ -438,49 +414,55 @@ def pool_variance_h(X_training_candidates, **kwargs):
             The index of the best candidate.
     """
     
-    # extract parameters
-    classifier = kwargs['classifier']
-    X_train = kwargs['X_train'].copy()
-    y_train = kwargs['y_train'].copy()
-    classes = kwargs['classes']
-    pool_sample_size = kwargs['pool_sample_size']
-    C = kwargs['C']
-    n_candidates = X_training_candidates.shape[0]
-    n_features = X_training_candidates.shape[1]
+    train_mask_plus = train_mask.copy()
+    classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    sigmas = np.zeros(n_candidates)
+    candidate_size = np.sum(train_mask_plus)
+    n_features = X.shape[1]
+    variance = np.empty(len(candidate_mask))
+    variance[:] = np.inf
 
-    # add an extra dummy example to the training set
-    dummy_feature = np.zeros(n_features)
-    X_train = np.vstack((X_train, dummy_feature))
-    y_train = np.concatenate((y_train, ['None']))
+    # the probabilities used to calculate expected value of pool
+    probs = classifier.predict_proba(X[candidate_mask])
 
-    # predict probabilities
-    probs = classifier.predict_proba(X_training_candidates)
+    # copy the classifier (avoid modifying the original classifier)
+    classifier_plus = clone(classifier)
 
-    # construct the sample pool
-    sample_pool_index = permutation(n_candidates)[:pool_sample_size]
-    sample_pool = X_training_candidates[sample_pool_index]
+    # construct the sample pool (used to estimate the variance)
+    unlabelled_indices = np.where(-train_mask)[0]
+    pool_indices = permutation(unlabelled_indices)[:pool_n]
+    pool_mask = np.zeros(pool_size, dtype=bool)
+    pool_mask[pool_indices] = True
 
-    for i in np.arange(n_candidates):
-        candidate_features = X_training_candidates[i]
-        candidate_sigmas = np.zeros(n_classes)
-        X_train[-1] = candidate_features
+    # let's look at each candidate
+    candidate_indices = np.where(candidate_mask)[0]
+    for i, index in enumerate(candidate_indices):
 
-        # assume the candidate is in each of the classes
-        for j in np.arange(n_classes):
-            assumed_class = classes[j]
-            y_train[-1] = assumed_class
+        # add the candidate the to training set
+        assert train_mask_plus[index] == False
+        train_mask_plus[index] = True
 
-            # re-train the classifier
-            classifier.fit(X_train, y_train)
-            pi = classifier.predict_proba(sample_pool)
-            candidate_sigmas[j] = compute_pool_variance(sample_pool, pi, classes, C=C)
+        # store the true class away (no peeking allowed)
+        true_class = y[index]
 
-        sigmas[i] = np.dot(probs[i], candidate_sigmas)
+        # assume a label and compute variance
+        potential_variance = np.zeros(n_classes)
+        for cls_idx, cls in enumerate(classes):
+            y[index] = cls
+            classifier_plus.fit(X[train_mask_plus], y[train_mask_plus])
+            pi = classifier_plus.predict_proba(X[pool_mask])
+            potential_variance[cls_idx] = compute_pool_variance(X[pool_mask], pi, classes, C)
 
-    best_candidate = np.argmin(sigmas)
-    return [best_candidate]
+        # restore the training set and the true class of the candidate
+        train_mask_plus[index] = False
+        y[index] = true_class
+
+        # calculate expected variance and save result
+        variance[index] = np.dot(probs[i], potential_variance)
+
+    # pick the candidate with the smallest expected variance
+    best_candidates = np.argsort(variance)[:n_candidates]
+    return best_candidates
 
 
 def compute_pool_entropy(pi):
@@ -500,7 +482,8 @@ def compute_pool_entropy(pi):
     return -np.sum(pi * np.log(pi))
 
 
-def pool_entropy_h(X_training_candidates, **kwargs):
+def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
+                   pool_n, **kwargs):
     """ Return the candidate that will minimise the expected entropy of the predictions.
 
         Parameters
@@ -511,51 +494,61 @@ def pool_entropy_h(X_training_candidates, **kwargs):
         classes : int
             The name of classes.
 
+        pool_n : int
+            The size of the sampel pool used in estimating the entropy
+
         Returns
         -------
         best_candidate : int
             The index of the best candidate.
     """
     
-    # extract parameters
-    classifier = kwargs['classifier']
-    X_train = kwargs['X_train'].copy()
-    y_train = kwargs['y_train'].copy()
-    classes = kwargs['classes']
-    pool_sample_size = kwargs['pool_sample_size']
-    n_candidates = X_training_candidates.shape[0]
-    n_features = X_training_candidates.shape[1]
+    train_mask_plus = train_mask.copy()
+    classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    entropy = np.zeros(n_candidates)
+    candidate_size = np.sum(train_mask_plus)
+    n_features = X.shape[1]
+    entropy = np.empty(len(candidate_mask))
+    entropy[:] = np.inf
 
-    # add an extra dummy example to the training set
-    dummy_feature = np.zeros(n_features)
-    X_train = np.vstack((X_train, dummy_feature))
-    y_train = np.concatenate((y_train, ['None']))
+    # the probabilities used to calculate expected value of pool
+    probs = classifier.predict_proba(X[candidate_mask])
 
-    # predict probabilities
-    probs = classifier.predict_proba(X_training_candidates)
+    # copy the classifier (avoid modifying the original classifier)
+    classifier_plus = clone(classifier)
 
-    # construct the sample pool
-    sample_pool_index = permutation(n_candidates)[:pool_sample_size]
-    sample_pool = X_training_candidates[sample_pool_index]
+    # construct the sample pool (used to estimate the entropy)
+    unlabelled_indices = np.where(-train_mask)[0]
+    pool_indices = permutation(unlabelled_indices)[:pool_n]
+    pool_mask = np.zeros(pool_size, dtype=bool)
+    pool_mask[pool_indices] = True
 
-    for i in np.arange(n_candidates):
-        candidate_features = X_training_candidates[i]
-        candidate_entropy = np.zeros(n_classes)
-        X_train[-1] = candidate_features
+    # let's look at each candidate
+    candidate_indices = np.where(candidate_mask)[0]
+    for i, index in enumerate(candidate_indices):
 
-        # assume the candidate is in each of the classes
-        for j in np.arange(n_classes):
-            assumed_class = classes[j]
-            y_train[-1] = assumed_class
+        # add the candidate the to training set
+        assert train_mask_plus[index] == False
+        train_mask_plus[index] = True
 
-            # re-train the classifier
-            classifier.fit(X_train, y_train)
-            pi = classifier.predict_proba(sample_pool)
-            candidate_entropy[j] = compute_pool_entropy(pi)
+        # store the true class away (no peeking allowed)
+        true_class = y[index]
 
-        entropy[i] = np.dot(probs[i], candidate_entropy)
+        # assume a label and compute entropy
+        potential_entropy = np.zeros(n_classes)
+        for cls_idx, cls in enumerate(classes):
+            y[index] = cls
+            classifier_plus.fit(X[train_mask_plus], y[train_mask_plus])
+            pi = classifier_plus.predict_proba(X[pool_mask])
+            potential_entropy[cls_idx] = compute_pool_entropy(pi)
 
-    best_candidate = np.argmin(entropy)
-    return [best_candidate]
+        # restore the training set and the true class of the candidate
+        train_mask_plus[index] = False
+        y[index] = true_class
+
+        # calculate expected entropy and save result
+        entropy[index] = np.dot(probs[i], potential_entropy)
+
+    # pick the candidate with the smallest expected entropy
+    best_candidates = np.argsort(entropy)[:n_candidates]
+    return best_candidates

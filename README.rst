@@ -25,7 +25,8 @@ algorithms, with a focus in astronomical data. For a quick overview of how
 Installation
 ------------
 The dependencies are Python 3.4, numpy, pandas, matplotlib, seaborn, ephem, scipy, ipython,
-and scikit-learn. To install using pip::
+and scikit-learn. It's best to first install the Anaconda distribution for Python 3,
+then install **mclearn** using pip::
 
   pip install mclearn
 
@@ -86,6 +87,8 @@ Notebooks
 6. `VST ATLAS Dataset`_
     We run active learning on the VST ATLAS dataset.
 
+7. `Bandit Active Learning`_
+    We examine active learning in a multi-arm bandit setting.
 
 .. _Getting Started:
    projects/alasdair/notebooks/getting_started.ipynb
@@ -103,3 +106,5 @@ Notebooks
    projects/alasdair/notebooks/06_predicting_unlabelled_objects.ipynb
 .. _VST ATLAS Dataset:
    projects/alasdair/notebooks/07_vstatlas.ipynb
+.. _Bandit Active Learning:
+   projects/alasdair/notebooks/08_bandits.ipynb

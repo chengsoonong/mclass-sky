@@ -208,7 +208,7 @@ def fetch_sloan_data(sql, output, url=None, fmt='csv', verbose=True):
 
 
 
-def fetch_filter(filter, download_url):
+def fetch_filter(filter, download_url, filter_dir=''):
     """ Get a filter from the internet.
 
         Parameters
@@ -229,10 +229,10 @@ def fetch_filter(filter, download_url):
     assert filter in 'ugriz'
     url = download_url % filter
     
-    if not os.path.exists('data/filters'):
-        os.makedirs('data/filters')
+    if not os.path.exists(filter_dir):
+        os.makedirs(filter_dir)
 
-    loc = os.path.join('data/filters', '%s.dat' % filter)
+    loc = os.path.join(filter_dir, '%s.dat' % filter)
     
     if not os.path.exists(loc):
         filter_file = urlopen(url)
@@ -246,7 +246,7 @@ def fetch_filter(filter, download_url):
 
 
 
-def fetch_spectrum(spectrum_url):
+def fetch_spectrum(spectrum_url, spectra_dir=''):
     """ Get a spectrum from the internet.
 
         Parameters
@@ -260,10 +260,10 @@ def fetch_spectrum(spectrum_url):
             The downloaded spectrum data.
     """
 
-    if not os.path.exists('data/spectra'):
-        os.makedirs('data/spectra')
+    if not os.path.exists(spectra_dir):
+        os.makedirs(spectra_dir)
 
-    refspec_file = os.path.join('data/spectra', spectrum_url.split('/')[-1])
+    refspec_file = os.path.join(spectra_dir, spectrum_url.split('/')[-1])
 
     if not os.path.exists(refspec_file):
         spectrum_file = urlopen(spectrum_url)

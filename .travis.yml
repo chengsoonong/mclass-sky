@@ -5,6 +5,7 @@ notifications:
   email: false
 
 before_install:
+  - sudo apt-get update
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -19,6 +20,7 @@ before_install:
   - conda install --yes seaborn
   - conda install --yes ephem
   - conda install --yes ipython
+  - conda install --yes pytables
 
 install:
   - python setup.py install

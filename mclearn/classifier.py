@@ -19,7 +19,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 
 from .photometry import optimise_sdss_features
-from .viz import plot_validation_accuracy_heatmap, reshape_grid_socres, plot_hex_map
+from .performance import balanced_accuracy_expected
+from .preprocessing import balanced_train_test_split
+from .viz import (plot_validation_accuracy_heatmap, reshape_grid_socres, plot_hex_map,
+                  plot_recall_maps)
 
 
 def train_classifier(data, feature_names, class_name, train_size, test_size, output='',
@@ -85,8 +88,9 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
     """
     if balanced:
-        X_train, X_test, y_train, y_test = mclearn.balanced_train_test_split(
-            data, feature_names, class_name, train_size, test_size, random_state=random_state)
+        X_train, X_test, y_train, y_test = balanced_train_test_split(
+            data[feature_names], data[class_name], train_size=train_size, test_size=test_size,
+            random_state=random_state)
     else:
         X_train, X_test, y_train, y_test = train_test_split(np.array(data[feature_names]),
             np.array(data[class_name]), train_size=train_size, test_size=test_size, random_state=random_state)
@@ -173,7 +177,7 @@ def print_classification_result(X_train, X_test, y_train, y_test, report=True,
     classifier.fit(X_train, y_train)
     y_pred_test = classifier.predict(X_test)
     confusion_test = metrics.confusion_matrix(y_test, y_pred_test)
-    balanced_accuracy = mclearn.balanced_accuracy_expected(confusion_test)
+    balanced_accuracy = balanced_accuracy_expected(confusion_test)
 
     # put confusion matrix in a DataFrame
     classes = ['Galaxy', 'Quasar', 'Star']
@@ -196,12 +200,12 @@ def print_classification_result(X_train, X_test, y_train, y_test, report=True,
     if recall_maps:
         if correct_baseline is None:
             print('Recall Maps of Galaxies, Stars, and Quasars, respectively:')
-            mclearn.plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
+            plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
                 correct_boolean, vmin=0.7, vmax=1, mincnt=None, cmap=plt.cm.YlGn)
         else:
             print('Recall Improvement Maps of Galaxies, Stars, and Quasars, respectively:')
             correct_diff = correct_boolean.astype(int) - correct_baseline.astype(int)
-            mclearn.plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
+            plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
                 correct_diff, vmin=-0.2, vmax=+0.2, mincnt=20, cmap=plt.cm.RdBu)
 
     return correct_boolean, confusion_test
@@ -261,8 +265,8 @@ def learning_curve(data, feature_cols, target_col, classifier, train_sizes, test
         gc.collect()
         # split data into test set and training set
         if balanced:
-            X_train, X_test, y_train, y_test = mclearn.preprocessing.balanced_train_test_split(
-                data, feature_cols, target_col, train_size=i, test_size=j, random_state=random_state)
+            X_train, X_test, y_train, y_test = balanced_train_test_split(
+                data[feature_names], data[class_name], train_size=i, test_size=j, random_state=random_state)
         else:
             X_train, X_test, y_train, y_test = train_test_split(np.array(data[feature_cols]),
                 np.array(data[target_col]), train_size=i, test_size=j, random_state=random_state)
@@ -286,12 +290,12 @@ def learning_curve(data, feature_cols, target_col, classifier, train_sizes, test
         # apply classifier on test set
         y_pred_test = classifier.predict(X_test)
         confusion_test = metrics.confusion_matrix(y_test, y_pred_test)
-        lc_accuracy_test.append(mclearn.performance.balanced_accuracy_expected(confusion_test))
+        lc_accuracy_test.append(balanced_accuracy_expected(confusion_test))
 
     # pickle learning curve
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(lc_accuracy_test, f, pickle.HIGHEST_PROTOCOL) 
+            pickle.dump(lc_accuracy_test, f, protocol=4) 
     
     return lc_accuracy_test
 
@@ -598,7 +602,7 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path=None, pic
         X, y, param_grid, degree=3, train_size=train_size, test_size=test_size)
 
     scores = scores_1 + scores_2 + scores_3
-    scores = mclearn.reshape_grid_socres(scores, 12, len(C_range))
+    scores = reshape_grid_socres(scores, 12, len(C_range))
 
     ylabels = ['Degree 1, OVR, Squared Hinge, L1-norm',
                'Degree 1, OVR, Squared Hinge, L2-norm',

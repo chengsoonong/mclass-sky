@@ -5,9 +5,6 @@ from mclearn.photometry import (reddening_correction_sfd98,
                                 reddening_correction_sf11,
                                 reddening_correction_w14,
                                 correct_magnitudes)
-from mclearn.viz import (plot_class_distribution,
-                         plot_filters_and_spectrum,
-                         plot_hex_map)
 from .datasets import Dataset
 
 
@@ -15,16 +12,6 @@ class TestPhotometry:
     @classmethod
     def setup_class(cls):
         cls.sdss = Dataset('sdss_tiny')
-
-
-    def test_plot_class_distribution(self):
-        fig = plt.figure(figsize=(10, 5))
-        ax = plot_class_distribution(self.sdss.target)
-
-
-    def test_plot_hex_map(self):
-        fig = plt.figure(figsize=(10,5))
-        ax = plot_hex_map(self.sdss.data['ra'], self.sdss.data['dec'], vmax=5)
 
 
     def test_dust_extinction(self):
@@ -51,10 +38,6 @@ class TestPhotometry:
         ugriz_url = 'http://www.sdss.org/dr7/instruments/imager/filters/%s.dat'
         spectra_dir = 'mclearn/tests/data/spectra/'
         filter_dir = 'mclearn/tests/data/filters/'
-
-        fig = plt.figure(figsize=(10,5))
-        ax = plot_filters_and_spectrum(ugriz_url, vega_url, filter_dir, spectra_dir)
-
     
 
 

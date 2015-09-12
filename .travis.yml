@@ -15,10 +15,7 @@ before_install:
   - conda info -a # Useful for debugging any issues with conda
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy pandas matplotlib scikit-learn
   - conda install --yes -c dan_blanchard python-coveralls
-  - conda install --yes seaborn
-  - conda install --yes ephem
-  - conda install --yes ipython
-  - conda install --yes pytables
+  - conda install --yes seaborn ephem ipython pytables joblib
 
 install:
   - python setup.py install

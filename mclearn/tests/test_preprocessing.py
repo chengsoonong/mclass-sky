@@ -8,6 +8,7 @@ from mclearn.preprocessing import (
     balanced_train_test_split,
     csv_to_hdf
 )
+from .datasets import Dataset
 
 
 class TestNormalise:
@@ -42,16 +43,12 @@ class TestNormalise:
 class TestBalancedSplit:
     @classmethod
     def setup_class(cls):
-        cls.sdss = read_csv('mclearn/tests/data/sdss_tiny.csv')
-        cls.feature_cols = ['psfMag_u', 'psfMag_g', 'psfMag_r', 'psfMag_i', 'psfMag_z',
-                            'petroMag_u', 'petroMag_g', 'petroMag_r', 'petroMag_i',
-                            'petroMag_z', 'petroRad_r']
-        cls.target_col = 'class'
+        cls.sdss = Dataset('sdss_tiny')
 
 
     def test_balanced_split(self):
-        X = self.sdss[self.feature_cols]
-        y = self.sdss[self.target_col]
+        X = self.sdss.features
+        y = self.sdss.target
         X_train, X_test, y_train, y_test = balanced_train_test_split(
             X, y, train_size=72, test_size=45, random_state=13)
         

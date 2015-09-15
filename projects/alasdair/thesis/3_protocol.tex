@@ -15,10 +15,85 @@
 \section{Class Proportion Estimation}
 \label{sec:what}
 
-
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 \section{Performance Measures}
 \label{sec:measures}
+Certain astronomical objects are either rarer or more difficult to detect than others.
+In the SDSS labelled set, there are 4.5 times as many galaxies as quasars. The problem
+of class imbalance is even more severe in the VST-ATLAS set, with 11 times more stars than
+white dwarfs. An easy fix is to undersample the dominant class when creating training and
+test sets. This, of course, means that the size of these sets are limited by the size
+of the minority class.
 
+When we do not want to alter the underlying class distributions or when larger training and test
+sets are desired, we need a performance measure that can correct for the class imbalance.
+\shortciteN{brodersen10} showed that the posterior balanced accuracy distribution can overcome
+the bias in the binary case. We now extend this idea to the multi-class setting.
+
+Suppose we have $k$ classes. For each class $i$ between $1$ and $k$, there are $N_i$ objects
+in the universe. Given a classifier, we can assign a predicted label to every object and
+compare our prediction to the true label. Let $C_i$ be the number of objects in class $i$
+that are correctly predicted. Then we define the accuracy rate $A_i$ of class $i$ as
+	\begin{IEEEeqnarray*}{lCl}
+		A_i &=& \frac{C_i}{N_i}
+	\end{IEEEeqnarray*}
+
+Initially we have no information about $C_i$ and $N_i$, so we can assume that each $A_i$ 
+follows a uniform prior from 0 to 1. This is the same as a Beta distribution
+with parameters $\alpha = \beta = 1$:
+	\begin{IEEEeqnarray}{lCl}
+		A_i &\sim& \Beta(1,1) \label{eqn:prior}
+	\end{IEEEeqnarray}
+
+After we have trained the classifier, suppose we have a test set containing $n_i$
+objects in class $i$. Running the classifier on this test set is the same as conducting
+$k$ binomial experiments, where, in the $i$th experiment, the sample size is
+$n_i$ and the probability of success is simply the accuracy rate $A_i$. Let $c_i$ be
+the number of correctly labelled objects belonging to class $i$ in the test set. Then,
+conditional on the accuracy rate, $c_i$ follows a binomial distribution:
+	\begin{IEEEeqnarray}{lCl}
+		(c_i \mid A_i) &\sim& \Bin(n_i, A_i) \label{eqn:likelihood}
+	\end{IEEEeqnarray}
+In the Bayesian setting, \eqref{eqn:prior} is the prior and \eqref{eqn:likelihood}
+is the likelihood. In particular, with respect to the binomial likelihood function,
+the Beta distribution is conjugate to itself. Thus the posterior accuracy rate $A_i$
+will also follow a Beta distribution, now with parameters
+	\begin{IEEEeqnarray*}{lCl}
+		(A_i \mid c_i) &\sim& \Beta(1 + c_i, 1 + n_i - c_i)
+	\end{IEEEeqnarray*}
+
+Recall that the goal is have a balanced accuracy rate $A$ that puts an equal weight in each class.
+This can be achieved by taking the average of all the class accuracy rates:
+	\begin{IEEEeqnarray*}{lClCl}
+		A &=& \frac{1}{k} \sum_{i=1}^k A_i &=& \frac{1}{k} A_T
+	\end{IEEEeqnarray*}
+Here we have defined $A_T$ to be the sum of the individual accuracy rates.
+We call  $(A \mid \bm{c})$ the posterior balanced accuracy rate, where
+$\bm{c} =(c_1,...,c_k)$.
+Most of the time, we simply want to calculate its expected value:
+	\begin{IEEEeqnarray*}{lCl}
+		\E{A \given \bm{c}} &=& \frac{1}{k} \, \E{A_T \given \bm{c}} \\
+							   &=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{c}}(a) \, da
+	\end{IEEEeqnarray*}
+There is no closed form solution for $f_{A_T \mid \bm{c}}(a)$. However $A_T$ is a sum
+of $k$ independent Beta random variables, so $f_{A_T \mid \bm{c}}(a)$ can be approximated by
+numerically convolving $k$ Beta distributions.
+
+Having the knowledge of the PDF of $(A \mid \bm{c})$ will allow us to make violin plots,
+construct confidence intervals and do hypothesis tests. To get the PDF, observe that
+	\begin{IEEEeqnarray*}{lCl}
+		F_{A\mid \bm{c}}(a) &=& \Prob{A \leq a \mid \bm{c}} \\
+		       &=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{c}} \\
+		       &=& \Prob{A_T \leq ka \given \bm{c}} \\
+		       &=& k \cdot F_{A_T \mid \bm{c}}(a) \IEEEyesnumber \label{eqn:CDF}
+	\end{IEEEeqnarray*}
+
+Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $A$:
+	\begin{IEEEeqnarray*}{lCl}
+		f_A(a \mid \bm{c}) &=& \frac{\partial}{\partial a} F_{A \mid \bm{c}}(a) \\
+		       &=& k \cdot \frac{\partial}{\partial a} F_{A_T \mid \bm{c}}(a) \\
+		       &=& k \cdot f_{A_T \mid \bm{c}}(a)
+	\end{IEEEeqnarray*}
 
 
 %%% Local Variables: 

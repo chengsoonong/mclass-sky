@@ -3,6 +3,12 @@
 %%
 \documentclass[11pt]{book}
 \usepackage[palatino]{anuthesis}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{etoolbox}
 \usepackage{graphicx}
 \usepackage{thesis}
 \usepackage{makeidx}
@@ -10,7 +16,14 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{xcolor}
+\usepackage{IEEEtrantools}
 \usepackage{hyperref}
+\usepackage[acronym, nopostdot, nonumberlist, style=alttree]{glossaries}
+\glssetwidest{ABCDEFGHIJK}% widest name
+\renewcommand*{\glsnamefont}[1]{\textmd{#1}}
+
+
+
 
 \hypersetup{
 	bookmarksnumbered,
@@ -23,16 +36,70 @@
 	pdftitle	 = {Untitled Honours Project},
 }
 
+\providecommand\given{}
+\DeclarePairedDelimiterXPP\E[1]{\mathbb{E}}{[}{]}{}{
+	\renewcommand\given{  \nonscript\:
+		\delimsize\vert
+		\nonscript\:
+		\mathopen{}
+		\allowbreak}
+	#1
+}
+\DeclarePairedDelimiterXPP\Prob[1]{\mathbb{P}}{(}{)}{}{
+	\renewcommand\given{  \nonscript\:
+		\delimsize\vert
+		\nonscript\:
+		\mathopen{}
+		\allowbreak}
+	#1
+}
+
+\DeclareMathOperator{\Beta}{Beta}
+\DeclareMathOperator{\Bin}{Bin}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% List of symbols
+\newglossaryentry{E}%
+{%
+	name={$\E{X}$},
+	text={E(X)},
+	description={Expected value of the random variable $X$},
+	sort={EX}
+}
+
+\newglossaryentry{F_X}%
+{%
+	name={$F_X(x)$},
+	text={F_X(x)},
+	description={The cumulative distribution function of the random variable $X$},
+	sort={FX}
+}
+
+\newglossaryentry{f_x)}%
+{%
+	name={$f_X(x)$},
+	text={f_X(x)},
+	description={The probability density function distribution function of the random variable $X$},
+	sort={fX}
+}
+
+
+\newacronym{sdss}{SDSS}{Sloan Digital Sky Survey}
+\newacronym{vst}{VST}{VLT Survey Telescope}
+\newacronym{atlas}{ATLAS}{Australia Telescope Large Area Survey}
+\newacronym{pdf}{PDF}{Probability Density Function}
+\newacronym{cdf}{CDF}{Cumulative Distribution Function}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Preamble
-\title{Untitled Honours Project}
+\title{Active Learning in Astronomy}
 \author{Alasdair Nam Thang Tran}
 \date{\today}
 
 \renewcommand{\thepage}{\roman{page}}
 
 \makeindex
+\makeglossaries
 \begin{document}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -66,11 +133,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Table of contents
 \cleardoublepage
-\pagestyle{headings}
-\markboth{Contents}{Contents}
-\phantomsection
-\addcontentsline{toc}{chapter}{Contents}
 \tableofcontents
+
+\listoffigures
+
+\listoftables
+
+\glsaddall
+\printglossary[title=List of Symbols]
+\printglossary[type=\acronymtype]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Here begins the main text

@@ -7,92 +7,39 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{mathtools}
+\usepackage{mathrsfs}
 \usepackage{bm}
 \usepackage{etoolbox}
 \usepackage{graphicx}
 \usepackage{thesis}
 \usepackage{makeidx}
 \usepackage{acmnew-xref}
-\usepackage{caption}
+\usepackage[labelfont=bf]{caption}
 \usepackage{subcaption}
 \usepackage{xcolor}
 \usepackage{IEEEtrantools}
 \usepackage{hyperref}
-\usepackage[acronym, nopostdot, nonumberlist, style=alttree]{glossaries}
-\glssetwidest{ABCDEFGHIJK}% widest name
-\renewcommand*{\glsnamefont}[1]{\textmd{#1}}
-
+\usepackage[acronym, nopostdot, nonumberlist, nogroupskip]{glossaries}
+\usepackage{enumitem}
 
 
 
 \hypersetup{
 	bookmarksnumbered,
 	pdfstartview = {XYZ null null 1.00},
-	colorlinks   = true, %Colours links instead of ugly boxes
-	urlcolor     = {blue!80!black}, %Colour for external hyperlinks
-	linkcolor    = {red!50!black}, %Colour of internal links
-	citecolor    = {blue!50!black}, %Colour of citations
+	colorlinks   = true,            % Colours links instead of ugly boxes
+	urlcolor     = {blue!80!black}, % Colour for external hyperlinks
+	linkcolor    = {red!50!black},  % Colour of internal links
+	citecolor    = {blue!50!black}, % Colour of citations
 	pdfauthor    = {Alasdair Tran},
-	pdftitle	 = {Untitled Honours Project},
+	pdftitle	 = {Multi-arm Bandit Active Learning with Astronomy},
 }
 
-\providecommand\given{}
-\DeclarePairedDelimiterXPP\E[1]{\mathbb{E}}{[}{]}{}{
-	\renewcommand\given{  \nonscript\:
-		\delimsize\vert
-		\nonscript\:
-		\mathopen{}
-		\allowbreak}
-	#1
-}
-\DeclarePairedDelimiterXPP\Prob[1]{\mathbb{P}}{(}{)}{}{
-	\renewcommand\given{  \nonscript\:
-		\delimsize\vert
-		\nonscript\:
-		\mathopen{}
-		\allowbreak}
-	#1
-}
-
-\DeclareMathOperator{\Beta}{Beta}
-\DeclareMathOperator{\Bin}{Bin}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% List of symbols
-\newglossaryentry{E}%
-{%
-	name={$\E{X}$},
-	text={E(X)},
-	description={Expected value of the random variable $X$},
-	sort={EX}
-}
-
-\newglossaryentry{F_X}%
-{%
-	name={$F_X(x)$},
-	text={F_X(x)},
-	description={The cumulative distribution function of the random variable $X$},
-	sort={FX}
-}
-
-\newglossaryentry{f_x)}%
-{%
-	name={$f_X(x)$},
-	text={f_X(x)},
-	description={The probability density function distribution function of the random variable $X$},
-	sort={fX}
-}
-
-
-\newacronym{sdss}{SDSS}{Sloan Digital Sky Survey}
-\newacronym{vst}{VST}{VLT Survey Telescope}
-\newacronym{atlas}{ATLAS}{Australia Telescope Large Area Survey}
-\newacronym{pdf}{PDF}{Probability Density Function}
-\newacronym{cdf}{CDF}{Cumulative Distribution Function}
+\input 0.6_symbols
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Preamble
-\title{Active Learning in Astronomy}
+\title{Multi-arm Bandit Active Learning with Astronomy}
 \author{Alasdair Nam Thang Tran}
 \date{\today}
 
@@ -140,8 +87,11 @@
 \listoftables
 
 \glsaddall
+\setlist[description]{leftmargin=!, labelwidth=5em} % Change for glossaries
 \printglossary[title=List of Symbols]
 \printglossary[type=\acronymtype]
+\setlist[description]{style=standard} % reset settings back to default
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Here begins the main text
@@ -151,17 +101,16 @@
 \input 1_introduction
 
 %% Chapters
-\input 2_background
-\input 3_protocol
-\input 4_results
+\input 2_active
+\input 3_experiment
 
 %% Conclusion
-\input 5_conclusion
+\input 4_conclusion
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Here begins the end matter
 
-\input 6_appendix
+\input 5_appendix
 
 \backmatter
 

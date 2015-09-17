@@ -1,0 +1,200 @@
+%%
+%% Template ack.tex
+%%
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%% Mathematical operators
+
+\providecommand\given{}
+\DeclarePairedDelimiterXPP\E[1]{\mathbb{E}}{[}{]}{}{
+	\renewcommand\given{  \nonscript\:
+		\delimsize\vert
+		\nonscript\:
+		\mathopen{}
+		\allowbreak}
+	#1
+}
+\DeclarePairedDelimiterXPP\Prob[1]{\mathbb{P}}{(}{)}{}{
+	\renewcommand\given{  \nonscript\:
+		\delimsize\vert
+		\nonscript\:
+		\mathopen{}
+		\allowbreak}
+	#1
+}
+
+\DeclareMathOperator{\Beta}{Beta}
+\DeclareMathOperator{\Bin}{Bin}
+\DeclareMathOperator{\arsinh}{arsinh}
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%% List of symbols
+\newglossaryentry{A)}%
+{%
+	name={$A$},
+	text={A},
+	description={The balanced accuracy rate},
+	sort={A}
+}
+
+\newglossaryentry{A_i)}%
+{%
+	name={$A_i$},
+	text={A_i},
+	description={The accuracy rate of class $i$},
+	sort={Ai}
+}
+
+\newglossaryentry{b)}%
+{%
+	name={$b$},
+	text={b},
+	description={The asinh softening parameter},
+	sort={b}
+}
+
+\newglossaryentry{c)}%
+{%
+	name={$\bm{c}$},
+	text={c},
+	description={The vector $(c_1, c_2,...,c_k)$, where $k$ is the number of classes},
+	sort={c}
+}
+
+\newglossaryentry{C_i)}%
+{%
+	name={$C_i$},
+	text={C_i},
+	description={The total number of objects in class $i$ that are correctly predicted},
+	sort={Ci}
+}
+
+\newglossaryentry{c_i)}%
+{%
+	name={$c_i$},
+	text={c_i},
+	description={The number of objects in class $i$ in a sample that are correctly predicted},
+	sort={ci}
+}
+
+\newglossaryentry{E}%
+{%
+	name={$\E{X}$},
+	text={E(X)},
+	description={The expected value of the random variable $X$},
+	sort={EX}
+}
+
+\newglossaryentry{f)}%
+{%
+	name={$f$},
+	text={f},
+	description={The detected flux of an object},
+	sort={f}
+}
+
+\newglossaryentry{f_0)}%
+{%
+	name={$f_0$},
+	text={f_0},
+	description={The flux of the object with a conventional magnitude of zero},
+	sort={f0}
+}
+\newglossaryentry{F_X}%
+{%
+	name={$F_X(x)$},
+	text={F_X(x)},
+	description={The cumulative distribution function of the random variable $X$},
+	sort={FX}
+}
+
+\newglossaryentry{f_x)}%
+{%
+	name={$f_X(x)$},
+	text={f_X(x)},
+	description={The probability density function of the random variable $X$},
+	sort={fX}
+}
+
+\newglossaryentry{I(r)}%
+{%
+	name={$I(r)$},
+	text={I(r)},
+	description={The surface brightness profile of a galaxy},
+	sort={Ir}
+}
+
+\newglossaryentry{lambda)}%
+{%
+	name={$\lambda$},
+	text={lambda},
+	description={The wavelength of light},
+	sort={lambda}
+}
+
+\newglossaryentry{m)}%
+{%
+	name={$m$},
+	text={m},
+	description={The apparent magnitude of an object},
+	sort={m}
+}
+
+\newglossaryentry{N_i)}%
+{%
+	name={$N_i$},
+	text={N_i},
+	description={The total number of objects belonging to class $i$},
+	sort={Ni}
+}
+
+\newglossaryentry{n_i)}%
+{%
+	name={$n_i$},
+	text={n_i},
+	description={The number of objects belonging to class $i$ in a sample},
+	sort={ni}
+}
+
+\newglossaryentry{R_p(r)}%
+{%
+	name={$\mathfrak{R}_p(r)$},
+	text={R_p(r)},
+	description={The Petrosian ratio},
+	sort={Rp}
+}
+
+\newglossaryentry{r_p}%
+{%
+	name={$r_p$},
+	text={r_p},
+	description={The Petrosian radius},
+	sort={rp}
+}
+
+
+\newglossaryentry{T_lambda)}%
+{%
+	name={$T(\lambda)$},
+	text={T(lambda)},
+	description={The transmission function of a filter},
+	sort={Tlambda}
+}
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%% Acronyms
+\newacronym{atlas}{ATLAS}{Australia Telescope Large Area Survey}
+\newacronym{cdf}{CDF}{Cumulative Distribution Function}
+\newacronym{pdf}{PDF}{Probability Density Function}
+\newacronym{psf}{PSF}{Point Spread Function}
+\newacronym{sdss}{SDSS}{Sloan Digital Sky Survey}
+\newacronym{vlt}{VLT}{Very Large Telescope}
+\newacronym{vst}{VST}{VLT Survey Telescope}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "thesis"
+%%% End: 
+

@@ -2,22 +2,26 @@
 %% Template chap2.tex
 %%
 
-\chapter{Experimental Protocol}
+\chapter{Active Learning}
 \label{cha:secondexp}
 
-\section{Hyper-parameter Optimisation}
-\label{sec:why2}
 
-\section{Active Learning Routine}
-\label{sec:what2}
+\section{Disagreement-Based Heuristics}
 
 
-\section{Class Proportion Estimation}
-\label{sec:what}
+\section{Pool-Based Heuristics}
+
+
+
+
+\section{Bandit Active Learning}
+
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 \section{Performance Measures}
 \label{sec:measures}
+
+\subsection{Posterior Accuracy Rate}
 Certain astronomical objects are either rarer or more difficult to detect than others.
 In the SDSS labelled set, there are 4.5 times as many galaxies as quasars. The problem
 of class imbalance is even more severe in the VST-ATLAS set, with 11 times more stars than
@@ -62,8 +66,8 @@ will also follow a Beta distribution, now with parameters
 		(A_i \mid c_i) &\sim& \Beta(1 + c_i, 1 + n_i - c_i)
 	\end{IEEEeqnarray*}
 
-Recall that the goal is have a balanced accuracy rate $A$ that puts an equal weight in each class.
-This can be achieved by taking the average of all the class accuracy rates:
+Recall that our goal is to have a balanced accuracy rate, $A$, that puts an equal
+weight in each class. This can be achieved by taking the average of all the class accuracy rates:
 	\begin{IEEEeqnarray*}{lClCl}
 		A &=& \frac{1}{k} \sum_{i=1}^k A_i &=& \frac{1}{k} A_T
 	\end{IEEEeqnarray*}
@@ -75,26 +79,28 @@ Most of the time, we simply want to calculate its expected value:
 		\E{A \given \bm{c}} &=& \frac{1}{k} \, \E{A_T \given \bm{c}} \\
 							   &=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{c}}(a) \, da
 	\end{IEEEeqnarray*}
-There is no closed form solution for $f_{A_T \mid \bm{c}}(a)$. However $A_T$ is a sum
-of $k$ independent Beta random variables, so $f_{A_T \mid \bm{c}}(a)$ can be approximated by
-numerically convolving $k$ Beta distributions.
+Note that there is no closed form solution for the PDF $f_{A_T \mid \bm{c}}(a)$.
+However assuming that $A_T$ is a sum of $k$ independent Beta random variables,
+$f_{A_T \mid \bm{c}}(a)$ can be approximated by numerically convolving $k$ Beta distributions.
 
-Having the knowledge of the PDF of $(A \mid \bm{c})$ will allow us to make violin plots,
-construct confidence intervals and do hypothesis tests. To get the PDF, observe that
+Having the knowledge of $f_{A \mid \bm{c}}(a)$ will allow us to make violin plots,
+construct confidence intervals and do hypothesis tests. To get an expression for this,
+let us first rewrite the CDF as
 	\begin{IEEEeqnarray*}{lCl}
 		F_{A\mid \bm{c}}(a) &=& \Prob{A \leq a \mid \bm{c}} \\
 		       &=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{c}} \\
 		       &=& \Prob{A_T \leq ka \given \bm{c}} \\
-		       &=& k \cdot F_{A_T \mid \bm{c}}(a) \IEEEyesnumber \label{eqn:CDF}
+		       &=& F_{A_T \mid \bm{c}}(ka) \IEEEyesnumber \label{eqn:CDF}
 	\end{IEEEeqnarray*}
 
-Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $A$:
+Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{c})$:
 	\begin{IEEEeqnarray*}{lCl}
-		f_A(a \mid \bm{c}) &=& \frac{\partial}{\partial a} F_{A \mid \bm{c}}(a) \\
-		       &=& k \cdot \frac{\partial}{\partial a} F_{A_T \mid \bm{c}}(a) \\
-		       &=& k \cdot f_{A_T \mid \bm{c}}(a)
+		f_{A \mid \bm{c}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{c}}(ka) \\
+		       &=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{c}}(ka) \\
+		       &=& k \cdot f_{A_T \mid \bm{c}}(ka)
 	\end{IEEEeqnarray*}
 
+\subsection{Recall and Precision}
 
 %%% Local Variables: 
 %%% mode: latex

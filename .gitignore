@@ -23,6 +23,15 @@ __pycache__
 *.run.xml
 *.bcf
 *.txss
+*.lof
+*.lot
+*.ist
+*.glo
+*.glg
+*.gls
+*.alg
+*.acn
+*.acr
 
 # project-specific exclusions
 projects/alasdair/data/sdss.h5
@@ -30,5 +39,6 @@ projects/alasdair/data/sdss_dr7_photometry_source.csv.gz
 projects/alasdair/data/sdss_full.h5
 projects/alasdair/data/sdss_subclass.h5
 projects/alasdair/pickle/06_predicting_unlabelled_objects
+projects/alasdair/literature
 projects/alasdair/thesis/thesis.pdf
 _sandbox*

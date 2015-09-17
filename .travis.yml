@@ -12,22 +12,16 @@ before_install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-
+  - conda info -a # Useful for debugging any issues with conda
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy pandas matplotlib scikit-learn
   - conda install --yes -c dan_blanchard python-coveralls
-  - conda install --yes seaborn
-  - conda install --yes ephem
-  - conda install --yes ipython
-  - conda install --yes pytables
+  - conda install --yes seaborn ephem ipython pytables joblib
 
 install:
   - python setup.py install
 
 script:
-  - cd $HOME/build/alasdairtran/mclearn
-  - python tests.py -v --with-coverage --cover-package=mclearn
+  - nosetests --with-coverage --cover-package=mclearn
 
 after_success:
   - coveralls

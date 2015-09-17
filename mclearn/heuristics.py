@@ -2,6 +2,7 @@
 
 import numpy as np
 import copy
+from joblib import Parallel, delayed
 from numpy.random import permutation
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.base import clone
@@ -116,7 +117,8 @@ def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     return best_candidates
 
 
-def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kwargs):
+def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee,
+                 committee_samples, **kwargs):
     """ Return the candidate with the smallest average margin.
     
         We first use bagging to train k classifiers. The margin is then defined as
@@ -149,7 +151,7 @@ def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kw
     """
     
     # check that the max bagging sample is not too big
-    committee.max_samples = min(committee.max_samples, len(y[train_mask]))
+    committee.max_samples = min(committee_samples, len(y[train_mask]))
 
     # train and predict
     committee.fit(X[train_mask], y[train_mask])
@@ -187,7 +189,8 @@ def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kw
     return best_candidates
 
 
-def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kwargs):
+def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committee_samples,
+             **kwargs):
     """ Return the candidate with the largest average KL divergence from the mean.
     
         We first use bagging to train k classifiers. We then choose the candidate
@@ -220,7 +223,7 @@ def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, **kwargs
     """
 
     # check that the max bagging sample is not too big
-    committee.max_samples = min(committee.max_samples, len(y[train_mask]))
+    committee.max_samples = min(committee_samples, len(y[train_mask]))
 
     # train the committee
     committee.fit(X[train_mask], y[train_mask])
@@ -394,7 +397,7 @@ def compute_pool_variance(X, pi, classes, C=1):
 
 
 def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
-                   pool_n, C, **kwargs):
+                   pool_n, C, n_jobs=-1, **kwargs):
     """ Return the candidate that will minimise the expected variance of the predictions.
 
         Parameters
@@ -414,10 +417,9 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
             The index of the best candidate.
     """
     
-    train_mask_plus = train_mask.copy()
     classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    candidate_size = np.sum(train_mask_plus)
+    candidate_size = np.sum(train_mask)
     n_features = X.shape[1]
     variance = np.empty(len(candidate_mask))
     variance[:] = np.inf
@@ -431,38 +433,45 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     # construct the sample pool (used to estimate the variance)
     unlabelled_indices = np.where(-train_mask)[0]
     pool_indices = permutation(unlabelled_indices)[:pool_n]
-    pool_mask = np.zeros(pool_size, dtype=bool)
+    pool_mask = np.zeros(len(candidate_mask), dtype=bool)
     pool_mask[pool_indices] = True
 
     # let's look at each candidate
     candidate_indices = np.where(candidate_mask)[0]
-    for i, index in enumerate(candidate_indices):
 
-        # add the candidate the to training set
-        assert train_mask_plus[index] == False
-        train_mask_plus[index] = True
+    results = Parallel(n_jobs=n_jobs)(delayed(_parallel_variance_estimate)(
+        X, y.copy(), train_mask.copy(), pool_mask,
+        clone(classifier_plus), classes, n_classes, probs, i, index, C)
+        for i, index in enumerate(candidate_indices))
 
-        # store the true class away (no peeking allowed)
-        true_class = y[index]
-
-        # assume a label and compute variance
-        potential_variance = np.zeros(n_classes)
-        for cls_idx, cls in enumerate(classes):
-            y[index] = cls
-            classifier_plus.fit(X[train_mask_plus], y[train_mask_plus])
-            pi = classifier_plus.predict_proba(X[pool_mask])
-            potential_variance[cls_idx] = compute_pool_variance(X[pool_mask], pi, classes, C)
-
-        # restore the training set and the true class of the candidate
-        train_mask_plus[index] = False
-        y[index] = true_class
-
-        # calculate expected variance and save result
-        variance[index] = np.dot(probs[i], potential_variance)
+    indices, expected = zip(*results)
+    indices, expected = np.asarray(indices), np.asarray(expected)
+    assert not np.isnan(expected).any(), 'Some expected values are undefined.'
+    variance[indices] = expected
 
     # pick the candidate with the smallest expected variance
     best_candidates = np.argsort(variance)[:n_candidates]
     return best_candidates
+
+
+def _parallel_variance_estimate(X, y, train_mask, pool_mask, classifier,
+    classes, n_classes, probs, i, index, C):
+    """ Helper function. """
+
+    # assume a label and compute entropy
+    potential_variance = np.zeros(n_classes)
+    train_mask[index] = True
+    for cls_idx, cls in enumerate(classes):
+        y[index] = cls
+        classifier.fit(X[train_mask], y[train_mask])
+        pi = classifier.predict_proba(X[pool_mask])
+        potential_variance[cls_idx] = compute_pool_variance(X[pool_mask], pi, classes, C)
+
+    # calculate expected entropy and save result
+    expected = np.dot(probs[i], potential_variance)
+
+    return index, expected
+
 
 
 def compute_pool_entropy(pi):
@@ -479,11 +488,11 @@ def compute_pool_entropy(pi):
             The estimated entropy on the pool.
     """
 
-    return -np.sum(pi * np.log(pi))
+    return np.nan_to_num(-np.sum(pi * np.log(pi)))
 
 
 def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
-                   pool_n, **kwargs):
+                   pool_n, n_jobs=-1, **kwargs):
     """ Return the candidate that will minimise the expected entropy of the predictions.
 
         Parameters
@@ -503,10 +512,9 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
             The index of the best candidate.
     """
     
-    train_mask_plus = train_mask.copy()
     classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    candidate_size = np.sum(train_mask_plus)
+    candidate_size = np.sum(train_mask)
     n_features = X.shape[1]
     entropy = np.empty(len(candidate_mask))
     entropy[:] = np.inf
@@ -520,35 +528,42 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     # construct the sample pool (used to estimate the entropy)
     unlabelled_indices = np.where(-train_mask)[0]
     pool_indices = permutation(unlabelled_indices)[:pool_n]
-    pool_mask = np.zeros(pool_size, dtype=bool)
+    pool_mask = np.zeros(len(candidate_mask), dtype=bool)
     pool_mask[pool_indices] = True
 
     # let's look at each candidate
     candidate_indices = np.where(candidate_mask)[0]
-    for i, index in enumerate(candidate_indices):
 
-        # add the candidate the to training set
-        assert train_mask_plus[index] == False
-        train_mask_plus[index] = True
+    results = Parallel(n_jobs=n_jobs)(delayed(_parallel_entropy_estimate)(
+        X, y.copy(), train_mask.copy(), pool_mask,
+        clone(classifier_plus), classes, n_classes, probs, i, index)
+        for i, index in enumerate(candidate_indices))
 
-        # store the true class away (no peeking allowed)
-        true_class = y[index]
+    indices, expected = zip(*results)
+    indices, expected = np.asarray(indices), np.asarray(expected)
+    assert not np.isnan(expected).any(), 'Some expected values are undefined.'
 
-        # assume a label and compute entropy
-        potential_entropy = np.zeros(n_classes)
-        for cls_idx, cls in enumerate(classes):
-            y[index] = cls
-            classifier_plus.fit(X[train_mask_plus], y[train_mask_plus])
-            pi = classifier_plus.predict_proba(X[pool_mask])
-            potential_entropy[cls_idx] = compute_pool_entropy(pi)
-
-        # restore the training set and the true class of the candidate
-        train_mask_plus[index] = False
-        y[index] = true_class
-
-        # calculate expected entropy and save result
-        entropy[index] = np.dot(probs[i], potential_entropy)
+    entropy[indices] = expected
 
     # pick the candidate with the smallest expected entropy
     best_candidates = np.argsort(entropy)[:n_candidates]
     return best_candidates
+
+
+def _parallel_entropy_estimate(X, y, train_mask, pool_mask, classifier,
+    classes, n_classes, probs, i, index):
+    """ Helper function. """
+
+    # assume a label and compute entropy
+    potential_entropy = np.zeros(n_classes)
+    train_mask[index] = True
+    for cls_idx, cls in enumerate(classes):
+        y[index] = cls
+        classifier.fit(X[train_mask], y[train_mask])
+        pi = classifier.predict_proba(X[pool_mask])
+        potential_entropy[cls_idx] = compute_pool_entropy(pi)
+
+    # calculate expected entropy and save result
+    expected = np.dot(probs[i], potential_entropy)
+
+    return index, expected

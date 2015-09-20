@@ -54,7 +54,7 @@ $$\big( A_i \mid C_{ii} \big) \sim Beta \big( 1 + C_{ii}, 1 + m_i - C_{ii} \big)
 :py\~mclearn.performance.get\_beta\_parameters is a helper function that
 extracts the beta paremeters form a confusion matrix.
 
-### Convultion
+### Convolution
 
 One way to define the balanced accuracy $A$ is to take the average of
 the individual accuracy rates $A_i$:
@@ -88,16 +88,24 @@ However we're interested in the average of the accuracy rates,
 $A = \dfrac{1}{k} \sum_i A_i = \dfrac{1}{k} A_T$. We can rewrite the pdf
 of $A$ as:
 
-$$F_A (a) &= \mathbb{P} (A \leq a) \\
+$$
+\begin{align}
+F_A (a) &= \mathbb{P} (A \leq a) \\
          &= \mathbb{P}\bigg( \dfrac{1}{k} \sum_i A_i \leq a \bigg) \\
          &= \mathbb{P}\bigg( \sum_i A_i \leq ka \bigg) \\
-         &= F_{A_T}(ka)$$
+         &= F_{A_T}(ka)
+\end{align}
+$$
 
-Differnetiating with respect to $a$, we'd get:
+Differentiating with respect to $a$, we'd get:
 
-$$f_A(a) &= \dfrac{\partial}{\partial a} F_A(a) \\
+$$
+\begin{align}
+f_A(a) &= \dfrac{\partial}{\partial a} F_A(a) \\
         &= \dfrac{\partial}{\partial a} F_{A_T}(ka) \\
-        &= k \cdot f_{A_T} (ka)$$
+        &= k \cdot f_{A_T} (ka)
+\end{align}
+$$
 
 See :py\~mclearn.performance.beta\_avg\_pdf for the implementation.
 

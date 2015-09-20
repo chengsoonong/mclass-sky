@@ -67,12 +67,13 @@ $$E_{B-V} = \dfrac{A_r}{2.751}$$
 
 We now need to remap the $E_{B-V}$ scale:
 
-$$E_{B-V} \in [0,0.04]
-     &\rightarrow E'_{B-V} = E_{B-V} \\
- E_{B-V} \in [0.04,0.08]
-     &\rightarrow   E'_{B-V} = E_{B-V} + 0.5 * (E_{B-V} - 0.04) \\
- E_{B-V} \in [0.08,+\infty]
-     &\rightarrow E'_{B-V} = E_{B-V} + 0.02$$
+$$
+\begin{align}
+E_{B-V} \in [0,0.04]&\rightarrow E'_{B-V} = E_{B-V} \\
+E_{B-V} \in [0.04,0.08]&\rightarrow E'_{B-V} = E_{B-V} + 0.5 * (E_{B-V} - 0.04) \\
+E_{B-V} \in [0.08,+\infty]&\rightarrow E'_{B-V} = E_{B-V} + 0.02
+\end{align}
+$$
 
 This allows us to calculate the W14 estimates:
 

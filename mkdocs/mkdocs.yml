@@ -1,0 +1,12 @@
+site_name: mclearn
+repo_url: https://github.com/alasdairtran/mclearn
+pages:
+    - Home: index.md
+    - Getting Started: getting_started.md
+    - Photometry: photometry.md
+    - Preprocessing: preprocessing.md
+    - Performance: performance.md
+    - Active Learner: active_learner.md
+    - Visualization: viz.md
+    - API: api.md
+theme: readthedocs

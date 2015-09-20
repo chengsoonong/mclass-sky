@@ -10,5 +10,6 @@ using mkdocs.
    ```
    $$\begin{align}...\end{align}$$
    ```
+
 ##Todo:
 1. Autogenerate API documentation from docstrings, like Sphinx does.

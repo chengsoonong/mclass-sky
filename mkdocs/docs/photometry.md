@@ -61,7 +61,7 @@ $$A_u = E_{B-V} * 5.155 \\
 
 ### W14 Correction Set
 
-In the most recent correction set from [W2014]\_, we again start with
+In the most recent correction set from W2014[^W2014], we again start with
 
 $$E_{B-V} = \dfrac{A_r}{2.751}$$
 
@@ -85,3 +85,5 @@ $$A''_u = E'_{B-V} * 4.305 \\
 
 **References**
 
+[^W2014]: Wolf, Christian. "Milky Way dust extinction measured with
+QSOs".[arXiv:1410.0109 `[astro-ph.GA]`](http://arxiv.org/abs/1410.0109)

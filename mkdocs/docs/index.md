@@ -1,25 +1,19 @@
-Documentation of mclearn
-========================
+MCLearn
+===============
 
-**Multiclass Active Learning Algorithms with Application in Astronomy.**
+Introduction
+------------
 
-Author
-:   [Alasdair Tran](http://alasdairtran.com)
+**mclearn** is a Python package that implement selected multiclass
+active learning algorithms, with a special focus in astronomical data.
 
-License
-:   This package is distributed under a a 3-clause ("Simplified" or
-    "New") BSD license.
+Installation
+------------
 
-Source
-:   [](https://github.com/alasdairtran/mclearn)
+The presequisites are Python 3.4, numpy, pandas, matplotlib, and
+scikit-learn. To install using pip:
 
-Contents
---------
+    pip install mclearn
 
-Indices and tables
-------------------
-
--   genindex
--   modindex
--   search
-
+Example Notebooks
+-----------------

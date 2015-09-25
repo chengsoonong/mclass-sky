@@ -411,6 +411,9 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
         pool_sample_size : int
             The size of the sample which will be used to estimate the variance/entropy.
 
+        n_jobs : int
+            The number of parallel jobs (-1 if want to use all cores)
+
         Returns
         -------
         best_candidate : int
@@ -505,6 +508,9 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
 
         pool_n : int
             The size of the sampel pool used in estimating the entropy
+
+        n_jobs : int
+            The number of parallel jobs (-1 if want to use all cores)
 
         Returns
         -------

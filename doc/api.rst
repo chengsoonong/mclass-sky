@@ -7,9 +7,6 @@ parameters and the return type of each function.
 If this is the first time you're using mclearn, you might like to
 instead go through the User Guide for an in-depth explanation of the algorithms.
 
-As a convenience, all functions listed below can be accessed directly from the
-top-level module.
-
 
 Classifiers
 --------------------------------
@@ -42,7 +39,9 @@ Active Learner
     :nosignatures:
     :toctree: generated/
 
-    active_learn
+    BaseActive
+    ActiveLearner
+    ActiveBandit
     run_active_learning_with_heuristic
     active_learning_experiment
 
@@ -122,7 +121,6 @@ Data Preprocessing
     normalise_z
     normalise_unit_var
     normalise_01
-    draw_random_sample
     balanced_train_test_split
     csv_to_hdf
 

@@ -1,0 +1,64 @@
+%%
+%% Template appendix.tex
+%%
+
+\appendix
+
+\chapter{How to Obtain the Datasets}
+\label{cha:datasets}
+
+Testing the display of SQL code:
+
+\begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
+SELECT
+	p.ra, p.dec,
+	CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
+				 WHEN 'STAR' THEN 'Star'
+				 WHEN 'QSO' THEN 'Quasar'
+				 END AS class,
+	s.subclass,
+	s.z AS redshift,
+	s.zErr AS redshiftErr,
+	s.zWarning,
+	p.psfMag_u, p.psfMagErr_u,
+	p.psfMag_g, p.psfMagErr_g,
+	p.psfMag_r, p.psfMagErr_r,
+	p.psfMag_i, p.psfMagErr_i,
+	p.psfMag_z, p.psfMagErr_z,
+	p.petroMag_u, p.petroMagErr_u,
+	p.petroMag_g, p.petroMagErr_g,
+	p.petroMag_r, p.petroMagErr_r,
+	p.petroMag_i, p.petroMagErr_i,
+	p.petroMag_z, p.petroMagErr_z,
+	p.extinction_u, p.extinction_g, p.extinction_r,
+	p.extinction_i, p.extinction_z,
+	p.petroRad_r, p.petroRadErr_r
+
+FROM PhotoObj AS p
+	LEFT JOIN SpecObj AS s
+	ON s.bestobjid = p.objid
+\end{minted}
+
+
+\chapter{Guide to Using mclearn}
+\label{cha:mclearn}
+
+\section{Installation}
+\label{sec:installation}
+
+\section{Usage and Examples}
+\label{sec:usage}
+
+
+\chapter{Vectorisation of the Variance Estimation}
+\label{cha:vectorise}
+
+In estimating the variance of the unlabelled pool, there are two matrices we wish to compute...
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "thesis"
+%%% End: 

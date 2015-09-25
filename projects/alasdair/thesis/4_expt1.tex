@@ -1,0 +1,64 @@
+%%
+%% Template chap2.tex
+%%
+
+\chapter{Experiment 1: Learning with Random Sampling}
+\label{cha:expt1}
+
+
+
+\section{Experimental Protocol}
+\label{sec:protocol1}
+
+%To do: Scikit-learn \cite{pedregosa11}
+
+
+\section{Results and Discussion}
+\label{sec:results1}
+
+\subsection{Colour Indices and Feature Selection}
+
+\subsection{Comparison of Reddening Correction Sets}
+
+\subsection{Learning Curves with Random Sampling}
+
+\subsection{Class Proportion Estimation}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/learning_curves}
+	\caption{Learning curves with random sampling.}
+	\label{fig:learning}
+\end{figure}
+
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/map_prediction_forest_galaxies}
+		\caption{Distribution of galaxies.}
+		\label{fig:random1}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/map_prediction_forest_stars}
+		\caption{Distribution of stars.}
+		\label{fig:random2}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/map_prediction_forest_quasars}
+		\caption{Distribution of quasars.}
+		\label{fig:random3}
+	\end{subfigure}
+	\caption{Map of predicted labels using random forest.}
+	\label{fig:random}
+\end{figure}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "thesis"
+%%% End: 

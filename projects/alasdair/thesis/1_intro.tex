@@ -1,0 +1,73 @@
+%%
+%% Template intro.tex
+%%
+
+\chapter{Introduction}
+\label{cha:intro}
+The night sky has always been a source of wonder throughout history. Even before the Age of
+Science, we used our built-in pattern recognition and tried to assign a purpose to
+the cosmos with stories of gods and the supernatural. Then came the Ancient Greeks who brought
+mathematics to astronomy and sought a more rational explanation of celestial bodies.
+But we could only discover so much with our naked eyes. It was not until the invention
+of new technology during the Scientific Revolution like the telescope that we began to
+make significantly more progress. And yet, 400 years after Galileo made the first working
+telescope, most of the sky still remains unknown to us.
+
+This, however, is starting to change. The Sloan Digital Sky Survey (SDSS) began
+in 2000 and has since obtained 800 million sets of photometric measurements
+and 3 million spectra of the northern sky. Similar projects are going on
+to map the southern sky including the VST-ATLAS. We now face another challenge of how
+to analyse this huge amount of data. Fortunately, we can bring machine learning
+to astronomy and let the computer to do the pattern recognition task.
+This thesis is an attempt to study a small part of the interaction between these
+two disciplines.
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section{Contributions}
+\label{sec:contributions}
+The main contribution of the thesis is an investigation of Thompson sampling to automatically
+select the optimal active learning heuristic. Along the way, we compare three competing sets
+of reddening corrections and see which one is best at estimating dust extinction.
+We also present an extension of the
+posterior balanced accuracy rate to the multi-class setting, which will be used to evaluate
+the performance of our algorithms.
+
+An important part of this project involves creating an
+open-source, extendable, and well-documented Python package that allows astronomers to perform active learning
+routines and make quick visualisations of photometric data. The package and
+reproducible code of all experiments are available on the project's GitHub repository\footnote{
+	\url{https://github.com/alasdairtran/mclearn}}.
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section{Thesis Outline}
+\label{sec:orgnisation}
+The thesis consists of four main chapters, two of which are dedicated to a discussion of ideas and
+the other two focus on the experiments:
+	\begin{itemize}
+		\item Chapter \ref{cha:astro} introduces the reader to the tools that astronomers use
+		to map the sky. This includes important concepts like photometry, magnitudes, and the
+		celestial coordinate system. We also give a brief overview of two datasets, SDSS and
+		VST-ATLAS, that are used in our experiments.
+		
+		\item Chapter \ref{cha:ml} surveys the relevant literature in active learning. This leads
+		to  a discussion of the multi-arm bandit problem and the use of Thompson sampling to a
+		setting where each bandit arm is an active learning heuristic. We end the chapter with a 
+		derivation of various performance measures.
+		
+		\item Chapter \ref{cha:expt1} and \ref{cha:expt2} test the ideas discussed so far in a
+		series of experiments on the SDSS and the VST-ATLAS datasets. A detailed protocol and a
+		thorough discussion of the results are given for each experiment. In particular, we offer
+		insights into the areas where Thompson sampling outperforms random sampling and where it
+		underperforms. 
+	\end{itemize}
+For those interested in reproducing the experiments and applying the ideas in this thesis
+to their own datasets, the Appendix includes a guide on how to install and use the accompanying
+Python package \texttt{mclearn}. We also provide information on how to obtain the SDSS dataset
+with SQL queries.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "thesis"
+%%% End: 

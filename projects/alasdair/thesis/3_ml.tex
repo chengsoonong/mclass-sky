@@ -1,20 +1,49 @@
+
 %%
 %% Template chap2.tex
 %%
 
-\chapter{Active Learning}
-\label{cha:secondexp}
+\chapter{Photometric Classification}
+\label{cha:ml}
+
+For each object, we are given a number of photometric features (11 in the SDSS and 5 in the 
+VST-ATLAS). Only some of these objects have been labelled by an expert. Let us call these
+the training data. In the most basic
+classification task, we would like to use this expert labelling, or the training set, to generalise this to other unlabelled data. This is the core idea of machine learning.
+
+\section{Classifiers}
+\label{sec:machine}
+
+\subsection{Random Forest}
+
+\subsection{Logistic Regression}
+
+\subsection{Support Vector Machines}
 
 
-\section{Disagreement-Based Heuristics}
+\section{Classification in Astronomy}
+To do: survey similar work like spectral classification with neural networks \cite{hala14} and
+SVM classification of the SDSS \cite{elting08}
+
+\section{Active Learning}
+
+To do: write some background on active learning \cite{hanneke14}
+
+\subsection{Disagreement-based Heuristics}
+To do: write about the four heuristics discussed in \cite{schein07}. Also margin-based method
+provides an exponential improvement \cite{balcan12}
 
 
-\section{Pool-Based Heuristics}
+\subsection{Pool-based Heuristics}
+To do: there are two pool-based heuristics: estimating the variance or the entropy of the
+unlabelled pool.
 
 
 
+\section{Thompson Sampling}
 
-\section{Bandit Active Learning}
+To do: apply Thompson sampling to drifting rewards \cite{gupta11}
+
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
@@ -68,8 +97,9 @@ will also follow a Beta distribution, now with parameters
 
 Recall that our goal is to have a balanced accuracy rate, $A$, that puts an equal
 weight in each class. This can be achieved by taking the average of all the class accuracy rates:
-	\begin{IEEEeqnarray*}{lClCl}
-		A &=& \frac{1}{k} \sum_{i=1}^k A_i &=& \frac{1}{k} A_T
+	\begin{IEEEeqnarray*}{lCl}
+		A &=& \frac{1}{k} \sum_{i=1}^k A_i \\
+		&=& \frac{1}{k} A_T
 	\end{IEEEeqnarray*}
 Here we have defined $A_T$ to be the sum of the individual accuracy rates.
 We call  $(A \mid \bm{c})$ the posterior balanced accuracy rate, where
@@ -77,7 +107,7 @@ $\bm{c} =(c_1,...,c_k)$.
 Most of the time, we simply want to calculate its expected value:
 	\begin{IEEEeqnarray*}{lCl}
 		\E{A \given \bm{c}} &=& \frac{1}{k} \, \E{A_T \given \bm{c}} \\
-							   &=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{c}}(a) \, da
+		&=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{c}}(a) \, da
 	\end{IEEEeqnarray*}
 Note that there is no closed form solution for the PDF $f_{A_T \mid \bm{c}}(a)$.
 However assuming that $A_T$ is a sum of $k$ independent Beta random variables,
@@ -88,19 +118,21 @@ construct confidence intervals and do hypothesis tests. To get an expression for
 let us first rewrite the CDF as
 	\begin{IEEEeqnarray*}{lCl}
 		F_{A\mid \bm{c}}(a) &=& \Prob{A \leq a \mid \bm{c}} \\
-		       &=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{c}} \\
-		       &=& \Prob{A_T \leq ka \given \bm{c}} \\
-		       &=& F_{A_T \mid \bm{c}}(ka) \IEEEyesnumber \label{eqn:CDF}
+		&=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{c}} \\
+		&=& \Prob{A_T \leq ka \given \bm{c}} \\
+		&=& F_{A_T \mid \bm{c}}(ka) \IEEEyesnumber \label{eqn:CDF}
 	\end{IEEEeqnarray*}
 
 Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{c})$:
 	\begin{IEEEeqnarray*}{lCl}
 		f_{A \mid \bm{c}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{c}}(ka) \\
-		       &=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{c}}(ka) \\
-		       &=& k \cdot f_{A_T \mid \bm{c}}(ka)
+		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{c}}(ka) \\
+		&=& k \cdot f_{A_T \mid \bm{c}}(ka)
 	\end{IEEEeqnarray*}
 
 \subsection{Recall and Precision}
+
+
 
 %%% Local Variables: 
 %%% mode: latex

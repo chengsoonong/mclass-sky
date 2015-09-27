@@ -205,7 +205,7 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, ax=
 
 def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsize=100,
     milky_way=True, C=None, reduce_C_function=np.mean, vmin=0, vmax=1500, mincnt=1,
-    cmap=plt.cm.bone_r, axisbg='white', colorbar=True, labels=False, ax=None):
+    cmap=plt.cm.bone_r, axisbg='white', colorbar=True, labels=False, norm=None, ax=None):
     """ Plot the density of objects on a hex map.
 
         Parameters
@@ -290,8 +290,9 @@ def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsi
     # plot data on map
     if not ax:
         ax = plt.gca(projection=projection, axisbg=axisbg)
-    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), gridsize=gridsize, cmap=cmap, mincnt=mincnt,
-                           zorder=-1, vmin=vmin, vmax=vmax, C=C, reduce_C_function=reduce_C_function)
+    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), gridsize=gridsize, cmap=cmap,
+                           mincnt=mincnt, zorder=-1, vmin=vmin, vmax=vmax, C=C, norm=norm,
+                           reduce_C_function=reduce_C_function)
     if colorbar:
         plt.gcf().colorbar(hex_quasar)
 

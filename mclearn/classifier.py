@@ -28,7 +28,7 @@ from .viz import (plot_validation_accuracy_heatmap, reshape_grid_socres, plot_he
 def train_classifier(data, feature_names, class_name, train_size, test_size, output='',
     random_state=None, coords=True, recall_maps=True, classifier=None, correct_baseline=None,
     balanced=True, returns=['correct_boolean', 'confusion_test'], report=True,
-    pickle_path=None):
+    pickle_path=None, fig_dir=''):
     """ Standard classifier routine.
 
         Parameters
@@ -108,7 +108,7 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
 
     correct_boolean, confusion_test = print_classification_result(X_train, X_test, y_train,
-        y_test, report, recall_maps, classifier, correct_baseline, coords_test, output)
+        y_test, report, recall_maps, classifier, correct_baseline, coords_test, output, fig_dir)
 
 
     if pickle_path:
@@ -127,7 +127,8 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
 
 def print_classification_result(X_train, X_test, y_train, y_test, report=True,
-    recall_maps=True, classifier=None, correct_baseline=None, coords_test=None, output=''):
+    recall_maps=True, classifier=None, correct_baseline=None, coords_test=None, output='',
+    fig_dir=''):
     """ Train the specified classifier and print out the results.
 
         Parameters
@@ -201,17 +202,54 @@ def print_classification_result(X_train, X_test, y_train, y_test, report=True,
         if correct_baseline is None:
             print('Recall Maps of Galaxies, Stars, and Quasars, respectively:')
             plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
-                correct_boolean, vmin=0.7, vmax=1, mincnt=None, cmap=plt.cm.YlGn)
+                correct_boolean, vmin=0.7, vmax=1, mincnt=None, cmap=plt.cm.YlGn, fig_dir=fig_dir)
         else:
             print('Recall Improvement Maps of Galaxies, Stars, and Quasars, respectively:')
             correct_diff = correct_boolean.astype(int) - correct_baseline.astype(int)
             plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
-                correct_diff, vmin=-0.2, vmax=+0.2, mincnt=20, cmap=plt.cm.RdBu)
+                correct_diff, vmin=-0.1, vmax=+0.1, mincnt=20, cmap=plt.cm.RdBu, fig_dir=fig_dir)
 
     return correct_boolean, confusion_test
 
 
-def learning_curve(data, feature_cols, target_col, classifier, train_sizes, test_sizes=200000,
+def learning_curve(classifier, X, y, cv, sample_sizes,
+    degree=1, pickle_path=None, verbose=True):
+    """ Learning curve
+    """
+
+    learning_curves = []
+    for i, (train_index, test_index) in enumerate(cv):
+        X_train = X[train_index]
+        X_test = X[test_index]
+        y_train = y[train_index]
+        y_test = y[test_index]
+
+        if degree > 1:
+            poly = PolynomialFeatures(degree=degree, interaction_only=False, include_bias=True)
+            X_train = poly.fit_transform(X_train)
+            X_test = poly.transform(X_test)
+
+        lc = []
+        for sample in sample_sizes:
+            classifier.fit(X_train[:sample], y_train[:sample])
+
+            # apply classifier on test set
+            y_pred = classifier.predict(X_test)
+            confusion = metrics.confusion_matrix(y_test, y_pred)
+            lc.append(balanced_accuracy_expected(confusion))
+
+        learning_curves.append(lc)
+        if verbose: print(i, end=' ')
+    
+    # pickle learning curve
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(learning_curves, f, protocol=4)
+    if verbose: print()
+
+
+
+def learning_curve_old(data, feature_cols, target_col, classifier, train_sizes, test_sizes=200000,
     random_state=None, balanced=True, normalise=True, degree=1, pickle_path=None):
     """ Compute the learning curve of a classiifer.
 
@@ -318,12 +356,6 @@ def compute_all_learning_curves(data, feature_cols, target_col):
     # define the range of the sample sizes
     sample_sizes = np.concatenate((np.arange(100, 1000, 100), np.arange(1000, 10000, 1000),
                                              np.arange(10000, 100001, 10000), [200000, 300000]))
-    sample_sizes_per_class = (sample_sizes / 3).astype(int)
-
-    # due to limited memory, we need to stop earlier when using polynomial kernel of degree 3
-    sample_sizes_small = np.concatenate((np.arange(100, 1000, 100), np.arange(1000, 10000, 1000),
-                                             np.arange(10000, 40000, 10000)))
-    sample_sizes_small_per_class = (sample_sizes_small / 3).astype(int)
 
     # initialise the classifiers
     svm_rbf = SVC(kernel='rbf', gamma=0.01, C=100, cache_size=2000)
@@ -334,27 +366,27 @@ def compute_all_learning_curves(data, feature_cols, target_col):
     forest = RandomForestClassifier(n_estimators=100, n_jobs=-1, class_weight='auto', random_state=21)
 
     # train SVM with RBF kernel (this will take a few hours)
-    lc_svm_rbf = learning_curve(data, feature_cols, target_col, svm_rbf, sample_sizes_small_per_class, random_state=2,
+    lc_svm_rbf = learning_curve(data, feature_cols, target_col, svm_rbf, sample_sizes, random_state=2,
         normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_rbf.pickle')
 
     # train SVM with polynomial kernel of degree 2
-    lc_svm_poly_2 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes_small_per_class, degree=2,
+    lc_svm_poly_2 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes, degree=2,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_poly_2.pickle')
 
     # train SVM with polynomial kernel of degree 3
-    lc_svm_poly_3 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes_small_per_class, degree=3,
+    lc_svm_poly_3 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes, degree=3,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_poly_3.pickle')
 
     # train logistic regression with polynomial kernel of degree 2
-    lc_logistic_2 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes_small_per_class, degree=2,
+    lc_logistic_2 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes, degree=2,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_logistic_2.pickle')
 
     # train logistic regression with polynomial kernel of degree 3
-    lc_logistic_3 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes_small_per_class, degree=3,
+    lc_logistic_3 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes, degree=3,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_logistic_3.pickle')
 
     # train a random forest
-    lc_forest = learning_curve(data, feature_cols, target_col, forest, sample_sizes_small_per_class,
+    lc_forest = learning_curve(data, feature_cols, target_col, forest, sample_sizes,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_forest.pickle')
 
 

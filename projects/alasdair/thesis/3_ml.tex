@@ -6,24 +6,103 @@
 \chapter{Photometric Classification}
 \label{cha:ml}
 
-For each object, we are given a number of photometric features (11 in the SDSS and 5 in the 
-VST-ATLAS). Only some of these objects have been labelled by an expert. Let us call these
-the training data. In the most basic
-classification task, we would like to use this expert labelling, or the training set, to generalise this to other unlabelled data. This is the core idea of machine learning.
+Spectroscopy is expensive but it is an effective method to do manual classification,
+since spectra contain a lot of information. There has even been attempts to make the process
+more automatic. For example, \citeN{hala14} achieved a 95\% accuracy rate by training
+a convolutional neural network on one-dimensional spectra to classify objects
+into stars, quasars, and galaxies. Even so, it is currently not possible to obtain
+a spectrum of every object, especially faint ones. This means only a small number of objects
+(less than 0.05\% in the SDSS dataset) can be classified this way. For the rest,
+we only have photometric measurements.
+
+Fortunately, the field of machine learning came about to solve this kind of problem.
+In the most basic set-up, we have a set of object, each with some photometric measurements.
+Some of the objects have been spectroscopically classified and these are used as training
+examples. During the training phase, we feed these labelled examples into a classifier,
+which will attempt to form a hypothesis. The labelled examples are of course not perfect, and so
+the goal in machine learning is to capture as much of the underlying trend in the data as possible,
+while avoiding fitting the random noise. Once trained, the classifier can then
+be used to predict the classes of the unlabelled objects.
 
 \section{Classifiers}
 \label{sec:machine}
+Three family of classifiers are used in the experiments. They are random forests,
+logistic regression, and support vector machines. Below we give a quick overview of how
+each of them works. We will not implement these algorithms ourselves. Rather we will use
+the scikit-learn \cite{pedregosa11}, which is the most well-known machine learning package
+in Python. 
 
 \subsection{Random Forest}
+Building a decision tree is like playing the a game of Twenty Questions. We start with the
+whole training set and at each step, we slice the data along the axis of one feature. We
+keep doing this until all the subsets contain data from only one class. There are many
+criteria that we can use to decide on which feature and where we slice along the axis.
+In this thesis, we use the Gini impurity which measures the potential misclassification
+rate. In particular, let $k$ be the number of classes and $p_D(i)$ be the frequency of objects
+belonging to class $i$ in set $D$. Then the Gini impurity of a $D$ is the 
+probability that a randomly selected object from $D$ is misclassified if it were labelled
+according to its distribution in $D$:
+	\begin{IEEEeqnarray*}{lCl}
+		\iota_G(D) &=& \sum_{i=1}^{k} p_D(i) (1 - p_D(i)) \\
+		           &=& \sum_{i=1}^{k} p_D(i)  - \sum_{i=1}^{k} p_D(i)^2 \\
+		           &=& 1 - \sum_{i=1}^{k} p_D(i)^2
+	\end{IEEEeqnarray*}
+When we split set $D$ into two subsets $D_1$ and $D_2$, the Gini impurity of $D$ is now
+the sum of the individual Gini impurities, weighted by the size of the subsets:
+	\begin{IEEEeqnarray*}{lCl}
+		\iota_G(D) &=& \frac{|D_1|}{|D|} \iota_G(D_1) + \frac{|D_2|}{|D|} \iota_G(D_2)
+	\end{IEEEeqnarray*}
+Observe that if a subset contains objects from only one class, then its Gini impurity would be
+zero. This gives us the following splitting criterion: at each step, slice the data along the
+axis that will result in the greatest drop in the Gini impurity.
+
+One problem with decision trees is that they tend to overfit the data and thus do not generalise
+well. To solve this, we can build many decision trees, thus creating a random forest. For each tree,
+we only give it a small bootstrap sample and at each split, we only consider a small number
+of features. The random forest makes its prediction by simply counting up all the
+predictions of the individual trees and then taking the most popular choice. By averaging
+the predictions, we avoid the problem of overfitting. Another nice
+feature of random forests is that they are extremely fast and hence scale well with large
+datasets. Although they do not provide true probability estimates, we can use the proportion
+of the votes as a proxy of the likelihood that an object is in some particular class. 
 
 \subsection{Logistic Regression}
+If we want to have probability estimates, then logistic regression might be a better option.
+Developed by \citeN{cox58}, the algorithm tries to directly model the probability of 
+being in a class. Let $\bm{x}$ be a vector of features and $\bm{\beta}$ be the vector of 
+coefficients. The linear predictor is defined as
+	\begin{IEEEeqnarray*}{lCl}
+		\eta(\bm{x}) &=& \bm{\beta}^T \bm{x}
+	\end{IEEEeqnarray*}	
+Since probabilities must lie between 0 and 1, we want our predictor to have the same range.
+This can be achieved by wrapping $\eta$ around the logistic function:
+	\begin{IEEEeqnarray*}{lCl}
+		\sigma(\eta(\bm{x})) &=& \frac{1}{1 + e^{-\eta(\bm{x})}}
+	\end{IEEEeqnarray*}
+We can now interpret $\sigma(\eta(\bm{x}))$ as the probability that an object with feature
+vector $\bm{x}$ belonging to the positive class. The goal of the algorithm is to use the
+training data to estimate the coefficient vector $\bm{\beta}$.
+
+There are a few ways to extend this model to the multi-class setting. One option is
+the multinomial logistic regression, where we would need to jointly solve a set of $(k-1)$ 
+binary regressions if we have $k$ classes. In practice, when running the multinomial setting
+in scikit-learn, we do not get reliable probability estimates. This is probably due
+to rounding errors created by the implementation.\footnote{See Figure ~ in
+	Appendix ~ for a plot comparing the learning curves of multinomial with one-vs-rest.}
+A more empirically stable alternative is to use the one-vs-rest strategy, where we run $k$ 
+independent binary regressions. In particular, for class $i$, we pretend that the dataset
+contains only objects from class $i$ and class `not $i$'. We then train the normal logistic model
+on this simplified dataset and we do this $k$ times, one for each class. At the end, we end up
+with $k$ probabilities. These can be interpreted like usual after normalisation.
+
 
 \subsection{Support Vector Machines}
 
-
-\section{Classification in Astronomy}
-To do: survey similar work like spectral classification with neural networks \cite{hala14} and
-SVM classification of the SDSS \cite{elting08}
+Another popular algorithm are support vector machines. \citeN{elting08}, for example, used
+them to find non-linear decision boundaries in the colour space of the SDSS dataset. The idea
+here is to find the decision boundary that can maximise the distance between the boundary and the
+closest data points. Support vector machines are inherently binary classifiers, but
+we still use the one-vs-rest strategy to extend it to the multi-class setting.
 
 \section{Active Learning}
 
@@ -130,7 +209,7 @@ Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \m
 		&=& k \cdot f_{A_T \mid \bm{c}}(ka)
 	\end{IEEEeqnarray*}
 
-\subsection{Recall and Precision}
+\subsection{Recall}
 
 
 

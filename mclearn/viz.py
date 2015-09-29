@@ -106,9 +106,9 @@ def plot_balanced_accuracy_violin(balanced_accuracy_samples, ax=None):
     if not ax:
         ax = plt.gca()
 
-    sns.violinplot(data=balanced_accuracy_samples, ax=ax, inner='box')
+    sns.violinplot(data=balanced_accuracy_samples, ax=ax, inner='box', cut=2)
 
-    format_as_percent_plot = lambda x, pos: "{:.2f}%".format(x * 100)
+    format_as_percent_plot = lambda x, pos: "{:.1f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
 
     return ax
@@ -205,7 +205,7 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, ax=
 
 def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsize=100,
     milky_way=True, C=None, reduce_C_function=np.mean, vmin=0, vmax=1500, mincnt=1,
-    cmap=plt.cm.bone_r, axisbg='white', colorbar=True, labels=False, ax=None):
+    cmap=plt.cm.bone_r, axisbg='white', colorbar=True, labels=False, norm=None, ax=None):
     """ Plot the density of objects on a hex map.
 
         Parameters
@@ -290,8 +290,9 @@ def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsi
     # plot data on map
     if not ax:
         ax = plt.gca(projection=projection, axisbg=axisbg)
-    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), gridsize=gridsize, cmap=cmap, mincnt=mincnt,
-                           zorder=-1, vmin=vmin, vmax=vmax, C=C, reduce_C_function=reduce_C_function)
+    hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), gridsize=gridsize, cmap=cmap,
+                           mincnt=mincnt, zorder=-1, vmin=vmin, vmax=vmax, C=C, norm=norm,
+                           reduce_C_function=reduce_C_function)
     if colorbar:
         plt.gcf().colorbar(hex_quasar)
 
@@ -335,7 +336,7 @@ def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsi
     return ax
 
 def plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
-    correct_boolean, vmin=0, vmax=1, mincnt=None, cmap=plt.cm.YlGn):
+    correct_boolean, vmin=0, vmax=1, mincnt=None, fig_dir='', cmap=plt.cm.YlGn):
     """ Plot the recall map.
 
         Parameters
@@ -387,7 +388,7 @@ def plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
         ax = plot_hex_map(ra, dec, C=C, reduce_C_function=C_func,
              vmin=vmin, vmax=vmax, mincnt=mincnt, cmap=cmap)
 
-        file_name = r'plots/map_recall_' + output + r'_' + class_name + r'.png'
+        file_name = fig_dir + 'map_recall_' + output + r'_' + class_name + r'.png'
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
 

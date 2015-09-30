@@ -7,37 +7,101 @@
 \chapter{How to Obtain the Datasets}
 \label{cha:datasets}
 
-Testing the display of SQL code:
+To get all 800 million objects:
 
 \begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
 SELECT
+p.ra, p.dec,
+CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
+WHEN 'STAR' THEN 'Star'
+WHEN 'QSO' THEN 'Quasar'
+END AS class,
+s.subclass,
+s.z AS redshift,
+s.zErr AS redshiftErr,
+s.zWarning,
+p.psfMag_u, p.psfMagErr_u,
+p.psfMag_g, p.psfMagErr_g,
+p.psfMag_r, p.psfMagErr_r,
+p.psfMag_i, p.psfMagErr_i,
+p.psfMag_z, p.psfMagErr_z,
+p.petroMag_u, p.petroMagErr_u,
+p.petroMag_g, p.petroMagErr_g,
+p.petroMag_r, p.petroMagErr_r,
+p.petroMag_i, p.petroMagErr_i,
+p.petroMag_z, p.petroMagErr_z,
+p.extinction_u, p.extinction_g, p.extinction_r,
+p.extinction_i, p.extinction_z,
+p.petroRad_r, p.petroRadErr_r
+
+FROM PhotoObj AS p
+LEFT JOIN SpecObj AS s
+ON s.bestobjid = p.objid
+\end{minted}
+
+
+Getting the main labelled SDSS dataset:
+
+\begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
+SELECT
+	-- right ascension and declination in degrees
 	p.ra, p.dec,
+	
+	-- class of object, expert opinion (galaxy, star, or quasar)
 	CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
-				 WHEN 'STAR' THEN 'Star'
-				 WHEN 'QSO' THEN 'Quasar'
-				 END AS class,
-	s.subclass,
+	WHEN 'STAR' THEN 'Star'
+	WHEN 'QSO' THEN 'Quasar'
+	END AS class,
+	
+	s.subclass, -- subclass of object
+	
+	-- redshift of object from spectrum with error, expert opnion
 	s.z AS redshift,
 	s.zErr AS redshiftErr,
 	s.zWarning,
+	
+	-- PSF magnitude measurements in 5 bands (ugriz) with error
 	p.psfMag_u, p.psfMagErr_u,
 	p.psfMag_g, p.psfMagErr_g,
 	p.psfMag_r, p.psfMagErr_r,
 	p.psfMag_i, p.psfMagErr_i,
 	p.psfMag_z, p.psfMagErr_z,
+	
+	-- Petrosian magnitude measurements in 5 bands (ugriz) with error
 	p.petroMag_u, p.petroMagErr_u,
 	p.petroMag_g, p.petroMagErr_g,
 	p.petroMag_r, p.petroMagErr_r,
 	p.petroMag_i, p.petroMagErr_i,
 	p.petroMag_z, p.petroMagErr_z,
+	
+	-- extinction values
 	p.extinction_u, p.extinction_g, p.extinction_r,
 	p.extinction_i, p.extinction_z,
+	
+	-- size measurement in r-band in arc seconds
 	p.petroRad_r, p.petroRadErr_r
-
+	
 FROM PhotoObj AS p
-	LEFT JOIN SpecObj AS s
-	ON s.bestobjid = p.objid
+JOIN SpecObj AS s
+ON s.bestobjid = p.objid
+
+WHERE
+	-- only include objects with complete and reasonably accurate data
+	p.psfMagErr_u BETWEEN 0 AND 3
+	AND p.psfMagErr_g BETWEEN 0 AND 3
+	AND p.psfMagErr_r BETWEEN 0 AND 3
+	AND p.psfMagErr_i BETWEEN 0 AND 3
+	AND p.psfMagErr_z BETWEEN 0 AND 3
+	AND p.petroMagErr_u BETWEEN 0 AND 3
+	AND p.petroMagErr_g BETWEEN 0 AND 3
+	AND p.petroMagErr_r BETWEEN 0 AND 3
+	AND p.petroMagErr_i BETWEEN 0 AND 3
+	AND p.petroMagErr_z BETWEEN 0 AND 3
+	AND p.petroRadErr_r BETWEEN 0 AND 3
+	AND s.zErr BETWEEN 0 AND 0.1
+	AND s.zWarning = 0    -- spectrum is ok
 \end{minted}
+
 
 
 \chapter{Guide to Using mclearn}

@@ -17,6 +17,7 @@ we only have photometric measurements.
 
 Fortunately, the field of machine learning came about to solve this kind of problem.
 In the most basic set-up, we have a set of object, each with some photometric measurements.
+These measurements form the feature space $\X$.
 Some of the objects have been spectroscopically classified and these are used as training
 examples. During the training phase, we feed these labelled examples into a classifier,
 which will attempt to form a hypothesis. The labelled examples are of course not perfect, and so
@@ -29,7 +30,7 @@ be used to predict the classes of the unlabelled objects.
 Three family of classifiers are used in the experiments. They are random forests,
 logistic regression, and support vector machines. Below we give a quick overview of how
 each of them works. We will not implement these algorithms ourselves. Rather we will use
-the scikit-learn \cite{pedregosa11}, which is the most well-known machine learning package
+scikit-learn \cite{pedregosa11}, the most well-known machine learning package
 in Python. 
 
 \subsection{Random Forest}
@@ -37,15 +38,15 @@ Building a decision tree is like playing the a game of Twenty Questions. We star
 whole training set and at each step, we slice the data along the axis of one feature. We
 keep doing this until all the subsets contain data from only one class. There are many
 criteria that we can use to decide on which feature and where we slice along the axis.
-In this thesis, we use the Gini impurity which measures the potential misclassification
-rate. In particular, let $k$ be the number of classes and $p_D(i)$ be the frequency of objects
-belonging to class $i$ in set $D$. Then the Gini impurity of a $D$ is the 
+In this thesis, we use the Gini impurity which intuitively measures the potential misclassification
+rate. In particular, let $k$ be the number of classes and $q_D(i)$ be the frequency of objects
+belonging to class $i$ in set $D$. Then the Gini impurity of $D$ is the 
 probability that a randomly selected object from $D$ is misclassified if it were labelled
-according to its distribution in $D$:
+according to its frequency in $D$:
 	\begin{IEEEeqnarray*}{lCl}
-		\iota_G(D) &=& \sum_{i=1}^{k} p_D(i) (1 - p_D(i)) \\
-		           &=& \sum_{i=1}^{k} p_D(i)  - \sum_{i=1}^{k} p_D(i)^2 \\
-		           &=& 1 - \sum_{i=1}^{k} p_D(i)^2
+		\iota_G(D) &=& \sum_{i=1}^{k} q_D(i) (1 - q_D(i)) \\
+		           &=& \sum_{i=1}^{k} q_D(i)  - \sum_{i=1}^{k} q_D(i)^2 \\
+		           &=& 1 - \sum_{i=1}^{k} q_D(i)^2
 	\end{IEEEeqnarray*}
 When we split set $D$ into two subsets $D_1$ and $D_2$, the Gini impurity of $D$ is now
 the sum of the individual Gini impurities, weighted by the size of the subsets:
@@ -67,7 +68,7 @@ datasets. Although they do not provide true probability estimates, we can use th
 of the votes as a proxy of the likelihood that an object is in some particular class. 
 
 \subsection{Logistic Regression}
-If we want to have probability estimates, then logistic regression might be a better option.
+If we want to have true probability estimates, then logistic regression might be a better option.
 Developed by \citeN{cox58}, the algorithm tries to directly model the probability of 
 being in a class. Let $\bm{x}$ be a vector of features and $\bm{\beta}$ be the vector of 
 coefficients. The linear predictor is defined as
@@ -98,38 +99,188 @@ with $k$ probabilities. These can be interpreted like usual after normalisation.
 
 \subsection{Support Vector Machines}
 
-Another popular algorithm are support vector machines. \citeN{elting08}, for example, used
-them to find non-linear decision boundaries in the colour space of the SDSS dataset. The idea
+Support vector machines, first introduced by \citeN{boser92}, are another popular
+family of algorithms. They have been used in astronomy, for example by \citeN{elting08},
+to find non-linear decision boundaries in the colour space of the SDSS dataset. The idea
 here is to find the decision boundary that can maximise the distance between the boundary and the
 closest data points. Support vector machines are inherently binary classifiers, but
 we still use the one-vs-rest strategy to extend it to the multi-class setting.
 
-\section{Active Learning}
+\section{Overview of Active Learning}
 
-To do: write some background on active learning \cite{hanneke14}
+We now turn our attention to the construction of the training set.
+Getting spectroscopic labels is expensive. So far, when astronomers pick which objects to obtain
+spectra from, not much attention is paid to whether the labelling information can improve
+the performance of the classifiers. To illustrate this, imagine there is a group of objects
+with very similar photometric measurements. We can obtain spectra from all of them and conclude
+that they are all stars. However, a smarter way is to get only one spectrum for labelling and 
+let the classifier generalise to other similar objects. Keeping the size of the training set
+as small as possible while not sacrificing the classifier accuracy is the goal of active
+learning.
 
-\subsection{Disagreement-based Heuristics}
-To do: write about the four heuristics discussed in \cite{schein07}. Also margin-based method
-provides an exponential improvement \cite{balcan12}
+In the active learning setting, the feature space $\X$ is split into two parts. The
+set $\Labelled \subset \X \times \Y$ contains all the examples that have been labelled
+by an expert. All the remaining unlabelled examples form $\Unlabelled \subset \X$.
+The question now is how to select the next training example from $\Unlabelled$. In practical terms, 
+where should we point the telescope to next to obtain a spectrum? To answer this question,
+we need a rule $r(\bm{x})$ that can assign score to each object, based solely on their features. The
+score should reflect the amount of new information we would gain if we were to label the object.
+We will discuss various heuristics in the next section. For now assuming that we have $r(\bm)$,
+we can now pick the example with the highest score and obtain its spectrum. The object
+and its label is then added to the training set and the classifier is retrained.
+
+Algorithm \ref{alg:active} shows the active learning routine in more details.
+
+\algblock[Name]{Start}{End}
+
+\algblockdefx[Forall]{Foreach}{Endforeach}%
+			[1]{\textbf{for each} #1 \textbf{do}}%
+			{\textbf{end for}}
+
+\begin{algorithm}[tbp]
+	\caption{The general active learning algorithm}
+	\label{alg:active}
+	\begin{algorithmic}[1]
+		\Procedure {ActiveLearner}{$\Unlabelled$, $\Labelled$, $h$, $r$ $n$, $t$}
+			\While {$|\Labelled| < n$}
+				\State $E$ $\leftarrow$ random sample of size $t$ from $\Unlabelled$
+				\State $\bm{x}^* \leftarrow \argmax_{\bm{x} \in E} r(\bm{x})$
+				\State $y^* \leftarrow$ ask the expert to label $\bm{x}^*$
+				\State $\Labelled \leftarrow \Labelled  \cup (\bm{x}^*, y^*)$
+				\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}^*$
+				\State $h_\Labelled(\bm{x}) \leftarrow$ retrain the classifier
+			\EndWhile
+			\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
 
 
-\subsection{Pool-based Heuristics}
-To do: there are two pool-based heuristics: estimating the variance or the entropy of the
-unlabelled pool.
+\section{Active Learning Heuristics}
+
+There are many ways to rank the unlabelled objects. We will focus on the three most
+prominent families of heuristics: uncertainty sampling, query by bagging, and classifier
+uncertainty \cite{schein07}. Also margin-based method 
+provides an exponential improvement \cite{balcan12}.
+
+\subsection{Uncertainty Sampling}
+
+Suppose there are $k$ classes. Then one heuristic is to maximise the Shannon entropy:
+	\begin{IEEEeqnarray*}{lCl}
+		r_S(\bm{x}) &=& -\sum_i^k \Prob{y(\bm{x}) = i} \log \big[\Prob{y(\bm{x}) = i} \big]
+	\end{IEEEeqnarray*}
+Let $c^{(1)}$ and $c^{(2)}$ be the two most likely classes for some object $\bm{x}$.
+We define the margin as the difference between these two values. Thus the most uncertain
+example is the one with the smallest margin.
+	\begin{IEEEeqnarray*}{lCl}
+		r_M(\bm{(x)}) &=& -\Big[  \Prob{y(\bm{x}) = c^{(1)}} -  \Prob{y(\bm{x}) = c^{(2)}} \Big]
+	\end{IEEEeqnarray*}
+
+\subsection{Query by Bagging}
+
+And two query by bagging heuristics are tested. The first is picking the candidate with the smallest average margin. We can also pick the candidate with the largest value of the average Kullback-Leibler divergence from the average:
+	\begin{IEEEeqnarray*}{lCl}
+		\dfrac{1}{B} \sum_{b=1}^B \text{KL}(f_b \mid\mid f_\text{avg})
+	\end{IEEEeqnarray*}
+Note that the KL divergence of $Q$ from $P$ is defined as
+	\begin{IEEEeqnarray*}{lCl}
+		D_{\mathrm{KL}}(P\|Q) = \sum_i P(i) \, \ln\frac{P(i)}{Q(i)}
+	\end{IEEEeqnarray*}
+This KL divergence measures the amount of information lost when $Q$ is used to approximate $P$. In the active learning context, $Q$ is the average prediction probability of the committee, while $P$ is the prediction of a particular committee member.
 
 
+\subsection{Variance Minimisation}
+Finally we test two further heuristics. The first one involves picking the candidate that will minimise the variance of the predictions. Using Taylor series approximation, the variance is estimated as $tr(AF^{-1})$ in logistic regression, where $F$ is the Fisher information matrix and $A$ is defined as:
+	\begin{IEEEeqnarray*}{lCl}
+		A &=& \sum_n \sum_c \mathbf{g}_n(c) ~ \mathbf{g}_n(c)^T
+	\end{IEEEeqnarray*}
+where $\mathbf{g}_n(c)$ is the gradient vector. Our implementation involves a vectorised computation of $A$ and $F$.
+
+
+\subsection{Classifier Certainty}
+For the second heuristic, we pick the example that will minimise the expected entropy of the algorithm's prediction. The entropy can be computed as follows:
+	\begin{IEEEeqnarray*}{lCl}
+		CC &=& - \sum_{p \in \text{Pool}} \sum_c p(c \mid \mathbf{x}_p) \log p(c \mid \mathbf{x}_p)
+	\end{IEEEeqnarray*}
+	
+
+
+\section{Multi-arm Bandit}
+To-do: exploration-exploitation trade-off.
 
 \section{Thompson Sampling}
+We now turn our attention to the problem heuristic selection.
+ One of the oldest idea which we will
+study here is Thompson sampling, first introduced by \citeN{thompson33}.
+\citeN{chapelle11} showed that it is a highly effective algorithm and can perform better
+than Upper Confidence Bound, a very popular algorithm that have been studied extensively.
+Algorithm \ref{alg:thompson} shows how Thompson Sampling works in the active learning
+setting.
+
+\begin{algorithm}[tbp]
+	\caption{Thompson Sapmling}
+	\label{alg:thompson}
+	\begin{algorithmic}[1]
+		\Procedure {ThompsonSampling}{$\R$, $\bm{\mu}$, $\bm{\sigma}$, $\bm{\tau}$}
+		\Foreach {$t \in \{1, 2, ..., n\}$}
+			\Foreach {$r \in \R$}
+				\State $W(r) \leftarrow$ draw a sample from $N(\bm{\mu_r}, \bm{\sigma_r})$
+			\Endforeach
+			\State $r^* \leftarrow \argmax_{r \in \R} W(r)$
+			\State Observe reward $w_t$
+			\State Update $\bm{\mu}_{r^*}$
+			\State Update $\bm{\sigma}_{r^*}$
+		\Endforeach
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+We assume the rewards are normally distributed with prior
+	\begin{IEEEeqnarray*}{lCl}
+		\bm{w} \sim N(\bm{\mu}, \sigma \bm{I})
+	\end{IEEEeqnarray*}
+Let us also assume that the likelihood follows a Normal distribution. This means
+that the posterior is also normal:
+	\begin{IEEEeqnarray*}{lCl}
+		(\bm{w}_i \mid \bm{\tau}) \sim N \left(
+			\frac{\bm{\mu}_i \bm{\tau}_i + \delta \bm{\sigma}_i}{\bm{\tau}_i + \bm{\sigma}_i},
+			\frac{\bm{\sigma}_i \bm{\tau}_i}{\bm{\tau}_i + \bm{\sigma}_i}
+			\right)
+	\end{IEEEeqnarray*}
+
+\begin{algorithm}[tbp]
+	\caption{The multi-arm bandit active learning algorithm}
+	\label{alg:bandit}
+	\begin{algorithmic}[1]
+		\Procedure {ActiveBandit}{$\Unlabelled$, $\Labelled$, $h$, $n$, $t$,
+			                      $\R$, $\bm{\mu}$, $\bm{\sigma}$, $\bm{\tau}$}
+		\While {$|\Labelled| < n$}
+		\State $E$ $\leftarrow$ random sample of size $t$ from $\Unlabelled$
+		\Foreach {$r \in \R$}
+			\State $W(r) \leftarrow$ draw a sample from $N(\bm{\mu_r}, \bm{\sigma_r})$
+		\Endforeach
+		\State $r^* \leftarrow \argmax_{r \in \R} W(r)$
+		\State $\bm{x}^* \leftarrow \argmax_{\bm{x} \in E} r^*(\bm{x})$
+		\State $y^* \leftarrow$ ask the expert to label $\bm{x}^*$
+		\State $\Labelled \leftarrow \Labelled  \cup (\bm{x}^*, y^*)$
+		\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}^*$
+		\State $h_\Labelled(\bm{x}) \leftarrow$ retrain the classifier
+		\State $\delta$ $\leftarrow$ change in the balanced accuracy rate 
+		\State Update $\bm{\mu}_{r^*}$
+		\State Update $\bm{\sigma}_{r^*}$
+		\EndWhile
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
 
 To do: apply Thompson sampling to drifting rewards \cite{gupta11}
-
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 \section{Performance Measures}
 \label{sec:measures}
 
-\subsection{Posterior Accuracy Rate}
+\subsection{Posterior Balanced Accuracy Rate}
 Certain astronomical objects are either rarer or more difficult to detect than others.
 In the SDSS labelled set, there are 4.5 times as many galaxies as quasars. The problem
 of class imbalance is even more severe in the VST-ATLAS set, with 11 times more stars than
@@ -149,14 +300,12 @@ that are correctly predicted. Then we define the accuracy rate $A_i$ of class $i
 	\begin{IEEEeqnarray*}{lCl}
 		A_i &=& \frac{C_i}{N_i}
 	\end{IEEEeqnarray*}
-
 Initially we have no information about $C_i$ and $N_i$, so we can assume that each $A_i$ 
 follows a uniform prior from 0 to 1. This is the same as a Beta distribution
 with parameters $\alpha = \beta = 1$:
 	\begin{IEEEeqnarray}{lCl}
 		A_i &\sim& \Beta(1,1) \label{eqn:prior}
 	\end{IEEEeqnarray}
-
 After we have trained the classifier, suppose we have a test set containing $n_i$
 objects in class $i$. Running the classifier on this test set is the same as conducting
 $k$ binomial experiments, where, in the $i$th experiment, the sample size is
@@ -167,13 +316,19 @@ conditional on the accuracy rate, $c_i$ follows a binomial distribution:
 		(c_i \mid A_i) &\sim& \Bin(n_i, A_i) \label{eqn:likelihood}
 	\end{IEEEeqnarray}
 In the Bayesian setting, \eqref{eqn:prior} is the prior and \eqref{eqn:likelihood}
-is the likelihood. In particular, with respect to the binomial likelihood function,
-the Beta distribution is conjugate to itself. Thus the posterior accuracy rate $A_i$
-will also follow a Beta distribution, now with parameters
+is the likelihood. To get the posterior PDF, we simply multiply the prior with the likelihood:
+	\begin{IEEEeqnarray*}{lCl}
+		f_{A_i \mid \bm{c}}(a)
+		&\propto& f_{A_i}(a) \times f_{c_i \mid A_i}(c_i) \\
+		&\propto& a^{1-1}(1-a)^{1-1} \times a^{c_i} (1 - a)^{n_i - c_i} \\
+		&=& a^{1 + c_i - 1}(1-a)^{1 + n_i - c_i - 1}
+	\end{IEEEeqnarray*}
+Thus, with respect to the binomial likelihood function,
+the Beta distribution is conjugate to itself. The posterior accuracy rate $A_i$
+also follows a Beta distribution, now with parameters
 	\begin{IEEEeqnarray*}{lCl}
 		(A_i \mid c_i) &\sim& \Beta(1 + c_i, 1 + n_i - c_i)
 	\end{IEEEeqnarray*}
-
 Recall that our goal is to have a balanced accuracy rate, $A$, that puts an equal
 weight in each class. This can be achieved by taking the average of all the class accuracy rates:
 	\begin{IEEEeqnarray*}{lCl}
@@ -191,6 +346,10 @@ Most of the time, we simply want to calculate its expected value:
 Note that there is no closed form solution for the PDF $f_{A_T \mid \bm{c}}(a)$.
 However assuming that $A_T$ is a sum of $k$ independent Beta random variables,
 $f_{A_T \mid \bm{c}}(a)$ can be approximated by numerically convolving $k$ Beta distributions.
+The independence assumption is reasonable here, since there should be little to no correlation
+between the individual class accuracy rates. Knowing that a classifier is really good
+at recognising stars does not tell us much about how well that classifier can recognise
+galaxies.
 
 Having the knowledge of $f_{A \mid \bm{c}}(a)$ will allow us to make violin plots,
 construct confidence intervals and do hypothesis tests. To get an expression for this,
@@ -201,7 +360,6 @@ let us first rewrite the CDF as
 		&=& \Prob{A_T \leq ka \given \bm{c}} \\
 		&=& F_{A_T \mid \bm{c}}(ka) \IEEEyesnumber \label{eqn:CDF}
 	\end{IEEEeqnarray*}
-
 Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{c})$:
 	\begin{IEEEeqnarray*}{lCl}
 		f_{A \mid \bm{c}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{c}}(ka) \\

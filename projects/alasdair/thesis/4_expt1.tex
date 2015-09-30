@@ -17,20 +17,63 @@
 
 \subsection{Colour Indices and Feature Selection}
 
+
+
+
+
+
 \subsection{Comparison of Reddening Correction Sets}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/violin_reddening_correction}
+	\caption{Comparing the accuracy rates using 4 correction sets.}
+	\label{fig:reddeningviolin}
+\end{figure}
 
 \subsection{Learning Curves with Random Sampling}
 
-\subsection{Class Proportion Estimation}
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/heat_gridsearch_svm_rbf}
+	\caption{Accuracy rate heat map of the hyperparameters of SVM (RBF) for the SDSS.}
+	\label{fig:sdss_heat_rbf}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/heat_gridsearch_svm_poly}
+	\caption{Accuracy rate heat map of the hyperparameters of SVM (Polynomial) for the SDSS.}
+	\label{fig:sdss_heat_poly}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/heat_gridsearch_logistic}
+	\caption{Accuracy rate heat map of the hyperparameters of Logistic Regression for the SDSS.}
+	\label{fig:sdss_heat_logistic}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/heat_vstatlas_vgridsearch_logistic}
+	\caption{Accuracy rate heat map of the hyperparameters of Logistic Regression for the VST ATLAS.}
+	\label{fig:vst_heat_logistic}
+\end{figure}
+
 
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/learning_curves}
-	\caption{Learning curves with random sampling.}
-	\label{fig:learning}
+	\caption{SDSS learning curves with random sampling.}
+	\label{fig:sdss_learning}
 \end{figure}
 
 
+
+
+
+\subsection{Class Proportion Estimation}
 
 \begin{figure}[p]
 	\centering

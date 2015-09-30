@@ -29,6 +29,7 @@ class BaseActive:
         self.verbose = verbose
         self.learning_curve_ = []
         self.h_kwargs = h_kwargs
+        self.candidate_selections = []
 
 
     def _random_sample(self, pool_size, train_mask, sample_size):
@@ -139,6 +140,7 @@ class BaseActive:
 
         # select an initial random sample from the pool and train the classifier
         sample = np.random.choice(np.arange(pool_size), self.initial_n, replace=False)
+        self.candidate_selections += list(sample)
         train_mask[sample] = True
         self.classifier.fit(X_train[train_mask], y_train[train_mask])
         self.current_training_size += len(sample)
@@ -159,6 +161,7 @@ class BaseActive:
 
             # pick the index of the best candidates
             best_candidates = self.select_candidates(X_train, y_train, candidate_mask, train_mask)
+            self.candidate_selections += best_candidates
 
             # retrain the classifier
             train_mask[best_candidates] = True

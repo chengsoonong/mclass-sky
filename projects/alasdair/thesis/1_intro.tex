@@ -25,13 +25,24 @@ two disciplines.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 \section{Contributions}
 \label{sec:contributions}
-The main contribution of the thesis is an investigation of Thompson sampling to automatically
-select the optimal active learning heuristic. Along the way, we compare three competing sets
-of reddening corrections and see which one is best at estimating dust extinction.
-We also present an extension of the
-posterior balanced accuracy rate to the multi-class setting, which will be used to evaluate
-the performance of our algorithms.
-
+The main theme of our thesis is how we can utilise machine learning to improve 
+the current practices in photometric classification. We offer the
+following novel contributions to the discipline:
+	\begin{itemize}
+		\item Using classification accuracy to compare three competing sets of reddening
+		corrections and see which one is best at estimating dust extinction.
+		\item Identifying good photometric features using both well-known machine learning techniques
+		and domain knowledge.
+		\item Applying various classifiers to do photometric classification and studying the
+		pros and cons of each one.
+		\item Bringing active learning to astronomy by applying 7 active learning heuristics
+		to this new domain.
+		\item An investigation of Thompson sampling to automatically select the optimal active
+		learning heuristic.
+		\item An extension of the
+		posterior balanced accuracy rate to the multi-class setting, which will be used to evaluate
+		the performance of our algorithms.
+	\end{itemize}
 An important part of this project involves creating an
 open-source, extendable, and well-documented Python package that allows astronomers to perform active learning
 routines and make quick visualisations of photometric data. The package and

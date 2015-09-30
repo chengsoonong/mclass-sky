@@ -584,10 +584,12 @@ def plot_heuristic_selections(sample_sizes, selections, labels, ax=None):
         ax = plt.gca()
 
     for curve, label in zip(cumulatives, labels):
-        ax.plot(sample_sizes, curve/sample_sizes, label=label)
+        inital_n = sample_sizes[0] - 1
+        n_selections = sample_sizes - inital_n
+        ax.plot(sample_sizes, curve / n_selections, label=label)
 
     ax.set_xlabel('Training Size')
-    ax.set_ylabel('Number of Selections')
+    ax.set_ylabel('Frequency of Selections')
     ax.legend(loc='lower right', frameon=True)
     ax.grid(False)
 

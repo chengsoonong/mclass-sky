@@ -5,24 +5,53 @@
 \chapter{Experiment 1: Learning with Random Sampling}
 \label{cha:expt1}
 
+\section{Preparation of Data}
+
+
+\begin{itemize}
+	\item Preparing the SDSS dataset:
+	 Obtain data from SkyServer via SQL query (see Appendix for code)
+	 \item Preparing the VST ATLAS: Data specifically prepared by Christian Wolf
+	\item Convert data to HDF Table for fast reading
+\end{itemize}
 
 
 \section{Experimental Protocol}
 \label{sec:protocol1}
+
+SDSS Colour Features
+\begin{itemize}
+	\item Convert magnitude features to colours. Reason: remove distance dependence.
+	Use five colours and one r-band magnitudes -- a rule of thumb used by astronomers.
+	Choose r-band since it captures the most light, hence hopefully we have a low
+	signal-to-noise ratio
+\end{itemize}
+Comparing Three sets of reddening correction on SDSS
+\begin{itemize}
+	\item Split into balanced training set (600,000) and test set (300,000).
+	\item Use random forest (fast and accurate) with 300 trees
+	\item Compare recall maps and accuracy rates
+\end{itemize}
+Comparing three families of classifiers: shuffle split with 5 iterations, train size is
+up to 300,000 and test size is 200,000.
+\begin{itemize}
+	\item Random Forest, Logistic Regression, and SVM
+	\item Do a grid search to optimise hyperparameters
+	\item Plot learning curve with random sampling
+	\item Use linear decision boundaries in SVM and Logistic but transform features with
+	degree 2 and 3 polynomial.
+\end{itemize}
+Run random forest on all 2.8 million labelled examples and predict proportion 
+on the 800 million unlabelled data. Corrections are made for the potential misclassification.
 
 
 
 \section{Results and Discussion}
 \label{sec:results1}
 
-\subsection{Colour Indices and Feature Selection}
-
-
-
-
-
-
 \subsection{Comparison of Reddening Correction Sets}
+No significant difference. Will use W14 set for reasons stated in \cite{wolf14}.
+
 
 \begin{figure}[tbp]
 	\centering
@@ -32,6 +61,21 @@
 \end{figure}
 
 \subsection{Learning Curves with Random Sampling}
+Optimal Hyper-parameters for SDSS
+\begin{itemize}
+	\item SVM RBF: $C = 10 000$ and $\gamma = 0.001$.
+	\item SVM Polynomial degree 2 with one-vs-rest strategy, squared hinge loss and L1-norm
+	(giving us sparse solutions) and $C = 0.1$.
+	\item Logistic degree 2 also with one-vs-rest strategy, L1-norm and $C=1$.
+\end{itemize}
+Learning Curves
+\begin{itemize}
+	\item Random forest is the fastest and most accurate
+	\item Degree 3 polynomial transformation offers better results than degree 2, although
+	both do level off after 100,000 examples.
+	\item Logistic degree 3 was stopped early as it took too long to run.
+\end{itemize}
+
 
 \begin{figure}[tbp]
 	\centering
@@ -64,7 +108,7 @@
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=\textwidth]{figures/learning_curves}
+	\includegraphics[width=\textwidth]{figures/learning_curves_sdss_random}
 	\caption{SDSS learning curves with random sampling.}
 	\label{fig:sdss_learning}
 \end{figure}
@@ -74,7 +118,8 @@
 
 
 \subsection{Class Proportion Estimation}
-
+See Figure \ref{fig:forest} for predictions. Show confusion matrix, and
+both uncorrected and corrected values.
 \begin{figure}[p]
 	\centering
 	\begin{subfigure}{\textwidth}
@@ -96,7 +141,7 @@
 		\label{fig:random3}
 	\end{subfigure}
 	\caption{Map of predicted labels using random forest.}
-	\label{fig:random}
+	\label{fig:forest}
 \end{figure}
 
 

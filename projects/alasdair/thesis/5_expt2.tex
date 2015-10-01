@@ -9,10 +9,28 @@
 \section{Experimental Protocol}
 \label{sec:protocol2}
 
-
+Studying Individual Heuristics
+\begin{itemize}
+	\item Split data into balanced training and test set. Use stratified shuffle split
+	(similar to cross-validation) with 5 iterations
+	\item Main classifier is logistic regression (one-vs-rest, L1-norm, $C=1$ for SDSS and $C=100$
+	for VST ATLAS)
+	\item Committee consists of 11 logistic classifiers
+	\item Test 6 active learning heuristics with random sampling as benchmark
+	\item Initial sample size is 50, train until we have 300 samples
+	\item At each round, select a random sample of 300 and assign a score to each of them
+\end{itemize}
+Selection of Best Heuristic
+\begin{itemize}
+	\item Use Thompson Sampling to select best heuristic
+	\item Still balanced split of training and test set, but now with 20 iterations of
+	shuffle splits.
+\end{itemize}
 
 \section{Results and Discussion}
 \label{sec:results2}
+Margin appears to be the best performing heuristic in both SDSS and VST ATLAS.
+To-do: add the maximum possible accuracy rate that can be achieved on plots
 
 \subsection{Logistic Active Learning}
 

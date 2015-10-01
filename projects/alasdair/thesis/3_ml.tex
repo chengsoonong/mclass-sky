@@ -6,8 +6,11 @@
 \chapter{Photometric Classification}
 \label{cha:ml}
 
-Spectroscopy is expensive but it is an effective method to do manual classification,
-since spectra contain a lot of information. There has even been attempts to make the process
+The two most common types of celestial objects are stars and galaxies. There are also some
+interesting objects such as quasars and white dwarfs. Quasars are thought to be supermassive black holes surrounded by an accretion disks.
+White dwarfs are stars in their final stage. One way to classify an object into 
+these various groups is to manually inspect its spectrum.
+There has even been attempts to make the process
 more automatic. For example, \citeN{hala14} achieved a 95\% accuracy rate by training
 a convolutional neural network on one-dimensional spectra to classify objects
 into stars, quasars, and galaxies. Even so, it is currently not possible to obtain
@@ -205,7 +208,7 @@ For the second heuristic, we pick the example that will minimise the expected en
 
 
 \section{Multi-arm Bandit}
-To-do: exploration-exploitation trade-off.
+Define arms, rewards, exploration-exploitation trade-off.
 
 \section{Thompson Sampling}
 We now turn our attention to the problem heuristic selection.
@@ -368,7 +371,13 @@ Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \m
 	\end{IEEEeqnarray*}
 
 \subsection{Recall}
-
+Let $C$ be the confusion matrix, where entry $C_{ij}$ is the number of objects in class $i$
+but have been classified as class $j$.
+Recall measures the classifier's ability to find all the positive examples and avoid
+having false negatives:
+	\begin{IEEEeqnarray*}{lCl}
+		\text{Recall}_i &=& \frac{C_{ii}}{\sum_j C_{ij}}
+	\end{IEEEeqnarray*}
 
 
 %%% Local Variables: 

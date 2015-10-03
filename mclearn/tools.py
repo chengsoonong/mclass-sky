@@ -1,7 +1,7 @@
 """ Some useful tools and helper functions. """
 
 import pickle
-import os.path
+import os
 
 
 def results_exist(pickle_path):
@@ -60,3 +60,19 @@ def load_results(pickle_path):
             results.append(pickle.load(f))
 
     return results
+
+
+def save_results(obj, pickle_path):
+    """ Save results. """
+
+    directory = os.path.dirname(pickle_path)
+
+    if not os.path.exists(pickle_path):
+        os.makedirs(directory)
+
+    if not os.path.exists(pickle_path):
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(obj, f, protocol=4)
+
+    else:
+        print('File already exists.')

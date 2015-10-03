@@ -49,7 +49,7 @@ def plot_class_distribution(target, ax=None):
 
     format_thousands = lambda x, pos: format(int(x), ',')
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_thousands))
-    ax.xaxis.grid(False)
+    ax.grid(False)
 
     return ax
 
@@ -110,6 +110,7 @@ def plot_balanced_accuracy_violin(balanced_accuracy_samples, ax=None):
 
     format_as_percent_plot = lambda x, pos: "{:.1f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
+    ax.grid(False)
 
     return ax
 
@@ -506,7 +507,7 @@ def reshape_grid_socres(grid_scores, row_length, col_length, transpose=False):
 
 
 def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
-    x_label=None, y_label=None, power10='both', ax=None):
+    x_label=None, y_label=None, power10='both', vmin=None, vmax=None, ax=None):
     """ Plot heatmap of the validation accuracy from a grid search.
 
         Parameters
@@ -541,8 +542,8 @@ def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
     if not ax:
         ax = plt.gca()
 
-    heat_ax = ax.imshow(scores, interpolation='nearest', cmap=plt.cm.summer)
-    plt.colorbar(heat_ax)
+    im = ax.imshow(scores, interpolation='nearest', cmap=plt.cm.summer, vmin=vmin, vmax=vmax)
+    #plt.colorbar(im)
 
     format_power = lambda x, pos, p_range: "$10^{%d}$" % int(np.log10(p_range[pos]))
 
@@ -564,7 +565,7 @@ def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
 
     ax.grid(False)
 
-    return ax
+    return im
 
 
 def plot_heuristic_selections(sample_sizes, selections, labels, ax=None):

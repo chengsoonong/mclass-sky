@@ -55,7 +55,7 @@ No significant difference. Will use W14 set for reasons stated in \cite{wolf14}.
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=\textwidth]{figures/violin_reddening_correction}
+	\includegraphics[width=\textwidth]{figures/4_expt1/violin_reddening_correction}
 	\caption{Comparing the accuracy rates using 4 correction sets.}
 	\label{fig:reddeningviolin}
 \end{figure}
@@ -75,6 +75,7 @@ Learning Curves
 	both do level off after 100,000 examples.
 	\item Logistic degree 3 was stopped early as it took too long to run.
 \end{itemize}
+
 
 
 \begin{figure}[tbp]
@@ -108,18 +109,51 @@ Learning Curves
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=\textwidth]{figures/learning_curves_sdss_random}
+	\includegraphics[width=\textwidth]{figures/4_expt1/sdss_learning_curves}
+	\caption{SDSS learning curves with random sampling.}
+	\label{fig:sdss_learning}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/4_expt1/sdss_learning_curves}
 	\caption{SDSS learning curves with random sampling.}
 	\label{fig:sdss_learning}
 \end{figure}
 
 
 
-
-
 \subsection{Class Proportion Estimation}
 See Figure \ref{fig:forest} for predictions. Show confusion matrix, and
 both uncorrected and corrected values.
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.73\textwidth]{figures/4_expt1/sdss_train_galaxies}
+		\caption{The distribution of galaxies.}
+		\label{fig:training_g}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.73\linewidth]{figures/4_expt1/sdss_train_stars}
+		\caption{The distribution of stars.}
+		\label{fig:training_s}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.73\linewidth]{figures/4_expt1/sdss_train_quasars}
+		\caption{The distribution of quasars.}
+		\label{fig:training_q}
+	\end{subfigure}
+	\caption[Distribution map of labelled objects in the SDSS]{The distribution map of
+		the 2.8 million labelled objects in the SDSS: Observe that the
+		galaxies are mostly uniformly distributed in the survey, while the stars are not.
+		We also do not have a lot of examples of quasars.}
+	\label{fig:training_dist}
+\end{figure}
+
 \begin{figure}[p]
 	\centering
 	\begin{subfigure}{\textwidth}

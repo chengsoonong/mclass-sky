@@ -3,7 +3,7 @@
 import numpy as np
 import copy
 from joblib import Parallel, delayed
-from numpy.random import permutation
+from numpy.random import RandomState
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.base import clone
 
@@ -397,7 +397,7 @@ def compute_pool_variance(X, pi, classes, C=1):
 
 
 def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
-                   pool_n, C, n_jobs=-1, **kwargs):
+                   pool_n, C, n_jobs=-1, random_state=None, **kwargs):
     """ Return the candidate that will minimise the expected variance of the predictions.
 
         Parameters
@@ -426,6 +426,7 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     n_features = X.shape[1]
     variance = np.empty(len(candidate_mask))
     variance[:] = np.inf
+    rng = RandomState(random_state)
 
     # the probabilities used to calculate expected value of pool
     probs = classifier.predict_proba(X[candidate_mask])
@@ -435,7 +436,7 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
 
     # construct the sample pool (used to estimate the variance)
     unlabelled_indices = np.where(-train_mask)[0]
-    pool_indices = permutation(unlabelled_indices)[:pool_n]
+    pool_indices = rng.permutation(unlabelled_indices)[:pool_n]
     pool_mask = np.zeros(len(candidate_mask), dtype=bool)
     pool_mask[pool_indices] = True
 
@@ -495,7 +496,7 @@ def compute_pool_entropy(pi):
 
 
 def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
-                   pool_n, n_jobs=-1, **kwargs):
+                   pool_n, n_jobs=-1, random_state=None, **kwargs):
     """ Return the candidate that will minimise the expected entropy of the predictions.
 
         Parameters
@@ -524,6 +525,7 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     n_features = X.shape[1]
     entropy = np.empty(len(candidate_mask))
     entropy[:] = np.inf
+    rng = RandomState(random_state)
 
     # the probabilities used to calculate expected value of pool
     probs = classifier.predict_proba(X[candidate_mask])
@@ -533,7 +535,7 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
 
     # construct the sample pool (used to estimate the entropy)
     unlabelled_indices = np.where(-train_mask)[0]
-    pool_indices = permutation(unlabelled_indices)[:pool_n]
+    pool_indices = rng.permutation(unlabelled_indices)[:pool_n]
     pool_mask = np.zeros(len(candidate_mask), dtype=bool)
     pool_mask[pool_indices] = True
 

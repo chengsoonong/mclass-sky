@@ -151,7 +151,7 @@ def plot_learning_curve(sample_sizes, learning_curves, curve_labels, xscale='log
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
     ax.legend(loc='lower right', frameon=True)
     ax.set_xlabel('Sample Size')
-    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.set_ylabel('Posterior Balanced Accuracy Rate')
     ax.set_xscale(xscale)
     ax.grid(False)
 
@@ -197,7 +197,7 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, ax=
         ax.plot(sample_sizes, mean_curve, label=curve_label)
 
     ax.set_xlabel('Number of Training Examples')
-    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.set_ylabel('Posterior Balanced Accuracy Rate')
     ax.legend(loc='lower right', frameon=True)
     ax.grid(False)
 

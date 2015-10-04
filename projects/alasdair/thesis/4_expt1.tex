@@ -51,12 +51,15 @@ on the 800 million unlabelled data. Corrections are made for the potential miscl
 
 \subsection{Comparison of Reddening Correction Sets}
 No significant difference. Will use W14 set for reasons stated in \cite{wolf14}.
+Here we present violin plots. See Appendix for more detailed breakdown
+the recall map improvements. 
 
 
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/4_expt1/violin_reddening_correction}
-	\caption{Comparing the accuracy rates using 4 correction sets.}
+	\caption[Accuracy rates with four reddening correction sets]{Comparing the
+		accuracy rates using 4 correction sets.}
 	\label{fig:reddeningviolin}
 \end{figure}
 
@@ -78,48 +81,75 @@ Learning Curves
 
 
 
-\begin{figure}[tbp]
+\begin{figure}[p]
 	\centering
-	\includegraphics[width=0.7\textwidth]{figures/heat_gridsearch_svm_rbf}
-	\caption{Accuracy rate heat map of the hyperparameters of SVM (RBF) for the SDSS.}
-	\label{fig:sdss_heat_rbf}
+	\includegraphics[width=\textwidth]{figures/4_expt1/sdss_grid_logistic}
+	\caption[Heatmap of logistic regression's cross-valdiation accuracy in SDSS]{
+		Heatmap of linear logistic regression's cross-valdiation accuracy in SDSS}
+	\label{fig:sdss_grid_logistic}
 \end{figure}
 
-\begin{figure}[tbp]
+\begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/heat_gridsearch_svm_poly}
-	\caption{Accuracy rate heat map of the hyperparameters of SVM (Polynomial) for the SDSS.}
-	\label{fig:sdss_heat_poly}
+	\includegraphics[width=\textwidth]{figures/4_expt1/vstatlas_grid_logistic}
+	\caption[Heatmap of logistic regression's cross-valdiation accuracy in VST ATLAS]{
+		Heatmap of logistic regression's cross-valdiation accuracy in VST ATLAS}
+	\label{fig:vstatlas_grid_logistic}
 \end{figure}
 
-\begin{figure}[tbp]
+\begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/heat_gridsearch_logistic}
-	\caption{Accuracy rate heat map of the hyperparameters of Logistic Regression for the SDSS.}
-	\label{fig:sdss_heat_logistic}
+	\includegraphics[width=\textwidth]{figures/4_expt1/sdss_grid_poly}
+	\caption[Heatmap of linear SVM's cross-valdiation accuracy in SDSS]{
+		Heatmap of linear SVM's cross-valdiation accuracy in SDSS}
+	\label{fig:sdss_grid_poly}
 \end{figure}
 
-\begin{figure}[tbp]
+\begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/heat_vstatlas_vgridsearch_logistic}
-	\caption{Accuracy rate heat map of the hyperparameters of Logistic Regression for the VST ATLAS.}
-	\label{fig:vst_heat_logistic}
+	\includegraphics[width=\textwidth]{figures/4_expt1/vstatlas_grid_poly}
+	\caption[Heatmap of linear SVM's cross-valdiation accuracy in VST ATLAS]{
+		Heatmap of linear SVM's cross-valdiation accuracy in VST ATLAS}
+	\label{fig:vstatlas_grid_poly}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/4_expt1/sdss_grid_rbf}
+	\caption[Heatmap of RBF SVM's cross-valdiation accuracy in SDSS]{
+		Heatmap of RBF SVM's cross-valdiation accuracy in SDSS}
+	\label{fig:sdss_grid_rbf}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/4_expt1/vstatlas_grid_rbf}
+	\caption[Heatmap of RBF SVM's cross-valdiation accuracy in VST ATLAS]{
+		Heatmap of RBF SVM's cross-valdiation accuracy in VST ATLAS}
+	\label{fig:vstatlas_grid_rbf}
 \end{figure}
 
 
-\begin{figure}[tbp]
+
+
+
+\begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/4_expt1/sdss_learning_curves}
-	\caption{SDSS learning curves with random sampling.}
-	\label{fig:sdss_learning}
+	\caption[Learning curves with random sampling in SDSS]{
+		SDSS learning curves with random sampling.}
+	\label{fig:sdss_learning_curves}
 \end{figure}
 
-\begin{figure}[tbp]
+\begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/4_expt1/sdss_learning_curves}
-	\caption{SDSS learning curves with random sampling.}
-	\label{fig:sdss_learning}
+	\includegraphics[width=\textwidth]{figures/4_expt1/vstatlas_learning_curves}
+	\caption[Learning curves with random sampling in VST ATLAS]{
+		VST ATLAS learning curves with random sampling.}
+	\label{fig:vstatlas_learning_curves}
 \end{figure}
+
+
 
 
 
@@ -158,25 +188,51 @@ both uncorrected and corrected values.
 	\centering
 	\begin{subfigure}{\textwidth}
 		\centering
-		\includegraphics[width=0.75\textwidth]{figures/map_prediction_forest_galaxies}
+		\includegraphics[width=0.75\textwidth]{figures/4_expt1/map_prediction_forest_galaxies}
 		\caption{Distribution of galaxies.}
 		\label{fig:random1}
 	\end{subfigure}\\
 	\begin{subfigure}{\textwidth}
 		\centering
-		\includegraphics[width=0.75\linewidth]{figures/map_prediction_forest_stars}
+		\includegraphics[width=0.75\linewidth]{figures/4_expt1/map_prediction_forest_stars}
 		\caption{Distribution of stars.}
 		\label{fig:random2}
 	\end{subfigure}
 	\begin{subfigure}{\textwidth}
 		\centering
-		\includegraphics[width=0.75\linewidth]{figures/map_prediction_forest_quasars}
+		\includegraphics[width=0.75\linewidth]{figures/4_expt1/map_prediction_forest_quasars}
 		\caption{Distribution of quasars.}
 		\label{fig:random3}
 	\end{subfigure}
 	\caption{Map of predicted labels using random forest.}
 	\label{fig:forest}
 \end{figure}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/4_expt1/map_recall_forest_all_Galaxy}
+		\caption{Recall of galaxies.}
+		\label{fig:map_recall_forest_all_Galaxy}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/4_expt1/map_recall_forest_all_Star}
+		\caption{Recall of stars.}
+		\label{fig:map_recall_forest_all_Star}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/4_expt1/map_recall_forest_all_Quasar}
+		\caption{Recall of quasars.}
+		\label{fig:map_recall_forest_all_Quasar}
+	\end{subfigure}
+	\caption{Recall map of the random forest.}
+	\label{fig:map_recall_forest_all}
+\end{figure}
+
 
 
 %%% Local Variables: 

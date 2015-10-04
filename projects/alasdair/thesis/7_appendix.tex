@@ -120,9 +120,180 @@ WHERE
 In estimating the variance of the unlabelled pool, there are two matrices we wish to compute...
 
 
-\chapter{Other Visualisations}
+\chapter{Supplementary Results}
+
+Compare learning curve of multinomial with one-vs-rest in logistic regression.
+Compare learning curve of random forest. Warm start
 
 
+\section{Effects of Dust Extinction on Recall}
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_uncorrected_Galaxy}
+		\caption{Recall map of galaxies.}
+		\label{fig:map_recall_uncorrected_galaxies}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_uncorrected_Star}
+		\caption{Recall map of stars.}
+		\label{fig:map_recall_uncorrected_stars}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_uncorrected_Quasar}
+		\caption{Recall map of quasars.}
+		\label{fig:map_recall_uncorrected_quasars}
+	\end{subfigure}
+	\caption{Recall map of when there is no corrections.}
+	\label{fig:map_recall_uncorrected}
+\end{figure}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_sfd98_Galaxy}
+		\caption{Recall improvement map of galaxies.}
+		\label{fig:map_recall_sfd98_galaxies}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sfd98_Star}
+		\caption{Recall improvement map of stars.}
+		\label{fig:map_recall_sfd98_stars}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sfd98_Quasar}
+		\caption{Recall improvement map of quasars.}
+		\label{fig:map_recall_sfd98_quasars}
+	\end{subfigure}
+	\caption{Recall improvement map of when the SFD98 correction set is applied.}
+	\label{fig:map_recall_sfd98}
+\end{figure}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_sf11_Galaxy}
+		\caption{Recall improvement map of galaxies.}
+		\label{fig:map_recall_sf11_galaxies}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sf11_Star}
+		\caption{Recall improvement map of stars.}
+		\label{fig:map_recall_sf11_stars}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sf11_Quasar}
+		\caption{Recall improvement map of quasars.}
+		\label{fig:map_recall_sf11_quasars}
+	\end{subfigure}
+	\caption{Recall improvement map of when the SF11 correction set is applied.}
+	\label{fig:map_recall_sf11}
+\end{figure}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_w14_Galaxy}
+		\caption{Recall improvement map of galaxies.}
+		\label{fig:map_recall_w14_galaxies}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_w14_Star}
+		\caption{Recall improvement map of stars.}
+		\label{fig:map_recall_w14_stars}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_w14_Quasar}
+		\caption{Recall improvement map of quasars.}
+		\label{fig:map_recall_w14_quasars}
+	\end{subfigure}
+	\caption{Recall improvement map of when the W14 correction set is applied.}
+	\label{fig:map_recall_w14}
+\end{figure}
+
+
+\section{Variance of the Reward Function in Thompson Sampling}
+
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_bl_sigmas}
+	\caption[Variance of the reward (SDSS, balanced, logistic)]{
+		Variance of the reward (SDSS, balanced, logistic)}
+	\label{fig:sdss_bl_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_br_sigmas}
+	\caption[Variance of the reward (SDSS, balanced, SVM)]{
+		Variance of the reward (SDSS, balanced, SVM)}
+	\label{fig:sdss_br_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ul_sigmas}
+	\caption[Variance of the reward (SDSS, unbalanced, logistic)]{
+		Variance of the reward (SDSS, unbalanced, logistic)}
+	\label{fig:sdss_ul_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ur_sigmas}
+	\caption[Variance of the reward (SDSS, unbalanced, SVM)]{
+		Variance of the reward (SDSS, unbalanced, SVM)}
+	\label{fig:sdss_ur_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_sigmas}
+	\caption[Variance of the reward (VST ATLAS, balanced, logistic)]{
+		Variance of the reward (VST ATLAS, balanced, logistic)}
+	\label{fig:vstatlas_bl_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_br_sigmas}
+	\caption[Variance of the reward (VST ATLAS, balanced, SVM)]{
+		Variance of the reward (VST ATLAS, balanced, SVM)}
+	\label{fig:vstatlas_br_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ul_sigmas}
+	\caption[Variance of the reward (VST ATLAS, unbalanced, logistic)]{
+		Variance of the reward (VST ATLAS, unbalanced, logistic)}
+	\label{fig:vstatlas_ul_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ur_sigmas}
+	\caption[Variance of the reward (VST ATLAS, unbalanced, SVM)]{
+		Variance of the reward (VST ATLAS, unbalanced, SVM)}
+	\label{fig:vstatlas_ur_sigmas}
+\end{figure}
 
 
 %%% Local Variables: 

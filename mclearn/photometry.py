@@ -4,6 +4,7 @@ import os
 import numpy as np
 from urllib.request import urlopen
 from urllib.parse import urlencode
+from .tools import load_results
 
 def reddening_correction_sfd98(extinction_r):
     """ Compute the reddening values using the SFD98 correction set.
@@ -314,8 +315,8 @@ def clean_up_subclasses(classes, subclasses):
     subclasses.loc[not_empty] = classes[not_empty] + ' ' + subclasses[not_empty] 
 
 
-def optimise_sdss_features(sdss):
-    """ Apply the SF11 reddening correction and compute key colours in the SDSS dataset.
+def optimise_sdss_features(sdss, scaler_path):
+    """ Apply the W14 reddening correction and compute key colours in the SDSS dataset.
 
         Parameters
         ----------
@@ -324,18 +325,25 @@ def optimise_sdss_features(sdss):
     """
 
     # compute the three sets of reddening correction
-    A_u_sf11, A_g_sf11, A_r_sf11, A_i_sf11, A_z_sf11 = reddening_correction_sf11(sdss['extinction_r'])
+    A_u_w14, A_g_w14, A_r_w14, A_i_w14, A_z_w14 = reddening_correction_w14(sdss['extinction_r'])
 
     # useful variables
     psf_magnitudes = ['psfMag_u', 'psfMag_g', 'psfMag_r', 'psfMag_i', 'psfMag_z']
     petro_magnitudes = ['petroMag_u', 'petroMag_g', 'petroMag_r', 'petroMag_i', 'petroMag_z']
-    sf11_corrections = [A_u_sf11, A_g_sf11, A_r_sf11, A_i_sf11, A_z_sf11]
-    colours = [('psfMag_u', 'psfMag_g'), ('psfMag_g', 'psfMag_r'), ('psfMag_g', 'psfMag_i'),
-               ('psfMag_r', 'psfMag_i'), ('psfMag_i', 'psfMag_z'), ('petroMag_i', 'petroMag_z')]
+    w14_corrections = [A_u_w14, A_g_w14, A_r_w14, A_i_w14, A_z_w14]
+    colours = [('psfMag_u', 'psfMag_g'), ('psfMag_g', 'psfMag_r'), ('psfMag_r', 'psfMag_i'), ('psfMag_i', 'psfMag_z'),
+               ('petroMag_u', 'petroMag_g'), ('petroMag_g', 'petroMag_r'), ('petroMag_r', 'petroMag_i'), ('petroMag_i', 'petroMag_z')]
 
     # calculate the corrected magnitudes
-    correct_magnitudes(sdss, psf_magnitudes, sf11_corrections, '_sf11')
-    correct_magnitudes(sdss, petro_magnitudes, sf11_corrections, '_sf11')
+    correct_magnitudes(sdss, psf_magnitudes, w14_corrections, '_w14')
+    correct_magnitudes(sdss, petro_magnitudes, w14_corrections, '_w14')
 
     # calculate the corrected magnitudes
-    compute_colours(sdss, colours, '_sf11')
+    compute_colours(sdss, colours, '_w14')
+
+    # scale features
+    w14_feature_cols = ['psfMag_r_w14', 'psf_u_g_w14', 'psf_g_r_w14', 'psf_r_i_w14',
+                        'psf_i_z_w14', 'petroMag_r_w14', 'petro_u_g_w14', 'petro_g_r_w14',
+                        'petro_r_i_w14', 'petro_i_z_w14', 'petroRad_r']
+    scaler = load_results(scaler_path)
+    sdss[w14_feature_cols] = scaler.transform(sdss[w14_feature_cols])

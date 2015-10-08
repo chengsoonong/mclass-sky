@@ -49,7 +49,7 @@ def plot_class_distribution(target, ax=None):
 
     format_thousands = lambda x, pos: format(int(x), ',')
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_thousands))
-    ax.xaxis.grid(False)
+    ax.grid(False)
 
     return ax
 
@@ -83,6 +83,26 @@ def plot_scores(scores, title, x_label, classifier_names):
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
 
     plt.show()
+
+
+def plot_final_accuracy(data, labels, sort=True, linewidth=1, inner='box', ax=None):
+    """
+    """
+    if not ax:
+        ax = plt.gca()
+
+    df = [np.array(h)[:,-1] for h in data]
+    df = np.array(df).transpose()
+    df = pd.DataFrame(df, columns=labels)
+    df = df.reindex_axis(df.mean().order().index, axis=1)
+
+    sns.violinplot(data=df, ax=ax, inner=inner, cut=2, linewidth=linewidth)
+
+    format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
+    ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
+    ax.set_ylabel('Posterior Balanced Accuracy Rate')
+
+    return ax
 
 
 def plot_balanced_accuracy_violin(balanced_accuracy_samples, ax=None):
@@ -149,8 +169,8 @@ def plot_learning_curve(sample_sizes, learning_curves, curve_labels, xscale='log
     format_as_percent_plot = lambda x, pos: "{:.1f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
     ax.legend(loc='lower right', frameon=True)
-    ax.set_xlabel('Sample Size')
-    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.set_xlabel('Number of Training Example')
+    ax.set_ylabel('Posterior Balanced Accuracy Rate')
     ax.set_xscale(xscale)
     ax.grid(False)
 
@@ -196,7 +216,7 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, ax=
         ax.plot(sample_sizes, mean_curve, label=curve_label)
 
     ax.set_xlabel('Number of Training Examples')
-    ax.set_ylabel('Balanced Accuracy Rate')
+    ax.set_ylabel('Posterior Balanced Accuracy Rate')
     ax.legend(loc='lower right', frameon=True)
     ax.grid(False)
 
@@ -439,8 +459,8 @@ def plot_filters_and_spectrum(filter_url, spectrum_url, filter_dir='', spectra_d
 
     return ax
 
-def plot_scatter_with_classes(data, targets, classes, size=2, alpha=0.01,
-    scatterpoints=1000, ax=None):
+def plot_scatter_with_classes(data, targets, classes, size=2, alpha=0.05,
+    scatterpoints=500, ax=None):
     """ Plot a scater plot of the classes.
 
         data : array
@@ -506,7 +526,7 @@ def reshape_grid_socres(grid_scores, row_length, col_length, transpose=False):
 
 
 def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
-    x_label=None, y_label=None, power10='both', ax=None):
+    x_label=None, y_label=None, power10='both', vmin=None, vmax=None, ax=None):
     """ Plot heatmap of the validation accuracy from a grid search.
 
         Parameters
@@ -541,8 +561,8 @@ def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
     if not ax:
         ax = plt.gca()
 
-    heat_ax = ax.imshow(scores, interpolation='nearest', cmap=plt.cm.summer)
-    plt.colorbar(heat_ax)
+    im = ax.imshow(scores, interpolation='nearest', cmap=plt.cm.summer, vmin=vmin, vmax=vmax)
+    #plt.colorbar(im)
 
     format_power = lambda x, pos, p_range: "$10^{%d}$" % int(np.log10(p_range[pos]))
 
@@ -564,10 +584,37 @@ def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
 
     ax.grid(False)
 
+    return im
+
+
+def plot_learning_curve_df(sample_sizes, learning_curves, labels, colors,
+    linestyles, ylim=None,
+    ax=None):
+    """
+    """
+
+    if not ax:
+        ax = plt.gca()
+
+    for label in labels:
+        curve = learning_curves[label]
+        ax.plot(sample_sizes[:len(curve)], curve, label=label, color=colors[label],
+            ls=linestyles[label], linewidth=1.5)
+
+    format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
+    ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
+    ax.legend(loc='lower right', frameon=True)
+    ax.set_xlabel('Number of Training Examples')
+    ax.set_ylabel('Posterior Balanced Accuracy Rate')
+
+    if ylim is not None:
+        ax.set_ylim(ylim)
+
     return ax
 
 
-def plot_heuristic_selections(sample_sizes, selections, labels, ax=None):
+def plot_heuristic_selections(sample_sizes, selections, labels, colors, linestyles,
+    loc='lower right', linewidth=1.5, ylim=None, ax=None):
     """ Plot the heuristic selections from active bandit.
     """
 
@@ -586,17 +633,18 @@ def plot_heuristic_selections(sample_sizes, selections, labels, ax=None):
     for curve, label in zip(cumulatives, labels):
         inital_n = sample_sizes[0] - 1
         n_selections = sample_sizes - inital_n
-        ax.plot(sample_sizes, curve / n_selections, label=label)
+        ax.plot(sample_sizes, curve / n_selections, label=label, color=colors[label],
+            ls=linestyles[label], linewidth=linewidth)
 
     ax.set_xlabel('Training Size')
     ax.set_ylabel('Frequency of Selections')
-    ax.legend(loc='lower right', frameon=True)
-    ax.grid(False)
+    ax.legend(loc=loc, frameon=True)
+    ax.set_ylim(ylim)
 
     return ax
 
-def plot_bandit_parameters(sample_sizes, parameters, labels, xlabel='Training Size',
-    ylabel='', ax=None):
+def plot_bandit_parameters(sample_sizes, parameters, labels, colors, linestyles,
+    linewidth=1.5, xlabel='Training Size', ylabel='', yscale='linear', ax=None):
     """ Plot the parameters from the bandit experiment.
     """
 
@@ -613,11 +661,53 @@ def plot_bandit_parameters(sample_sizes, parameters, labels, xlabel='Training Si
         ax = plt.gca()
 
     for i, label in enumerate(labels):
-        ax.plot(sample_sizes, param_avg[:,i], label=label)
+        ax.plot(sample_sizes, param_avg[:,i], label=label, color=colors[label],
+            ls=linestyles[label], linewidth=linewidth)
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    ax.set_yscale(yscale)
     ax.legend(loc='upper right', frameon=True)
     ax.grid(False)
 
     return ax
+
+def plot_cumulative_rewards(sample_sizes, parameters, labels, colors, linestyles,
+    linewidth=1.5, xlabel='Training Size', ylabel='Cumulative Reward', loc='upper left', ax=None):
+    """ 
+    """
+
+    n_samples = len(sample_sizes)
+    n_labels = len(labels)
+    param_avg = np.zeros((n_samples, n_labels))
+
+    for param in parameters:
+        param_avg += np.vstack(param)
+
+    param_avg /= len(parameters)
+    param_avg = np.cumsum(param_avg, axis=0)
+
+    if not ax:
+        ax = plt.gca()
+
+    for i, label in enumerate(labels):
+        ax.plot(sample_sizes, param_avg[:,i], label=label, color=colors[label],
+            ls=linestyles[label], linewidth=linewidth)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend(loc=loc, frameon=True)
+    ax.grid(False)
+
+    return ax
+
+def order_learning_curves(data, labels, ascending=False):
+    """
+    """
+
+    df = [np.array(h).mean(axis=0) for h in data]
+    df = np.array(df).transpose()
+    df = pd.DataFrame(df, columns=labels)
+    df = df.reindex_axis(df.iloc[-1].order(ascending=ascending).index, axis=1)
+    
+    return df

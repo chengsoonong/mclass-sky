@@ -7,40 +7,9 @@
 \chapter{How to Obtain the Datasets}
 \label{cha:datasets}
 
-To get all 800 million objects:
-
-\begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
-SELECT
-p.ra, p.dec,
-CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
-WHEN 'STAR' THEN 'Star'
-WHEN 'QSO' THEN 'Quasar'
-END AS class,
-s.subclass,
-s.z AS redshift,
-s.zErr AS redshiftErr,
-s.zWarning,
-p.psfMag_u, p.psfMagErr_u,
-p.psfMag_g, p.psfMagErr_g,
-p.psfMag_r, p.psfMagErr_r,
-p.psfMag_i, p.psfMagErr_i,
-p.psfMag_z, p.psfMagErr_z,
-p.petroMag_u, p.petroMagErr_u,
-p.petroMag_g, p.petroMagErr_g,
-p.petroMag_r, p.petroMagErr_r,
-p.petroMag_i, p.petroMagErr_i,
-p.petroMag_z, p.petroMagErr_z,
-p.extinction_u, p.extinction_g, p.extinction_r,
-p.extinction_i, p.extinction_z,
-p.petroRad_r, p.petroRadErr_r
-
-FROM PhotoObj AS p
-LEFT JOIN SpecObj AS s
-ON s.bestobjid = p.objid
-\end{minted}
-
-
-Getting the main labelled SDSS dataset:
+The following SQL query is used to get the main SDSS dataset containing 2.8 million
+labelled objects from the Sloan SkyServer\footnote{
+	url{http://skyserver.sdss.org/CasJobs/}}
 
 \begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
 SELECT
@@ -49,9 +18,9 @@ SELECT
 	
 	-- class of object, expert opinion (galaxy, star, or quasar)
 	CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
-	WHEN 'STAR' THEN 'Star'
-	WHEN 'QSO' THEN 'Quasar'
-	END AS class,
+				 WHEN 'STAR' THEN 'Star'
+				 WHEN 'QSO' THEN 'Quasar'
+				 END AS class,
 	
 	s.subclass, -- subclass of object
 	
@@ -60,14 +29,13 @@ SELECT
 	s.zErr AS redshiftErr,
 	s.zWarning,
 	
-	-- PSF magnitude measurements in 5 bands (ugriz) with error
+	-- PSF and Petrosian mags in 5 bands (ugriz) with error
 	p.psfMag_u, p.psfMagErr_u,
 	p.psfMag_g, p.psfMagErr_g,
 	p.psfMag_r, p.psfMagErr_r,
 	p.psfMag_i, p.psfMagErr_i,
 	p.psfMag_z, p.psfMagErr_z,
 	
-	-- Petrosian magnitude measurements in 5 bands (ugriz) with error
 	p.petroMag_u, p.petroMagErr_u,
 	p.petroMag_g, p.petroMagErr_g,
 	p.petroMag_r, p.petroMagErr_r,
@@ -80,7 +48,7 @@ SELECT
 	
 	-- size measurement in r-band in arc seconds
 	p.petroRad_r, p.petroRadErr_r
-	
+
 FROM PhotoObj AS p
 JOIN SpecObj AS s
 ON s.bestobjid = p.objid
@@ -103,6 +71,43 @@ WHERE
 \end{minted}
 
 
+The following query is used to extract photometric measurements from all 800 million
+in the database. Since the file is fairly big (around 200 GB in size),
+a special request might need to be made.
+
+\begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
+SELECT
+	p.ra, p.dec,
+	CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
+				 WHEN 'STAR' THEN 'Star'
+				 WHEN 'QSO' THEN 'Quasar'
+				 END AS class,
+	s.subclass,
+	s.z AS redshift,
+	s.zErr AS redshiftErr,
+	s.zWarning,
+	p.psfMag_u, p.psfMagErr_u,
+	p.psfMag_g, p.psfMagErr_g,
+	p.psfMag_r, p.psfMagErr_r,
+	p.psfMag_i, p.psfMagErr_i,
+	p.psfMag_z, p.psfMagErr_z,
+	p.petroMag_u, p.petroMagErr_u,
+	p.petroMag_g, p.petroMagErr_g,
+	p.petroMag_r, p.petroMagErr_r,
+	p.petroMag_i, p.petroMagErr_i,
+	p.petroMag_z, p.petroMagErr_z,
+	p.extinction_u, p.extinction_g, p.extinction_r,
+	p.extinction_i, p.extinction_z,
+	p.petroRad_r, p.petroRadErr_r
+FROM PhotoObj AS p
+LEFT JOIN SpecObj AS s
+ON s.bestobjid = p.objid
+\end{minted}
+
+
+
+
+
 
 \chapter{Guide to Using mclearn}
 \label{cha:mclearn}
@@ -114,40 +119,200 @@ WHERE
 \label{sec:usage}
 
 
-\chapter{Vectorisation of the Variance Estimation}
-\label{cha:vectorise}
+%\chapter{Vectorisation of the Variance Estimation}
+%\label{cha:vectorise}
 
-In estimating the variance of the unlabelled pool, there are two matrices we wish to compute...
+%In estimating the variance of the unlabelled pool, there are two matrices we wish to compute...
 
 
-\chapter{Visualisations}
+\chapter{Supplementary Results}
+\label{cha:supp}
+
+Compare learning curve of multinomial with one-vs-rest in logistic regression.
+Compare learning curve of random forest. Warm start
+
+
+\section{Effects of Dust Extinction on Recall}
 
 \begin{figure}[p]
 	\centering
 	\begin{subfigure}{\textwidth}
 		\centering
-		\includegraphics[width=0.73\textwidth]{figures/map_train_galaxies}
-		\caption{The distribution of galaxies.}
-		\label{fig:training_g}
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_uncorrected_Galaxy}
+		\caption{Recall map of galaxies.}
+		\label{fig:map_recall_uncorrected_galaxies}
 	\end{subfigure}\\
 	\begin{subfigure}{\textwidth}
 		\centering
-		\includegraphics[width=0.73\linewidth]{figures/map_train_stars}
-		\caption{The distribution of stars.}
-		\label{fig:training_s}
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_uncorrected_Star}
+		\caption{Recall map of stars.}
+		\label{fig:map_recall_uncorrected_stars}
 	\end{subfigure}
 	\begin{subfigure}{\textwidth}
 		\centering
-		\includegraphics[width=0.73\linewidth]{figures/map_train_quasars}
-		\caption{The distribution of quasars.}
-		\label{fig:training_q}
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_uncorrected_Quasar}
+		\caption{Recall map of quasars.}
+		\label{fig:map_recall_uncorrected_quasars}
 	\end{subfigure}
-	\caption[Distribution map of labelled objects in the SDSS]{The distribution map of
-		the 2.8 million labelled objects in the SDSS: Observe that the
-		galaxies are mostly uniformly distributed in the survey, while the stars are not.
-		We also do not have a lot of examples of quasars.}
-	\label{fig:training_dist}
+	\caption{Recall map of when there is no corrections.}
+	\label{fig:map_recall_uncorrected}
 \end{figure}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_sfd98_Galaxy}
+		\caption{Recall improvement map of galaxies.}
+		\label{fig:map_recall_sfd98_galaxies}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sfd98_Star}
+		\caption{Recall improvement map of stars.}
+		\label{fig:map_recall_sfd98_stars}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sfd98_Quasar}
+		\caption{Recall improvement map of quasars.}
+		\label{fig:map_recall_sfd98_quasars}
+	\end{subfigure}
+	\caption{Recall improvement map of when the SFD98 correction set is applied.}
+	\label{fig:map_recall_sfd98}
+\end{figure}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_sf11_Galaxy}
+		\caption{Recall improvement map of galaxies.}
+		\label{fig:map_recall_sf11_galaxies}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sf11_Star}
+		\caption{Recall improvement map of stars.}
+		\label{fig:map_recall_sf11_stars}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_sf11_Quasar}
+		\caption{Recall improvement map of quasars.}
+		\label{fig:map_recall_sf11_quasars}
+	\end{subfigure}
+	\caption{Recall improvement map of when the SF11 correction set is applied.}
+	\label{fig:map_recall_sf11}
+\end{figure}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\textwidth]{figures/appendix/map_recall_w14_Galaxy}
+		\caption{Recall improvement map of galaxies.}
+		\label{fig:map_recall_w14_galaxies}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_w14_Star}
+		\caption{Recall improvement map of stars.}
+		\label{fig:map_recall_w14_stars}
+	\end{subfigure}
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=0.75\linewidth]{figures/appendix/map_recall_w14_Quasar}
+		\caption{Recall improvement map of quasars.}
+		\label{fig:map_recall_w14_quasars}
+	\end{subfigure}
+	\caption{Recall improvement map of when the W14 correction set is applied.}
+	\label{fig:map_recall_w14}
+\end{figure}
+
+
+\section{Variance of the Reward Function in Thompson Sampling}
+
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_bl_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:sdss_bl_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_br_sigmas}
+		\caption{SVM RBF}
+		\label{fig:sdss_br_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (SDSS, balanced)]{
+		Variance of the reward (SDSS, balanced)}
+	\label{fig:sdss_b_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_ul_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:sdss_l_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_ur_sigmas}
+		\caption{SVM RBF}
+		\label{fig:sdss_ur_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (SDSS, unbalanced)]{
+		Variance of the reward (SDSS, unbalanced)}
+	\label{fig:sdss_u_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_bl_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:vstatlas_bl_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_br_sigmas}
+		\caption{SVM RBF}
+		\label{fig:vstatlas_br_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (VST ATLAS, balanced)]{
+		Variance of the reward (VST ATLAS, balanced)}
+	\label{fig:vstatlas_b_sigmas}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_ul_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:vstatlas_l_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_ur_sigmas}
+		\caption{SVM RBF}
+		\label{fig:vstatlas_ur_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (VST ATLAS, unbalanced)]{
+		Variance of the reward (VST ATLAS, unbalanced)}
+	\label{fig:vstatlas_u_sigmas}
+\end{figure}
+
 
 
 %%% Local Variables: 

@@ -24,7 +24,13 @@
 \usepackage{enumitem}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
 
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 
 \hypersetup{
 	bookmarksnumbered,
@@ -34,16 +40,22 @@
 	linkcolor    = {red!50!black},  % Colour of internal links
 	citecolor    = {blue!50!black}, % Colour of citations
 	pdfauthor    = {Alasdair Tran},
-	pdftitle	 = {Active Learning in Astronomy},
+	pdftitle	 = {Photometric Classification with Thompson Sampling},
 }
 
-	
+\newcommand\MyBox[2]{
+	\fbox{\lower0.75cm
+		\vbox to 1.7cm{\vfil
+			\hbox to 1.7cm{\hfil\parbox{1.4cm}{#1\\#2}\hfil}
+			\vfil}%
+	}%
+}
 	
 \input 0.6_symbols
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Preamble
-\title{Active Learning in Astronomy}
+\title{Photometric Classification with Thompson Sampling}
 \author{Alasdair Nam Thang Tran}
 \date{\today}
 
@@ -88,7 +100,7 @@
 
 \listoffigures
 
-\listoftables
+%\listoftables
 
 \glsaddall
 \setlist[description]{leftmargin=!, labelwidth=5em} % Change for glossaries

@@ -7,40 +7,9 @@
 \chapter{How to Obtain the Datasets}
 \label{cha:datasets}
 
-To get all 800 million objects:
-
-\begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
-SELECT
-p.ra, p.dec,
-CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
-WHEN 'STAR' THEN 'Star'
-WHEN 'QSO' THEN 'Quasar'
-END AS class,
-s.subclass,
-s.z AS redshift,
-s.zErr AS redshiftErr,
-s.zWarning,
-p.psfMag_u, p.psfMagErr_u,
-p.psfMag_g, p.psfMagErr_g,
-p.psfMag_r, p.psfMagErr_r,
-p.psfMag_i, p.psfMagErr_i,
-p.psfMag_z, p.psfMagErr_z,
-p.petroMag_u, p.petroMagErr_u,
-p.petroMag_g, p.petroMagErr_g,
-p.petroMag_r, p.petroMagErr_r,
-p.petroMag_i, p.petroMagErr_i,
-p.petroMag_z, p.petroMagErr_z,
-p.extinction_u, p.extinction_g, p.extinction_r,
-p.extinction_i, p.extinction_z,
-p.petroRad_r, p.petroRadErr_r
-
-FROM PhotoObj AS p
-LEFT JOIN SpecObj AS s
-ON s.bestobjid = p.objid
-\end{minted}
-
-
-Getting the main labelled SDSS dataset:
+The following SQL query is used to get the main SDSS dataset containing 2.8 million
+labelled objects from the Sloan SkyServer\footnote{
+	url{http://skyserver.sdss.org/CasJobs/}}
 
 \begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
 SELECT
@@ -49,9 +18,9 @@ SELECT
 	
 	-- class of object, expert opinion (galaxy, star, or quasar)
 	CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
-	WHEN 'STAR' THEN 'Star'
-	WHEN 'QSO' THEN 'Quasar'
-	END AS class,
+				 WHEN 'STAR' THEN 'Star'
+				 WHEN 'QSO' THEN 'Quasar'
+				 END AS class,
 	
 	s.subclass, -- subclass of object
 	
@@ -60,14 +29,13 @@ SELECT
 	s.zErr AS redshiftErr,
 	s.zWarning,
 	
-	-- PSF magnitude measurements in 5 bands (ugriz) with error
+	-- PSF and Petrosian mags in 5 bands (ugriz) with error
 	p.psfMag_u, p.psfMagErr_u,
 	p.psfMag_g, p.psfMagErr_g,
 	p.psfMag_r, p.psfMagErr_r,
 	p.psfMag_i, p.psfMagErr_i,
 	p.psfMag_z, p.psfMagErr_z,
 	
-	-- Petrosian magnitude measurements in 5 bands (ugriz) with error
 	p.petroMag_u, p.petroMagErr_u,
 	p.petroMag_g, p.petroMagErr_g,
 	p.petroMag_r, p.petroMagErr_r,
@@ -80,7 +48,7 @@ SELECT
 	
 	-- size measurement in r-band in arc seconds
 	p.petroRad_r, p.petroRadErr_r
-	
+
 FROM PhotoObj AS p
 JOIN SpecObj AS s
 ON s.bestobjid = p.objid
@@ -103,6 +71,43 @@ WHERE
 \end{minted}
 
 
+The following query is used to extract photometric measurements from all 800 million
+in the database. Since the file is fairly big (around 200 GB in size),
+a special request might need to be made.
+
+\begin{minted}[fontsize=\footnotesize, frame=single, tabsize=4]{sql}
+SELECT
+	p.ra, p.dec,
+	CASE s.class WHEN 'GALAXY' THEN 'Galaxy'
+				 WHEN 'STAR' THEN 'Star'
+				 WHEN 'QSO' THEN 'Quasar'
+				 END AS class,
+	s.subclass,
+	s.z AS redshift,
+	s.zErr AS redshiftErr,
+	s.zWarning,
+	p.psfMag_u, p.psfMagErr_u,
+	p.psfMag_g, p.psfMagErr_g,
+	p.psfMag_r, p.psfMagErr_r,
+	p.psfMag_i, p.psfMagErr_i,
+	p.psfMag_z, p.psfMagErr_z,
+	p.petroMag_u, p.petroMagErr_u,
+	p.petroMag_g, p.petroMagErr_g,
+	p.petroMag_r, p.petroMagErr_r,
+	p.petroMag_i, p.petroMagErr_i,
+	p.petroMag_z, p.petroMagErr_z,
+	p.extinction_u, p.extinction_g, p.extinction_r,
+	p.extinction_i, p.extinction_z,
+	p.petroRad_r, p.petroRadErr_r
+FROM PhotoObj AS p
+LEFT JOIN SpecObj AS s
+ON s.bestobjid = p.objid
+\end{minted}
+
+
+
+
+
 
 \chapter{Guide to Using mclearn}
 \label{cha:mclearn}
@@ -114,13 +119,14 @@ WHERE
 \label{sec:usage}
 
 
-\chapter{Vectorisation of the Variance Estimation}
-\label{cha:vectorise}
+%\chapter{Vectorisation of the Variance Estimation}
+%\label{cha:vectorise}
 
-In estimating the variance of the unlabelled pool, there are two matrices we wish to compute...
+%In estimating the variance of the unlabelled pool, there are two matrices we wish to compute...
 
 
 \chapter{Supplementary Results}
+\label{cha:supp}
 
 Compare learning curve of multinomial with one-vs-rest in logistic regression.
 Compare learning curve of random forest. Warm start
@@ -233,67 +239,80 @@ Compare learning curve of random forest. Warm start
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_bl_sigmas}
-	\caption[Variance of the reward (SDSS, balanced, logistic)]{
-		Variance of the reward (SDSS, balanced, logistic)}
-	\label{fig:sdss_bl_sigmas}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_bl_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:sdss_bl_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_br_sigmas}
+		\caption{SVM RBF}
+		\label{fig:sdss_br_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (SDSS, balanced)]{
+		Variance of the reward (SDSS, balanced)}
+	\label{fig:sdss_b_sigmas}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_br_sigmas}
-	\caption[Variance of the reward (SDSS, balanced, SVM)]{
-		Variance of the reward (SDSS, balanced, SVM)}
-	\label{fig:sdss_br_sigmas}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_ul_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:sdss_l_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_ur_sigmas}
+		\caption{SVM RBF}
+		\label{fig:sdss_ur_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (SDSS, unbalanced)]{
+		Variance of the reward (SDSS, unbalanced)}
+	\label{fig:sdss_u_sigmas}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ul_sigmas}
-	\caption[Variance of the reward (SDSS, unbalanced, logistic)]{
-		Variance of the reward (SDSS, unbalanced, logistic)}
-	\label{fig:sdss_ul_sigmas}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_bl_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:vstatlas_bl_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_br_sigmas}
+		\caption{SVM RBF}
+		\label{fig:vstatlas_br_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (VST ATLAS, balanced)]{
+		Variance of the reward (VST ATLAS, balanced)}
+	\label{fig:vstatlas_b_sigmas}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ur_sigmas}
-	\caption[Variance of the reward (SDSS, unbalanced, SVM)]{
-		Variance of the reward (SDSS, unbalanced, SVM)}
-	\label{fig:sdss_ur_sigmas}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_ul_sigmas}
+		\caption{Logistic Regression}
+		\label{fig:vstatlas_l_sigmas}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_ur_sigmas}
+		\caption{SVM RBF}
+		\label{fig:vstatlas_ur_sigmas}
+	\end{subfigure}
+	\caption[Variance of the reward (VST ATLAS, unbalanced)]{
+		Variance of the reward (VST ATLAS, unbalanced)}
+	\label{fig:vstatlas_u_sigmas}
 \end{figure}
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_sigmas}
-	\caption[Variance of the reward (VST ATLAS, balanced, logistic)]{
-		Variance of the reward (VST ATLAS, balanced, logistic)}
-	\label{fig:vstatlas_bl_sigmas}
-\end{figure}
-
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_br_sigmas}
-	\caption[Variance of the reward (VST ATLAS, balanced, SVM)]{
-		Variance of the reward (VST ATLAS, balanced, SVM)}
-	\label{fig:vstatlas_br_sigmas}
-\end{figure}
-
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ul_sigmas}
-	\caption[Variance of the reward (VST ATLAS, unbalanced, logistic)]{
-		Variance of the reward (VST ATLAS, unbalanced, logistic)}
-	\label{fig:vstatlas_ul_sigmas}
-\end{figure}
-
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ur_sigmas}
-	\caption[Variance of the reward (VST ATLAS, unbalanced, SVM)]{
-		Variance of the reward (VST ATLAS, unbalanced, SVM)}
-	\label{fig:vstatlas_ur_sigmas}
-\end{figure}
 
 
 %%% Local Variables: 

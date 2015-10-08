@@ -6,6 +6,7 @@ from joblib import Parallel, delayed
 from numpy.random import RandomState
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.base import clone
+from scipy.stats import itemfreq
 
 
 def random_h(candidate_mask, n_candidates, **kwargs):
@@ -160,15 +161,19 @@ def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee,
     n_samples = len(X[candidate_mask])
     n_classes = len(committee.classes_)
     probs = np.zeros((n_samples, n_classes))
+    class_freq = itemfreq(y[train_mask])
     
     for member in committee.estimators_:
-        memeber_prob = member.predict_proba(X[candidate_mask])
+        member_prob = member.predict_proba(X[candidate_mask])
+        member_n_classes = member_prob.shape[1]
 
-        if n_classes == len(member.classes_):
-            probs += memeber_prob
+        if n_classes == member_n_classes:
+            probs += member_prob
 
         else:
-            probs[:, member.classes_] += memeber_prob[:, range(len(member.classes_))]
+            member_classes = class_freq[:,1].argsort()[::-1]
+            member_classes = member_classes[:member_n_classes]
+            probs[:, member_classes] += member_prob[:, range(member_n_classes)]
 
     # average out the probabilities
     probs /= len(committee.estimators_)
@@ -233,17 +238,21 @@ def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committe
     n_classes = len(committee.classes_)
     avg_probs = np.zeros((n_samples, n_classes))
     prob_list = []
+    class_freq = itemfreq(y[train_mask])
     
     for member in committee.estimators_:
         member_prob = member.predict_proba(X[candidate_mask])
+        member_n_classes = member_prob.shape[1] 
 
-        if n_classes == len(member.classes_):
+        if n_classes == member_n_classes:
             avg_probs += member_prob
             prob_list.append(member_prob)
 
         else:
+            member_classes = class_freq[:,1].argsort()[::-1]
+            member_classes = member_classes[:member_n_classes]
             full_member_prob = np.zeros((n_samples, n_classes))
-            full_member_prob[:, member.classes_] += member_prob[:, range(len(member.classes_))]
+            full_member_prob[:, member_classes] += member_prob[:, range(member_n_classes)]
             avg_probs += full_member_prob
             prob_list.append(full_member_prob)
 
@@ -311,6 +320,7 @@ def _compute_A(X, pi, classes):
     G = A * B * I_same  + C * D * I_diff
     G = E * G
     outer = np.dot(G, G.transpose())
+    outer = np.nan_to_num(outer)
     
     return outer
 
@@ -364,6 +374,8 @@ def _compute_F(X, pi, classes, C=1):
     
     F = F_1 * I_diag + F_2 * I_mini_off_diag + F_3 * I_main_off_diag
     F = F / n_samples
+
+    assert not np.any(np.isnan(F)), 'F = {}\nM = {}\nN = {}'.format(F, M, N)
     
     return F
 
@@ -393,7 +405,7 @@ def compute_pool_variance(X, pi, classes, C=1):
 
     A = _compute_A(X, pi, classes)
     F = _compute_F(X, pi, classes, C=C)
-    return np.trace(np.dot(A, np.linalg.inv(F)))
+    return np.trace(np.dot(A, np.linalg.pinv(F)))
 
 
 def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
@@ -422,7 +434,6 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     
     classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    candidate_size = np.sum(train_mask)
     n_features = X.shape[1]
     variance = np.empty(len(candidate_mask))
     variance[:] = np.inf
@@ -521,7 +532,6 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     
     classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
-    candidate_size = np.sum(train_mask)
     n_features = X.shape[1]
     entropy = np.empty(len(candidate_mask))
     entropy[:] = np.inf

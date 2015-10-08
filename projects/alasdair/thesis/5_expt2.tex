@@ -6,171 +6,273 @@
 \chapter{Experiment 2: Learning with Thompson Sampling}
 \label{cha:expt2}
 
+Let us now turn our attention to active learning. In this chapter,
+we investigate the 6 active learning heuristics described in section \ref{sec:heuristics}:
+two uncertainty sampling heuristics (with either entropy or margin), two query
+by bagging heuristics (with either margin or KL divergence), variance minimisation,
+and classifier certainty. The goal is to see which ones can outperform
+random sampling from the previous chapter. We then use Thompson sampling to see if
+it can automatically filter out the bad heuristics and select the best one.
+
+
 \section{Experimental Protocol}
 \label{sec:protocol2}
 
-Studying Individual Heuristics
-\begin{itemize}
-	\item Split data into balanced training and test set. Use stratified shuffle split
-	(similar to cross-validation) with 5 iterations
-	\item Main classifier is logistic regression (one-vs-rest, L1-norm, $C=1$ for SDSS and $C=100$
-	for VST ATLAS)
-	\item Committee consists of 11 logistic classifiers
-	\item Test 6 active learning heuristics with random sampling as benchmark
-	\item Initial sample size is 50, train until we have 300 samples
-	\item At each round, select a random sample of 300 and assign a score to each of them
-\end{itemize}
-Selection of Best Heuristic
-\begin{itemize}
-	\item Use Thompson Sampling to select best heuristic
-	\item Still balanced split of training and test set, but now with 20 iterations of
-	shuffle splits.
-\end{itemize}
+Out of the four classifiers studied in Chapter \ref{cha:expt1}, only logistic regression
+and RBF SVM provide reliable probability estimates. Random forests are able to predict
+class probabilities by looking at the distribution of votes. However, we find in practice
+that they are not stable (see Appendix for an example). With linear SVMs, the probability 
+functionality has not been implemented in Scikit-learn. Thus we are only left
+with two choices: logistic regression and RBF SVM.
 
-Two parts: balanced and unbalanced datasets. Both SDSS and VST ATLAS are not true
-random samples of sky. E.g. in VST ATLAS, after corrected for bias, we should have [insert
-table here]. Won't worry here since in practice, such survey never scan a random pathc
-of sky anyway. Instead the surveys are results of other targeted projects.
-The question that we're interested in, instead, is how well our algorithms can
-deal with unbalanced data in general.
+For the unlabelled pool, we examine two cases. In one case, the pool is balanced, with
+an equal number of objects in each class. This allows us to find out the maximum
+performance of the heuristics in the best possible scenario. Of course, in real life,
+the classes are not evenly distributed. Thus in the second case, we keep the original
+class distribution and see if the performance would deteriorate in any way.
+
+Given that there are two datasets, two choices of classifiers, and two ways to construct the
+unlabelled pool, we need to conduct in total eight runs for each heuristic.
+In each run, we do a stratified shuffle split of the training and test data with 10 trials.
+The learning curves are then averaged out.
+
+All heuristics require probability estimates. Thus we need to start with a partially trained
+classifier. Initially, 50 random examples are chosen for training. Then at each step,
+we select a random sample of 300 and use the heuristics to rank these candidates. The best
+one is then put in our training
+set. We keep doing this until a sample size of 300 is achieved. For the committee heuristics,
+we use 11 members.
+
+Finally we repeat the above procedure with Thompson sampling, our eighth heuristic.
 
 
 \section{Results and Discussion}
 \label{sec:results2}
 Margin appears to be the best performing heuristic in both SDSS and VST ATLAS.
-To-do: add the maximum possible accuracy rate that can be achieved on plots
 
 \subsection{Learning with the SDSS Dataset}
 
 
 
-
+%--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/sdss_bl_individuals}
-	\caption[Learning with individual heuristics (SDSS, balanced, logistic)]{
-		Learning with individual heuristics (SDSS, balanced, logistic)}
-	\label{fig:sdss_bl_individuals}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_active/sdss_bl_ind_lower}
+		\caption{Worse than random sampling}
+		\label{fig:sdss_bl_ind_lower}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_active/sdss_bl_ind_upper}
+		\caption{Better than random sampling}
+		\label{fig:sdss_bl_ind_upper}
+	\end{subfigure}
+	\caption[Learning curves with heuristics (SDSS, balanced, logistic)]{
+		Learning curves with heuristics (SDSS dataset, balanced pool, logistic regression)}
+	\label{fig:sdss_bl_ind}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_bl_thompson}
-	\caption[Learning with Thompson sampling (SDSS, balanced, logistic)]{
-		Learning with Thompson sampling (SDSS, balanced, logistic)}
-	\label{fig:sdss_bl_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/sdss_bl_ind_violin}
+	\caption[Violin plots of final accuracy rates (SDSS, balanced, logistic)]{
+		Violin plots of final accuracy rates (SDSS dataset, balanced pool, logistic regression)}
+	\label{fig:sdss_bl_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_bl_frequencies}
 	\caption[Heuristic selection frequency (SDSS, balanced, logistic)]{
-		Heuristic selection frequency (SDSS, balanced, logistic)}
+		Heuristic selection frequency (SDSS dataset, balanced pool, logistic regression)}
 	\label{fig:sdss_bl_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_bl_mus}
-	\caption[Mean of the reward (SDSS, balanced, logistic)]{
-		Mean of the reward (SDSS, balanced, logistic)}
-	\label{fig:sdss_bl_mus}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_bl_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:sdss_bl_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_bl_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:sdss_bl_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (SDSS, balanced, logistic)]{
+		Reward of heuristics (SDSS dataset, balanced pool, logistic regression)}
+	\label{fig:sdss_bl_rewards}
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/sdss_br_individuals}
-	\caption[Learning with individual heuristics (SDSS, balanced, SVM)]{
-		Learning with individual heuristics (SDSS, balanced, SVM)}
-	\label{fig:sdss_br_individuals}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_active/sdss_br_ind_lower}
+		\caption{Worse than random sampling}
+		\label{fig:sdss_br_ind_lower}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_active/sdss_br_ind_upper}
+		\caption{Better than random sampling}
+		\label{fig:sdss_br_ind_upper}
+	\end{subfigure}
+	\caption[Learning curves with heuristics (SDSS, balanced, logistic)]{
+		Learning curves with heuristics (SDSS dataset, balanced pool, logistic regression)}
+	\label{fig:sdss_br_ind}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_br_thompson}
-	\caption[Learning with Thompson sampling (SDSS, balanced, SVM)]{
-		Learning with Thompson sampling (SDSS, balanced, SVM)}
-	\label{fig:sdss_br_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/sdss_br_ind_violin}
+	\caption[Violin plots of final accuracy rates (SDSS, balanced, SVM RBF)]{
+		Violin plots of final accuracy rates (SDSS dataset, balanced pool, SVM RBF)}
+	\label{fig:sdss_br_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_br_frequencies}
-	\caption[Heuristic selection frequency (SDSS, balanced, SVM)]{
-		Heuristic selection frequency (SDSS, balanced, SVM)}
+	\caption[Heuristic selection frequency (SDSS, balanced, SVM RBF)]{
+		Heuristic selection frequency (SDSS dataset, balanced pool, SVM RBF)}
 	\label{fig:sdss_br_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_br_mus}
-	\caption[Mean of the reward (SDSS, balanced, SVM)]{
-		Mean of the reward (SDSS, balanced, SVM)}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_br_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:sdss_br_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_br_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:sdss_br_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (SDSS, balanced, SVM RBF)]{
+		Reward of heuristics (SDSS dataset, balanced pool, SVM RBF)}
+	\label{fig:sdss_br_rewards}
 \end{figure}
+
 
 %--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/sdss_ul_individuals}
-	\caption[Learning with individual heuristics (SDSS, unbalanced, logistic)]{
-		Learning with individual heuristics (SDSS, balanced, logistic)}
-	\label{fig:sdss_ul_individuals}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_active/sdss_ul_ind_lower}
+		\caption{Worse than random sampling}
+		\label{fig:sdss_ul_ind_lower}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_active/sdss_ul_ind_upper}
+		\caption{Better than random sampling}
+		\label{fig:sdss_ul_ind_upper}
+	\end{subfigure}
+	\caption[Learning curves with heuristics (SDSS, balanced, logistic)]{
+		Learning curves with heuristics (SDSS dataset, unbalanced pool, logistic regression)}
+	\label{fig:sdss_ul_ind}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ul_thompson}
-	\caption[Learning with Thompson sampling (SDSS, unbalanced, logistic)]{
-		Learning with Thompson sampling (SDSS, balanced, logistic)}
-	\label{fig:sdss_ul_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/sdss_ul_ind_violin}
+	\caption[Violin plots of final accuracy rates (SDSS, unbalanced, logistic)]{
+		Violin plots of final accuracy rates (SDSS dataset, unbalanced pool, logistic regression)}
+	\label{fig:sdss_ul_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ul_frequencies}
 	\caption[Heuristic selection frequency (SDSS, unbalanced, logistic)]{
-		Heuristic selection frequency (SDSS, balanced, logistic)}
+		Heuristic selection frequency (SDSS dataset, unbalanced pool, logistic regression)}
 	\label{fig:sdss_ul_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ul_mus}
-	\caption[Mean of the reward (SDSS, unbalanced, logistic)]{
-		Mean of the reward (SDSS, balanced, logistic)}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_ul_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:sdss_ul_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_ul_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:sdss_ul_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (SDSS, unbalanced, logistic)]{
+		Reward of heuristics (SDSS dataset, unbalanced pool, logistic regression)}
+	\label{fig:sdss_ul_rewards}
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/sdss_ur_individuals}
-	\caption[Learning with individual heuristics (SDSS, unbalanced, SVM)]{
-		Learning with individual heuristics (SDSS, balanced, SVM)}
-	\label{fig:sdss_ur_individuals}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_active/sdss_ur_ind_lower}
+		\caption{Worse than random sampling}
+		\label{fig:sdss_ur_ind_lower}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_active/sdss_ur_ind_upper}
+		\caption{Better than random sampling}
+		\label{fig:sdss_ur_ind_upper}
+	\end{subfigure}
+	\caption[Learning curves with heuristics (SDSS, unbalanced, logistic)]{
+		Learning curves with heuristics (SDSS dataset, unbalanced pool, logistic regression)}
+	\label{fig:sdss_ur_ind}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ur_thompson}
-	\caption[Learning with Thompson sampling (SDSS, unbalanced, SVM)]{
-		Learning with Thompson sampling (SDSS, balanced, SVM)}
-	\label{fig:sdss_ur_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/sdss_ur_ind_violin}
+	\caption[Violin plots of final accuracy rates (SDSS, unbalanced, SVM RBF)]{
+		Violin plots of final accuracy rates (SDSS dataset, unbalanced pool, SVM RBF)}
+	\label{fig:sdss_ur_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ur_frequencies}
-	\caption[Heuristic selection frequency (SDSS, unbalanced, SVM)]{
-		Heuristic selection frequency (SDSS, balanced, SVM)}
+	\caption[Heuristic selection frequency (SDSS, unbalanced, SVM RBF)]{
+		Heuristic selection frequency (SDSS dataset, unbalanced pool, SVM RBF)}
 	\label{fig:sdss_ur_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ur_mus}
-	\caption[Mean of the reward (SDSS, unbalanced, SVM)]{
-		Mean of the reward (SDSS, balanced, SVM)}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_ur_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:sdss_ur_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_ur_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:sdss_ur_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (SDSS, unbalanced, SVM RBF)]{
+		Reward of heuristics (SDSS dataset, unbalanced pool, SVM RBF)}
+	\label{fig:sdss_ur_rewards}
 \end{figure}
 
 
@@ -179,132 +281,242 @@ To-do: add the maximum possible accuracy rate that can be achieved on plots
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 \subsection{Learning with the VST ATLAS Dataset}
 
+%--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_bl_individuals}
-	\caption[Learning with individual heuristics (VST ATLAS, balanced, logistic)]{
-		Learning with individual heuristics (VST ATLAS, balanced, logistic)}
-	\label{fig:vstatlas_bl_individuals}
+	\includegraphics[width=0.5\textwidth]{figures/5_active/vstatlas_bl_ind_upper}
+	\caption[Learning curves with heuristics (VST ATLAS, balanced, logistic)]{
+		Learning curves with heuristics (VST ATLAS dataset, balanced pool, logistic regression)}
+	\label{fig:vstatlas_bl_ind_upper}
 \end{figure}
+
+%\begin{figure}[p]
+%	\centering
+%	\begin{subfigure}{.5\textwidth}
+%		\centering
+%		\includegraphics[width=0.99\textwidth]{figures/5_active/vstatlas_bl_ind_lower}
+%		\caption{Worse than random sampling}
+%		\label{fig:vstatlas_bl_ind_lower}
+%	\end{subfigure}%
+%	\begin{subfigure}{.5\textwidth}
+%		\centering
+%		\includegraphics[width=0.99\linewidth]{figures/5_active/vstatlas_bl_ind_upper}
+%		\caption{Better than random sampling}
+%		\label{fig:vstatlas_bl_ind_upper}
+%	\end{subfigure}
+%	\caption[Learning curves with heuristics (VST ATLAS, balanced, logistic)]{
+%		Learning curves with heuristics (VST ATLAS, balanced pool, logistic regression)}
+%	\label{fig:vstatlas_bl_ind}
+%\end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_thompson}
-	\caption[Learning with Thompson sampling (VST ATLAS, balanced, logistic)]{
-		Learning with Thompson sampling (VST ATLAS, balanced, logistic)}
-	\label{fig:vstatlas_bl_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_bl_ind_violin}
+	\caption[Violin plots of final accuracy rates (VST ATLAS, balanced, logistic)]{
+		Violin plots of final accuracy rates (VST ATLAS dataset, balanced pool, logistic regression)}
+	\label{fig:vstatlas_bl_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_frequencies}
 	\caption[Heuristic selection frequency (VST ATLAS, balanced, logistic)]{
-		Heuristic selection frequency (VST ATLAS, balanced, logistic)}
+		Heuristic selection frequency (VST ATLAS dataset, balanced pool, logistic regression)}
 	\label{fig:vstatlas_bl_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_mus}
-	\caption[Mean of the reward (VST ATLAS, balanced, logistic)]{
-		Mean of the reward (VST ATLAS, balanced, logistic)}
-	\label{fig:vstatlas_bl_mus}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_bl_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:vstatlas_bl_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_bl_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:vstatlas_bl_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (VST ATLAS, balanced, logistic)]{
+		Reward of heuristics (VST ATLAS dataset, balanced pool, logistic regression)}
+	\label{fig:vstatlas_bl_rewards}
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_br_individuals}
-	\caption[Learning with individual heuristics (VST ATLAS, balanced, SVM)]{
-		Learning with individual heuristics (VST ATLAS, balanced, SVM)}
-	\label{fig:vstatlas_br_individuals}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_active/vstatlas_br_ind_lower}
+		\caption{Worse than random sampling}
+		\label{fig:vstatlas_br_ind_lower}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_active/vstatlas_br_ind_upper}
+		\caption{Better than random sampling}
+		\label{fig:vstatlas_br_ind_upper}
+	\end{subfigure}
+	\caption[Learning curves with heuristics (VST ATLAS, balanced, logistic)]{
+		Learning curves with heuristics (VST ATLAS dataset, balanced pool, logistic regression)}
+	\label{fig:vstatlas_br_ind}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_br_thompson}
-	\caption[Learning with Thompson sampling (VST ATLAS, balanced, SVM)]{
-		Learning with Thompson sampling (VST ATLAS, balanced, SVM)}
-	\label{fig:vstatlas_br_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_br_ind_violin}
+	\caption[Violin plots of final accuracy rates (VST ATLAS, balanced, SVM RBF)]{
+		Violin plots of final accuracy rates (VST ATLAS dataset, balanced pool, SVM RBF)}
+	\label{fig:vstatlas_br_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_br_frequencies}
-	\caption[Heuristic selection frequency (VST ATLAS, balanced, SVM)]{
-		Heuristic selection frequency (VST ATLAS, balanced, SVM)}
+	\caption[Heuristic selection frequency (VST ATLAS, balanced, SVM RBF)]{
+		Heuristic selection frequency (VST ATLAS dataset, balanced pool, SVM RBF)}
 	\label{fig:vstatlas_br_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_br_mus}
-	\caption[Mean of the reward (VST ATLAS, balanced, SVM)]{
-		Mean of the reward (VST ATLAS, balanced, SVM)}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_br_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:vstatlas_br_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_br_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:vstatlas_br_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (VST ATLAS, balanced, SVM RBF)]{
+		Reward of heuristics (VST ATLAS dataset, balanced pool, SVM RBF)}
+	\label{fig:vstatlas_br_rewards}
 \end{figure}
+
 
 %--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_ul_individuals}
-	\caption[Learning with individual heuristics (VST ATLAS, unbalanced, logistic)]{
-		Learning with individual heuristics (VST ATLAS, balanced, logistic)}
-	\label{fig:vstatlas_ul_individuals}
+	\includegraphics[width=0.5\textwidth]{figures/5_active/vstatlas_ul_ind_upper}
+	\caption[Learning curves with heuristics (VST ATLAS, unbalanced, logistic)]{
+		Learning curves with heuristics (VST ATLAS dataset, unbalanced pool, logistic regression)}
+	\label{fig:vstatlas_ul_ind_upper}
 \end{figure}
+
+
+%\begin{figure}[p]
+%	\centering
+%	\begin{subfigure}{.5\textwidth}
+%		\centering
+%		\includegraphics[width=0.99\textwidth]{figures/5_active/vstatlas_ul_ind_lower}
+%		\caption{Worse than random sampling}
+%		\label{fig:vstatlas_ul_ind_lower}
+%	\end{subfigure}%
+%	\begin{subfigure}{.5\textwidth}
+%		\centering
+%		\includegraphics[width=0.99\linewidth]{figures/5_active/vstatlas_ul_ind_upper}
+%		\caption{Better than random sampling}
+%		\label{fig:vstatlas_ul_ind_upper}
+%	\end{subfigure}
+%	\caption[Learning curves with heuristics (VST ATLAS, unbalanced, logistic)]{
+%		Learning curves with heuristics (VST ATLAS, unbalanced pool, logistic regression)}
+%	\label{fig:vstatlas_ul_ind}
+%\end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ul_thompson}
-	\caption[Learning with Thompson sampling (VST ATLAS, unbalanced, logistic)]{
-		Learning with Thompson sampling (VST ATLAS, balanced, logistic)}
-	\label{fig:vstatlas_ul_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_ul_ind_violin}
+	\caption[Violin plots of final accuracy rates (VST ATLAS, unbalanced, logistic)]{
+		Violin plots of final accuracy rates (VST ATLAS dataset, unbalanced pool, logistic regression)}
+	\label{fig:vstatlas_ul_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ul_frequencies}
 	\caption[Heuristic selection frequency (VST ATLAS, unbalanced, logistic)]{
-		Heuristic selection frequency (VST ATLAS, balanced, logistic)}
+		Heuristic selection frequency (VST ATLAS dataset, unbalanced pool, logistic regression)}
 	\label{fig:vstatlas_ul_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ul_mus}
-	\caption[Mean of the reward (VST ATLAS, unbalanced, logistic)]{
-		Mean of the reward (VST ATLAS, balanced, logistic)}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_ul_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:vstatlas_ul_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_ul_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:vstatlas_ul_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (VST ATLAS, unbalanced, logistic)]{
+		Reward of heuristics (VST ATLAS dataset, unbalanced pool, logistic regression)}
+	\label{fig:vstatlas_ul_rewards}
 \end{figure}
 
 %--------------------------------------------------------------------------------------------------
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_ur_individuals}
-	\caption[Learning with individual heuristics (VST ATLAS, unbalanced, SVM)]{
-		Learning with individual heuristics (VST ATLAS, balanced, SVM)}
-	\label{fig:vstatlas_ur_individuals}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_active/vstatlas_ur_ind_lower}
+		\caption{Worse than random sampling}
+		\label{fig:vstatlas_ur_ind_lower}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_active/vstatlas_ur_ind_upper}
+		\caption{Better than random sampling}
+		\label{fig:vstatlas_ur_ind_upper}
+	\end{subfigure}
+	\caption[Learning curves with heuristics (VST ATLAS, unbalanced, logistic)]{
+		Learning curves with heuristics (VST ATLAS, unbalanced pool, logistic regression)}
+	\label{fig:vstatlas_ur_ind}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ur_thompson}
-	\caption[Learning with Thompson sampling (VST ATLAS, unbalanced, SVM)]{
-		Learning with Thompson sampling (VST ATLAS, balanced, SVM)}
-	\label{fig:vstatlas_ur_thompson}
+	\includegraphics[width=\textwidth]{figures/5_active/vstatlas_ur_ind_violin}
+	\caption[Violin plots of final accuracy rates (VST ATLAS, unbalanced, SVM RBF)]{
+		Violin plots of final accuracy rates (VST ATLAS, unbalanced pool, SVM RBF)}
+	\label{fig:vstatlas_ur_ind_violin}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ur_frequencies}
-	\caption[Heuristic selection frequency (VST ATLAS, unbalanced, SVM)]{
-		Heuristic selection frequency (VST ATLAS, balanced, SVM)}
+	\caption[Heuristic selection frequency (VST ATLAS, unbalanced, SVM RBF)]{
+		Heuristic selection frequency (VST ATLAS dataset, unbalanced pool, SVM RBF)}
 	\label{fig:vstatlas_ur_frequencies}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
-	\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ur_mus}
-	\caption[Mean of the reward (VST ATLAS, unbalanced, SVM)]{
-		Mean of the reward (VST ATLAS, balanced, SVM)}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_ur_sum_rewards}
+		\caption{Cumulative reward}
+		\label{fig:vstatlas_ur_sum_rewards}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_ur_avg_rewards}
+		\caption{Mean of reward}
+		\label{fig:vstatlas_ur_avg_rewards}
+	\end{subfigure}
+	\caption[Reward of heuristics (VST ATLAS, unbalanced, SVM RBF)]{
+		Reward of heuristics (VST ATLAS dataset, unbalanced pool, SVM RBF)}
+	\label{fig:vstatlas_ur_rewards}
 \end{figure}
 
 

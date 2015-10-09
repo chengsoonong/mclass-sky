@@ -3,6 +3,7 @@
 import pickle
 import gc
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn import metrics
 from pandas import DataFrame, MultiIndex
@@ -28,7 +29,7 @@ from .viz import (plot_validation_accuracy_heatmap, reshape_grid_socres, plot_he
 def train_classifier(data, feature_names, class_name, train_size, test_size, output='',
     random_state=None, coords=True, recall_maps=True, classifier=None, correct_baseline=None,
     balanced=True, returns=['correct_boolean', 'confusion_test'], report=True,
-    pickle_path=None):
+    pickle_path=None, fig_dir=''):
     """ Standard classifier routine.
 
         Parameters
@@ -108,7 +109,7 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
 
     correct_boolean, confusion_test = print_classification_result(X_train, X_test, y_train,
-        y_test, report, recall_maps, classifier, correct_baseline, coords_test, output)
+        y_test, report, recall_maps, classifier, correct_baseline, coords_test, output, fig_dir)
 
 
     if pickle_path:
@@ -127,7 +128,8 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
 
 def print_classification_result(X_train, X_test, y_train, y_test, report=True,
-    recall_maps=True, classifier=None, correct_baseline=None, coords_test=None, output=''):
+    recall_maps=True, classifier=None, correct_baseline=None, coords_test=None, output='',
+    fig_dir=''):
     """ Train the specified classifier and print out the results.
 
         Parameters
@@ -201,17 +203,54 @@ def print_classification_result(X_train, X_test, y_train, y_test, report=True,
         if correct_baseline is None:
             print('Recall Maps of Galaxies, Stars, and Quasars, respectively:')
             plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
-                correct_boolean, vmin=0.7, vmax=1, mincnt=None, cmap=plt.cm.YlGn)
+                correct_boolean, vmin=0.7, vmax=1, mincnt=None, cmap=plt.cm.YlGn, fig_dir=fig_dir)
         else:
             print('Recall Improvement Maps of Galaxies, Stars, and Quasars, respectively:')
             correct_diff = correct_boolean.astype(int) - correct_baseline.astype(int)
             plot_recall_maps(coords_test, y_test, y_pred_test, class_names, output,
-                correct_diff, vmin=-0.2, vmax=+0.2, mincnt=20, cmap=plt.cm.RdBu)
+                correct_diff, vmin=-0.1, vmax=+0.1, mincnt=20, cmap=plt.cm.RdBu, fig_dir=fig_dir)
 
     return correct_boolean, confusion_test
 
 
-def learning_curve(data, feature_cols, target_col, classifier, train_sizes, test_sizes=200000,
+def learning_curve(classifier, X, y, cv, sample_sizes,
+    degree=1, pickle_path=None, verbose=True):
+    """ Learning curve
+    """
+
+    learning_curves = []
+    for i, (train_index, test_index) in enumerate(cv):
+        X_train = X[train_index]
+        X_test = X[test_index]
+        y_train = y[train_index]
+        y_test = y[test_index]
+
+        if degree > 1:
+            poly = PolynomialFeatures(degree=degree, interaction_only=False, include_bias=True)
+            X_train = poly.fit_transform(X_train)
+            X_test = poly.transform(X_test)
+
+        lc = []
+        for sample in sample_sizes:
+            classifier.fit(X_train[:sample], y_train[:sample])
+
+            # apply classifier on test set
+            y_pred = classifier.predict(X_test)
+            confusion = metrics.confusion_matrix(y_test, y_pred)
+            lc.append(balanced_accuracy_expected(confusion))
+
+        learning_curves.append(lc)
+        if verbose: print(i, end=' ')
+    
+    # pickle learning curve
+    if pickle_path:
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(learning_curves, f, protocol=4)
+    if verbose: print()
+
+
+
+def learning_curve_old(data, feature_cols, target_col, classifier, train_sizes, test_sizes=200000,
     random_state=None, balanced=True, normalise=True, degree=1, pickle_path=None):
     """ Compute the learning curve of a classiifer.
 
@@ -318,12 +357,6 @@ def compute_all_learning_curves(data, feature_cols, target_col):
     # define the range of the sample sizes
     sample_sizes = np.concatenate((np.arange(100, 1000, 100), np.arange(1000, 10000, 1000),
                                              np.arange(10000, 100001, 10000), [200000, 300000]))
-    sample_sizes_per_class = (sample_sizes / 3).astype(int)
-
-    # due to limited memory, we need to stop earlier when using polynomial kernel of degree 3
-    sample_sizes_small = np.concatenate((np.arange(100, 1000, 100), np.arange(1000, 10000, 1000),
-                                             np.arange(10000, 40000, 10000)))
-    sample_sizes_small_per_class = (sample_sizes_small / 3).astype(int)
 
     # initialise the classifiers
     svm_rbf = SVC(kernel='rbf', gamma=0.01, C=100, cache_size=2000)
@@ -334,27 +367,27 @@ def compute_all_learning_curves(data, feature_cols, target_col):
     forest = RandomForestClassifier(n_estimators=100, n_jobs=-1, class_weight='auto', random_state=21)
 
     # train SVM with RBF kernel (this will take a few hours)
-    lc_svm_rbf = learning_curve(data, feature_cols, target_col, svm_rbf, sample_sizes_small_per_class, random_state=2,
+    lc_svm_rbf = learning_curve(data, feature_cols, target_col, svm_rbf, sample_sizes, random_state=2,
         normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_rbf.pickle')
 
     # train SVM with polynomial kernel of degree 2
-    lc_svm_poly_2 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes_small_per_class, degree=2,
+    lc_svm_poly_2 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes, degree=2,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_poly_2.pickle')
 
     # train SVM with polynomial kernel of degree 3
-    lc_svm_poly_3 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes_small_per_class, degree=3,
+    lc_svm_poly_3 = learning_curve(data, feature_cols, target_col, svm_poly, sample_sizes, degree=3,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_svm_poly_3.pickle')
 
     # train logistic regression with polynomial kernel of degree 2
-    lc_logistic_2 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes_small_per_class, degree=2,
+    lc_logistic_2 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes, degree=2,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_logistic_2.pickle')
 
     # train logistic regression with polynomial kernel of degree 3
-    lc_logistic_3 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes_small_per_class, degree=3,
+    lc_logistic_3 = learning_curve(data, feature_cols, target_col, logistic, sample_sizes, degree=3,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_logistic_3.pickle')
 
     # train a random forest
-    lc_forest = learning_curve(data, feature_cols, target_col, forest, sample_sizes_small_per_class,
+    lc_forest = learning_curve(data, feature_cols, target_col, forest, sample_sizes,
         random_state=2, normalise=True, pickle_path='pickle/04_learning_curves/lc_forest.pickle')
 
 
@@ -407,7 +440,9 @@ def grid_search(X, y, classifier, param_grid, train_size=300, test_size=300, clf
 
 
 
-def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path=None, pickle_path=None):
+def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path=None,
+    C_range=np.logspace(-2, 10, 13), gamma_range=np.logspace(-9, 3, 13),
+    pickle_path=None):
     """ Do a grid search on SVM wih an RBF kernel.
 
         Parameters
@@ -432,8 +467,6 @@ def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path=None, pick
     """
 
     # define search domain
-    C_range = np.logspace(-2, 10, 13)
-    gamma_range = np.logspace(-9, 3, 13)
     param_grid_svm = dict(gamma=gamma_range, C=C_range)
 
     # run grid search
@@ -442,18 +475,10 @@ def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path=None, pick
         train_size=train_size, test_size=test_size, clf_name='SVM RBF')
     scores = reshape_grid_socres(grid.grid_scores_, len(C_range), len(gamma_range))
 
-    # plot scores in a heat map
-    fig = plt.figure(figsize=(10, 5))
-    ax = plot_validation_accuracy_heatmap(scores, x_range=gamma_range,
-        y_range=C_range, y_label='$C$', x_label='$\gamma$', power10='both')
-
-    if fig_path:
-        fig.savefig(fig_path, bbox_inches='tight')
-
     # pickle scores
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
+            pickle.dump(scores, f, protocol=4) 
 
 
 
@@ -503,7 +528,7 @@ def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path=None, 
     # pickle scores
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
+            pickle.dump(scores, f, protocol=4) 
 
 
 
@@ -604,31 +629,32 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path=None, pic
     scores = scores_1 + scores_2 + scores_3
     scores = reshape_grid_socres(scores, 12, len(C_range))
 
-    ylabels = ['Degree 1, OVR, Squared Hinge, L1-norm',
-               'Degree 1, OVR, Squared Hinge, L2-norm',
-               'Degree 1, OVR, Hinge, L2-norm',
-               'Degree 1, Crammer-Singer',
-               'Degree 2, OVR, Squared Hinge, L1-norm',
-               'Degree 2, OVR, Squared Hinge, L2-norm',
-               'Degree 2, OVR, Hinge, L2-norm',
-               'Degree 2, Crammer-Singer',
-               'Degree 3, OVR, Squared Hinge, L1-norm',
-               'Degree 3, OVR, Squared Hinge, L2-norm',
-               'Degree 3, OVR, Hinge, L2-norm',
-               'Degree 3, Crammer-Singer']
-
-    # plot scores on heat map
-    fig = plt.figure(figsize=(10, 5))
-    ax = plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
-    plt.yticks(np.arange(0, 12), ylabels)
+    
 
     if fig_path:
+        ylabels = ['Degree 1, OVR, Squared Hinge, L1-norm',
+                   'Degree 1, OVR, Squared Hinge, L2-norm',
+                   'Degree 1, OVR, Hinge, L2-norm',
+                   'Degree 1, Crammer-Singer',
+                   'Degree 2, OVR, Squared Hinge, L1-norm',
+                   'Degree 2, OVR, Squared Hinge, L2-norm',
+                   'Degree 2, OVR, Hinge, L2-norm',
+                   'Degree 2, Crammer-Singer',
+                   'Degree 3, OVR, Squared Hinge, L1-norm',
+                   'Degree 3, OVR, Squared Hinge, L2-norm',
+                   'Degree 3, OVR, Hinge, L2-norm',
+                   'Degree 3, Crammer-Singer']
+
+        # plot scores on heat map
+        fig = plt.figure(figsize=(10, 5))
+        ax = plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
+        plt.yticks(np.arange(0, 12), ylabels)
         fig.savefig(fig_path, bbox_inches='tight')
 
     # pickle scores
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL) 
+            pickle.dump(scores, f, protocol=4) 
 
 
 
@@ -720,7 +746,10 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path=None, pic
     scores = scores_1 + scores_2 + scores_3
     scores = reshape_grid_socres(scores, 9, len(C_range))
 
-    ylabels = ['Degree 1, OVR, L1-norm',
+
+
+    if fig_path:
+        ylabels = ['Degree 1, OVR, L1-norm',
                'Degree 1, OVR, L2-norm',
                'Degree 1, Multinomial, L2-norm',
                'Degree 2, OVR, L1-norm',
@@ -730,22 +759,21 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path=None, pic
                'Degree 3, OVR, L2-norm',
                'Degree 3, Multinomial, L2-norm']
 
-    # plot scores on heat map
-    fig = plt.figure(figsize=(10, 5))
-    ax = plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
-    plt.yticks(np.arange(0, 9), ylabels)
-
-    if fig_path:
+        # plot scores on heat map
+        fig = plt.figure(figsize=(10, 5))
+        ax = plot_validation_accuracy_heatmap(scores, x_range=C_range, x_label='$C$', power10='x')
+        plt.yticks(np.arange(0, 9), ylabels)
         fig.savefig(fig_path, bbox_inches='tight')
 
     # pickle scores
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(scores, f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(scores, f, protocol=4)
 
 
 def predict_unlabelled_objects(file_path, table, classifier,
-    data_cols, feature_cols, chunksize, pickle_paths, fig_paths):
+    data_cols, feature_cols, chunksize, pickle_paths, fig_paths,
+    scaler_path, extinction=False, verbose=True):
     """ Predict the classes of unlabelled objects given a classifier.
 
         Parameters
@@ -756,18 +784,27 @@ def predict_unlabelled_objects(file_path, table, classifier,
 
     sdss_chunks = pd.read_hdf(file_path, table, columns=data_cols, chunksize=chunksize)
 
-    galaxy_map = np.zeros((3600, 3600), dtype=int)
+    galaxy_map = np.zeros((3600, 3600), 
+        dtype=int)
     quasar_map = np.zeros((3600, 3600), dtype=int)
     star_map = np.zeros((3600, 3600), dtype=int)
     object_maps = [galaxy_map, quasar_map, star_map]
 
-    for chunk in sdss_chunks:
+    if extinction:
+        ebv = np.zeros((3600, 3600))
+        ebv_count = np.zeros((3600, 3600), dtype=int)
+
+    for i, chunk in enumerate(sdss_chunks):
         # apply reddening correction and compute key colours
-        optimise_sdss_features(chunk)
-        chunk['prediction'] = forest.predict(chunk[feature_cols])
+        optimise_sdss_features(chunk, scaler_path)
+        chunk['prediction'] = classifier.predict(chunk[feature_cols])
         
         chunk['ra'] = np.remainder(np.round(chunk['ra'] * 10) + 3600, 3600)
         chunk['dec'] = np.remainder(np.round(chunk['dec'] * 10) + 3600, 3600)
+
+        # get extinction value
+        if extinction:
+            chunk['ebv'] = chunk['extinction_r'] / 2.751
         
         for index, row in chunk.iterrows():
             if row['prediction'] == 'Galaxy':
@@ -779,10 +816,31 @@ def predict_unlabelled_objects(file_path, table, classifier,
             else:
                 print('Invalid prediction.')
 
+            if extinction:
+                ebv[row['ra']][row['dec']] += row['ebv']
+                ebv_count[row['ra']][row['dec']] += 1
+        
+        current_line = i * chunksize
+        if verbose and current_line % 1000000 == 0:
+            print(current_line // 1000000, end=' ')
+
+        break
+
+    if extinction:
+        ebv /= ebv_count
+        ebv[np.isinf(ebv)] = 0
+        ebv[np.isnan(ebv)] = 0
+        object_maps.append(ebv)
+        object_maps.append(ebv_count)
+
+    if verbose: print()
+
     # save our predictions
     for object_map, pickle_path in zip(object_maps, pickle_paths):
         with open(pickle_path, 'wb') as f:
             pickle.dump(object_map, f, protocol=4)
+
+
 
     # print out results
     whole_map = galaxy_map + star_map + quasar_map
@@ -807,7 +865,7 @@ def predict_unlabelled_objects(file_path, table, classifier,
     object_maps = [whole_map, galaxy_map, quasar_map, star_map]
     for obj_map, fig_path in zip(object_maps, fig_paths):
         fig = plt.figure(figsize=(10,5))
-        ax = viz.plot_hex_map(ras, decs, C=obj_map.flatten(), gridsize=360,
+        ax = plot_hex_map(ras, decs, C=obj_map.flatten(), gridsize=360,
             reduce_C_function=np.sum, vmin=0, vmax=50000, origin=180,
             milky_way=True)
         fig.savefig(fig_path, bbox_inches='tight', dpi=300)

@@ -17,12 +17,20 @@
 \usepackage[labelfont=bf]{caption}
 \usepackage{subcaption}
 \usepackage{xcolor}
+\usepackage{minted}
 \usepackage{IEEEtrantools}
 \usepackage{hyperref}
 \usepackage[acronym, nopostdot, nonumberlist, nogroupskip]{glossaries}
 \usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
 
-
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 
 \hypersetup{
 	bookmarksnumbered,
@@ -32,14 +40,22 @@
 	linkcolor    = {red!50!black},  % Colour of internal links
 	citecolor    = {blue!50!black}, % Colour of citations
 	pdfauthor    = {Alasdair Tran},
-	pdftitle	 = {Multi-arm Bandit Active Learning with Astronomy},
+	pdftitle	 = {Photometric Classification with Thompson Sampling},
 }
 
+\newcommand\MyBox[2]{
+	\fbox{\lower0.75cm
+		\vbox to 1.7cm{\vfil
+			\hbox to 1.7cm{\hfil\parbox{1.4cm}{#1\\#2}\hfil}
+			\vfil}%
+	}%
+}
+	
 \input 0.6_symbols
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Preamble
-\title{Multi-arm Bandit Active Learning with Astronomy}
+\title{Photometric Classification with Thompson Sampling}
 \author{Alasdair Nam Thang Tran}
 \date{\today}
 
@@ -84,7 +100,7 @@
 
 \listoffigures
 
-\listoftables
+%\listoftables
 
 \glsaddall
 \setlist[description]{leftmargin=!, labelwidth=5em} % Change for glossaries
@@ -98,19 +114,21 @@
 \mainmatter
 
 %% Introduction
-\input 1_introduction
+\input 1_intro
 
 %% Chapters
-\input 2_active
-\input 3_experiment
+\input 2_astro
+\input 3_ml
+\input 4_expt1
+\input 5_expt2
 
 %% Conclusion
-\input 4_conclusion
+\input 6_conclusion
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Here begins the end matter
 
-\input 5_appendix
+\input 7_appendix
 
 \backmatter
 

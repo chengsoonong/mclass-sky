@@ -1,0 +1,19 @@
+site_name: mclearn
+site_author: Alasdair Tran
+repo_url: https://github.com/alasdairtran/mclearn
+pages:
+    - Home: index.md
+    - User Guide:
+        - Photometric Data: photometry.md
+        - Data Preprocessing: preprocessing.md
+        - Performance Measures: performance.md
+        - Active Learning: active_learner.md
+        - Visualisations: viz.md
+        - API Reference: api.md
+markdown_extensions: 
+    - math
+    - toc
+    - footnotes
+extra_javascript: ['https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML',
+                   'mathjaxhelper.js']
+

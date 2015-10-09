@@ -32,13 +32,14 @@ __pycache__
 *.alg
 *.acn
 *.acr
+_minted*
 
 # project-specific exclusions
 projects/alasdair/data/sdss.h5
 projects/alasdair/data/sdss_dr7_photometry_source.csv.gz
 projects/alasdair/data/sdss_full.h5
 projects/alasdair/data/sdss_subclass.h5
-projects/alasdair/pickle/06_predicting_unlabelled_objects
+projects/alasdair/pickle/05_class_proportion_estimation
 projects/alasdair/literature
 projects/alasdair/thesis/thesis.pdf
 _sandbox*

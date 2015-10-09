@@ -22,15 +22,30 @@
 		\allowbreak}
 	#1
 }
-
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
 \DeclareMathOperator{\Beta}{Beta}
 \DeclareMathOperator{\Bin}{Bin}
 \DeclareMathOperator{\arsinh}{arsinh}
-
+\newcommand{\A}{\mathpzc{A}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Unlabelled}{\mathcal{U}}
+\newcommand{\Labelled}{\mathcal{L}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand*{\argmin}{\operatornamewithlimits{argmin}\limits}
+\newcommand*{\argmax}{\operatornamewithlimits{argmax}\limits}
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 %% List of symbols
-\newglossaryentry{A)}%
+\newglossaryentry{A_u}%
+{%
+	name={$\A_u$},
+	text={A_u},
+	description={The extinction value at the u-band},
+	sort={Au}
+}
+
+\newglossaryentry{A}%
 {%
 	name={$A$},
 	text={A},
@@ -78,12 +93,28 @@
 	sort={ci}
 }
 
+\newglossaryentry{d)}%
+{%
+	name={$d$},
+	text={d},
+	description={The distance between an object and Earth},
+	sort={d}
+}
+
 \newglossaryentry{E}%
 {%
 	name={$\E{X}$},
 	text={E(X)},
 	description={The expected value of the random variable $X$},
 	sort={EX}
+}
+
+\newglossaryentry{E(B-V)}%
+{%
+	name={$E(B-V)$},
+	text={E(B-V)},
+	description={The reference interstellar reddening value},
+	sort={EBV}
 }
 
 \newglossaryentry{f)}%
@@ -117,6 +148,22 @@
 	sort={fX}
 }
 
+\newglossaryentry{i_G(D)}%
+{%
+	name={$\iota_G(D)$},
+	text={i_G(D)},
+	description={The Gini impurity of the set $D$},
+	sort={iGD}
+}
+
+\newglossaryentry{h}%
+{%
+	name={$h$},
+	text={h},
+	description={The classifier or the hypothesis function $h: \X \mapsto \Y$},
+	sort={h}
+}
+
 \newglossaryentry{I(r)}%
 {%
 	name={$I(r)$},
@@ -125,12 +172,37 @@
 	sort={Ir}
 }
 
+\newglossaryentry{k}%
+{%
+	name={$k$},
+	text={k},
+	description={The number of classes or labels that can be assigned to an object},
+	sort={k}
+}
+
+\newglossaryentry{L}%
+{%
+	name={$\Labelled$},
+	text={L},
+	description={The pool of labelled data},
+	sort={L}
+}
+
+
 \newglossaryentry{lambda)}%
 {%
 	name={$\lambda$},
 	text={lambda},
 	description={The wavelength of light},
 	sort={lambda}
+}
+
+\newglossaryentry{M)}%
+{%
+	name={$M$},
+	text={M},
+	description={The absolute magnitude of an object},
+	sort={M}
 }
 
 \newglossaryentry{m)}%
@@ -155,6 +227,14 @@
 	text={n_i},
 	description={The number of objects belonging to class $i$ in a sample},
 	sort={ni}
+}
+
+\newglossaryentry{q_D(i)}%
+{%
+	name={$q_D(i)$},
+	text={q_D(i)},
+	description={The frequency of objects belong to class $i$ in set $D$},
+	sort={qDi}
 }
 
 \newglossaryentry{R_p(r)}%
@@ -182,16 +262,64 @@
 	sort={Tlambda}
 }
 
+\newglossaryentry{U}%
+{%
+	name={$\Unlabelled$},
+	text={U},
+	description={The pool of unlabelled data},
+	sort={U}
+}
+
+\newglossaryentry{X}%
+{%
+	name={$\X$},
+	text={X},
+	description={The feature space},
+	sort={X}
+}
+
+\newglossaryentry{x}%
+{%
+	name={$\bm{x}$},
+	text={x},
+	description={The feature vector of an object},
+	sort={x}
+}
+
+\newglossaryentry{Y}%
+{%
+	name={$\Y$},
+	text={Y},
+	description={The label space},
+	sort={Y}
+}
+
+\newglossaryentry{y}%
+{%
+	name={$y$},
+	text={y},
+	description={The label of an object},
+	sort={y}
+}
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 %% Acronyms
 \newacronym{atlas}{ATLAS}{Australia Telescope Large Area Survey}
 \newacronym{cdf}{CDF}{Cumulative Distribution Function}
+\newacronym{dec}{dec}{Declination}
+\newacronym{kl}{KL}{Kullback–-Leibler}
 \newacronym{pdf}{PDF}{Probability Density Function}
 \newacronym{psf}{PSF}{Point Spread Function}
+\newacronym{ra}{ra}{Right Ascension}
+\newacronym{rbf}{RBF}{Radial Basis Function}
+\newacronym{sdf98}{SDF98}{Schlegel, Finkbeiner, and Davis [1998]}
+\newacronym{sf11}{SF11}{Schlafly and Finkbeiner [2011]}
 \newacronym{sdss}{SDSS}{Sloan Digital Sky Survey}
+\newacronym{svm}{SVM}{Support Vector Machine}
 \newacronym{vlt}{VLT}{Very Large Telescope}
 \newacronym{vst}{VST}{VLT Survey Telescope}
+\newacronym{w14}{W14}{Wolf [2014]}
+\newacronym{wise}{WISE}{Wide-field Infrared Survey Explorer}
 
 %%% Local Variables: 
 %%% mode: latex

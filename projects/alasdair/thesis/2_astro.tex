@@ -13,16 +13,16 @@ astronomical objects, we need actual quantitative measurements.
 \label{sec:spec}
 
 One such quantitative approach is spectroscopy. This involves
-using diffraction grating to disperse light and measure the amount of electromagnetic radiation,
+using diffraction grating to disperse light and then measuring the amount of electromagnetic radiation,
 or flux, emitted from an object at small wavelength intervals. As the name implies, we end
 up with a spectrum, like the one shown in Figure \ref{fig:vega}. The shape of the spectrum
-and its absorption lines allow us to deduce many useful properties such as the object's
-temperature and chemical composition.
+and its absorption lines allow us to deduce many useful properties about the object
+such as its temperature and chemical composition.
 
 Unfortunately, it can be very costly to take high resolution spectra of faint objects since
 we are spreading light thinly across many wavelengths. Photometry gets around this problem
 by separating light into fewer groups and thus reducing the wavelength resolution
-\cite{romanishin02}. Specifically we have a set of filters, each of which can be put in
+\cite[Chapter 1]{romanishin02}. Specifically we have a set of filters, each of which can be put in
 front of the CCD
 camera to allow only light from certain wavelengths to pass through. Associated with
 each filter is a transmission function $T(\lambda)$ that tells us
@@ -104,7 +104,8 @@ At the same time, as the flux tends toward zero for fainter objects, the arsinh 
 
 The problem with apparent magnitudes is their dependence on distance. Objects that are further
 away form us are fainter and hence have higher apparent magnitudes. Of course, being
-further away does not change the fact that an object is a star or a galaxy. Thus if we want
+further away does not change anything fundamental about an object like whether it is
+a star or a galaxy. Thus if we want
 to study their intrinsic properties, we need to remove this dependency. One method is
 to convert to the absolute magnitude, which is defined as the object's apparent magnitude if
 it were exactly 10 parsecs away from Earth:
@@ -121,7 +122,7 @@ the $u -g$ colour is calculated as
 		            M_g + 5 \log_{10} \bigg(\frac{d}{10}\bigg) \\
 		        &=& M_u - M_g
 	\end{IEEEeqnarray*}
-When taking the difference, the conversion factor cancels and the colour of an object no longer
+When taking the difference, the conversion factor disappears and the colour of an object no longer
 depends on its distance.
 
 
@@ -152,15 +153,17 @@ the vernal equinox. We now define the right ascension of the vernal equinox to b
 	There is actually a slight complication. Since the Earth's rotation axis is not
 	fixed due to precession, the ra-dec coordinates of an object relative to the origin will
 	actually change slowly over time. Thus we need to also fix a time in which the
-	coordinates are measured. In the SDSS, 1 January 2000 12:00 Terrestial Time is chosen as
-	a reference point.}
+	coordinates are measured. In many surveys like the SDSS, 1 January 2000 12:00 Terrestial Time
+	is chosen as a reference point.}
 
 
 
 
 \section{Datasets}
 \label{sec:datasets}
-Two datasets, SDSS and VST ATLAS, are used in our experiments. Below we give a quick overview
+We now have all required background to understand the features in the two datasets used
+in our experiments. 
+Below we give a quick overview
 of what each dataset contains. For more information on how to obtain them, refer to
 Appendix \ref{cha:datasets}.
 
@@ -176,7 +179,8 @@ Appendix \ref{cha:datasets}.
 
 The main dataset in our investigation comes from the SDSS, a comprehensive survey of the
 Northern Sky that began operation in 2000. This dataset consists of 800 million objects, covering
-about a third of the sky \cite{alam15}. Figure \ref{fig:coverage} shows the coverage of the survey.
+14,055 square degrees, or 
+about a third of the celestial sphere \cite{alam15}. Figure \ref{fig:coverage} shows the coverage of the survey.
 
 For each object, we are given 11 features:
 	\begin{itemize}
@@ -187,8 +191,8 @@ For each object, we are given 11 features:
 Only 2.8 million out of the 800 million objects have been spectroscopically classified into three
 classes: galaxies, quasars, and stars. From Figure \ref{fig:class_dist_sdss}, we can see that the
 number of galaxies is twice that of stars and three times that of quasars. This leads to
-the problem of class imbalance. A few approaches on how to minimise any bias toward
-the dominant class during classification will be discussed in chapter \ref{cha:ml}.
+the problem of class imbalance. We will discuss some approaches to minimise the bias toward
+the dominant class during classification in chapter \ref{cha:ml}.
 
 \begin{figure}[tbp]
 	\centering
@@ -207,7 +211,7 @@ the dominant class during classification will be discussed in chapter \ref{cha:m
 	\caption[Distribution of the classes in the SDSS and VST ATLAS datasets]{
 		Class distribution of the labelled objects in the SDSS and VST ATLAS datasets: Observe
 		that both datasets exhibit the problem of class imbalance. Most objects in the
-		SDSS are galaxies, while stars are the dominant class in the VST ATLAS.}
+		SDSS dataset are galaxies, while stars are the dominant class in the VST ATLAS dataset.}
 	\label{fig:class_dist}
 \end{figure}
 
@@ -216,8 +220,8 @@ the dominant class during classification will be discussed in chapter \ref{cha:m
 A second and much smaller dataset comes from a more recent survey, the VST ATLAS. This project
 aims to survey 4500 deg$^2$ of the Southern Sky to roughly the same depth as the SDSS
 \cite{shanks15}.
-There are 35,000 objects in total which have been classified by an expert into four classes
-this time: stars, galaxies, quasars, and white dwarfs. For each object, we are provided
+There are 35,000 objects in total which have been classified by experts into four classes:
+stars, galaxies, quasars, and white dwarfs. For each object, we are provided
 with 7 features:
 	\begin{itemize}
 		\item The calibrated magnitude from the r-band.
@@ -225,7 +229,7 @@ with 7 features:
 		\item Two colour indices in the infrared: $r-W1$ and $W1-W2$.
 	\end{itemize}
 The two infrared channels $W1$ and $W2$ are measured by the Wide-field Infrared Survey Explorer
-(WISE), one of NASA's space telescopes. These channels will prove quite useful in distinguishing
+(WISE), one of NASA's space telescopes. These channels will prove useful in distinguishing
 between classes. As we can see from Figure \ref{fig:class_dist_vst}, the problem of class
 imbalance is even worse in this dataset. For instance, we have 25 times more stars than white
 dwarfs. Since research is still on-going, the coordinates of the objects are not yet publicly
@@ -234,18 +238,19 @@ available.
 
 
 \section{Dust Extinction}
-Throughout the Milky Way we have interstellar dust which can absorb and scatter light as it
-travels from its source to us. The scattering is especially strong at shorter wavelengths,
-Since less of the blue light arrives on Earth, an object will appear redder than it actually
+As light travels from its source to us, it can be absorbed and scattered by interstellar dust.
+The scattering is especially strong at shorter wavelengths.
+This means less of the blue light arrives on Earth and the object will appear redder than it actually
 is.
 
-This would not be a big problem if this reddening process were uniform throughout the
+This would not be a big problem if the reddening process were uniform throughout the
 celestial sphere, since all the magnitudes and colours will simply shift by a constant
 term. Indeed, this is the case with the VST-ATLAS, since the field where the objects were
 surveyed exhibits no drift in the reddening.
 However, the SDSS covers a much larger portion of the sky. As shown in
-Figure \ref{fig:reddening}, the reddening varies by quite a bit throughout the field. This
-mean we might need to correct the SDSS magnitudes for dust extinction.
+Figure \ref{fig:reddening}, the reddening varies by quite a bit throughout the field. The
+effect is particularly strong in the Milky Way region. Thus we might need to correct the SDSS
+magnitudes for dust extinction.
 
 \begin{figure}[tbp]
 	\centering
@@ -255,57 +260,15 @@ mean we might need to correct the SDSS magnitudes for dust extinction.
 	\label{fig:reddening}
 \end{figure}
 
-There are three competing sets of reddening corrections. In all of the three sets, we
-start with the reference reddening quantity
-	\begin{IEEEeqnarray*}{lCl}
-		E(B-V) &=& \frac{\A_r}{2.751}
-	\end{IEEEeqnarray*}
-where the values of $\A_r$ are included in the SDSS dataset.
-
-The most popular correction set for a long time was created by \citeN{schlegel98}.
-The correction values for each of the five passbands can be
-calculated as follows:
-	\begin{IEEEeqnarray*}{lCl}
-		\A_u &=& 5.155 \cdot E(B-V) \\
-		\A_g &=& 3.793 \cdot E(B-V) \\
-		\A_r &=& 2.751 \cdot E(B-V) \\
-		\A_i &=& 2.086 \cdot E(B-V) \\
-		\A_z &=& 1.479 \cdot E(B-V)
-	\end{IEEEeqnarray*}
-Later, \citeN{schlafly11} applied a different extinction curve, giving us the following
-correction values:
- 	\begin{IEEEeqnarray*}{lCl}
- 		\A_u &=& 4.239 \cdot E(B-V) \\
- 		\A_g &=& 3.303 \cdot E(B-V) \\
- 		\A_r &=& 2.285 \cdot E(B-V) \\
- 		\A_i &=& 1.698 \cdot E(B-V) \\
- 		\A_z &=& 1.263 \cdot E(B-V)
- 	\end{IEEEeqnarray*}
-Recently, \citeN{wolf14} remapped the $E(B-V)$ scale to
-	\begin{IEEEeqnarray*}{lCl}
-		E'(B-V) &=&
-		\begin{cases}
-			E(B-V) & \text{if } E(B-V) \in [0, 0.04], \\
-			E(B-V) + 0.5(E(B-V) - 0.04) & \text{if } E(B-V) \in [0, 0.08], \\
-			E(B-V) + 0.02 & \text{if } E(B-V) \in [0.08, +\infty].
-		\end{cases}
-	\end{IEEEeqnarray*}
-which can then be used to calculate a new set of correction values:
-	\begin{IEEEeqnarray*}{lCl}
- 		\A_u &=& 4.305 \cdot E'(B-V) \\
- 		\A_g &=& 3.288 \cdot E'(B-V) \\
- 		\A_r &=& 2.261 \cdot E'(B-V) \\
- 		\A_i &=& 1.714 \cdot E'(B-V) \\
- 		\A_z &=& 1.263 \cdot E'(B-V)
-	\end{IEEEeqnarray*}
-Each of these correction values can then be subtracted from the corresponding magnitudes
-to make up for the loss of the scattered light. Let us call these three reddening correction
-sets SDF98, SF11, and W14, respectively. As part of our experiments, we will compare them and
-see which one offers the best results.
-
-
-
-
+Three competing extinction vectors currently exist in the current literature.
+The most popular one for a long time was created by \citeN{schlegel98}, who 
+used the colours of nearby elliptical galaxies for calibration. Later, \citeN{schlafly11}
+made some improvement with new data from the SDSS. Recently, \citeN{wolf14} investigated
+quasars in the SDSS and found evidence of non-linearity in the reddening map. For convience,
+let us call the extinction vectors resulted from the above works SFD98, SF11, and W14, after
+the authors' initials and year of publication.
+One interesting question, which we explore in Chapter \ref{cha:expt1}, is whether
+applying any of these vectors will have any noticeable effect on the performance of the classifiers.
 
 
 

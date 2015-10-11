@@ -112,6 +112,8 @@ ON s.bestobjid = p.objid
 \chapter{Guide to Using mclearn}
 \label{cha:mclearn}
 
+[To do: a quick two page tutorial on main features on the python package \texttt{mclearn}]
+
 \section{Installation}
 \label{sec:installation}
 
@@ -125,14 +127,82 @@ ON s.bestobjid = p.objid
 %In estimating the variance of the unlabelled pool, there are two matrices we wish to compute...
 
 
+
+\chapter{Dust Extinction Vectors}
+\label{cha:dust}
+
+The SDF98 extinction values are given in the SDSS dataset. To calculate the other
+two extinction vectors, we start with a reference reddening quantity
+\begin{IEEEeqnarray*}{lCl}
+	E_{B-V} &=& \frac{\A_r}{2.751}
+\end{IEEEeqnarray*}
+where $\A_r$ is the SDF98 extinction value in the r-band.
+
+As a check, we can actually recover the SDF98 extinction vector as follows:
+\begin{IEEEeqnarray*}{lCl}
+	\A_u &=& 5.155 \cdot E_{B-V} \\
+	\A_g &=& 3.793 \cdot E_{B-V} \\
+	\A_r &=& 2.751 \cdot E_{B-V} \\
+	\A_i &=& 2.086 \cdot E_{B-V} \\
+	\A_z &=& 1.479 \cdot E_{B-V}
+\end{IEEEeqnarray*}
+Later, \citeN{schlafly11} applied a different extinction curve, giving us the following
+correction values:
+\begin{IEEEeqnarray*}{lCl}
+	\A_u &=& 4.239 \cdot E_{B-V} \\
+	\A_g &=& 3.303 \cdot E_{B-V} \\
+	\A_r &=& 2.285 \cdot E_{B-V} \\
+	\A_i &=& 1.698 \cdot E_{B-V} \\
+	\A_z &=& 1.263 \cdot E_{B-V}
+\end{IEEEeqnarray*}
+Recently, \citeN{wolf14} remapped the $E_{B-V}$ scale to
+\begin{IEEEeqnarray*}{lCl}
+	E'_{B-V} &=&
+	\begin{cases}
+		E_{B-V} & \text{if } E_{B-V} \in [0, 0.04], \\
+		E_{B-V} + 0.5(E_{B-V} - 0.04) & \text{if } E_{B-V} \in [0, 0.08], \\
+		E_{B-V} + 0.02 & \text{if } E_{B-V} \in [0.08, +\infty].
+	\end{cases}
+\end{IEEEeqnarray*}
+which can then be used to calculate a new set of correction values:
+\begin{IEEEeqnarray*}{lCl}
+	\A_u &=& 4.305 \cdot E'_{B-V} \\
+	\A_g &=& 3.288 \cdot E'_{B-V} \\
+	\A_r &=& 2.261 \cdot E'_{B-V} \\
+	\A_i &=& 1.714 \cdot E'_{B-V} \\
+	\A_z &=& 1.263 \cdot E'_{B-V}
+\end{IEEEeqnarray*}
+Each of these correction values need to be subtracted from the corresponding magnitudes
+to make up for the loss of the scattered light.
+
+
+
+
+
 \chapter{Supplementary Results}
 \label{cha:supp}
 
-Compare learning curve of multinomial with one-vs-rest in logistic regression.
-Compare learning curve of random forest. Warm start
+In our experiments, we generated many plots. In this Appendix, we put together results
+that are not vital to the main narrative but still somewhat interesting.
+
+\section{Reliability of Probabilities Estimates}
+\label{sec:forest_prob}
+We found that the probabilities estimated by both random forests and multinomial regression
+to be unreliable. [To do: include learning curves of random forest, one-vs-rest, and
+multinomial regression, and warm-start here]
 
 
 \section{Effects of Dust Extinction on Recall}
+
+In Chapter \ref{cha:expt1} we tested the effect of three different extinction vectors 
+on the accuracy rate. \ref{fig:map_recall_uncorrected} show how recall rate is distributed
+over the celestial sphere. Overall, the recall on galaxies is almost perfect, while
+the recall on stars is fairly average. On the three pages after that, Figures \ref{fig:map_recall_sfd98}, \ref{fig:map_recall_sf11}, and \ref{fig:map_recall_w14} show
+the improvement on recall after each extinction vector is applied. The interesting bit
+is that there is a patch of stars right next to the Milky Way plane that gets a big improvement
+in recall after reddening correction. Thus it seems that the extinction vector could work
+quite well if there were more objects that are closer to the Milky Way plane.
+
 
 \begin{figure}[p]
 	\centering
@@ -236,83 +306,73 @@ Compare learning curve of random forest. Warm start
 
 \section{Variance of the Reward Function in Thompson Sampling}
 
+Finally, Figures \ref{fig:sdss_sigmas} and \ref{fig:vstatlas_sigmas} show how $\sigma^2$,
+the variance of the expected reward, changes with the training size. As we would expect,
+the variance decreases exponentially over time. This is expected since as we increase
+the training size, we become more certain of the classifier's accuracy. In addition, the incremental change
+of the accuracy rate shrinks over time as well as we approach an accuracy of 1.
 
 \begin{figure}[p]
 	\centering
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_bl_sigmas}
-		\caption{Logistic Regression}
+		\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_sigmas}
+		\caption{Balanced pool and logistic regression}
 		\label{fig:sdss_bl_sigmas}
 	\end{subfigure}%
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_br_sigmas}
-		\caption{SVM RBF}
+		\includegraphics[width=\linewidth]{figures/5_thompson/sdss_br_sigmas}
+		\caption{Balanced pool and RBF SVM}
 		\label{fig:sdss_br_sigmas}
 	\end{subfigure}
-	\caption[Variance of the reward (SDSS, balanced)]{
-		Variance of the reward (SDSS, balanced)}
-	\label{fig:sdss_b_sigmas}
-\end{figure}
-
-\begin{figure}[p]
-	\centering
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\textwidth]{figures/5_thompson/sdss_ul_sigmas}
-		\caption{Logistic Regression}
-		\label{fig:sdss_l_sigmas}
+		\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ul_sigmas}
+		\caption{Unbalanced pool and logistic regression}
+		\label{fig:sdss_ul_sigmas}
 	\end{subfigure}%
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\linewidth]{figures/5_thompson/sdss_ur_sigmas}
-		\caption{SVM RBF}
+		\includegraphics[width=\linewidth]{figures/5_thompson/sdss_ur_sigmas}
+		\caption{Unbalanced pool and RBF SVM}
 		\label{fig:sdss_ur_sigmas}
 	\end{subfigure}
-	\caption[Variance of the reward (SDSS, unbalanced)]{
-		Variance of the reward (SDSS, unbalanced)}
-	\label{fig:sdss_u_sigmas}
+	\caption[Variance of heuristics (SDSS)]{
+		Variance of the expected reward in Thompson sampling with the SDSS dataset.}
+	\label{fig:sdss_sigmas}
 \end{figure}
 
 \begin{figure}[p]
 	\centering
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_bl_sigmas}
-		\caption{Logistic Regression}
+		\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_sigmas}
+		\caption{Balanced pool and logistic regression}
 		\label{fig:vstatlas_bl_sigmas}
 	\end{subfigure}%
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_br_sigmas}
-		\caption{SVM RBF}
+		\includegraphics[width=\linewidth]{figures/5_thompson/vstatlas_br_sigmas}
+		\caption{Balanced pool and RBF SVM}
 		\label{fig:vstatlas_br_sigmas}
 	\end{subfigure}
-	\caption[Variance of the reward (VST ATLAS, balanced)]{
-		Variance of the reward (VST ATLAS, balanced)}
-	\label{fig:vstatlas_b_sigmas}
-\end{figure}
-
-\begin{figure}[p]
-	\centering
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\textwidth]{figures/5_thompson/vstatlas_ul_sigmas}
-		\caption{Logistic Regression}
-		\label{fig:vstatlas_l_sigmas}
+		\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ul_sigmas}
+		\caption{Unbalanced pool and logistic regression}
+		\label{fig:vstatlas_ul_sigmas}
 	\end{subfigure}%
 	\begin{subfigure}{.5\textwidth}
 		\centering
-		\includegraphics[width=0.99\linewidth]{figures/5_thompson/vstatlas_ur_sigmas}
-		\caption{SVM RBF}
+		\includegraphics[width=\linewidth]{figures/5_thompson/vstatlas_ur_sigmas}
+		\caption{Unbalanced pool and RBF SVM}
 		\label{fig:vstatlas_ur_sigmas}
 	\end{subfigure}
-	\caption[Variance of the reward (VST ATLAS, unbalanced)]{
-		Variance of the reward (VST ATLAS, unbalanced)}
-	\label{fig:vstatlas_u_sigmas}
+	\caption[Variance of heuristics (VST ATLAS)]{
+		Variance of the expected reward in Thompson sampling with the VST ATLAS dataset.}
+	\label{fig:vstatlas_sigmas}
 \end{figure}
-
 
 
 %%% Local Variables: 

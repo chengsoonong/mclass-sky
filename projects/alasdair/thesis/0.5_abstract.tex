@@ -6,7 +6,16 @@
 \label{cha:abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Abstract of my thesis\dots
+Recent sky surveys have given us a large amount of data to work with. One particular
+problem is that spectroscopic labelling is expensive, so we only want to manually label
+an object if doing so allows us to gain new information. This thesis explores pool-based
+active learning and the application of prominent families of heuristics to the
+domain of photometric classification.
+
+We begin with an investigation of using
+standard classifiers with random sampling. We then derive a method that allows us to automatically select
+the optimal heuristic without any prior knowledge of their relative performance. This is done by
+using ideas from Thompson sampling and the multi-arm bandit setting to solve the exploration vs exploitation problem. Two best-performing classifiers with reliable probability estimates, logistic regression and support vector machines, are then used to conduct the active learning experiment. The results are very promising, with the margin heuristic outperforming random sampling by as much as 9\% in the VST ATLAS dataset after only 300 samples. Most heuristics still work well even when we have data with extremely unbalanced classes and noise.
 
 %%% Local Variables: 
 %%% mode: latex

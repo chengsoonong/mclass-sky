@@ -5,7 +5,24 @@
 \chapter{Conclusion}
 \label{cha:conclusion}
 
-Future work: theoretical convergence analysis of the heuristics.
+This thesis provides an initial set of experiments that explore how active learning can help astronomers with photometric classification. Through our novel contribution of bringing
+the classic Thompson sampling algorithm to the setting of heuristic selection, we have managed to
+learn the optimal heuristic automatically very quickly. The cleaner the dataset and 
+the better the probability estimates are, the more effective active learning is. For example,
+we achieve the best improvement with logistic regression and the VST ATLAS dataset. The margin
+heuristic comes out as a clear winner, even under noisy conditions like in the SDSS. This
+is also great news because it is also the fastest heuristic to run. Simplicity wins at the end of the day.
+
+The work that we have done here is only a beginning. In particular, we have only done an empirical
+investigation in the astronomical domain. It would be an interesting exercise to conduct a
+theoretical analysis to see if heuristics such as margin can always guarantee to beat random sampling.
+Another possible future direction is to derive a variance estimation method for both SVMs and
+one-vs-rest logistic regression, since our variance estimate is only true under the multinomial logistic regression. We can also try to implement the Dynamic Thompson Sampling approach to address
+the reward drifting problem.
+
+In our investigation, the algorithm only works with one sample at a time. What astronomers would
+normally do in practice, however, is batch active learning, where at each round, $n$ objects are selected to be labelled simultaneously. This problem is slightly more challenging since we need to deal with the setting where we could have two objects whose class membership we are currently very uncertain about, but the knowledge of class membership of one object would allow us to predict the other object's class easily. 
+Cluster analysis might be able to help us with this problem of batch active learning.
 
 %%% Local Variables: 
 %%% mode: latex

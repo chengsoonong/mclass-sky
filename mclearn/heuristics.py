@@ -320,9 +320,8 @@ def _compute_A(X, pi, classes):
     G = A * B * I_same  + C * D * I_diff
     G = E * G
     outer = np.dot(G, G.transpose())
-    outer = np.nan_to_num(outer)
     
-    return outer
+    return np.nan_to_num(outer)
 
 
 def _compute_F(X, pi, classes, C=1):
@@ -374,10 +373,8 @@ def _compute_F(X, pi, classes, C=1):
     
     F = F_1 * I_diag + F_2 * I_mini_off_diag + F_3 * I_main_off_diag
     F = F / n_samples
-
-    assert not np.any(np.isnan(F)), 'F = {}\nM = {}\nN = {}'.format(F, M, N)
     
-    return F
+    return  np.nan_to_num(F)
 
 
 def compute_pool_variance(X, pi, classes, C=1):

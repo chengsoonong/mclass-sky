@@ -128,7 +128,7 @@ ON s.bestobjid = p.objid
 
 
 
-\chapter{Dust Extinction Vectors}
+\chapter{Dust Extinction Vectors} \index{dust extinction}
 \label{cha:dust}
 
 The SDF98 extinction values are given in the SDSS dataset. To calculate the other
@@ -189,7 +189,25 @@ that are not vital to the main narrative but still somewhat interesting.
 \label{sec:forest_prob}
 We found that the probabilities estimated by both random forests and multinomial regression
 to be unreliable. [To do: include learning curves of random forest, one-vs-rest, and
-multinomial regression, and warm-start here]
+multinomial regression, and warm-start here, test both SDSS and VST ATLAS]
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/appendix/sdss_forest_multinom}
+		\caption{Recall map of galaxies.}
+		\label{fig:sdss_forest_multinom}
+	\end{subfigure}\\
+	\begin{subfigure}{\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/appendix/vstatlas_forest_multinom}
+		\caption{Recall map of stars.}
+		\label{fig:vstatlas_forest_multinom}
+	\end{subfigure}
+	\caption{Recall map of when there is no corrections.}
+	\label{fig:forest_multinom}
+\end{figure}
 
 
 \section{Effects of Dust Extinction on Recall}
@@ -200,8 +218,8 @@ over the celestial sphere. Overall, the recall on galaxies is almost perfect, wh
 the recall on stars is fairly average. On the three pages after that, Figures \ref{fig:map_recall_sfd98}, \ref{fig:map_recall_sf11}, and \ref{fig:map_recall_w14} show
 the improvement on recall after each extinction vector is applied. The interesting bit
 is that there is a patch of stars right next to the Milky Way plane that gets a big improvement
-in recall after reddening correction. Thus it seems that the extinction vector could work
-quite well if there were more objects that are closer to the Milky Way plane.
+in recall after reddening correction. Thus the extinction vector would be very important
+if there were more objects that are closer to the Milky Way plane.
 
 
 \begin{figure}[p]
@@ -301,6 +319,73 @@ quite well if there were more objects that are closer to the Milky Way plane.
 	\end{subfigure}
 	\caption{Recall improvement map of when the W14 correction set is applied.}
 	\label{fig:map_recall_w14}
+\end{figure}
+
+
+\section{Total Number of Selection of Heuristics in Thompson Sampling}
+
+Finally, Figures \ref{fig:sdss_sigmas} and \ref{fig:vstatlas_sigmas} show how...
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_no_selections}
+		\caption{Balanced pool and logistic regression}
+		\label{fig:sdss_bl_no_selections}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/5_thompson/sdss_br_no_selections}
+		\caption{Balanced pool and RBF SVM}
+		\label{fig:sdss_br_no_selections}
+	\end{subfigure}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/5_thompson/sdss_ul_no_selections}
+		\caption{Unbalanced pool and logistic regression}
+		\label{fig:sdss_ul_no_selections}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/5_thompson/sdss_ur_no_selections}
+		\caption{Unbalanced pool and RBF SVM}
+		\label{fig:sdss_ur_no_selections}
+	\end{subfigure}
+	\caption[Variance of heuristics (SDSS)]{
+		Variance of the expected reward in Thompson sampling with the SDSS dataset.}
+	\label{fig:sdss_no_selections}
+\end{figure}
+
+\begin{figure}[p]
+	\centering
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_bl_no_selections}
+		\caption{Balanced pool and logistic regression}
+		\label{fig:vstatlas_bl_no_selections}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/5_thompson/vstatlas_br_no_selections}
+		\caption{Balanced pool and RBF SVM}
+		\label{fig:vstatlas_br_no_selections}
+	\end{subfigure}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{figures/5_thompson/vstatlas_ul_no_selections}
+		\caption{Unbalanced pool and logistic regression}
+		\label{fig:vstatlas_ul_no_selections}
+	\end{subfigure}%
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/5_thompson/vstatlas_ur_no_selections}
+		\caption{Unbalanced pool and RBF SVM}
+		\label{fig:vstatlas_ur_no_selections}
+	\end{subfigure}
+	\caption[Variance of heuristics (VST ATLAS)]{
+		Variance of the expected reward in Thompson sampling with the VST ATLAS dataset.}
+	\label{fig:vstatlas_no_selections}
 \end{figure}
 
 

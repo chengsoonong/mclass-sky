@@ -12,6 +12,7 @@ classifiers. This, in turn, will help us design the protocol
 of the active learning experiment.
 
 \section{Preparation of Data}
+\label{sec:prep}
 
 The VST ATLAS dataset has been specifically prepared for us by Christian Wolf so there
 is no need to do any cleaning or feature selection.
@@ -29,9 +30,7 @@ of all 800 million objects in the database. No constraints were applied to this 
 
 Originally, each object contains 5 PSF and 5 Petrosian magnitudes.
 However as we discussed
-in \ref{sub:colours}, these magnitudes are dependent on distance. To remove this
-dependency,  we take 
-the differences and obtain the colours. By convention, we calculate the $u-g$, $u-r$, $r-i$,
+in \ref{sub:colours}, it is better to take the differences and obtain the colours. By convention, we calculate the $u-g$, $u-r$, $r-i$,
 and $i-z$ colours. In addition, we keep one apparent magnitude in the set of features.
 The magnitude in the r-band is chosen since it lets the the greatest fraction of light through
 the filter. This, hopefully, would give us a high signal-to-noise ratio.
@@ -71,12 +70,12 @@ set.
 \subsection{Reddening Correction}
 In order to compare three sets of dust extinction, SDF98, SF11, and W14, we first
 split the labelled pool into a balanced training set of size 600,000 and a balanced test
-set of size 300,000. We then apply each a correction and train a random forest of 300 decision
+set of size 300,000. We then apply each correction and train a random forest of 300 decision
 trees. A random forest is chosen due to its speed of execution. Finally the accuracy rate on the test set allows
 us to decide on the best performing reddening correction set. This set will be applied
 in all subsequent experiments.
 
-\subsection{Copmaring Classifiers}
+\subsection{Comparing Classifiers}
 Next we would like to compare the performance of four classifiers: random forests, logistic
 regression, linear SVMs, and SVMs with an RBF kernel. In the random forest,
 we again build 300 trees and the
@@ -92,7 +91,7 @@ Once the hyperparameters are optimised, we compare the performance of the classi
 at their learning curves. The VST ATLAS data is fairly small, so we can use all of the examples.
 Using all of the SDSS labelled examples would take too long on some classifiers like
 logistic regression, we stop at 300,000 examples. To smooth out the curve, we do a
-stratified shuffle split with 5 iterations, and then take average of the results.
+stratified shuffle split with 5 iterations, and then take an average of the results.
 
 Since we would like to use as much data as possible, no attempt is made to balance the classes.
 Instead we give to the classifiers a weight vector that is proportional to the inverse
@@ -102,16 +101,18 @@ any bias toward the dominant class.
 
 Finally since we have 800 million unlabelled objects in the SDSS, let us pick the
 best performing classifier and predict the class proportion on the unlabelled data.
-In doing so, we using the numbers in the confusion matrix and try to correct for the
+In doing so, we are using the numbers in the confusion matrix and try to correct for the
 potential misclassification.
 
 \section{Results and Discussion}
 \label{sec:results1}
 
 \subsection{Comparison of Reddening Correction Sets}
+\label{sec:extinction}
+
 Figure \ref{fig:reddeningviolin} on page \pageref{fig:reddeningviolin} shows
 the violin plot of the accuracy rate on the test
-set when apply each of the three correction set. Appendix \ref{cha:supp} contains
+set when we apply each of the three correction sets. Appendix \ref{cha:supp} contains
 more detailed maps on the improvement of the recall rate. Overall, the results are quite
 uninteresting since no statistical differences can be found between the three sets. In fact,
 even if we do not apply any correction, the accuracy rate still remains unchanged.
@@ -119,7 +120,7 @@ even if we do not apply any correction, the accuracy rate still remains unchange
 This could be because there are not too many objects in the Milky Way band,
 the region in which there is the most dust extinction. Indeed, if we look back at the reddening map
 in Figure \ref{fig:reddening}, the extinction amount does vary through the field, such 
-variation is probably fairly small and random forests, after all, are quite robust to noise,
+variation is probably fairly small and random forests, after all, are quite robust to noise.
 In any case, for good measure, we will correct all photometric measurement for dust
 extinction using
 the latest W14 set. Other projects like SkyMapper will survey regions closer to the Milky
@@ -136,7 +137,9 @@ evidence of which of the three sets gives the biggest improvement to the accurac
 	\label{fig:reddeningviolin}
 \end{figure}
 
-\subsection{Hyperparameters Optismations}
+\subsection{Hyperparameter Optimisations}
+\label{sec:hyper}
+
 On the next three pages, we show the heat maps of the cross-validation accuracy rate
 for many different combinations of hyperparameters. For readability, we provide detailed
 reasoning under each figure of how we choose the optimal values of the parameters.
@@ -160,7 +163,7 @@ Below we provide a summary of our decisions:
 	\includegraphics[width=\textwidth]{figures/4_expt1/sdss_grid_logistic}
 	\caption[Heatmap of logistic regression's cross-valdiation accuracy in SDSS]{
 		Heatmap of linear logistic regression's cross-valdiation accuracy in the SDSS dataset:
-		The best-perfomring combination involves doing a degree 3 polynomial transformation
+		The best-performing combination involves doing a degree 3 polynomial transformation
 		of the features. In practice, this would make it too slow to run subsequent experiments.
 		Thus we sacrifice a bit of accuracy and pick the optimal parameters that
 		involve only a degree 2 polynomial transformation. In particular, we set the inverse regularisation
@@ -173,7 +176,7 @@ Below we provide a summary of our decisions:
 	\includegraphics[width=\textwidth]{figures/4_expt1/vstatlas_grid_logistic}
 	\caption[Heatmap of logistic regression's cross-valdiation accuracy in VST ATLAS]{
 		Heatmap of logistic regression's cross-valdiation accuracy in the VST ATLAS dataset:
-		The optimal combination invovles using multinomial logistic regression. This
+		The optimal combination involves using multinomial logistic regression. This
 		might seem like a good choice since we get true probability estimates. However
 		it turns out that the Scikit-learn implementation of multinomial regression
 		gives unstable probabilities. Thus we resort to the next best combination,
@@ -233,6 +236,8 @@ Below we provide a summary of our decisions:
 
 
 \subsection{Learning Curves with Random Sampling}
+\label{sec:lc}
+
 Now that we have tuned the hyperparameters, we are ready to compare the classifiers.
 Figure \ref{fig:learning_curves} shows the average learning curves of the two datasets.
 Overall the two best performers are random forests and SVMs with an RBF kernel. The VST ATLAS
@@ -256,14 +261,16 @@ surprising even slower than the RBF SVM.
 	\end{subfigure}
 	\caption[Learning curves with random sampling]{
 		These are the average learning curves (of 5 trials) with random sampling.
-		Note that we use a log scale for the y-axis since generally, it gets exponentially
-		more difficult to improve the accuracy rate as we the accuracy approaches 1.}
+		Note that we use a log scale for the x-axis since generally, it gets exponentially
+		more difficult to improve the accuracy rate as the accuracy approaches 1.}
 	\label{fig:learning_curves}
 \end{figure}
 
 
 
 \subsection{Class Proportion Estimation}
+\label{sec:prop}
+
 Let us now make some predictions on the unlabelled SDSS data. Although the RBF SVM is
 the best-performing classifier, we nonetheless choose the random forest due to its fast
 training time. We retrain the forest, now with a training set of size 837,000 and a test
@@ -276,7 +283,8 @@ forest predicts that
 	\begin{itemize}
 		\item 389,215,078 (49.0\%) are galaxies
 		\item 266,245,352 (33.5\%) are stars
-		\item 138,553,601 (17.4\%) are quasars
+		\item 138,553,601 (17.4\%) are quasars \info{and we know there will be around 1m,
+			becuase the labelled sample is not at all representative of the unlabelled one}
 	\end{itemize} 
 Using information from the normalised confusion matrix, we might be able to correct
 for the potential misclassification. For example, only 95.7\% of objects predicted as galaxies
@@ -363,7 +371,8 @@ sophisticated methods are needed if we want to recover the true proportions of t
 		\label{fig:random3}
 	\end{subfigure}
 	\caption[Map of predicted labels on the whole SDSS dataset using random forest.]{
-		Map of predicted labels on the whole SDSS dataset using random forest.}
+		Map of predicted labels on the whole SDSS dataset using random forest. this
+		map is, however, only moderately useful, since it is not a random sample of the sky.}
 	\label{fig:forest}
 \end{figure}
 

@@ -4,52 +4,48 @@
 
 \chapter{Mapping the Night Sky}
 \label{cha:astro}
-When many people think about astronomy, the first things that pop into their mind are
-breathtaking images of the sky like the famous Hubble Deep Field. But pretty images alone
-are not enough to do real science. For us to make any meaningful observations about
-astronomical objects, we need actual quantitative measurements.
 
-\section{Spectroscopy and Photometry}
+When many people think about astronomy, the first things that pop into their mind are breathtaking
+images of the sky like the famous Hubble Deep Field. But pretty images alone are not enough to do
+real science. For us to make any meaningful observations about astronomical objects, we need actual
+quantitative measurements.
+
+\section{Spectroscopy and Photometry} \index{spectroscopy} \index{photometry}
 \label{sec:spec}
 
-One such quantitative approach is spectroscopy. This involves
-using diffraction grating to disperse light and then measuring the amount of electromagnetic radiation,
-or flux, emitted from an object at small wavelength intervals. As the name implies, we end
-up with a spectrum, like the one shown in Figure \ref{fig:vega}. The shape of the spectrum
-and its absorption lines allow us to deduce many useful properties about the object
-such as its temperature and chemical composition.
+One such quantitative approach is spectroscopy. This involves using diffraction grating to disperse
+light and then measuring the amount of electromagnetic radiation, or flux, emitted from an object
+at small wavelength intervals. As the name implies, we end up with a spectrum, like the one shown
+in Figure \ref{fig:vega}. The shape of the spectrum and its absorption lines allow us to deduce
+many useful properties about the object such as its temperature and chemical composition.
 
-Unfortunately, it can be very costly to take high resolution spectra of faint objects since
-we are spreading light thinly across many wavelengths. Photometry gets around this problem
-by separating light into fewer groups and thus reducing the wavelength resolution
-\cite[Chapter 1]{romanishin02}. Specifically we have a set of filters, each of which can be put in
-front of the CCD
-camera to allow only light from certain wavelengths to pass through. Associated with
-each filter is a transmission function $T(\lambda)$ that tells us
-the fraction of light that the filter will transmit at wavelength $\lambda$.
-Figure \ref{fig:vega} shows $T(\lambda)$ of the five bandpasses (u, g, r, i, and z) that
-are used in the SDSS.
+Unfortunately, it can be very difficult to take high resolution spectra of faint objects since we
+are spreading light thinly across many wavelengths. Photometry gets around this problem by
+separating light into fewer groups and thus reducing the wavelength resolution \cite[Chapter
+1]{romanishin02}. Specifically we have a set of filters, each of which can be put in front of the
+CCD camera to allow only light from certain wavelengths to pass through. Associated with each
+filter is a transmission function $T(\lambda)$ that tells us the fraction of light that the filter
+will transmit at wavelength $\lambda$. Figure \ref{fig:vega} shows $T(\lambda)$ of the five
+bandpasses (u, g, r, i, and z) that are used in the SDSS.
 
 \begin{figure}[tbp]
-	\centering
-	\includegraphics[width=\textwidth]{figures/2_astro/vega_filters_and_spectrum}
-	\caption[Spectrum of the star Vega and the ugriz bandpasses]{The black curve
-		is the spectrum of Vega, the fifth brightest star in the night sky. The spectrum
-		tells us how much radiation Vega emmits at each wavelength. We also show five
-		transmission functions, one for each of the five ugriz filters. The transmission
-		function tells us how much light can get through the filter at each wavelength.}
-	\label{fig:vega} \index{Vega}
+	\centering \includegraphics[width=\textwidth]{figures/2_astro/vega_filters_and_spectrum}
+	\caption[Spectrum of the star Vega and the ugriz bandpasses]{The black curve is the
+		spectrum of Vega, the fifth brightest star in the night sky. The spectrum tells us how
+		much radiation Vega emits at each wavelength. We also show five transmission functions,
+		one for each of the five ugriz filters. The transmission function tells us how much light
+		can get through the filter at each wavelength.} \label{fig:vega} \index{Vega}
 \end{figure}
 
 
-\section{Measuring Fluxes}
+\section{Measuring Fluxes} \index{flux}
 \label{sec:mag}
 When light hits the CCD, all we have initially are counts of photons, one for each pixel.
 The first challenge is to assign the photons to distinct objects. Two models are used
 in the SDSS, depending on whether we assume the object is an extended source or a point source.
 
 
-\subsection{Petrosian Flux}
+\subsection{Petrosian Flux} \index{flux!Petrosian}
 Galaxies are extended-source objects so we need to define an aperture radius, within which
 all the photons are added together to obtain the flux of the galaxy. Since galaxies have
 poorly defined edges, a consistent method to pick the aperture radius is required.
@@ -70,69 +66,71 @@ the corresponding Petrosian flux as
 		f &=& \int_{0}^{2 r_p} 2 \pi s I(s) \, ds
 	\end{IEEEeqnarray*}
 
-\subsection{Point Spread Function Fitting}
+\subsection{Point Spread Function Fitting} \index{flux!PSF}
+
 Stars, quasars, and white dwarfs are unresolved point sources so they can be modelled by a point
-spread function (PSF). This approach is particularly useful when we examine a dense region
-like a globular cluster. In such places, given the amount of overlap, it would be very
-difficult define an aperture that includes only photons from an object and excludes all others
-from the neighbours. In PSF fitting, we assume that all objects have the same shape, which allows
-us to fit a Gaussian model to each of them. We then iteratively vary the position and flux
-of the objects until the model produces the observed light distribution \cite[Chapter 10]{palmer01}.
-The flux estimated by the converged model is called the PSF flux.
+spread function (PSF). This approach is particularly useful when we examine a dense region like a
+globular cluster. In such places, given the amount of overlap, it would be very difficult define an
+aperture that includes only photons from an object and excludes all others from the neighbours. In
+PSF fitting, we assume that all objects have the same shape, which allows us to fit a Gaussian model
+to each of them. We then iteratively vary the position and flux of the objects until the model
+produces the observed light distribution \cite[Chapter 10]{palmer01}. The flux estimated by the
+converged model is called the PSF flux.
 
+\section{Magnitudes and Colours} \index{magnitude}
 
-\section{Magnitudes and Colours}
-\subsection{Apparent Magnitudes}
+\subsection{Apparent Magnitudes} \index{magnitude!apparent}
+
 The fluxes of the brightest and the dimmest objects in the sky can differ by many orders of
-magnitudes. This motivates us to take one step further and convert fluxes to inverse
-hyperbolic sine (or arsinh) apparent magnitudes:
+magnitudes. This motivates us to take one step further and convert fluxes to inverse hyperbolic sine
+(or arsinh) apparent magnitudes:
 	\begin{IEEEeqnarray*}{lCl}
 		m &=& -\frac{2.5}{\ln(10)} \Bigg[ \arsinh\bigg(\frac{f/f_0}{2b}\bigg) + \ln(b) \Bigg]
 	\end{IEEEeqnarray*}
-Here $f_0$ is the flux of the object with a conventional magnitude of 0 and $b$ is the
-softening parameter. A nice feature of this magnitude system is that for bright objects
-with a high signal-to-noise ratio, it behaves like a logarithmic scale, i.e. with
-every decrease of 1 in the magnitude scale, the object becomes 2.5 times brighter.\footnote{
-	The reader might wonder why the scale works in reverse, with a small magnitude
-	corresponding to more brightness. This is the convention created two centuries ago by
-	the Greek astronomer Hipparchus, which, for better or worse, has stuck with us ever since.}
-At the same time, as the flux tends toward zero for fainter objects, the arsinh function
-(unlike the log function) ensures that the magnitudes are still well-defined \cite{lupton99}.
+Here $f_0$ is the flux of the object with a conventional magnitude of 0 and $b$ is the softening
+parameter. A nice feature of this magnitude system is that for bright objects with a high
+signal-to-noise ratio, it behaves like a logarithmic scale, i.e. with every decrease of 1 in the
+magnitude scale, the object becomes 2.5 times brighter.\footnote{ The reader might wonder why the
+	scale works in reverse, with a small magnitude corresponding to more brightness. This is the
+	convention created two millennia ago by the Greek astronomer Hipparchus, which, for better or worse,
+	has stuck with us ever since.} At the same time, as the flux tends toward zero for fainter objects,
+the arsinh function (unlike the log function) ensures that the magnitudes are still well-defined
+\cite{lupton99}.
 
-\subsection{Absolute Magnitudes and Colours}
+\subsection{Absolute Magnitudes and Colours} \index{magnitude!absolute} \index{colour}
 \label{sub:colours}
 
-The problem with apparent magnitudes is their dependence on distance. Objects that are further
-away form us are fainter and hence have higher apparent magnitudes. Of course, being
-further away does not change anything fundamental about an object like whether it is
-a star or a galaxy. Thus if we want
-to study their intrinsic properties, we need to remove this dependency. One method is
-to convert to the absolute magnitude, which is defined as the object's apparent magnitude if
-it were exactly 10 parsecs away from Earth:
+The problem with apparent magnitudes is their dependence on distance. Objects that are further away
+form us are fainter and hence have higher apparent magnitudes. Of course, being further away does
+not change anything fundamental about an object like whether it is a star or a galaxy. Thus if we
+want to study their intrinsic properties, we need to remove this dependency. One method is to
+convert to the absolute magnitude, which is defined as the object's apparent magnitude if it were
+exactly 10 parsecs away from Earth:
 	\begin{IEEEeqnarray*}{lCl}
 		M &=& m - 5 \log_{10} \bigg(\frac{d}{10}\bigg)
 	\end{IEEEeqnarray*}
-This conversion requires the knowledge of $d$, the actual distance of an object in parsecs.
-In practice, it is often difficult to estimate $d$, so we resort to an easier method of taking
-the difference between the amount of light received in two bandpasses. For example,
-the $u -g$ colour is calculated as
+This conversion requires the knowledge of $d$, the actual distance of an object in parsecs. In
+practice, it is often difficult to estimate $d$, so we resort to an easier method of taking the
+difference between the amount of light received in two bandpasses. For example, the $u -g$ colour is
+calculated as
 	\begin{IEEEeqnarray*}{lCl}
 		m_{u-g} &=& m_u - m_g \\
 		        &=& M_u + 5 \log_{10} \bigg(\frac{d}{10}\bigg) -
 		            M_g + 5 \log_{10} \bigg(\frac{d}{10}\bigg) \\
 		        &=& M_u - M_g
 	\end{IEEEeqnarray*}
-When taking the difference, the conversion factor disappears and the colour of an object no longer
-depends on its distance.
+Note that the conversion factor disappears and the colour does not change with distance. In
+addition, the difference between two magnitudes depends on the average slope of the spectrum. Thus
+colours can measure the general shape of an object's spectrum, which in turn can reveal many useful
+properties such as a star's temperature.
 
 
-\section{Equatorial Coordinate System}
-Imagine a very large celestial sphere with Earth at its centre. By projecting onto the
-inside surface of this sphere, we have a way to specify the position
-of any astronomical object. In this thesis, we use the equatorial coordinate system,
-where an object's position is specified by two numbers, a right ascension (ra) and a declination
-(dec). Figure \ref{fig:mollweide} shows the Mollweide projection of the celestial sphere.
-We will use this map throughout the thesis to visualise some results.
+\section{Equatorial Coordinate System} Imagine a very large celestial sphere with Earth at its
+centre. By projecting onto the inside surface of this sphere, we have a way to specify the position
+of any astronomical object. In this thesis, we use the equatorial coordinate system, where an
+object's position is specified by two numbers, a right ascension (ra) and a declination (dec).
+Figure \ref{fig:mollweide} shows the Mollweide projection of the celestial sphere. We will use this
+map throughout the thesis to visualise some results.
 
 \begin{figure}[tbp]
 	\centering
@@ -143,31 +141,28 @@ We will use this map throughout the thesis to visualise some results.
 	\label{fig:mollweide} \index{Mollweide projection}
 \end{figure}
 
-The equatorial coordinate system, like any other systems, needs to have a reference point.
-Here anything on the celestial sphere that is
-directly above the Earth's equator will have a declination of 0\deg. To define a zero point
-for the right ascension, we use the fact that the centre of the Sun passes through the plane of the
-Earth's equator twice a year. The first crossing point usually happens on 21 March and is called
-the vernal equinox. We now define the right ascension of the vernal equinox to be
-0\deg~\cite[Chapter~1]{sparke07}.\footnote{
-	There is actually a slight complication. Since the Earth's rotation axis is not
-	fixed due to precession, the ra-dec coordinates of an object relative to the origin will
-	actually change slowly over time. Thus we need to also fix a time in which the
-	coordinates are measured. In many surveys like the SDSS, 1 January 2000 12:00 Terrestial Time
-	is chosen as a reference point.}
+The equatorial coordinate system, like any other systems, needs to have a reference point. Here
+anything on the celestial sphere that is directly above the Earth's equator will have a declination
+of 0\deg. To define a zero point for the right ascension, we use the fact that the centre of the Sun
+passes through the plane of the Earth's equator twice a year. The first crossing point usually
+happens on 21 March and is called the vernal equinox. We now define the right ascension of the
+vernal equinox to be 0\deg~\cite[Chapter~1]{sparke07}.\footnote{ There is actually a slight
+	complication. Since the Earth's rotation axis is not fixed due to precession, the ra-dec coordinates
+	of an object relative to the origin will actually change slowly over time. Thus we need to also fix
+	a time in which the coordinates are measured. In many surveys like the SDSS, 1 January 2000 12:00
+	Terrestial Time is chosen as a reference point.}
 
 
 
 
 \section{Datasets}
 \label{sec:datasets}
-We now have all required background to understand the features in the two datasets used
-in our experiments. 
-Below we give a quick overview
-of what each dataset contains. For more information on how to obtain them, refer to
-Appendix \ref{cha:datasets}.
 
-\subsection{SDSS Dataset}
+We now have all required background to understand the
+features in the two datasets used in our experiments. Below we give a quick overview of what each
+dataset contains. For more information on how to obtain them, refer to Appendix \ref{cha:datasets}.
+
+\subsection{SDSS Dataset} \index{SDSS}
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/4_expt1/map_prediction_forest_all}
@@ -216,7 +211,7 @@ the dominant class during classification in chapter \ref{cha:ml}.
 \end{figure}
 
 
-\subsection{VST ATLAS Dataset}
+\subsection{VST ATLAS Dataset} \index{VST ATLAS}
 A second and much smaller dataset comes from a more recent survey, the VST ATLAS. This project
 aims to survey 4500 deg$^2$ of the Southern Sky to roughly the same depth as the SDSS
 \cite{shanks15}.
@@ -237,7 +232,7 @@ available.
 
 
 
-\section{Dust Extinction}
+\section{Dust Extinction} \index{dust extinction}
 As light travels from its source to us, it can be absorbed and scattered by interstellar dust.
 The scattering is especially strong at shorter wavelengths.
 This means less of the blue light arrives on Earth and the object will appear redder than it actually

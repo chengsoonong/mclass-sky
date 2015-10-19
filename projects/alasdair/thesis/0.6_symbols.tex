@@ -27,6 +27,7 @@
 \DeclareMathOperator{\Bin}{Bin}
 \DeclareMathOperator{\arsinh}{arsinh}
 \newcommand{\A}{\mathpzc{A}}
+\newcommand{\B}{\mathcal{B}}
 \newcommand{\X}{\mathcal{X}}
 \newcommand{\Y}{\mathcal{Y}}
 \newcommand{\Unlabelled}{\mathcal{U}}
@@ -49,7 +50,7 @@
 {%
 	name={$A$},
 	text={A},
-	description={The balanced accuracy rate},
+	description={The balanced accuracy},
 	sort={A}
 }
 
@@ -57,7 +58,7 @@
 {%
 	name={$A_i$},
 	text={A_i},
-	description={The accuracy rate of class $i$},
+	description={The recall of class $i$},
 	sort={Ai}
 }
 
@@ -75,6 +76,14 @@
 	text={c},
 	description={The vector $(c_1, c_2,...,c_k)$, where $k$ is the number of classes},
 	sort={c}
+}
+
+\newglossaryentry{C_ij)}%
+{%
+	name={$C_{ij}$},
+	text={C_ij},
+	description={The number of objects in class $i$ that have been labelled as class $j$},
+	sort={Cij}
 }
 
 \newglossaryentry{C_i)}%
@@ -144,7 +153,7 @@
 {%
 	name={$f_X(x)$},
 	text={f_X(x)},
-	description={The probability density function of the random variable $X$},
+	description={The probability density function of the continuous random variable $X$},
 	sort={fX}
 }
 
@@ -160,7 +169,7 @@
 {%
 	name={$h$},
 	text={h},
-	description={The classifier or the hypothesis function $h: \X \mapsto \Y$},
+	description={The classifier or the hypothesis $h: \X \mapsto \Y$},
 	sort={h}
 }
 
@@ -304,15 +313,16 @@
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 %% Acronyms
-\newacronym{atlas}{ATLAS}{Australia Telescope Large Area Survey}
 \newacronym{cdf}{CDF}{Cumulative Distribution Function}
 \newacronym{dec}{dec}{Declination}
 \newacronym{kl}{KL}{Kullback–-Leibler}
+\newacronym{mpba}{MPBA}{Mean of the Posterior Balanced Accuracy}
 \newacronym{pdf}{PDF}{Probability Density Function}
 \newacronym{psf}{PSF}{Point Spread Function}
+\newacronym{qbb}{QBB}{Query by Bagging}
 \newacronym{ra}{ra}{Right Ascension}
 \newacronym{rbf}{RBF}{Radial Basis Function}
-\newacronym{sdf98}{SDF98}{Schlegel, Finkbeiner, and Davis [1998]}
+\newacronym{sfd98}{SFD98}{Schlegel, Finkbeiner, and Davis [1998]}
 \newacronym{sf11}{SF11}{Schlafly and Finkbeiner [2011]}
 \newacronym{sdss}{SDSS}{Sloan Digital Sky Survey}
 \newacronym{svm}{SVM}{Support Vector Machine}

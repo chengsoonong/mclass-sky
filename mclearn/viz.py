@@ -85,7 +85,7 @@ def plot_scores(scores, title, x_label, classifier_names):
     plt.show()
 
 
-def plot_final_accuracy(data, labels, colors=None, sort=True, linewidth=1, inner='box',
+def plot_final_accuracy(data, labels, colors=None, sort=True, linewidth=1.5, inner='box',
     cut=2, ylim=None, ax=None):
     """
     """
@@ -98,7 +98,8 @@ def plot_final_accuracy(data, labels, colors=None, sort=True, linewidth=1, inner
     sorted_labels = df.mean().order().index
     df = df.reindex_axis(sorted_labels, axis=1)
 
-    sns.violinplot(data=df, ax=ax, inner=inner, cut=cut, palette=colors, linewidth=linewidth)
+    sns.violinplot(data=df, ax=ax, inner=inner, cut=cut, palette=colors,
+        linewidth=linewidth)
 
     format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
@@ -592,7 +593,7 @@ def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
 
 
 def plot_learning_curve_df(sample_sizes, learning_curves, labels, colors,
-    linestyles, ylim=None, loc='lower right', ax=None):
+    linestyles, ylim=None, loc='lower right', upper=None, ax=None):
     """
     """
 
@@ -608,7 +609,10 @@ def plot_learning_curve_df(sample_sizes, learning_curves, labels, colors,
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
     ax.legend(loc=loc, frameon=True)
     ax.set_xlabel('Number of Training Examples')
-    ax.set_ylabel('Posterior Balanced Accuracy Rate')
+    ax.set_ylabel('MPBA')
+
+    if upper is not None:
+        ax.plot([sample_sizes[0], sample_sizes[-1]], [upper, upper], color='r')
 
     if ylim is not None:
         ax.set_ylim(ylim)

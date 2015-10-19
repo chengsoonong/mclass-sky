@@ -45,6 +45,9 @@ we use 11 members.
 
 \section{Results and Discussion}
 \label{sec:results2}
+
+List of four sets of plots. Colour is kept consistent.
+
 \subsection{Learning with the SDSS Dataset}
 
 On the next five pages, we plot the results of the experiment on the SDSS dataset.
@@ -143,8 +146,8 @@ if we were to implement the Dynamic Thompson Sampling method.
 		\label{fig:sdss_ur_ind_lower}
 	\end{subfigure}
 	\caption[Learning curves of heuristics worse than random (SDSS)]{
-		Learning curves (average of 10 trials) of heuristics that perform worse than random sampling in the SDSS dataset: When can clearly see that with logistic regression,
-		QBB KL performs performs much worse than random sampling. For 
+		Learning curves (average of 10 trials) of heuristics that perform worse than random sampling in the SDSS dataset: We can clearly see that with logistic regression,
+		QBB KL performs much worse than random sampling. For 
 		RBF SVM, the bad heuristics are pool variance and pool entropy. The underperformance
 		of the pool variance heuristic is expected since the theory does not quite apply
 		to SVMs.}
@@ -318,7 +321,7 @@ than random, including the QBB KL heuristic.
 		\label{fig:vstatlas_ur_ind_violin}
 	\end{subfigure}
 	\caption[Violin plots of balanced accuracy rate (VST ATLAS)]{
-		Posterior distributions of the balanced accuracy rate when the VST ATLAS training set size reaches 300: Overall, all heuristics outperform random sampling when we use logistic regression. With RBF SVM, the two pool heurisitcs and QBB KL don't seem to do as well.
+		Posterior distributions of the balanced accuracy rate when the VST ATLAS training set size reaches 300: Overall, all heuristics outperform random sampling when we use logistic regression. With RBF SVM, the two pool heuristics and QBB KL don't seem to do as well.
 		In particular, as we can see in Figure \ref{fig:vstatlas_ur_ind_violin}, when the classes are unbalanced, these three heuristics become very unreliable.}
 	\label{fig:vstatlas_bl_ind}
 \end{figure}

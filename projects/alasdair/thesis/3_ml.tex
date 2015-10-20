@@ -34,17 +34,17 @@ spectrum of every object, especially faint ones. This means only a small number 
 photometric measurements.
 
 Fortunately, the field of machine learning came about to solve this kind of problem. In the most
-basic set-up, we have a collection of objects, each with a vector of photometric measurements $\bm{x} \in
-\X$. A subset of them has been spectroscopically classified into some class $y \in \Y$ and they
-form the labelled set $\Labelled \subset \X \times \Y$. We call $\X$ the feature space and $\Y$ the
-label space. During the training phase, we feed a set of labelled examples, which we call the
-training set, to a classifier. The classifier will then attempt to form a hypothesis $h: \X
-\rightarrow \Y$. The labelling process might not be perfect, so the goal in machine learning is to
-capture as much of the underlying trend in the data as possible, while avoiding fitting the random
-noise. To see how well the hypothesis generalises to unknown data, we set aside a small number of
-labelled examples which the classifier has not seen before. We call this the test set, and during
-the testing phase, the true labels of test examples are compared to the predictions made by the
-classifier.
+basic set-up, we have a collection of objects, each with a vector of photometric measurements
+$\bm{x} \in \X$. A subset of them has been spectroscopically classified into some class $y \in \Y$
+and they form the labelled set $\Labelled \subset \X \times \Y$. We call $\X$ the feature space and
+$\Y$ the label space. Let us now partition $\Labelled$ into two disjoint subsets, a training set
+$\Labelled_T$ and a test set $\Labelled_S$. During the training phase, we feed  $\Labelled_T$ to a
+classifier, and the classifier will then learn a hypothesis $h: \X \rightarrow \Y$. The labelling
+process might not be perfect, so the goal in machine learning is to capture as much of the
+underlying trend in the data as possible, while avoiding fitting the random noise. To see how well
+the hypothesis generalises to unknown data, in the testing phase, we ask the classifier to predict
+labels of objects in  $\Labelled_S$. These predictions can then be compared to the true labels.
+predictions made by the classifier.
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -221,19 +221,18 @@ unlabelled examples, which again is not applicable to astronomy. Thus we shall n
 query synthesis and stream-based selective sampling further in this thesis.
 
 Instead, we shall focus on pool-based active learning \cite{lewis94}, the most relevant type of
-active learning for astronomy. In this setting, we keep track of two sets. The labelled set
-$\Labelled \subset \X \times \Y$ contains all examples that have been labelled by an expert so
-far.\footnote{To keep it simple, we assume that all of $\Labelled$ is used as training data,
-    and when we need to calculate the generalisation error, we shall withhold some labelled examples in
-    $\Labelled$ from the classifier and use them as the test set.} All the remaining unlabelled
-examples form the unlabelled set $\Unlabelled \subset \X$. The question now is how to select the
-next training example from $\Unlabelled$. In practical terms, where should we next point the
-telescope to, in order to obtain a spectrum? To answer this question, we need a rule $r(\bm{x}; h)$
-that can assign a score to each object, based solely on their photometric features $\bm{x}$ and the
-current hypothesis $h$. This score should reflect the amount of new information we would gain if we
-were to label the object. Once we have computed $r(\bm{x}; h)$ for all candidates, we can then pick
-the example with the highest score and obtain its spectrum. The object's feature vector and its
-label are then added to the training set and the classifier is retrained to obtain a new $h$.
+active learning for astronomy. In this setting, we keep track of two sets. As usual, we have a
+labelled set $\Labelled$, which can be further partitioned into a training set $\Labelled_T$ and a
+test set $\Labelled_S$. There is also an unlabelled set $\Unlabelled \subset \X$, which contains
+all the remaining unlabelled examples. The question now is how to select the next example from
+$\Unlabelled$ for labelling. In practical terms, where should we next point the telescope to, in
+order to obtain a spectrum? To answer this question, we need a rule $r(\bm{x}; h)$ that can assign
+a score to each object in $\Unlabelled$, based solely on their photometric features $\bm{x}$ and
+the current hypothesis $h$. This score should reflect the amount of new information we would gain
+if we were to label the object. Once we have computed $r(\bm{x}; h)$ for all candidates, we can
+then pick the example with the highest score and obtain its spectrum. The object's feature vector
+and its label are then added to the training set and the classifier is retrained to obtain a new
+$h$.
 
 Finding an algorithm to compute $r(\bm{x}; h)$ exactly is still an open problem. or now, the best
 that we can do is to come up with heuristics that can approximate $r(\bm{x}; h)$. Another problem
@@ -254,14 +253,14 @@ $\argmin$ in line 4 of Algorithm \ref{alg:active}.
 	\caption{The general pool-based active learning algorithm}
 	\label{alg:active}
 	\begin{algorithmic}[1]
-		\Procedure {ActiveLearner}{$\Unlabelled$, $\Labelled$, $h$, $r$, $n$, $t$}
-			\While {$|\Labelled| < n$}
+		\Procedure {ActiveLearner}{$\Unlabelled$, $\Labelled_T$, $h$, $r$, $n$, $t$}
+			\While {$|\Labelled_T| < n$}
 				\State $E$ $\leftarrow$ random sample of size $t$ from $\Unlabelled$
 				\State $\bm{x}_* \leftarrow \argmax_{\bm{x} \in E} r(\bm{x}; h)$
 				\State $y_* \leftarrow$ ask the expert to label $\bm{x}_*$
-				\State $\Labelled \leftarrow \Labelled  \cup (\bm{x}_*, y_*)$
+				\State $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$
 				\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$
-				\State $h_\Labelled(\bm{x}) \leftarrow$ retrain the classifier
+				\State $h(\bm{x}) \leftarrow$ retrain the classifier
 			\EndWhile
 			\EndProcedure
 	\end{algorithmic}
@@ -403,7 +402,7 @@ be the Fisher information matrix and
 		A &=& \sum_{\bm{x} \in \Unlabelled}
 		      \sum_{y \in \Y} \mathbf{g}_{\bm{x}}(y) ~ \mathbf{g}_{\bm{x}}(y)^T
 	\end{IEEEeqnarray*}
-\citeN{schein07} show that
+It can be shown that
 	\begin{IEEEeqnarray*}{lCl}
 		\text{V}(\Labelled; h) &=& tr(AF^{-1})
 	\end{IEEEeqnarray*}
@@ -489,175 +488,178 @@ scarce, and when there is one available, they normally only work under simplifyi
 example, \shortciteN{freund97} show that the query by committee algorithm (a slight variant of our
 QBB heuristics) guarantees an exponential decrease in the prediction error with the training size,
 but only under certain restrictions such as there is no noise. Thus whether many of these are
-guaranteed to beat random sampling is still an open question. We do not worry too much about
-theoretical analysis in this thesis. Instead we focus on an empirical analysis in the astronomical
-domain.
+guaranteed to beat random sampling is still an open question. We shall not worry too much about
+theoretical analysis in this thesis. Instead we shall focus on an empirical analysis in the
+astronomical domain.
 
-To help us automatically choose the optimal heuristic, 
-we now turn our attention to the multi-armed bandit problem in probability theory. The colourful
-name originates from the situation where a gambler stands in front a slot machine with $n$ levers.
-When pulled, each lever gives out a random reward according to some unknown distribution.
-The goal of the game is to come up with a strategy that can maximise the gambler's
-lifetime rewards with a minimum number of pulls.
+To help us automatically choose the optimal heuristic, we now turn our attention to the multi-armed
+bandit problem in probability theory. The colourful name originates from the situation where a
+gambler stands in front a slot machine with $n$ levers. When pulled, each lever gives out a random
+reward according to some unknown distribution. The goal of the game is to come up with a strategy
+that can maximise the gambler's lifetime rewards while minimising the number of pulls.
 
-The key novel contribution of this thesis is the application of this theory to the problem of
-heuristic selection. Suppose we have a set of $n$ heuristics $ \R = \{r_1, ..., r_n \}$. Each heuristic
-has a different ability to pick the candidate that can give the biggest gain in information
-when added to the training set. An appropriate reward is then the incremental increase
-in the accuracy rate. Observe that the heuristic rewards are independent of each other,
-since the theories with which we use to derive the heuristics are mostly unrelated.
+Our key novel contribution is the application of this theory to the problem of heuristic selection.
+Suppose we have a set of $n$ heuristics $ \R = \{r_1, ..., r_n \}$. Each heuristic has a different
+ability to identify the candidate whose labelling information is most valuable. An appropriate
+reward is then the incremental increase in the accuracy rate after the candidate is added to the
+training set. We assume that the heuristic rewards are independent of each other. This is
+reasonable since the theories with which we use to derive the heuristics are mostly unrelated.
 
-Let $\bm{w}$ be the reward vector where entry $\bm{w}_i$ is the reward of heuristic $r_i$.
-Observe that even with the optimal heuristic, there could be error during the labelling
-process that causes the accuracy rate to decrease. Conversely, a bad heuristic might be
-able to pick an informative candidate due to pure luck. Thus there is always a certain level
-of randomness in the reward received. These errors are probably normally distributed, so
+Let $w_i$ be the reward of heuristic $r_i \in \R$. Observe that even with the optimal heuristic,
+there could be error during the labelling process that causes the accuracy rate to decrease.
+Conversely, a bad heuristic might be able to pick an informative candidate due to pure luck. Thus
+there is always a certain level of randomness in the reward received. These errors are probably
+normally distributed, so
 	\begin{IEEEeqnarray*}{lCl}
-		(\bm{w} \mid \bm{\nu}, \tau^2) \sim N(\bm{\nu}, \tau^2 \bm{I})
+		(w_i \mid \nu_i) \sim N(\nu_i, \tau_i^2)
 	\end{IEEEeqnarray*}
-where $\bm{I}$ is the identity matrix.
-To make the problem tractable, assume that we know the constant variance $\tau^2$. Assume that
-the mean vector $\bm{\nu}$ follows a normal distribution
+and the probably density function (PDF) of the reward is
+    \begin{IEEEeqnarray}{lCl}
+        f(w_i \mid \nu_i)
+        &=& \frac{1}{\tau_i \sqrt{2\pi}} \exp\left[ -\frac{(w_i - \nu_i)^2}{2 \tau_i^2} \right]
+         \label{eqn:rlike}
+    \end{IEEEeqnarray}
+If we knew both the mean $\nu_i$ and the variance $\tau_i^2$ for all heuristics, the problem would
+become trivially easy since we just need to always use the heuristic that has the highest mean
+reward. In practice, we do not know $\nu_i$, so let us assume that it follows a normal
+distribution
 	\begin{IEEEeqnarray*}{lCl}
-		\bm{\nu} \sim N(\bm{\mu}, \sigma^2 \bm{I})
-	\end{IEEEeqnarray*}
-Since we do not yet have any information about the performance of each heuristic,
-the hyperparameters $\bm{\mu}$ and $\sigma^2$ are unknown.
+        \nu_i \sim N(\mu_i, \sigma_i^2)
+    \end{IEEEeqnarray*}
+Thus the PDF of $\nu_i$ is
+    \begin{IEEEeqnarray}{lCl}
+        f(\nu_i)
+        &=& \frac{1}{\sigma_i \sqrt{2\pi}} \exp\left[ -\frac{(w_i - \mu_i)^2}{2 \sigma_i^2} \right]
+         \label{eqn:rprior}
+    \end{IEEEeqnarray}
+To make the problem tractable, assume that $\tau_i^2$ is a known constant. The goal now is to find a
+good algorithm that can estimate $\mu_i$ and $\sigma_i^2$.
 
 One problem in multi-arm bandits is the trade-off between exploration and exploitation. Suppose we
-have managed to estimate $\bm{\mu}$ and $\sigma^2$, then by always selecting the heuristic with the
-highest possible $\bm{\mu}$, or the greedy heuristic, we would be exploiting our current knowledge.
-If however we select one of the other non-greedy heuristics, we would then be exploring with the
-intention of improving our current estimates of $\bm{\mu}$ and $\sigma^2$. There are many instances
-in which we find our previously held beliefs to be completely wrong. Thus by always exploiting, we
-might miss out on the optimal heuristic. On the other hand, if we explore too much, it might take a
-long time to reach the desired accuracy rate and the strategy ends up being no different from
-random sampling. \info{relevant to ASKAP and to us anyway}
+have managed to estimate $\mu_i$ and $\sigma_i^2$ for all $i$, then by always selecting the
+heuristic with the highest possible mean or the greedy heuristic, we would be exploiting our
+knowledge. If however we select one of the other non-greedy heuristics, we would then be exploring
+with the intention of improving our current estimates of $\mu_i$ and $\sigma_i^2$. There are many
+instances in which we find our previously held beliefs to be completely wrong. Thus by always
+exploiting, we could miss out on the optimal heuristic. On the other hand, if we explore too much,
+it might take a long time to reach the desired accuracy rate and the strategy ends up being no
+different from random sampling.
 
 \section{Thompson Sampling}
 \label{sec:thompson}
 
-There are two main methods in the literature that address this exploration vs exploitation 
-problem. The algorithm with a strong theoretical guarantee is Upper Confidence Bound
-\cite{auer02}. We shall, however, focus on a simpler and much older algorithm called Thompson sampling.
-First introduced by \citeN{thompson33}, the algorithm solves the trade-off from
-a Bayesian perspective. It has been shown to achieve results
-that are comparable and sometimes even better than Upper Confidence Bound \cite{chapelle11}.
+There are two main methods in the literature that address this exploration vs exploitation problem.
+The algorithm with a strong theoretical guarantee is Upper Confidence Bound \cite{auer02}. We
+shall, however, focus on a simpler and much older algorithm called Thompson sampling. First
+introduced by \citeN{thompson33}, this algorithm solves the trade-off from a Bayesian perspective.
+It has been shown to achieve results that are comparable and sometimes even better than Upper
+Confidence Bound \cite{chapelle11}.
 
-Under the heuristic selection setting, Thompson sampling works as follows.
-We start with a prior knowledge of $\bm{\mu}$ and $\sigma^2$. In each
-round, we draw a random sample from the distribution $N(\bm{\mu}, \sigma^2 \bm{I})$
-and select heuristic $r_*$ that has the highest mean reward value in the sample. We then 
-observe the actual reward $w_{*}$ received and use it to update the prior accordingly.
-Under the normal likelihood, the normal distribution is conjugate to itself, and it can be
-shown that the posterior distribution of the mean reward $\bm{\nu}_{*}$
-remains normal, but now with parameters
-	\begin{IEEEeqnarray*}{lCl}
-		(\bm{\nu}_{*} \mid w_{*}) \sim N \left(
-		\frac{\bm{\mu}_* \bm{\tau}_* + w_{r^*} \bm{\sigma}_*}{\bm{\tau}_* + \bm{\sigma}_*},
-		\frac{\bm{\sigma}_* \bm{\tau}_*}{\bm{\tau}_* + \bm{\sigma}_*}
-		\right)
-	\end{IEEEeqnarray*}
-Below is the formal specification of the algorithm.
+Under the heuristic selection setting, Thompson sampling works as follows. We start with a prior
+knowledge of $\mu_i$ and $\sigma_i^2$ for all $i$. So long as we do not choose anything stupid, e.g. a zero
+variance, our choice of prior should not matter too much in the long run. Since initially
+we do not have any information about the performance of each heuristic, the appropriate prior value
+for $\mu_i$ is $0$, i.e. there is no evidence (yet) that any of the heuristics offer an
+improvement to the accuracy.
+
+In each round, we draw a random sample $\nu_i'$ from the distribution $N(\mu_i, \sigma_i^2)$ for
+each $i$ and select heuristic $r_*$ that has the highest sampled value of the mean reward:
+    \begin{IEEEeqnarray*}{lCl}
+        r_* = \argmax_{i} \nu_i'
+    \end{IEEEeqnarray*}
+We then use this heuristic to assign scores to the candidates. The object that is deemed to be the
+most informative is then added to the training set $\Labelled_T$ and the classifier is retrained.
+Next we use the updated hypothesis to predict the labels of objects in the test set $\Labelled_S$.
+Let $\delta$ be the reward observed, which is the incremental increase in the accuracy rate on
+$\Labelled_S$. We now have a new piece of information that we can use to update our prior belief
+about the mean $\nu_*$ and the variance $\sigma_*^2$ of $r_*$. In the Bayesian setting,
+(\ref{eqn:rprior}) is called the prior and (\ref{eqn:rlike}) is the likelihood. From Bayes'
+theorem, the posterior distribution is proportional to the product of the prior and the likelihood:
+    \begin{IEEEeqnarray*}{lCl}
+        f(\nu_* \mid w_* = \delta)
+        &\propto& f(\nu_*) f(\delta \mid \nu_*) \\
+        &\propto& \exp \left[ -\frac{1}{2 \sigma_*^2} (\nu_* - \mu_*)^2 \right]
+                  \exp \left[ -\frac{1}{2 \tau_*^2} (\delta - \nu_*)^2 \right] \\
+        &=& \exp \left[ -\frac{1}{2 \sigma_*^2} (\nu_* - \mu_*)^2 
+                        -\frac{1}{2 \tau_*^2} (\delta - \nu_*)^2  \right] \\
+        &=& \exp \left[ -\frac{\nu_*^2}{2} \left( \frac{1}{\sigma_*^2} + \frac{1}{\tau_*^2} \right) 
+                        +\nu_* \left( \frac{\mu_*}{\sigma_*^2} + \frac{\delta}{\tau_*^2} \right) 
+                        - \left( \frac{\mu_*^2}{2\sigma_*^2} + \frac{\delta^2}{2 \tau_*^2} \right) 
+                        \right] \\
+        &=& \exp \left[ -\frac{1}{2 {\sigma'_*}^2} (\nu^2_* - 2\nu_*\mu_*'  + {\mu'_*}^2) \right] \\      
+        &=& \exp \left[ -\frac{1}{2 {\sigma'_*}^2} (\nu_* - \mu'_*)^2 \right]
+    \end{IEEEeqnarray*}
+where we have defined
+    \begin{IEEEeqnarray*}{lCl}
+        \mu_*' &=& \frac{\mu_* \tau_* + \delta \sigma_*}{\sigma_* + \tau_*} \\
+        {\sigma'_*}^2 &=& \frac{\sigma_* \tau_*}{\sigma_* + \tau_*}
+    \end{IEEEeqnarray*}
+Thus the posterior distribution of the mean reward of $r_*$ remains normal, but now with parameters
+    \begin{IEEEeqnarray*}{lCl}
+        (\nu_* \mid w_* = \delta) \sim N (\mu_*', {\sigma'_*}^2)
+    \end{IEEEeqnarray*}
+For compactness, let $\bm{\mu}$, $\bm{\sigma}$, and $\bm{\tau}$ be the vectors that store the
+parameter values for all heuristics. Below  is the formal specification of Thompson sampling with a
+normally distributed reward.
 
 \begin{algorithm}[h]
 	\caption{Thompson sapmling}
 	\label{alg:thompson}
 	\begin{algorithmic}[1]
 		\Procedure {ThompsonSampling}{$\R$, $\bm{\mu}$, $\bm{\sigma}$, $\bm{\tau}$, n}
-		\Foreach {$t \in \{1, 2, ..., n\}$}
-		\Foreach {$r \in \R$}
-		\State $\bm{\nu}_r' \leftarrow$ draw a sample from $N(\bm{\mu_r}, \bm{\sigma_r})$
-		\Endforeach
-		\State $r_* \leftarrow \argmax_{r \in \R}\bm{\nu}_r'$
-		\State Observe reward $w_{*}$
-		\State Update $\bm{\mu}_{*}$
-		\State Update $\bm{\sigma}_{*}$
-		\Endforeach
+    		\Foreach {$t \in \{1, 2, ..., n\}$}
+        		\Foreach {$i \in \{1, 2, ..., |\R|\}$}
+            		\State $\nu_i' \leftarrow$ draw a sample from $N(\mu_i, \sigma_i)$
+        		\Endforeach
+        		\State $r_* \leftarrow \argmax_{i} \nu_i'$
+        		\State Observe reward $\delta$
+        		\State $\mu_* \leftarrow \dfrac{\mu_* \tau_* + \delta \sigma_*}{\sigma_* + \tau_*}$
+        		\State $\sigma_*^2 \leftarrow \dfrac{\sigma_* \tau_*}{\sigma_* + \tau_*}$
+    		\Endforeach
 		\EndProcedure
 	\end{algorithmic}
 \end{algorithm}
 
-If we combine Algorithm \ref{alg:active} and \ref{alg:thompson}, we end up with
-an algorithm that can automatically select the optimal active learning heuristic
-with Thompson sampling.
+Combining Algorithm \ref{alg:active} and \ref{alg:thompson}, we get the full active learning
+algorithm with Thompson sampling. Note again that in line 8, we need to replace
+$\argmax$ with $\argmin$ with some heuristics.
 
 \begin{algorithm}[h]
 	\caption{The multi-arm bandit active learning algorithm}
 	\label{alg:bandit}
 	\begin{algorithmic}[1]
-		\Procedure {ActiveBandit}{$\Unlabelled$, $\Labelled$, $h$, $n$, $t$,
+		\Procedure {ActiveBandit}{$\Unlabelled$, $\Labelled_T$, $h$, $n$, $t$,
 			                      $\R$, $\bm{\mu}$, $\bm{\sigma}$, $\bm{\tau}$}
-		\While {$|\Labelled| < n$}
-		\Foreach {$r \in \R$}
-			\State $\bm{\nu}_r' \leftarrow$ draw a sample from $N(\bm{\mu_r}, \bm{\sigma_r})$
-		\Endforeach
-		\State $r_* \leftarrow \argmax_{r \in \R} \bm{\nu}_r'$
-		\State $E$ $\leftarrow$ random sample of size $t$ from $\Unlabelled$
-		\State $\bm{x}_* \leftarrow \argmax_{\bm{x} \in E} r_*(\bm{x})$
-		\State $y_* \leftarrow$ ask the expert to label $\bm{x}_*$
-		\State $\Labelled \leftarrow \Labelled  \cup (\bm{x}_*, y_*)$
-		\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$
-		\State $h_\Labelled(\bm{x}) \leftarrow$ retrain the classifier
-		\State $\delta$ $\leftarrow$ change in the balanced accuracy rate 
-		\State Update $\bm{\mu}_{*}$
-		\State Update $\bm{\sigma}_{*}$
-		\EndWhile
+    		\While {$|\Labelled_T| < n$}
+        		\Foreach  {$i \in \{1, 2, ..., |\R|\}$}
+        			\State $\nu_i' \leftarrow$ draw a sample from $N(\mu_i, \sigma_i)$
+        		\Endforeach
+        		\State $r_* \leftarrow \argmax_{i} \nu_i'$
+        		\State $E$ $\leftarrow$ random sample of size $t$ from $\Unlabelled$
+        		\State $\bm{x}_* \leftarrow \argmax_{\bm{x} \in E} r_*(\bm{x})$
+        		\State $y_* \leftarrow$ ask the expert to label $\bm{x}_*$
+        		\State $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$
+        		\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$
+        		\State $h(\bm{x}) \leftarrow$ retrain the classifier
+        		\State $\delta$ $\leftarrow$ incremental increase in the accuracy
+        		\State $\mu_* \leftarrow \dfrac{\mu_* \tau_* + \delta \sigma_*}{\sigma_* + \tau_*}$
+                \State $\sigma_*^2 \leftarrow \dfrac{\sigma_* \tau_*}{\sigma_* + \tau_*}$
+    		\EndWhile
 		\EndProcedure
 	\end{algorithmic}
 \end{algorithm}
 
-As we shall see in Chapter \ref{cha:expt2}, the reward function dynamically evolves
-as the training size increases. Intuitively, the accuracy rate can never go beyond 100\%, so
-we would expect the incremental change in the accuracy rate to become smaller over time.
-Attempts to address this problem have been made in the literature. For example \citeN{gupta11}
-introduce the Dynamic Thompson Sampling method that manages to adapt to the evolving
-parameters faster than Algorithm \ref{alg:thompson}. However, we shall leave the investigation
-of such methods to future work.
+As we shall see in Chapter \ref{cha:expt2}, the reward function dynamically evolves as the training
+size increases. Intuitively, the accuracy rate can never go beyond 100\%, so we would expect the
+incremental change in the accuracy to become smaller over time. Attempts to address this problem
+have been made in the literature. For example \citeN{gupta11} introduce the Dynamic Thompson
+Sampling method that can adapt to the evolving parameters faster than Algorithm \ref{alg:thompson}
+and \ref{alg:bandit}. However, we shall leave the investigation of this method to future work.
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-\section{Performance Measures}
+\section{Posterior Balanced Accuracy}
 \label{sec:measures}
-
-We end this chapter with a description of two performance measures that are used in the experiments.
-
-\begin{figure}[tbp]
-	\centering
-	\renewcommand\arraystretch{1.5}
-	\setlength\tabcolsep{0pt}
-	\begin{tabular}{c >{\bfseries}r @{\hspace{0.7em}}c @{\hspace{0.4em}}c @{\hspace{0.4em}}c}
-		\multirow{13}{*}{\rotatebox{90}{\parbox{1.1cm}{\bfseries\raggedleft Actual}}} & 
-		& \multicolumn{3}{c}{\bfseries Predicted} \\
-		& & \bfseries Galaxy & \bfseries Star & \bfseries Quasar \\
-		& Galaxy & \MyBox{97,621}{95.7\%} & \MyBox{492}{0.5\%} & \MyBox{1,887}{1.8\%} \\[2.4em]
-		& Star & \MyBox{1,625}{1.6\%} & \MyBox{89,489}{95.4\%}  & \MyBox{8,886}{8.5\%} \\[2.4em]
-		& Quasar & \MyBox{2,790}{2.7\%} & \MyBox{3,868}{4.1\%}  & \MyBox{93,342}{89.7\%}
-	\end{tabular}
-	\caption[Confusion matrix of random forest on SDSS]{
-		The confusion and the normalised confusion matrix of the random forest
-		on the SDSS test set. For example, out of all the objects predicted as quasars, 8.5\%
-		of them are actually stars. Out of all the objects predicted as stasr, 4.1\% of them
-		are actually quasars.}
-	\label{fig:recall}
-\end{figure}
-
-\subsection{Recall}
-\label{sub:recall}
-
-Let $C$ be the confusion matrix of a classifier on a test set,
-where entry $C_{ij}$ is the number of objects in class $i$
-but have been predicted to be in class $j$.
-Recall measures the classifier's ability to find all the positive examples and avoid
-having false negatives:
-\begin{IEEEeqnarray*}{lCl}
-	\text{Recall}_i &=& \frac{C_{ii}}{\sum_j C_{ij}}
-\end{IEEEeqnarray*}
-We use recall to plot the the performance of a classifier on the celestial sphere. This
-measure is chosen mainly due to its simple implementation.
-
-\subsection{Posterior Balanced Accuracy Rate}
-\label{sub:pba}
 
 Certain astronomical objects are either rarer or more difficult to detect than others. In the SDSS
 labelled set, there are 4.5 times as many galaxies as quasars. The problem of class imbalance is
@@ -671,22 +673,24 @@ sets are desired, we need a performance measure that can correct for the class i
 bias in the binary case. We now extend this idea to the multi-class setting.
 
 Suppose we have $k$ classes. For each class $i$ between $1$ and $k$, there are $N_i$ objects in the
-universe. Given a classifier, we can assign a predicted label to every object and compare our
-prediction to the true label. Let $C_i$ be the number of objects in class $i$ that are correctly
-predicted. Then we define the accuracy rate $A_i$ of class $i$ as
+universe. Given a hypothesis, we can predict the label of every object and compare our prediction
+to the true label. Let $C_i$ be the number of objects in class $i$ that are correctly predicted.
+Then we define the recall $A_i$ of class $i$ as
 	\begin{IEEEeqnarray*}{lCl}
 		A_i &=& \frac{C_i}{N_i}
 	\end{IEEEeqnarray*}
-Initially we have no information about $C_i$ and $N_i$, so we can assume that each $A_i$ 
-follows a uniform prior from 0 to 1. This is the same as a Beta distribution
-with parameters $\alpha = \beta = 1$:
+The problem is that it is not feasible to get the actual values of $C_i$ and $N_i$ since that would
+require us to obtain the true label of every object. Thus we need a method to estimate these
+quantities when we only have a sample. Initially we have no information about $C_i$ and
+$N_i$, so we can assume that each $A_i$ follows a uniform prior from 0 to 1. This is the same as a
+Beta distribution with parameters $\alpha = \beta = 1$:
 	\begin{IEEEeqnarray}{lCl}
 		A_i &\sim& \Beta(1,1) \label{eqn:prior}
 	\end{IEEEeqnarray}
 After we have trained the classifier, suppose we have a test set containing $n_i$
 objects in class $i$. Running the classifier on this test set is the same as conducting
 $k$ binomial experiments, where, in the $i$th experiment, the sample size is
-$n_i$ and the probability of success is simply the accuracy rate $A_i$. Let $c_i$ be
+$n_i$ and the probability of success is simply $A_i$. Let $c_i$ be
 the number of correctly labelled objects belonging to class $i$ in the test set. Then,
 conditional on the accuracy rate, $c_i$ follows a binomial distribution:
 	\begin{IEEEeqnarray}{lCl}
@@ -701,32 +705,31 @@ is the likelihood. To get the posterior PDF, we simply multiply the prior with t
 		&=& a^{1 + c_i - 1}(1-a)^{1 + n_i - c_i - 1}
 	\end{IEEEeqnarray*}
 Thus, with respect to the binomial likelihood function,
-the Beta distribution is conjugate to itself. The posterior accuracy rate $A_i$
+the Beta distribution is conjugate to itself. The posterior recall rate $A_i$
 also follows a Beta distribution, now with parameters
 	\begin{IEEEeqnarray*}{lCl}
 		(A_i \mid c_i) &\sim& \Beta(1 + c_i, 1 + n_i - c_i)
 	\end{IEEEeqnarray*}
-Recall that our goal is to have a balanced accuracy rate, $A$, that puts an equal
-weight in each class. This can be achieved by taking the average of all the class accuracy rates:
+Our goal is to have a balanced accuracy rate, $A$, that puts an equal weight in each class. One way
+to achieve this is to take the average of the individual recalls:
 	\begin{IEEEeqnarray*}{lCl}
 		A &=& \frac{1}{k} \sum_{i=1}^k A_i \\
 		&=& \frac{1}{k} A_T
 	\end{IEEEeqnarray*}
-Here we have defined $A_T$ to be the sum of the individual accuracy rates.
-We call  $(A \mid \bm{c})$ the posterior balanced accuracy rate, where
-$\bm{c} =(c_1,...,c_k)$.
-Most of the time, we simply want to calculate its expected value:
+Here we have defined $A_T$ to be the sum of the individual recalls. We call  $(A \mid \bm{c})$ the
+posterior balanced accuracy rate, where $\bm{c} =(c_1,...,c_k)$. Most of the time, we simply want
+to calculate its expected value:
 	\begin{IEEEeqnarray*}{lCl}
 		\E{A \given \bm{c}} &=& \frac{1}{k} \, \E{A_T \given \bm{c}} \\
 		&=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{c}}(a) \, da
 	\end{IEEEeqnarray*}
-Note that there is no closed form solution for the PDF $f_{A_T \mid \bm{c}}(a)$.
-However assuming that $A_T$ is a sum of $k$ independent Beta random variables,
-$f_{A_T \mid \bm{c}}(a)$ can be approximated by numerically convolving $k$ Beta distributions.
-The independence assumption is reasonable here, since there should be little to no correlation
-between the individual class accuracy rates. Knowing that a classifier is really good
-at recognising stars does not tell us much about how well that classifier can recognise
-galaxies.
+Let us call this the mean posterior balanced accuracy rate (MPBA). Note that there is no closed
+form solution for the PDF $f_{A_T \mid \bm{c}}(a)$. However assuming that $A_T$ is a sum of $k$
+independent Beta random variables, $f_{A_T \mid \bm{c}}(a)$ can be approximated by numerically
+convolving $k$ Beta distributions. The independence assumption is reasonable here, since there
+should be little to no correlation between the individual class accuracy rates. Knowing that a
+classifier is really good at recognising stars does not tell us much about how well that classifier
+can recognise galaxies.
 
 Having the knowledge of $f_{A \mid \bm{c}}(a)$ will allow us to make violin plots,
 construct confidence intervals and do hypothesis tests. To get an expression for this,
@@ -743,8 +746,8 @@ Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \m
 		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{c}}(ka) \\
 		&=& k \cdot f_{A_T \mid \bm{c}}(ka)
 	\end{IEEEeqnarray*}
-The posterior balanced accuracy rate is used throughout the experiments to report
-the overall performance of a classifier. 
+We shall use the posterior balanced accuracy rate throughout the experiments to report the overall
+performance of a classifier on a test set.
 
 %%% Local Variables: 
 %%% mode: latex

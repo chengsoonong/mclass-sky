@@ -8,16 +8,25 @@
 When many people think about astronomy, the first things that pop into their mind are breathtaking
 images of the sky like the famous Hubble Deep Field. But pretty images alone are not enough to do
 real science. For us to make any meaningful observations about astronomical objects, we need actual
-quantitative measurements.
+quantitative measurements. This chapter begins with an overview of spectroscopy and photometry, the
+two most important tools astronomers use to study the sky (Section \ref{sec:spec}). We then look at
+important astronomical concepts like fluxes, magnitudes, colours, and the equatorial coordinate
+system (Section \ref{sec:flux}, \ref{sec:mag}, and \ref{sec:map}). This will give us a better
+understanding of the SDSS and the VST ATLAS datasets, which are introduced in Section
+\ref{sec:datasets}. The chapter ends with a brief discussion on dust extinction, a
+potential problem in the SDSS dataset that we shall need to take care of (Section \ref{sec:dust}).
+
 
 \section{Spectroscopy and Photometry} \index{spectroscopy} \index{photometry}
 \label{sec:spec}
 
-One such quantitative approach is spectroscopy. This involves using diffraction grating to disperse
-light and then measuring the amount of electromagnetic radiation, or flux, emitted from an object
-at small wavelength intervals. As the name implies, we end up with a spectrum, like the one shown
-in Figure \ref{fig:vega}. The shape of the spectrum and its absorption lines allow us to deduce
-many useful properties about the object such as its temperature and chemical composition.
+Spectroscopy was born when Isaac Newton discovered in 1666 that white light can be split into a
+rainbow by passing it through a glass prism. In modern-day astronomy, we use diffraction grating to
+disperse light and measure the amount of electromagnetic radiation, or flux, emitted from a
+celestial object at small wavelength intervals. As the name implies, we end up with a spectrum,
+like the one shown in Figure \ref{fig:vega}. The shape of the spectrum and its absorption lines
+allow us to deduce many useful properties about the object such as its temperature and chemical
+composition.
 
 Unfortunately, it can be very difficult to take high resolution spectra of faint objects since we
 are spreading light thinly across many wavelengths. Photometry gets around this problem by
@@ -39,13 +48,16 @@ bandpasses (u, g, r, i, and z) that are used in the SDSS.
 
 
 \section{Measuring Fluxes} \index{flux}
-\label{sec:mag}
+\label{sec:flux}
+
 When light hits the CCD, all we have initially are counts of photons, one for each pixel.
 The first challenge is to assign the photons to distinct objects. Two models are used
 in the SDSS, depending on whether we assume the object is an extended source or a point source.
 
 
 \subsection{Petrosian Flux} \index{flux!Petrosian}
+\label{sub:petrosian}
+
 Galaxies are extended-source objects so we need to define an aperture radius, within which
 all the photons are added together to obtain the flux of the galaxy. Since galaxies have
 poorly defined edges, a consistent method to pick the aperture radius is required.
@@ -67,6 +79,7 @@ the corresponding Petrosian flux as
 	\end{IEEEeqnarray*}
 
 \subsection{Point Spread Function Fitting} \index{flux!PSF}
+\label{sub:psf}
 
 Stars, quasars, and white dwarfs are unresolved point sources so they can be modelled by a point
 spread function (PSF). This approach is particularly useful when we examine a dense region like a
@@ -78,8 +91,10 @@ produces the observed light distribution \cite[Chapter 10]{palmer01}. The flux e
 converged model is called the PSF flux.
 
 \section{Magnitudes and Colours} \index{magnitude}
+\label{sec:mag}
 
 \subsection{Apparent Magnitudes} \index{magnitude!apparent}
+\label{sub:apparent}
 
 The fluxes of the brightest and the dimmest objects in the sky can differ by many orders of
 magnitudes. This motivates us to take one step further and convert fluxes to inverse hyperbolic sine
@@ -121,16 +136,19 @@ calculated as
 	\end{IEEEeqnarray*}
 Note that the conversion factor disappears and the colour does not change with distance. In
 addition, the difference between two magnitudes depends on the average slope of the spectrum. Thus
-colours can measure the general shape of an object's spectrum, which in turn can reveal many useful
+colours measure the general shape of an object's spectrum, which in turn can reveal many useful
 properties such as a star's temperature.
 
 
-\section{Equatorial Coordinate System} Imagine a very large celestial sphere with Earth at its
-centre. By projecting onto the inside surface of this sphere, we have a way to specify the position
-of any astronomical object. In this thesis, we use the equatorial coordinate system, where an
-object's position is specified by two numbers, a right ascension (ra) and a declination (dec).
-Figure \ref{fig:mollweide} shows the Mollweide projection of the celestial sphere. We will use this
-map throughout the thesis to visualise some results.
+\section{Equatorial Coordinate System}
+\label{sec:map}
+
+Imagine a very large celestial sphere with Earth at its centre. By projecting onto the inside
+surface of this sphere, we have a way to specify the position of any astronomical object. In this
+thesis, we use the equatorial coordinate system, where an object's position is specified by two
+numbers, a right ascension (ra) and a declination (dec). Figure \ref{fig:mollweide} shows the
+Mollweide projection of the celestial sphere. We shall use this map throughout the thesis to
+visualise some results.
 
 \begin{figure}[tbp]
 	\centering
@@ -163,11 +181,13 @@ features in the two datasets used in our experiments. Below we give a quick over
 dataset contains. For more information on how to obtain them, refer to Appendix \ref{cha:datasets}.
 
 \subsection{SDSS Dataset} \index{SDSS}
+\label{sub:sdss}
+
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/4_expt1/map_prediction_forest_all}
 	\caption[Coverage of the SDSS]{The distribution of the 800 million scanned objects
-		in the survey: Note that the coverage is not uniform. A darker colour
+		in the SDSS: Note that the coverage is not uniform. A darker colour
 		corresponds to more objects being scanned in a particular area.}
 	\label{fig:coverage}
 \end{figure}
@@ -186,7 +206,7 @@ For each object, we are given 11 features:
 Only 2.8 million out of the 800 million objects have been spectroscopically classified into three
 classes: galaxies, quasars, and stars. From Figure \ref{fig:class_dist_sdss}, we can see that the
 number of galaxies is twice that of stars and three times that of quasars. This leads to
-the problem of class imbalance. We will discuss some approaches to minimise the bias toward
+the problem of class imbalance. We shall discuss some approaches to minimise the bias toward
 the dominant class during classification in chapter \ref{cha:ml}.
 
 \begin{figure}[tbp]
@@ -212,6 +232,8 @@ the dominant class during classification in chapter \ref{cha:ml}.
 
 
 \subsection{VST ATLAS Dataset} \index{VST ATLAS}
+\label{sub:vstatlas}
+
 A second and much smaller dataset comes from a more recent survey, the VST ATLAS. This project
 aims to survey 4500 deg$^2$ of the Southern Sky to roughly the same depth as the SDSS
 \cite{shanks15}.
@@ -233,6 +255,8 @@ available.
 
 
 \section{Dust Extinction} \index{dust extinction}
+\label{sec:dust}
+
 As light travels from its source to us, it can be absorbed and scattered by interstellar dust.
 The scattering is especially strong at shorter wavelengths.
 This means less of the blue light arrives on Earth and the object will appear redder than it actually
@@ -255,15 +279,14 @@ magnitudes for dust extinction.
 	\label{fig:reddening}
 \end{figure}
 
-Three competing extinction vectors currently exist in the current literature.
-The most popular one for a long time was created by \citeN{schlegel98}, who 
-used the colours of nearby elliptical galaxies for calibration. Later, \citeN{schlafly11}
-made some improvement with new data from the SDSS. Recently, \citeN{wolf14} investigated
-quasars in the SDSS and found evidence of non-linearity in the reddening map. For convience,
-let us call the extinction vectors resulted from the above works SFD98, SF11, and W14, after
-the authors' initials and year of publication.
-One interesting question, which we explore in Chapter \ref{cha:expt1}, is whether
-applying any of these vectors will have any noticeable effect on the performance of the classifiers.
+Three competing extinction vectors currently exist in the current literature. The most popular one
+for a long time was created by \citeN{schlegel98}, who used the colours of nearby elliptical
+galaxies for calibration. Later, \citeN{schlafly11} made some improvement with new data from the
+SDSS. Recently, \citeN{wolf14} investigated quasars in the SDSS and found evidence of non-linearity
+in the reddening map. For convenience, let us call the extinction vectors resulted from the above
+works SFD98, SF11, and W14, after the authors' initials and year of publication. One interesting
+question, which we explore in Chapter \ref{cha:expt1}, is whether applying any of these vectors
+will have any noticeable effect on the performance of the classifiers.
 
 
 

@@ -108,7 +108,7 @@ potential misclassification.
 \label{sec:results1}
 
 \subsection{Comparison of Reddening Correction Sets}
-\label{sec:extinction}
+\label{sub:extinction}
 
 Figure \ref{fig:reddeningviolin} on page \pageref{fig:reddeningviolin} shows
 the violin plot of the accuracy rate on the test
@@ -121,7 +121,7 @@ This could be because there are not too many objects in the Milky Way band,
 the region in which there is the most dust extinction. Indeed, if we look back at the reddening map
 in Figure \ref{fig:reddening}, the extinction amount does vary through the field, such 
 variation is probably fairly small and random forests, after all, are quite robust to noise.
-In any case, for good measure, we will correct all photometric measurement for dust
+In any case, for good measure, we shall correct all photometric measurement for dust
 extinction using
 the latest W14 set. Other projects like SkyMapper will survey regions closer to the Milky
 Way band and thus future work using its data might be able to provide more conclusive
@@ -138,7 +138,7 @@ evidence of which of the three sets gives the biggest improvement to the accurac
 \end{figure}
 
 \subsection{Hyperparameter Optimisations}
-\label{sec:hyper}
+\label{sub:hyper}
 
 On the next three pages, we show the heat maps of the cross-validation accuracy rate
 for many different combinations of hyperparameters. For readability, we provide detailed
@@ -192,7 +192,7 @@ Below we provide a summary of our decisions:
 		Like Figure \ref{fig:sdss_grid_logistic}, the optimal
 		combination involves a degree 3 polynomial transformation of the features.
 		Due to constraints on
-		processing power, we will instead pick the next best alternative, which involves
+		processing power, we shall instead pick the next best alternative, which involves
 		a degree 2 transformation, the one-vs-rest strategy, the square hinge loss function,
 		and the L1-norm for the penalisation}
 	\label{fig:sdss_grid_poly}
@@ -236,7 +236,7 @@ Below we provide a summary of our decisions:
 
 
 \subsection{Learning Curves with Random Sampling}
-\label{sec:lc}
+\label{sub:lc}
 
 Now that we have tuned the hyperparameters, we are ready to compare the classifiers.
 Figure \ref{fig:learning_curves} shows the average learning curves of the two datasets.
@@ -269,7 +269,7 @@ surprising even slower than the RBF SVM.
 
 
 \subsection{Class Proportion Estimation}
-\label{sec:prop}
+\label{sub:prop}
 
 Let us now make some predictions on the unlabelled SDSS data. Although the RBF SVM is
 the best-performing classifier, we nonetheless choose the random forest due to its fast

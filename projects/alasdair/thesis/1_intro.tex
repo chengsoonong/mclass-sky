@@ -37,15 +37,15 @@ context. Along the way, we make four other contributions that would support the 
 experiment. These are
 	\begin{itemize}
 		\item Comparing three sets of dust extinction vectors and seeing which one is the most
-		effective at improving the accuracy (Section \ref{sec:extinction}).
+		effective at improving the accuracy (Section \ref{sub:extinction}).
 		
 		\item Identifying good photometric features using both well-known machine learning techniques
 		like polynomial transformation and domain knowledge such as the use of colours (Section
-		\ref{sec:prep} and \ref{sec:hyper}).
+		\ref{sec:prep} and \ref{sub:hyper}).
 		
 		\item Training three families of classifiers to do photometric classification and using
-		a random forest to predict the class proportion of unlabelled data (Section \ref{sec:lc}
-		and \ref{sec:prop}).
+		a random forest to predict the class proportion of unlabelled data (Section \ref{sub:lc}
+		and \ref{sub:prop}).
 		
 		\item Deriving an extension of the posterior balanced accuracy to the multi-class
 		setting, which will be used to evaluate the performance of our algorithms (Section 
@@ -61,6 +61,7 @@ available on the project's GitHub repository\footnote{
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 \section{Thesis Outline}
 \label{sec:orgnisation}
+
 The thesis consists of four main chapters, two of which are dedicated to a discussion of ideas and
 the other two focus on experiments:
 	\begin{itemize}
@@ -85,7 +86,7 @@ For those interested in reproducing the experiments and applying the ideas in th
 own datasets, Appendix \ref{cha:datasets} provides information on how to obtain the SDSS dataset and
 Appendix \ref{cha:mclearn} contains a guide on how to install and use the
 accompanying Python package \texttt{mclearn}. Supplementary results are included in Appendix
-\ref{cha:dust} and \ref{cha:supp}.
+\ref{cha:dustvectors} and \ref{cha:supp}.
 
 %%% Local Variables: 
 %%% mode: latex

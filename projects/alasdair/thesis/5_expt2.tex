@@ -49,6 +49,7 @@ we use 11 members.
 List of four sets of plots. Colour is kept consistent.
 
 \subsection{Learning with the SDSS Dataset}
+\label{sub:learnsdss}
 
 On the next five pages, we plot the results of the experiment on the SDSS dataset.
 Figure \ref{fig:sdss_bl_ind} shows the posterior distributions of the
@@ -71,6 +72,11 @@ to see that the pool entropy heuristic also performs quite badly with SVMs, whil
 the uncertainty sampling entropy approach does very well. The reason for this is unclear.
 Finally whether the original data pool is balanced or unbalanced seems to have a very little effect
 on the outcome.
+
+Since the bagging technique has been shown to improve the stability of the predictions
+\cite{breiman96}, we should expect this method to be no worse the the simple margin approach. The
+cost, however, is that it now takes $B$ times longer to calculate the scores, where $B$ is the size
+of the committee.
 
 For the Thompson sampling, it seems that even under the very simplifying assumption 
 of a normal prior and a normal likelihood, the algorithm still manages to automatically detect
@@ -285,6 +291,7 @@ if we were to implement the Dynamic Thompson Sampling method.
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 \subsection{Learning with the VST ATLAS Dataset}
+\label{sub:learnvstatlas}
 
 Figures \ref{fig:vstatlas_bl_ind} to \ref{fig:vstatlas_avg_rewards} show the results of the experiment on the VST ATLAS dataset.
 The organisation of the plots is the same as the SDSS.

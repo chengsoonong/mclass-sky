@@ -14,10 +14,10 @@ Revolution like the telescope that we began to make significantly more progress.
 after Galileo made the first working telescope, most of the sky still remains unknown to us.
 
 This, however, is starting to change. The Sloan Digital Sky Survey (SDSS) began in 2000 and has
-since obtained 800 million sets of photometric measurements and 3 million spectra of the northern
-sky. Similar projects are going on to map the southern sky including the VST ATLAS and the
+since obtained 800 million sets of photometric measurements and 3 million spectra of the Northern
+Sky. Similar projects are going on to map the Southern Sky including the VST ATLAS and the
 SkyMapper surveys. We now face another challenge of how to analyse this huge amount of data.
-Fortunately, we can bring machine learning to astronomy and let the computer to do the pattern
+Fortunately, we can bring machine learning to astronomy and let the computer do the pattern
 recognition task. This thesis is an attempt to study a small part of the interaction between these
 two disciplines.
 
@@ -53,9 +53,9 @@ experiment. These are
 	\end{itemize}
 An important part of this project involves creating an open-source, extendable, and well-documented
 Python package that allows astronomers to perform active learning routines and make quick
-visualisations of photometric data. The package and reproducible code of all experiments are
-available on the project's GitHub repository\footnote{
-	\url{https://github.com/alasdairtran/mclearn}}.
+visualisations of photometric data. The package, the documentation, and reproducible code of all
+experiments are available on the project's GitHub repository\footnote{
+    \url{https://github.com/alasdairtran/mclearn}}.
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -77,16 +77,14 @@ the other two focus on experiments:
 		an important performance measure for data with unbalanced classes.
 		
 		\item Chapter \ref{cha:expt1} and \ref{cha:expt2} test the ideas discussed so far in a
-		series of experiments on the SDSS and the VST-ATLAS datasets. A detailed protocol and a
+		series of experiments on the SDSS and the VST ATLAS datasets. A detailed protocol and a
 		thorough discussion of the results are given for each experiment. In particular, we offer
 		insights into the areas where Thompson sampling outperforms random sampling and where it
 		underperforms. 
 	\end{itemize}
-For those interested in reproducing the experiments and applying the ideas in this thesis to their
-own datasets, Appendix \ref{cha:datasets} provides information on how to obtain the SDSS dataset and
-Appendix \ref{cha:mclearn} contains a guide on how to install and use the
-accompanying Python package \texttt{mclearn}. Supplementary results are included in Appendix
-\ref{cha:dustvectors} and \ref{cha:supp}.
+For those interested in reproducing the experiments, Appendix \ref{cha:datasets} provides
+information on how to obtain the SDSS dataset, including the necessary SQL queries. Supplementary
+results are included in Appendix \ref{cha:dustvectors} and \ref{cha:supp}.
 
 %%% Local Variables: 
 %%% mode: latex

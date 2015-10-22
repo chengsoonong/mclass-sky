@@ -103,7 +103,7 @@ def plot_final_accuracy(data, labels, colors=None, sort=True, linewidth=1.5, inn
 
     format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
-    ax.set_ylabel('Balanced Accuracy')
+    ax.set_ylabel('PBA')
     ax.set_ylim(ylim)
     ax.tick_params(top='off')
 
@@ -221,7 +221,7 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, ax=
         ax.plot(sample_sizes, mean_curve, label=curve_label)
 
     ax.set_xlabel('Number of Training Examples')
-    ax.set_ylabel('Posterior Balanced Accuracy Rate')
+    ax.set_ylabel('MPBA')
     ax.legend(loc='lower right', frameon=True)
     ax.grid(False)
 
@@ -612,7 +612,7 @@ def plot_learning_curve_df(sample_sizes, learning_curves, labels, colors,
     ax.set_ylabel('MPBA')
 
     if upper is not None:
-        ax.plot([sample_sizes[0], sample_sizes[-1]], [upper, upper], color='r')
+        ax.plot([sample_sizes[0], sample_sizes[-1]], [upper, upper], ls='--', color='#377eb8')
 
     if ylim is not None:
         ax.set_ylim(ylim)

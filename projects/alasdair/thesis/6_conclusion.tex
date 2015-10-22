@@ -9,32 +9,57 @@
 \epigraph{``Simplicity is the final achievement. After one has played a vast quantity of notes and more notes, it is simplicity that emerges as the crowning reward of art."}{--- \textup{Fr\'ed\'eric Chopin, as quoted in} If Not God, Then What?}
 
 
-This thesis provides an initial set of experiments that explore how active learning can help astronomers with photometric classification. Through our novel contribution of bringing
-the classic Thompson sampling algorithm to the setting of heuristic selection, we have managed to
-learn the optimal heuristic automatically very quickly. The cleaner the dataset and 
-the better the probability estimates are, the more effective active learning is. For example,
-we achieve the best improvement with logistic regression and the VST ATLAS dataset. The margin
-heuristic comes out as a clear winner, even under noisy conditions like in the SDSS. This
-is also great news because it is also the fastest heuristic to run. Simplicity wins at the end of the day.
+This thesis provides an initial set of experiments that explore how active learning can help
+astronomers with photometric classification. Through our novel contribution of bringing the classic
+Thompson sampling algorithm to the setting of heuristic selection, we have managed to learn the
+optimal heuristic automatically very quickly, while still have a reasonable amount of exploration.
+The cleaner the dataset is and the better the probability estimates are, the more effective active
+learning will be. For example, we achieve the best improvement with logistic regression and the VST
+ATLAS dataset. The margin heuristic comes out as a clear winner, even under noisy conditions like
+in the SDSS. This is great news because it is also the fastest heuristic to run. Simplicity
+wins at the end of the day.
+
 
 \section{Related Works}
 \label{sec:related}
 
+Our thesis is built mainly upon the work of \citeN{schein07}, who investigate the individual active
+learning heuristics described in this thesis and find that QBB margin provides the most promising
+results. There are other works in the literature that also do an empirical analysis of active
+learning in other domains such as text classification \cite{tong02} and sequence labelling tasks
+\cite{settles08}. Most of these works suggest that active learning does indeed offer an improvement
+over random sampling . However, as far as we know, this thesis is the first in applying
+active learning to optimal astronomy.
+
+Machine learning methods other than active learning have, of course, been applied to astronomical
+data. \citeN{hala14} uses neural networks to learn directly from spectra. \shortciteN{elting08}
+employ a mixture model and clustering to perform class discovery on a portion of the SDSS
+photometric data. Finally, \shortciteN{bazell05} train an SVM with an RBF kernel to predict class
+proportions in the unlabelled SDSS set, like what we did in Section \ref{sub:prop}. However they
+are more cautious and only predict labels of objects that are within the inner 90\% of the
+colour space of the training set and have a low measurement error. Given the constraints, they
+find that 2.3\% of the unlabelled objects are quasars. Our prediction, where we do not
+impose any constraint on the colour space, is 21.8\%.
 
 
 \section{Future Works}
 \label{sec:future}
 
-The work that we have done here is only a beginning. In particular, we have only done an empirical
+The work in this thesis is only a beginning. In particular, we have only done an empirical
 investigation in the astronomical domain. It would be an interesting exercise to conduct a
-theoretical analysis to see if heuristics such as margin can always guarantee to beat random sampling.
-Another possible future direction is to derive a variance estimation method for both SVMs and
-one-vs-rest logistic regression, since our variance estimate is only true under the multinomial logistic regression. We can also try to implement the Dynamic Thompson Sampling approach to address
-the reward drifting problem.
+theoretical analysis to see under what assumptions heuristics such as margin would guarantee to
+outperform random sampling. Another possible future direction is to derive a variance estimation
+method for both SVMs and one-vs-rest logistic regression, since the variance estimate that we used here
+is only true under the multinomial logistic regression. We can also try to implement the Dynamic
+Thompson Sampling approach to address the reward drifting problem.
 
 In our investigation, the algorithm only works with one sample at a time. What astronomers would
-normally do in practice, however, is batch active learning, where at each round, $n$ objects are selected to be labelled simultaneously. This problem is slightly more challenging since we need to deal with the setting where we could have two objects whose class membership we are currently very uncertain about, but the knowledge of class membership of one object would allow us to predict the other object's class easily. 
-Cluster analysis might be able to help us with this problem of batch active learning.
+normally do in practice, however, is batch active learning, where in each round, $n$ objects are
+selected to be labelled simultaneously. This problem is slightly more challenging since we need to
+deal with the setting where we could have two objects whose class membership we are currently very
+uncertain about, but the knowledge of class membership of one of them would allow us to predict the
+other object's class easily. Cluster analysis might be able to help us with this problem of batch
+active learning.
 
 %%% Local Variables: 
 %%% mode: latex

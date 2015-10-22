@@ -31,6 +31,7 @@
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \usepackage{epigraph}
 
+
 \setlength\epigraphwidth{10cm}
 \setlength\epigraphrule{0pt}
 
@@ -135,13 +136,14 @@
 
 
 
-
-\glsaddall
-\setlist[description]{leftmargin=!, labelwidth=5em} % Change for glossaries
-\printglossary[title=List of Symbols]
-\printglossary[type=\acronymtype]
-\setlist[description]{style=standard} % reset settings back to default
-
+%\begingroup
+%\let\cleardoublepage\clearpage
+    \glsaddall
+    \setlist[description]{leftmargin=!, labelwidth=5em} % Change for glossaries
+    \printglossary[title=List of Symbols]
+    \printglossary[type=\acronymtype]
+    \setlist[description]{style=standard} % reset settings back to default
+%\endgroup
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Here begins the main text

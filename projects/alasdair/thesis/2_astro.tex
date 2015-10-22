@@ -9,11 +9,11 @@ When many people think about astronomy, the first things that pop into their min
 images of the sky like the famous Hubble Deep Field. But pretty images alone are not enough to do
 real science. For us to make any meaningful observations about astronomical objects, we need actual
 quantitative measurements. This chapter begins with an overview of spectroscopy and photometry, the
-two most important tools astronomers use to study the sky (Section \ref{sec:spec}). We then look at
-important astronomical concepts like fluxes, magnitudes, colours, and the equatorial coordinate
-system (Section \ref{sec:flux}, \ref{sec:mag}, and \ref{sec:map}). This will give us a better
-understanding of the SDSS and the VST ATLAS datasets, which are introduced in Section
-\ref{sec:datasets}. The chapter ends with a brief discussion on dust extinction, a
+two most important tools in optical astronomy used to study the sky (Section \ref{sec:spec}).
+We then look at important astronomical concepts like fluxes, magnitudes, colours, and the
+equatorial coordinate system (Section \ref{sec:flux}, \ref{sec:mag}, and \ref{sec:map}). This will
+give us a better understanding of the SDSS and the VST ATLAS datasets, which are introduced in
+Section \ref{sec:datasets}. The chapter ends with a brief discussion on dust extinction, a
 potential problem in the SDSS dataset that we shall need to take care of (Section \ref{sec:dust}).
 
 
@@ -100,9 +100,9 @@ The fluxes of the brightest and the dimmest objects in the sky can differ by man
 magnitudes. This motivates us to take one step further and convert fluxes to inverse hyperbolic sine
 (or arsinh) apparent magnitudes:
 	\begin{IEEEeqnarray*}{lCl}
-		m &=& -\frac{2.5}{\ln(10)} \Bigg[ \arsinh\bigg(\frac{f/f_0}{2b}\bigg) + \ln(b) \Bigg]
+		m &=& -\frac{2.5}{\ln(10)} \Bigg[ \arsinh\bigg(\frac{f/f_0}{2b}\bigg) + \ln(a) \Bigg]
 	\end{IEEEeqnarray*}
-Here $f_0$ is the flux of the object with a conventional magnitude of 0 and $b$ is the softening
+where $f_0$ is the flux of the object with a conventional magnitude of 0 and $a$ is the softening
 parameter. A nice feature of this magnitude system is that for bright objects with a high
 signal-to-noise ratio, it behaves like a logarithmic scale, i.e. with every decrease of 1 in the
 magnitude scale, the object becomes 2.5 times brighter.\footnote{ The reader might wonder why the
@@ -116,22 +116,22 @@ the arsinh function (unlike the log function) ensures that the magnitudes are st
 \label{sub:colours}
 
 The problem with apparent magnitudes is their dependence on distance. Objects that are further away
-form us are fainter and hence have higher apparent magnitudes. Of course, being further away does
+from us are fainter and hence have higher apparent magnitudes. Of course, being further away does
 not change anything fundamental about an object like whether it is a star or a galaxy. Thus if we
 want to study their intrinsic properties, we need to remove this dependency. One method is to
 convert to the absolute magnitude, which is defined as the object's apparent magnitude if it were
 exactly 10 parsecs away from Earth:
 	\begin{IEEEeqnarray*}{lCl}
-		M &=& m - 5 \log_{10} \bigg(\frac{d}{10}\bigg)
+		M &=& m - 5 \log_{10} \bigg(\frac{D}{10}\bigg)
 	\end{IEEEeqnarray*}
-This conversion requires the knowledge of $d$, the actual distance of an object in parsecs. In
-practice, it is often difficult to estimate $d$, so we resort to an easier method of taking the
+This conversion requires the knowledge of $D$, the actual distance of an object in parsecs. In
+practice, it is often difficult to estimate $D$, so we resort to an easier method of taking the
 difference between the amount of light received in two bandpasses. For example, the $u -g$ colour is
 calculated as
 	\begin{IEEEeqnarray*}{lCl}
 		m_{u-g} &=& m_u - m_g \\
-		        &=& M_u + 5 \log_{10} \bigg(\frac{d}{10}\bigg) -
-		            M_g + 5 \log_{10} \bigg(\frac{d}{10}\bigg) \\
+		        &=& M_u + 5 \log_{10} \bigg(\frac{D}{10}\bigg) -
+		            M_g + 5 \log_{10} \bigg(\frac{D}{10}\bigg) \\
 		        &=& M_u - M_g
 	\end{IEEEeqnarray*}
 Note that the conversion factor disappears and the colour does not change with distance. In
@@ -140,15 +140,15 @@ colours measure the general shape of an object's spectrum, which in turn can rev
 properties such as a star's temperature.
 
 
-\section{Equatorial Coordinate System}
+\section{Equatorial Coordinate System} \index{equatorial coordinate system}
 \label{sec:map}
 
-Imagine a very large celestial sphere with Earth at its centre. By projecting onto the inside
-surface of this sphere, we have a way to specify the position of any astronomical object. In this
-thesis, we use the equatorial coordinate system, where an object's position is specified by two
-numbers, a right ascension (ra) and a declination (dec). Figure \ref{fig:mollweide} shows the
-Mollweide projection of the celestial sphere. We shall use this map throughout the thesis to
-visualise some results.
+Imagine a very large celestial sphere \index{celestial sphere} with Earth at its centre. By
+projecting onto the inside surface of this sphere, we have a way to specify the position of any
+astronomical object. In this thesis, we use the equatorial coordinate system, where an object's
+position is specified by two numbers, a right ascension \index{right ascension} (ra) and a
+declination \index{declination} (dec). Figure \ref{fig:mollweide} shows the Mollweide projection of
+the celestial sphere. We shall use this map throughout the thesis to visualise some results.
 
 \begin{figure}[tbp]
 	\centering
@@ -161,14 +161,15 @@ visualise some results.
 
 The equatorial coordinate system, like any other systems, needs to have a reference point. Here
 anything on the celestial sphere that is directly above the Earth's equator will have a declination
-of 0\deg. To define a zero point for the right ascension, we use the fact that the centre of the Sun
-passes through the plane of the Earth's equator twice a year. The first crossing point usually
-happens on 21 March and is called the vernal equinox. We now define the right ascension of the
-vernal equinox to be 0\deg~\cite[Chapter~1]{sparke07}.\footnote{ There is actually a slight
-	complication. Since the Earth's rotation axis is not fixed due to precession, the ra-dec coordinates
-	of an object relative to the origin will actually change slowly over time. Thus we need to also fix
-	a time in which the coordinates are measured. In many surveys like the SDSS, 1 January 2000 12:00
-	Terrestial Time is chosen as a reference point.}
+of 0\deg. To define a zero point for the right ascension, we use the fact that the centre of the
+Sun passes through the plane of the Earth's equator twice a year. The first crossing point usually
+happens on 21 March and is called the vernal equinox\index{vernal equinox}. We now define the right
+ascension of the vernal equinox to be 0\deg~\cite[Chapter~1]{sparke07}.\footnote{ There is actually
+    a slight complication. Since the Earth's rotation axis is not fixed due to
+    precession\index{precession}, the ra-dec coordinates of an object relative to the origin will
+    actually change slowly over time. Thus we need to also fix a time in which the coordinates are
+    measured. In many surveys like the SDSS, 1 January 2000 12:00 Terrestrial Time is chosen as a
+    reference point.}
 
 
 
@@ -176,28 +177,48 @@ vernal equinox to be 0\deg~\cite[Chapter~1]{sparke07}.\footnote{ There is actual
 \section{Datasets}
 \label{sec:datasets}
 
-We now have all required background to understand the
-features in the two datasets used in our experiments. Below we give a quick overview of what each
-dataset contains. For more information on how to obtain them, refer to Appendix \ref{cha:datasets}.
+We now have all the required background to understand the features in the two datasets used in our
+experiments. Below we give a quick overview of what each dataset contains. For more information on
+how to obtain them, refer to Appendix \ref{cha:datasets}.
 
 \subsection{SDSS Dataset} \index{SDSS}
 \label{sub:sdss}
 
-\begin{figure}[tbp]
+\begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{figures/4_expt1/map_prediction_forest_all}
 	\caption[Coverage of the SDSS]{The distribution of the 800 million scanned objects
 		in the SDSS: Note that the coverage is not uniform. A darker colour
-		corresponds to more objects being scanned in a particular area.}
+		corresponds to more objects being scanned in a particular area. The unit
+        of the colourbar is the object count in a hexagon.}
 	\label{fig:coverage}
 \end{figure}
 
-The main dataset in our investigation comes from the SDSS, a comprehensive survey of the
-Northern Sky that began operation in 2000. This dataset consists of 800 million objects, covering
-14,055 square degrees, or 
-about a third of the celestial sphere \cite{alam15}. Figure \ref{fig:coverage} shows the coverage of the survey.
+\begin{figure}[p]
+    \centering
+    \begin{subfigure}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.99\textwidth]{figures/2_astro/sdss_class_distribution}
+        \caption{SDSS Dataset}
+        \label{fig:class_dist_sdss}
+    \end{subfigure}%
+    \begin{subfigure}{.5\textwidth}
+        \centering
+        \includegraphics[width=0.99\linewidth]{figures/2_astro/vstatlas_class_distribution}
+        \caption{VST ATLAS Dataset}
+        \label{fig:class_dist_vst}
+    \end{subfigure}
+    \caption[Distribution of the classes in the SDSS and VST ATLAS datasets]{
+        Class distribution of the labelled objects in the SDSS and VST ATLAS datasets: Observe
+        that both datasets exhibit the problem of class imbalance. Most objects in the
+        SDSS dataset are galaxies, while stars are the dominant class in the VST ATLAS dataset.}
+    \label{fig:class_dist}
+\end{figure}
 
-For each object, we are given 11 features:
+The main dataset in our investigation comes from the SDSS, a comprehensive survey of the Northern
+Sky that began operation in 2000. This dataset consists of 800 million objects, covering 14,055
+square degrees, or about a third of the celestial sphere \cite{alam15}. Figure \ref{fig:coverage}
+shows the coverage of the survey. For each object, we are given 11 features:
 	\begin{itemize}
 		\item The PSF magnitude in each of the five ugriz bands.
 		\item The Petrosian magnitude in each of the five ugriz bands.
@@ -205,41 +226,23 @@ For each object, we are given 11 features:
 	\end{itemize}
 Only 2.8 million out of the 800 million objects have been spectroscopically classified into three
 classes: galaxies, quasars, and stars. From Figure \ref{fig:class_dist_sdss}, we can see that the
-number of galaxies is twice that of stars and three times that of quasars. This leads to
-the problem of class imbalance. We shall discuss some approaches to minimise the bias toward
-the dominant class during classification in chapter \ref{cha:ml}.
+number of galaxies is twice that of stars and four times that of quasars. This leads to the
+problem of class imbalance. In Chapter \ref{cha:ml} we shall discuss some approaches to minimise
+the bias toward the dominant class during classification. Also note that both the labelled and the
+unlabelled sets are not random samples of the sky. For example, since astronomers are particularly
+interested in studying quasars, these objects are over-represented in the collection.
 
-\begin{figure}[tbp]
-	\centering
-	\begin{subfigure}{.5\textwidth}
-		\centering
-		\includegraphics[width=0.99\textwidth]{figures/2_astro/sdss_class_distribution}
-		\caption{SDSS Dataset}
-		\label{fig:class_dist_sdss}
-	\end{subfigure}%
-	\begin{subfigure}{.5\textwidth}
-		\centering
-		\includegraphics[width=0.99\linewidth]{figures/2_astro/vstatlas_class_distribution}
-		\caption{VST ATLAS Dataset}
-		\label{fig:class_dist_vst}
-	\end{subfigure}
-	\caption[Distribution of the classes in the SDSS and VST ATLAS datasets]{
-		Class distribution of the labelled objects in the SDSS and VST ATLAS datasets: Observe
-		that both datasets exhibit the problem of class imbalance. Most objects in the
-		SDSS dataset are galaxies, while stars are the dominant class in the VST ATLAS dataset.}
-	\label{fig:class_dist}
-\end{figure}
+
 
 
 \subsection{VST ATLAS Dataset} \index{VST ATLAS}
 \label{sub:vstatlas}
 
-A second and much smaller dataset comes from a more recent survey, the VST ATLAS. This project
-aims to survey 4500 deg$^2$ of the Southern Sky to roughly the same depth as the SDSS
-\cite{shanks15}.
-There are 35,000 objects in total which have been classified by experts into four classes:
-stars, galaxies, quasars, and white dwarfs. For each object, we are provided
-with 7 features:
+A second and much smaller dataset comes from a more recent survey, the VST ATLAS. This project aims
+to survey 4500 square degrees of the Southern Sky to roughly the same depth as the SDSS
+\cite{shanks15}. There are about 35,000 objects in total which have been classified by experts into four
+classes: stars, galaxies, quasars, and white dwarfs. For each object, we are provided with 7
+features:
 	\begin{itemize}
 		\item The calibrated magnitude from the r-band.
 		\item Four colour indices using the ugriz filters: $u-g$, $g-r$, $r-i$, and $i-z$.
@@ -248,23 +251,22 @@ with 7 features:
 The two infrared channels $W1$ and $W2$ are measured by the Wide-field Infrared Survey Explorer
 (WISE), one of NASA's space telescopes. These channels will prove useful in distinguishing
 between classes. As we can see from Figure \ref{fig:class_dist_vst}, the problem of class
-imbalance is even worse in this dataset. For instance, we have 25 times more stars than white
+imbalance is even worse in this dataset. For instance, we have 43 times more stars than white
 dwarfs. Since research is still on-going, the coordinates of the objects are not yet publicly
 available.
 
 
 
-\section{Dust Extinction} \index{dust extinction}
+\section{Dust Extinction} \index{dust extinction} \index{reddening correction}
 \label{sec:dust}
 
-As light travels from its source to us, it can be absorbed and scattered by interstellar dust.
-The scattering is especially strong at shorter wavelengths.
-This means less of the blue light arrives on Earth and the object will appear redder than it actually
-is.
+As light travels from its source to us, it can be absorbed and scattered by interstellar dust. The
+scattering is especially strong at shorter wavelengths. This means that less of the blue light
+arrives on Earth and the object will appear redder than it actually is.
 
 This would not be a big problem if the reddening process were uniform throughout the
 celestial sphere, since all the magnitudes and colours will simply shift by a constant
-term. Indeed, this is the case with the VST-ATLAS, since the field where the objects were
+term. Indeed, this is the case with the VST ATLAS, since the field where the objects were
 surveyed exhibits no drift in the reddening.
 However, the SDSS covers a much larger portion of the sky. As shown in
 Figure \ref{fig:reddening}, the reddening varies by quite a bit throughout the field. The
@@ -274,19 +276,19 @@ magnitudes for dust extinction.
 \begin{figure}[tbp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/2_astro/ebv_map}
-	\caption[Galactic reddening map in the SDSS]{Galactic reddening $E(B-V)$ map in the SDSS:
+	\caption[Galactic reddening map in the SDSS]{Galactic reddening $E_{B-V}$ map in the SDSS:
 		A darker colour indicates a greater amount of reddening.}
 	\label{fig:reddening}
 \end{figure}
 
-Three competing extinction vectors currently exist in the current literature. The most popular one
-for a long time was created by \citeN{schlegel98}, who used the colours of nearby elliptical
-galaxies for calibration. Later, \citeN{schlafly11} made some improvement with new data from the
-SDSS. Recently, \citeN{wolf14} investigated quasars in the SDSS and found evidence of non-linearity
-in the reddening map. For convenience, let us call the extinction vectors resulted from the above
-works SFD98, SF11, and W14, after the authors' initials and year of publication. One interesting
-question, which we explore in Chapter \ref{cha:expt1}, is whether applying any of these vectors
-will have any noticeable effect on the performance of the classifiers.
+Three competing extinction vectors currently exist in the literature. The most popular one for a
+long time was created by \citeN{schlegel98}, who used the colours of nearby elliptical galaxies for
+calibration. Later, \citeN{schlafly11} made some improvement with new data from the SDSS. Recently,
+\citeN{wolf14} investigated quasars in the SDSS and found evidence of non-linearity in the
+reddening map. For convenience, let us call the extinction vectors resulted from the above works
+SFD98, SF11, and W14, after the authors' initials and year of publication. One interesting
+question, which we shall explore in Chapter \ref{cha:expt1}, is whether applying any of these
+vectors to the measurements will have any noticeable effect on the performance of the classifiers.
 
 
 

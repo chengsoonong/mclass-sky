@@ -2,6 +2,7 @@
 
 import pickle
 import numpy as np
+from numpy.random import RandomState
 from sklearn import metrics
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
@@ -16,7 +17,7 @@ class BaseActive:
 
     def __init__(self, classifier, best_heuristic=None, accuracy_fn=compute_balanced_accuracy,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
-                 verbose=False, **h_kwargs):
+                 verbose=False, random_state=None, pool_random_state=None, **h_kwargs):
 
         self.classifier = classifier
         self.best_heuristic = best_heuristic
@@ -29,6 +30,9 @@ class BaseActive:
         self.verbose = verbose
         self.learning_curve_ = []
         self.h_kwargs = h_kwargs
+        self.candidate_selections = []
+        self.rng = RandomState(random_state)
+        self.pool_rng = RandomState(pool_random_state)
 
 
     def _random_sample(self, pool_size, train_mask, sample_size):
@@ -55,7 +59,7 @@ class BaseActive:
 
         if 0 < self.sample_size < np.sum(candidate_mask):
             unlabelled_index = np.where(candidate_mask)[0]
-            candidate_index = np.random.choice(unlabelled_index, self.sample_size, replace=False)
+            candidate_index = self.rng.choice(unlabelled_index, self.sample_size, replace=False)
             candidate_mask = np.zeros(pool_size, dtype=bool)
             candidate_mask[candidate_index] = True
 
@@ -110,7 +114,8 @@ class BaseActive:
 
         return self.best_heuristic(X=X, y=y, candidate_mask=candidate_mask,
                                    train_mask=train_mask, classifier=self.classifier,
-                                   n_candidates=self.n_candidates, **self.h_kwargs)
+                                   n_candidates=self.n_candidates, random_state=self.pool_rng.randint(1000),
+                                   **self.h_kwargs)
 
 
     def fit(self, X_train, y_train, X_test=None, y_test=None):
@@ -138,7 +143,8 @@ class BaseActive:
         train_mask = np.zeros(pool_size, dtype=bool)
 
         # select an initial random sample from the pool and train the classifier
-        sample = np.random.choice(np.arange(pool_size), self.initial_n, replace=False)
+        sample = self.rng.choice(np.arange(pool_size), self.initial_n, replace=False)
+        self.candidate_selections += list(sample)
         train_mask[sample] = True
         self.classifier.fit(X_train[train_mask], y_train[train_mask])
         self.current_training_size += len(sample)
@@ -159,6 +165,7 @@ class BaseActive:
 
             # pick the index of the best candidates
             best_candidates = self.select_candidates(X_train, y_train, candidate_mask, train_mask)
+            self.candidate_selections += list(best_candidates)
 
             # retrain the classifier
             train_mask[best_candidates] = True
@@ -175,7 +182,7 @@ class BaseActive:
                 self._print_progress()
 
             assert self.current_training_size == np.sum(train_mask), \
-            	   'Mismatch detected in the training size. Check your heuristic.'
+                   'Mismatch detected in the training size. Check your heuristic.'
 
 
     def predict(self, X):
@@ -358,210 +365,82 @@ class ActiveBandit(BaseActive):
         self.all_prior_sigmas.append(self.prior_sigmas.copy())
 
 
-
-
-
-
-def run_active_learning_with_heuristic(heuristic, classifier,
-    training_pool, testing_pool, training_oracle, testing_oracle, balanced_pool=False,
-    full_sample_size=60000, n_trials=10, total_n=1000, initial_n=20, random_n=60000,
-    committee=None, bag_size=10000, classes=['Galaxy', 'Star', 'Quasar'], C=None,
-    pool_sample_size=300, pickle_path=None):
-    """ Experiment routine with a partciular classifier heuristic.
-
-        Parameters
-        ----------
-        heuristic : function
-            This is the function that implements the active learning rule. Given a set
-            of training candidates and the classifier as inputs, the function will
-            return index array of candidate(s) with the highest score(s).
-
-        classifier : Classifier object
-            A classifier object that will be used to train and test the data.
-            It should have the same interface as scikit-learn classifiers.
-
-        training_pool : array, shape = [n_samples, n_features]
-            The feature matrix of all the training examples. Throughout the training phase,
-            the active learner will select an oject from this pool to query to oracle.
-            
-        testing_pool : array, shape = [n_samples, n_features]
-            The feature matrix of the test examples, which will be used to assess the accuracy
-            rate of the active learner.
-            
-        training_oracle : array, shape = [n_samples]
-            The array of class labels corresponding to the training examples.
-            
-        testing_oracle : array, shape = [n_samples]
-            The array of class labels corresponding to the test examples.
-
-        balanced_pool : boolean
-            Whether the class disribution in the training pool should be uniform.
-
-        full_sample_size : int
-            The size of the training pool in each trial of the experiment.
-
-        n_trials : int
-            The number trials the experiment will be run.
-
-        total_n : int
-            The total number of samples that the active learner will query.
-            
-        initial_n : int
-            The number of samples that the active learner will randomly select at the beginning
-            to get the algorithm started.
-            
-        random_n : int
-            At each iteration, the active learner will pick a random of sample of examples.
-            It will then compute a score for each of example and query the one with the
-            highest score according to the active learning rule. If random_n is set to 0,
-            the entire training pool will be sampled (which can be inefficient with large
-            datasets).
-        
-        committee : list of Classifier object
-            A list that contains the committee of classifiers used by the query by bagging heuristics.
-        
-        bag_size : int
-            The number of training examples used by each member in the committee.
-
-        classes : array
-            The names of the targets.
-
-        C : float
-            The regularisation parameter of Logistic Regression.
-
-        pickle_paths : array
-            List of paths where the learning curves can be saved.
-
-        Returns
-        -------
-        learning_curves : array
-            If no pickle paths are provided, the learning curves will be returned.
+def run_active_learning_expt(X, y, kfold, classifier, committee, heuristics, pickle_paths,
+    initial_n=50, training_size=300, sample_size=300, verbose=True,
+    committee_samples=300, pool_n=300, C=1):
+    """ Run an active learning experiment
     """
-    
-    sub_sample_size = full_sample_size // 3
-    learning_curves = []
-
-    if balanced_pool:
-        i_max = sub_sample_size * n_trials
-        i_step = sub_sample_size
-    else:
-        i_max = full_sample_size * n_trials
-        i_step = full_sample_size
-
-    for i in np.arange(0, i_max, i_step):
-        if balanced_pool:
-            is_galaxy = training_oracle == 'Galaxy'
-            is_star = training_oracle == 'Star'
-            is_quasar = training_oracle == 'Quasar'
-
-            galaxy_features = training_pool[is_galaxy]
-            star_features = training_pool[is_star]
-            quasar_features = training_pool[is_quasar]
-
-            training_galaxy = galaxy_features[i:i+sub_sample_size]
-            training_star = star_features[i:i+sub_sample_size]
-            training_quasar = quasar_features[i:i+sub_sample_size]
-            
-            training_sub_pool = np.concatenate((training_galaxy, training_star, training_quasar), axis=0)
-            training_sub_oracle = np.concatenate((np.repeat('Galaxy', sub_sample_size),
-                np.repeat('Star', sub_sample_size), np.repeat('Quasar', sub_sample_size)))
-        else:
-            training_sub_pool = training_pool[i:i+full_sample_size]
-            training_sub_oracle = training_oracle[i:i+full_sample_size]
-    
-        # train the active learner
-        active_learner = ActiveLearner(classifier=classifier,
-                                       heuristic=heuristic,
-                                       initial_n=initial_n,
-                                       training_size=total_n,
-                                       sample_size=random_n,
-                                       verbose=True,
-                                       committee=committee)
-        active_learner.fit(training_pool, training_oracle, testing_pool, testing_oracle)        
-        learning_curves.append(active_learner.learning_curve_)
-    
-    print('\n')
-    
-    if pickle_path:
-        with open(pickle_path, 'wb') as f:
-            pickle.dump(learning_curves, f, protocol=4) 
-
-    else:
-        return learning_curves
-
-
-
-def active_learning_experiment(data, feature_cols, target_col, classifier,
-    heuristics, committee, pickle_paths, degree=1, n_trials=10, total_n=1000, balanced_pool=False,
-    C=None, pool_sample_size=300, random_n=60000):
-    """ Run an active learning experiment with specified heuristics.
-
-        Parameters
-        ----------
-        data : DataFrame
-            The DataFrame containing all the features and target.
-
-        feature_cols : array
-            The list of column names of the features.
-
-        target_col: array
-            The name of the target column in the DataFrame.
-
-        classifier : Classifier object
-            A classifier object that will be used to train and test the data.
-            It should have the same interface as scikit-learn classifiers.
-
-        heuristics : array
-            The list of heuristics to be experimented on. Each heuristic is
-            a function that implements the active learning rule. Given a set
-            of training candidates and the classifier as inputs, the function will
-            return index array of candidate(s) with the highest score(s).
-
-        committee : list of Classifier objects
-            A list that contains the committee of classifiers used by the query by bagging heuristics.
-
-        pickle_paths : array
-            List of paths where the learning curves can be saved.
-
-        degree : int
-            If greater than 1, the data will be transformed polynomially with the given degree.
-
-        n_trials : int
-            The number trials the experiment will be run.
-
-        total_n : int
-            The total number of samples that the active learner will query.
-
-        balanced_pool : boolean
-            Whether the class disribution in the training pool should be uniform.
-
-        C : float
-            The regularisation parameter of Logistic Regression.
-
-        random_n : int
-            At each iteration, the active learner will pick a random of sample of examples.
-            It will then compute a score for each of example and query the one with the
-            highest score according to the active learning rule. If random_n is set to 0,
-            the entire training pool will be sampled (which can be inefficient with large
-            datasets).
-
-    """
-
-    # 70/30 split of training and test sets
-    training_pool, testing_pool, training_oracle, testing_oracle = train_test_split(
-        np.array(data[feature_cols]), np.array(data[target_col]), train_size=0.7)
-
-    # shuffle and randomise data
-    training_pool, training_oracle = shuffle(training_pool, training_oracle, random_state=14)
-
-    # do a polynomial transformation
-    if degree > 1:
-        poly_features = PolynomialFeatures(degree=degree, interaction_only=False, include_bias=True)
-        training_pool = poly_features.fit_transform(training_pool)
-        testing_pool = poly_features.transform(testing_pool)
 
     for heuristic, pickle_path in zip(heuristics, pickle_paths):
-        run_active_learning_with_heuristic(heuristic, classifier, training_pool,
-            testing_pool, training_oracle, testing_oracle, n_trials=n_trials, total_n=total_n,
-            committee=committee, pickle_path=pickle_path, balanced_pool=balanced_pool, C=C,
-            pool_sample_size=pool_sample_size, random_n=random_n)
+        learning_curves = []
+        candidate_selections = []
+        for i, (train_index, test_index) in enumerate(kfold):
+            X_train = X[train_index]
+            X_test = X[test_index]
+            y_train = y[train_index]
+            y_test = y[test_index]
+
+            active_learner = ActiveLearner(classifier=classifier,
+                                           heuristic=heuristic,
+                                           initial_n=initial_n,
+                                           training_size=training_size,
+                                           sample_size=sample_size,
+                                           verbose=verbose,
+                                           committee=committee,
+                                           committee_samples=committee_samples,
+                                           pool_n=pool_n,
+                                           C=C,
+                                           random_state=i,
+                                           pool_random_state=i)
+            active_learner.fit(X_train, y_train, X_test, y_test)        
+            learning_curves.append(active_learner.learning_curve_)
+            candidate_selections.append(active_learner.candidate_selections)
+            print(i, end='')
+
+        with open(pickle_path, 'wb') as f:
+            pickle.dump((learning_curves, candidate_selections), f, protocol=4) 
+
+
+def run_bandit_expt(X, y, kfold, classifier, committee, heuristics, pickle_paths,
+    initial_n=50, training_size=300, sample_size=300, verbose=True,
+    committee_samples=300, pool_n=300, C=1):
+    """ Run Bandit experiment.
+    """
+
+    learning_curves = []
+    heuristic_selections = []
+    mus = []
+    sigmas = []
+    candidate_selections = []
+
+    for i, (train_index, test_index) in enumerate(kfold):
+        X_train = X[train_index]
+        X_test = X[test_index]
+        y_train = y[train_index]
+        y_test = y[test_index]
+
+        active_bandit = ActiveBandit(classifier=classifier,
+                                       heuristics=heuristics,
+                                       initial_n=initial_n,
+                                       training_size=training_size,
+                                       sample_size=sample_size,
+                                       committee=committee,
+                                       committee_samples=committee_samples,
+                                       verbose=verbose,
+                                       pool_n=pool_n,
+                                       C=C)
+
+        active_bandit.fit(X_train, y_train, X_test, y_test)
+        
+        learning_curves.append(active_bandit.learning_curve_)
+        heuristic_selections.append(active_bandit.heuristic_selection)
+        mus.append(active_bandit.all_prior_mus)
+        sigmas.append(active_bandit.all_prior_sigmas)
+        candidate_selections.append(active_bandit.candidate_selections)
+
+        print(i, end='')
+
+    outputs = [learning_curves, heuristic_selections, mus, sigmas, candidate_selections]
+    for pickle_path, output in zip(pickle_paths, outputs):
+        with open(pickle_path, 'wb') as f:
+            pickle.dump(output, f, protocol=4)

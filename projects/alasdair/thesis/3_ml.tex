@@ -6,139 +6,248 @@
 \chapter{Photometric Classification}
 \label{cha:ml}
 
-The two most common types of celestial objects are stars and galaxies. There are also some
-interesting objects such as quasars and white dwarfs. Quasars are thought to be supermassive black holes surrounded by an accretion disks.
-White dwarfs are stars in their final stage. One way to classify an object into 
-these various groups is to manually inspect its spectrum.
-There has even been attempts to make the process
-more automatic. For example, \citeN{hala14} achieved a 95\% accuracy rate by training
-a convolutional neural network on one-dimensional spectra to classify objects
-into stars, quasars, and galaxies. Even so, it is currently not possible to obtain
-a spectrum of every object, especially faint ones. This means only a small number of objects
-(less than 0.05\% in the SDSS dataset) can be classified this way. For the rest,
-we only have photometric measurements.
+Let us now bring machine learning to the realm of astronomy. We start with a motivation for why
+astronomers might find machine learning helpful (Section \ref{sec:machine}) and an overview of
+three families of classifiers (Section \ref{sec:classifiers}). We then discuss active learning and
+six heuristics that can be used to rank unlabelled examples (Section \ref{sec:active} and
+\ref{sec:heuristics}). Our novel contributions include the application of Thompson sampling to the
+heuristic selection setting  (Section \ref{sec:bandit} and \ref{sec:thompson}) and a derivation of
+the multi-class posterior balanced accuracy (Section \ref{sec:measures}) which can be used to
+measure the performance of our algorithms.
 
-Fortunately, the field of machine learning came about to solve this kind of problem.
-In the most basic set-up, we have a set of object, each with some photometric measurements.
-These measurements form the feature space $\X$.
-Some of the objects have been spectroscopically classified and these are used as training
-examples. During the training phase, we feed these labelled examples into a classifier,
-which will attempt to form a hypothesis. The labelled examples are of course not perfect, and so
-the goal in machine learning is to capture as much of the underlying trend in the data as possible,
-while avoiding fitting the random noise. Once trained, the classifier can then
-be used to predict the classes of the unlabelled objects.
 
-\section{Classifiers}
+\section{Maching Learning in Astronomy} \index{machine learning}
 \label{sec:machine}
-Three family of classifiers are used in the experiments. They are random forests,
-logistic regression, and support vector machines. Below we give a quick overview of how
-each of them works. We will not implement these algorithms ourselves. Rather we will use
-scikit-learn \cite{pedregosa11}, the most well-known machine learning package
-in Python. 
 
-\subsection{Random Forest}
-To understand how random forests work, we first need to construct individual trees.
-Building a decision tree is like playing the a game of Twenty Questions. We start with the
-whole training set and at each step, we slice the data along the axis of one feature. We
-keep doing this until all the subsets contain data from only one class. There are many
-criteria that we can use to decide on which feature and where we slice along the axis.
-In this thesis, we use the Gini impurity which intuitively measures the potential misclassification
-rate. In particular, let $k$ be the number of classes and $q_D(i)$ be the frequency of objects
-belonging to class $i$ in set $D$. Then the Gini impurity of $D$ is the 
-probability that a randomly selected object from $D$ is misclassified if it were labelled
-according to its frequency in $D$:
+The two most common types of celestial objects are stars and galaxies. There are also some other
+interesting objects such as quasars and white dwarfs. Quasars \index{quasar} are thought to be
+supermassive black holes surrounded by an accretion disc. They are very luminous and, unlike
+galaxies, appear as single-source objects. White dwarfs \index{white dwarf} are low to intermediate
+mass stars that are in their final evolutionary stage. They are very dense and have a faint
+luminosity.
+
+One way to classify objects into these various groups is to manually inspect their spectra.
+\index{spectrum} There have even been attempts to make the process more automatic. For example,
+\citeN{hala14} achieved a 95\% accuracy rate by training a convolutional neural network
+\index{neural network} on one-dimensional spectra to classify objects into stars, quasars, and
+galaxies. Even so, it is currently not possible to obtain a spectrum of every object, especially
+faint ones. This means that only a small number of objects (e.g. 0.35\% in the SDSS dataset) can be
+classified this way. For the rest, we only have photometric measurements.
+
+Fortunately, the field of machine learning came about to solve this kind of problem. In the most
+basic set-up, we have a collection of objects, each with a vector of photometric measurements
+$\bm{x} \in \X$. A subset of them has been spectroscopically classified into some class $y \in \Y$
+and they form the labelled set $\Labelled \subset \X \times \Y$. We call $\X$ the feature space and
+$\Y$ the label space. Let us now partition $\Labelled$ into two disjoint subsets, a training set
+$\Labelled_T$ and a test set $\Labelled_S$. During the training phase, we feed  $\Labelled_T$ to a
+classifier, and the classifier will then learn a hypothesis $h: \X \rightarrow \Y$. The labelling
+process might not be perfect, so the goal in machine learning is to capture as much of the
+underlying trend in the data as possible, while avoiding fitting the random noise. To see how well
+the hypothesis generalises to unknown data, in the testing phase, we ask the classifier to predict
+labels of objects in  $\Labelled_S$. These predictions are then be compared to the true labels,
+and an accuracy rate can be calculated.
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section{Classifiers}
+\label{sec:classifiers}
+
+Three families of classifiers are used in our experiments. They are random forests, logistic
+regression, and support vector machines. Below we give a quick overview of how each of them works.
+We do not implement these classifiers ourselves. Rather we shall use scikit-learn
+\cite{pedregosa11}, the most well-known machine learning package in Python.
+
+\subsection{Random Forest} \index{random forest}
+\label{sub:forest}
+
+To understand the motivation behind random forests, we first need to know how to construct
+individual decision trees\index{decision tree}. Building each of these trees is like playing a game
+of Twenty Questions. We start with the whole training set and at each step, we slice the feature
+space along the axis of one feature. After many steps, we end up with a set of hyper-dimensional
+cuboids which form a partition of the feature space. The algorithm stops when each of these cuboids
+contains data from only one class. There are many criteria that we can use to decide on which
+feature and where we slice along the axis. In this thesis, we use the Gini impurity \index{Gini
+    impurity} which intuitively measures the potential misclassification rate. In particular, let $k$
+be the number of classes and $q_D(i)$ be the frequency of objects belonging to class $i$ in set
+$D$. Then the Gini impurity of $D$ is the probability that a randomly selected object from $D$ is
+misclassified if it were labelled according to its frequency in $D$:
 	\begin{IEEEeqnarray*}{lCl}
 		\iota_G(D) &=& \sum_{i=1}^{k} q_D(i) (1 - q_D(i)) \\
 		           &=& \sum_{i=1}^{k} q_D(i)  - \sum_{i=1}^{k} q_D(i)^2 \\
 		           &=& 1 - \sum_{i=1}^{k} q_D(i)^2
 	\end{IEEEeqnarray*}
-When we split set $D$ into two subsets $D_1$ and $D_2$, the Gini impurity of $D$ is now
-the sum of the individual Gini impurities, weighted by the size of the subsets:
+When we partition $D$ into subsets $\{D_1, D_2, ..., D_d\}$, the Gini impurity of $D$ is now the sum
+of the individual Gini impurities, weighted by the size of the subsets:
 	\begin{IEEEeqnarray*}{lCl}
-		\iota_G(D) &=& \frac{|D_1|}{|D|} \iota_G(D_1) + \frac{|D_2|}{|D|} \iota_G(D_2)
+		\iota_G(D) &=& \sum_{i=1}^{d} \frac{|D_i|}{|D|} \iota_G(D_i)
 	\end{IEEEeqnarray*}
-Observe that if a subset contains objects from only one class, then its Gini impurity would be
-zero. This gives us the following splitting criterion: at each step, slice the data along the
+Observe that if a subset contains objects from only one class, then its Gini impurity will be zero.
+This gives us the following splitting criterion: at each step, slice the feature space along the
 axis that will result in the greatest drop in the Gini impurity.
 
-One problem with decision trees is that they tend to overfit the data and thus do not generalise
-well. To solve this, we can build many decision trees, thus creating a random forest.
-The random forest makes its prediction by simply counting up all the
-predictions of the individual trees and then taking the most popular choice. By averaging
-the predictions, we avoid the problem of overfitting. Furthermore, for each tree,
-we only give it a small bootstrap sample and at each split, we only consider a small number
-of features. This bootstrapping and random subspace selection have been shown empirically
-to improve the accuracy rate \cite{breiman96, ho98, louppe12}.
-Another nice
-feature of random forests is that they are extremely fast and hence scale well with large
-datasets. Although they do not provide true probability estimates, we can use the proportion
-of the votes as a proxy of the likelihood that an object is in some particular class. 
+One problem with decision trees is that they tend to overfit \index{overfitting} the data and thus
+do not generalise well. To solve this, \citeN{breiman01} proposes that we build many decision
+trees, thus creating a random forest. The random forest makes its prediction by simply counting up
+the predictions of all the individual trees and then choosing the most popular choice. By taking an
+average of the predictions, we avoid the problem of overfitting. Furthermore, for each tree, we
+only give it a small bootstrap sample and at each split, we only consider a small number of
+features. This bootstrapping and random subspace selection have been shown empirically to improve
+the accuracy \cite{breiman96, ho98, louppe12}. Another nice feature of random forests is that
+they are extremely fast and hence scale well with large datasets. Although they do not provide
+class probability estimates, we can use proportions of the votes as a proxy for the
+probabilities. However, in practice, we find these probability estimates to be a bit unstable.
 
-\subsection{Logistic Regression}
-If we want to have true probability estimates, then logistic regression might be a better option.
-Developed by \citeN{cox58}, the algorithm tries to directly model the probability of 
-being in a class. Let $\bm{x}$ be a vector of features and $\bm{\beta}$ be the vector of 
-coefficients. The linear predictor is defined as
+
+\subsection{Logistic Regression} \index{logistic regression}
+\label{sub:logistic}
+
+If we want the hypothesis to model actual class probabilities, then an alternative approach is to use
+logistic regression. Developed by \citeN{cox58}, the algorithm tries to directly model the
+probability of being in a class. Let $\bm{x}$ be the feature vector and $\bm{\theta}$ be the vector
+of coefficients. The linear predictor $\eta$ is defined as
 	\begin{IEEEeqnarray*}{lCl}
-		\eta(\bm{x}) &=& \bm{\beta}^T \bm{x}
+		\eta(\bm{x}) &=& \bm{\theta}^T \bm{x}
 	\end{IEEEeqnarray*}	
-Since probabilities must lie between 0 and 1, we want our predictor to have the same range.
-This can be achieved by wrapping $\eta$ around the logistic function:
+Since probabilities must lie between 0 and 1, we want our predictor to have the same range. This can
+be achieved by wrapping $\eta$ around the logistic function:
 	\begin{IEEEeqnarray*}{lCl}
-		\sigma(\eta(\bm{x})) &=& \frac{1}{1 + e^{-\eta(\bm{x})}}
+		p(y=1 | \bm{x}; \bm{\theta}) &=& \sigma(\eta(\bm{x}))  \\
+                                    &=& \frac{1}{1 + e^{-\eta(\bm{x})}}
 	\end{IEEEeqnarray*}
-We can now interpret $\sigma(\eta(\bm{x}))$ as the probability that an object with feature
-vector $\bm{x}$ belonging to the positive class. The goal of the algorithm is to use the
-training data to estimate the coefficient vector $\bm{\beta}$.
+We can now interpret $p(y=1 | \bm{x}; \bm{\theta})$ as the probability that an object with feature vector
+$\bm{x}$ belongs to the positive class. The goal of the algorithm is then to use the training data
+to estimate the coefficient vector $\bm{\theta}$. This can be done by finding $\hat{\bm{\theta}}$ that
+maximises the log-likelihood function:
+    \begin{IEEEeqnarray*}{lCl}
+        \hat{\bm{\theta}} &=& \argmax_{\bm{\theta}} \sum_{i = 1}^{n} \log p(y_i| \bm{x}_i; \bm{\theta})
+                         - \frac{1}{C} R(\bm{\theta})
+    \end{IEEEeqnarray*}
+where $n$ is the size of the training set, $R(\bm{\theta})$ is the regularisation term, and $C$ is
+the inverse of the regularisation strength. \index{regularisation} A low value of $C$ forces the
+values of the parameters to be small, thus avoiding overfitting. However if $C$ is too low, we
+might have a hypothesis that is too simple. For the regularisation term, we can either sum up the
+absolute values of the coefficients (L1) or the squares of the coefficients (L2):
+    \begin{IEEEeqnarray*}{lClllCl}
+        R_{L1}(\bm{\theta}) &=& \sum_{i = 1}^{m} \abs{\bm{\theta}_i } &\qquad\qquad
+        R_{L2}(\bm{\theta}) &=& \sum_{i = 1}^{m} \bm{\theta}_i^2
+    \end{IEEEeqnarray*}
+where $m$ is the number of features. One advantage of the L1 regularisation is that it leads to
+sparse solutions, where a lot of coefficients become zero \cite{tibshirani96}. This is useful if we
+have many features, which for example is the case after we do a polynomial transformation (see
+Section \ref{sub:complex}).
 
-There are a few ways to extend this model to the multi-class setting. One option is
-the multinomial logistic regression, where we would need to jointly solve a set of $(k-1)$ 
-binary regressions if we have $k$ classes. In practice, when running the multinomial setting
-in scikit-learn, we do not get reliable probability estimates. This is probably due
-to rounding errors created by the implementation.\footnote{See Figure ~ in
-	Appendix ~ for a plot comparing the learning curves of multinomial with one-vs-rest.}
-A more empirically stable alternative is to use the one-vs-rest strategy, where we run $k$ 
-independent binary regressions. In particular, for class $i$, we pretend that the dataset
-contains only objects from class $i$ and class `not $i$'. We then train the normal logistic model
-on this simplified dataset and we do this $k$ times, one for each class. At the end, we end up
-with $k$ probabilities. These can be interpreted like usual after normalisation.
+There are a few ways to extend the above model to the multi-class setting. One option is
+multinomial logistic regression, where we would need to jointly solve a set of $(k-1)$ binary
+regressions if we have $k$ classes. In practice, when running the multinomial option in
+scikit-learn, \index{scikit-learn} the probability estimates are not very reliable, especially when
+we have many classes. The cause of this is unknown, but it is more likely due to flaws in the
+scikit-learn implementation than in the actual theory. A more empirically stable alternative is to
+use the one-vs-rest \index{one-vs-rest} strategy, where we run $k$ independent binary regressions.
+In particular, for class $i$, we pretend that the dataset contains only objects from class $i$ and
+class `not $i$'. We then train the binary logistic model on this simplified dataset and we do this
+$k$ times, one for each class. At the end, we end up with $k$ probabilities. These can be
+interpreted like normal class probabilities after normalisation.
 
 
-\subsection{Support Vector Machines}
+\subsection{Support Vector Machines} \index{support vector machine}
+\label{sub:svm}
 
-Support vector machines, first introduced by \citeN{boser92}, are another popular
-family of algorithms. They have been used in astronomy, for example by \citeN{elting08},
-to find non-linear decision boundaries in the colour space of the SDSS dataset. The idea
-here is to find the decision boundary that can maximise the distance between the boundary and the
-closest data points. Support vector machines are inherently binary classifiers, but
-we still use the one-vs-rest strategy to extend it to the multi-class setting.
+Support vector machines (SVMs), first introduced by \citeN{boser92}, are another popular family of
+algorithms. They have been used in astronomy, for example by \citeN{elting08}, to find non-linear
+decision boundaries in the colour space of the SDSS dataset. The idea here is to find a decision
+boundary that can maximise the distance between the boundary and the closest data points, which we
+call support vectors. This involves finding the weights $\hat{\bm{w}}$ and the bias $\hat{b}$ that
+minimise the objective function
+    \begin{IEEEeqnarray*}{lCl}
+        \argmin_{\bm{w}, b} R(\bm{w}) + C \sum_{i = 1}^{n} \ell(\bm{x}_i)
+    \end{IEEEeqnarray*}
+where $R(\bm{w})$ can either be L1 or L2 regularisation \index{regularisation} like in logistic
+regression, and $\ell(\bm{x}_i)$ is the loss function. \index{loss function} Two common loss functions
+are the hinge loss
+    \begin{IEEEeqnarray*}{lCl}
+        \ell(\bm{x}_i) &=& \max (0, 1 - y_i (\bm{w}^T \bm{x}_i + b))
+    \end{IEEEeqnarray*}
+and the square of the hinge loss
+    \begin{IEEEeqnarray*}{lCl}
+        \ell(\bm{x}_i) &=& \max (0, 1 - y_i (\bm{w}^T \bm{x}_i + b))^2
+    \end{IEEEeqnarray*}
+As usual, the penalty parameter $C$ controls the trade-off between the misclassification of
+training examples and the simplicity of the decision surface, with a low value of $C$ resulting in
+a simple hypothesis. SVMs, in their original formulation, are inherently binary classifiers.
+However we can still use the one-vs-rest \index{one-vs-rest} strategy to extend it to the
+multi-class setting. There has even been an attempt to derive an inherently multi-class SVM
+\cite{crammer02}.
 
-\section{Overview of Active Learning}
 
-We now turn our attention to the construction of the training set.
-Getting spectroscopic labels is expensive. Until now, when astronomers pick which objects to obtain
-spectra from, not much attention is paid to whether the labelling information can improve
-the performance of the classifiers. To make it more concrete, imagine there is a group of objects
-with very similar photometric measurements. We can obtain spectra from all of them and conclude
-that they are all stars. However, a smarter way is to get only one spectrum for labelling and 
-let the classifier generalise to other similar objects. Keeping the size of the training set
-as small as possible while not sacrificing the classifier accuracy is the goal of active
-learning.
+\subsection{Learning Complex Hypotheses}
+\label{sub:complex}
 
-We will focus on pool-based active learning, the most relevant type of active learning
-for astronomy. In this setting, we keep track of two sets. The labelled
-set $\Labelled \subset \X \times \Y$ contains all the examples that have been labelled
-by an expert so far. All the remaining unlabelled examples form $\Unlabelled \subset \X$.
-The question now is how to select the next training example from $\Unlabelled$. In practical terms, 
-where should we next point the telescope to, in order to obtain a spectrum? To answer this question,
-we need a rule $r(\bm{x})$ that can assign a score to each object, based solely on their
-photometric
-features. The score should reflect the amount of new information we would gain if we were to label the object.
-We will discuss various heuristics in the next section. Once we have computed $r(\bm{x})$ for
-all candidates,
-we can now pick the example with the highest score and obtain its spectrum. The object
-and its label is then added to the training set and the classifier is retrained.
-Algorithm \ref{alg:active} shows the active learning routine in more details.
+Both SVMs and logistic regression are linear classifiers. When dealing with real-world data like
+those in astronomy, we should not expect to be able to separate classes with a hyper-dimensional
+plane. If we want them to learn more complex hypotheses, one option is do an explicit polynomial
+transformation \index{polynomial transformation} of the original photometric measurements. When we
+give the classifier the transformed features, it would still find a linear boundary in the
+transformed space. However, the boundary would most of the time be non-linear in the original space.
+
+A second option is to use the kernel trick which does an implicit map into a high-dimensional
+feature space. For example, a popular kernel that is often used with SVMs is the radial basis
+function \index{RBF kernel} (RBF), which actually maps the inputs into an infinite-dimensional
+space. The RBF kernel has the parameter $\gamma$ which is inversely proportional to the radius of
+influence of the support vectors. This means that a low value of $\gamma$ corresponds to a smoother
+model.
+
+In random forests, we do not have to worry about any transformation. Although in each round, we
+slice the data along only one axis, there is no limit on how many slices we can take and how small
+the resulting cuboids can be. This allows us to learn arbitrarily complex hypotheses.
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section{Overview of Active Learning} \index{active learning}
+\label{sec:active}
+
+We now turn our attention to the construction of the training set. Getting spectroscopic labels is
+expensive. Until now, astronomers do not have a quantitative method to help them choose objects
+whose spectroscopic labels would provide them with the most amount of new information. Often, they
+simply take a random sample of the sky. This, however, might not always be optimal. To see why,
+imagine that there is a group of objects with very similar photometric measurements. We can obtain
+spectra from all of them and conclude, for example, that they are all stars. However, a smarter way
+is to get only one spectrum from this group for labelling and let the classifier generalise to
+other similar objects. Keeping the size of the training set as small as possible while not
+sacrificing the classifier accuracy is the goal of active learning.
+
+There are three main types of active learning: membership query synthesis, stream-based selective
+sampling, and pool-based active learning. In membership query synthesis\index{membership query
+    synthesis}, we are allowed to request labels for any unlabelled instance in the feature space
+\cite{angluin88}. Equivalently, we may request the astronomer to find an object with a certain
+combination of colours and magnitudes. This is not very realistic since such objects might not even
+exist. In stream-based selective sampling\index{stream-based selective sampling}, we sample objects
+from the source one at a time, and as objects are streaming in, we must decide to either label or
+discard each of them \cite{cohn94}. The assumption here is that it is free to obtain unlabelled
+examples, which again is not applicable to astronomy. Thus we shall not discuss membership query
+synthesis and stream-based selective sampling further in this thesis.
+
+Instead, we shall focus on pool-based active learning \index{active learning!pool-based}
+\cite{lewis94}, the most relevant type of active learning for astronomy. In this setting, we keep
+track of two sets. As usual, we have a labelled set $\Labelled$, which can be further partitioned
+into a training set $\Labelled_T$ and a test set $\Labelled_S$. There is also an unlabelled set
+$\Unlabelled \subset \X$, which contains all the remaining unlabelled examples. The question now is
+how to select the next example from $\Unlabelled$ for labelling. In practical terms, where should
+we next point the telescope to, in order to obtain a spectrum? To answer this question, we need a
+rule $r(\bm{x}; h)$ that can assign a score to each object in $\Unlabelled$, based solely on their
+photometric features $\bm{x}$ and the current hypothesis $h$. This score should reflect the amount
+of new information we would gain if we were to label the object. Once we have computed $r(\bm{x};
+h)$ for all candidates, we can then pick the example with the highest score and obtain its
+spectrum. The object's feature vector and its label are then added to the training set and the
+classifier is retrained to obtain a new $h$.
+
+Finding an algorithm to compute $r(\bm{x}; h)$ exactly is still an open problem. For now, the best
+that we can do is to come up with heuristics that can approximate $r(\bm{x}; h)$. Another problem
+is that in practice, the unlabelled pool can be arbitrarily large. For example, there are 800
+million unlabelled objects in the SDSS. Thus if we only have a limited computing power, in each
+round, we might only be able to assign scores to a subset $\Ecal \subseteq \Unlabelled$ of size
+$E$. A formal description of the active learning routine is given in Algorithm \ref{alg:active}. As
+we shall see in Section \ref{sec:heuristics}, for some active learning heuristics, we need to
+substitute $\argmax$ with $\argmin$ in line 4 of Algorithm \ref{alg:active}.
 
 \algblock[Name]{Start}{End}
 
@@ -146,296 +255,569 @@ Algorithm \ref{alg:active} shows the active learning routine in more details.
 			[1]{\textbf{for each} #1 \textbf{do}}%
 			{\textbf{end for}}
 
-\begin{algorithm}[tbp]
+\begin{algorithm}[h]
 	\caption{The general pool-based active learning algorithm}
 	\label{alg:active}
 	\begin{algorithmic}[1]
-		\Procedure {ActiveLearner}{$\Unlabelled$, $\Labelled$, $h$, $r$ $n$, $t$}
-			\While {$|\Labelled| < n$}
-				\State $E$ $\leftarrow$ random sample of size $t$ from $\Unlabelled$
-				\State $\bm{x}^* \leftarrow \argmax_{\bm{x} \in E} r(\bm{x})$
-				\State $y^* \leftarrow$ ask the expert to label $\bm{x}^*$
-				\State $\Labelled \leftarrow \Labelled  \cup (\bm{x}^*, y^*)$
-				\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}^*$
-				\State $h_\Labelled(\bm{x}) \leftarrow$ retrain the classifier
+		\Procedure {ActiveLearner}{$\Unlabelled$, $\Labelled_T$, $h$, $r$, $n$, $E$}
+			\While {$|\Labelled_T| < n$}
+				\State $\Ecal$ $\leftarrow$ random sample of size $E$ from $\Unlabelled$
+				\State $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r(\bm{x}; h)$
+				\State $y_* \leftarrow$ ask the expert to label $\bm{x}_*$
+				\State $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$
+				\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$
+				\State $h(\bm{x}) \leftarrow$ retrain the classifier
 			\EndWhile
 			\EndProcedure
 	\end{algorithmic}
 \end{algorithm}
 
 
-\section{Active Learning Heuristics}
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section{Active Learning Heuristics} \index{heuristic}
 \label{sec:heuristics}
 
-There are many ways to rank unlabelled objects. The four prominent families
-of heuristics are uncertainty sampling, query by bagging, loss function minimisation, and
-and classifier certainty \cite{schein07}. All of these heuristics require the
-class probabilities estimated by the current classifier. 
-We now discuss each of them in turn, starting with the least computationally expensive
-one. We will now discuss each family in turn.
-(To do: Also margin-based method 
-provides an exponential improvement \cite{balcan12})
+Many methods have been proposed to rank the informativeness of unlabelled objects. The four
+prominent families of heuristics are uncertainty sampling, version space reduction, loss function
+minimisation, and classifier certainty. All of these heuristics require the class probabilities
+estimated by the current hypothesis. We now discuss each of them in turn, starting with the least
+computationally expensive one.
 
-\subsection{Uncertainty Sampling}
+\subsection{Uncertainty Sampling} \index{uncertainty sampling}
+\label{sub:uncertainty}
 
-\citeN{lewis94} introduces the idea of uncertainty sampling, where we select the example
-whose class membership the classifier is least certain about.
-These tend to be points that are near the decision boundary of the classifier. To quantify
-the uncertainty, \citeN{schein07} propose two techniques, entropy maximisation and
-margin minimisation.
-
-The Shannon entropy measures the amount of information contained in some object $\bm{x}$
-and is defined as
+\citeN{lewis94} introduce the idea of uncertainty sampling, where we select the example whose class
+membership the classifier is least certain about. These tend to be points that are near the
+decision boundary of the classifier. One way to quantify the uncertainty is to calculate the
+entropy \cite{shannon48}, which measures the amount of information needed to encode a distribution.
+Intuitively, the closer class probabilities of an object are to random guessing, the higher its
+entropy will be. This gives us the heuristic of picking the candidate with the highest entropy:
+\index{entropy}
 	\begin{IEEEeqnarray*}{lCl}
-		r_S(\bm{x}) &=& -\sum_i^k \Prob{y(\bm{x}) = i} \log \big[\Prob{y(\bm{x}) = i} \big]
-	\end{IEEEeqnarray*}
-where $k$ is the number of classes. Intuitively, the closer class probabilities of an object
-are to random guessing, the higher its entropy will be. This gives us the heuristic
-of picking the candidate with the highest Shannon entropy.
-
-In fact, if we care about how close the class probabilities are to random guessing, 
-there is an even simpler measure. 
-Let $c^{(1)}$ and $c^{(2)}$ be the two most likely classes for some object $\bm{x}$.
-We define the margin as the difference between these two values:
+        \bm{x}_*
+        &=&  \argmax_{x \in \Ecal} r_S(\bm{x}; h) \\
+        &=&  \argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
+        \log \big[ p(y | \bm{x}; h) \big] \right\}
+    \end{IEEEeqnarray*}
+In fact, if we care about how close the class probabilities are to random guessing, there is an
+even simpler measure. \shortciteN{scheffer01} define the margin as the difference between the two
+highest class probabilities. Since the sum of all probabilities must be 1, the smaller the margin
+is, the more uncertain we are about the object's class membership. Thus another heuristic is to pick
+the candidate with the smallest margin: \index{margin}
 	\begin{IEEEeqnarray*}{lCl}
-		r_M(\bm{x}) &=& \Big|  \Prob{y(\bm{x}) = c^{(1)}} -  \Prob{y(\bm{x}) = c^{(2)}} \Big|
-	\end{IEEEeqnarray*}
-Since the class probabilities must add up to 1, the smaller the margin is,
-the more uncertain we are. Thus another heuristic is
-to pick the candidate with the smallest margin.
-
-
-\subsection{Query by Bagging}
-
-Instead of focussing the uncertainty of individual predictions, we could look at
-the disagreement among a group of classifiers. In query by bagging (QBB), before we
-can assign a score to each candidate, we need to train a committee of classifiers, each
-with a hypothesis that is as different from the others as possible but that is still consistent
-with the training data \cite{melville04}. In order to have this variation,
-for each committee member, we only give it a subset of the labelled examples. Since there
-might be enough training data (in our experiments, we have 11 members but only a maximum 
-of 300 labelled points), we need to select a sample with replacement (hence the term bagging).
-
-Once we've constructed the committee, we pick the candidate whose class membership the committee 
-disagrees the most about about. To quantify the disagreement, \citeN{melville04} extends the
-margin approach above. This involves averaging out the class probabilities estimated
-by the committee members and then calculating the margin. Since the bagging technique
-has been shown to improve the stability of the predictions \cite{breiman96}, we should
-expect this method to be no worse the the simple margin approach. The cost, however, is that
-it now takes $B$ times longer to calculate the scores, where $B$ is the size of the 
-committee.
-
-In addition ot the margin, \citeN{mccallum98} offer an alternative disagreement measure.
-We first need to define the Kullback–Leibler (KL) divergence. Suppose we have two discrete
-probability distributions $P$ and $Q$, then the KL divregence of $P$ from $Q$ is
-	\begin{IEEEeqnarray*}{lCl}
-		D_{\mathrm{KL}}(P\|Q) = \sum_i P(i) \, \ln\frac{P(i)}{Q(i)}
-	\end{IEEEeqnarray*}
-This KL divergence measures the amount of information lost when $Q$ is used to approximate $P$. In the active learning context, $Q$ is the average prediction probability of the committee, while $P$ is the prediction of a particular committee member.
-This allows us to pick the candidate with the largest value of the average Kullback-Leibler divergence from the average:
-	\begin{IEEEeqnarray*}{lCl}
-		\dfrac{1}{B} \sum_{b=1}^B \text{KL}(f_b \mid\mid f_\text{avg})
+        \bm{x}_*
+        &=& \argmin_{x \in \Ecal} r_M(\bm{x}; h)  \\
+		&=& \argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
+            \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}
 	\end{IEEEeqnarray*}
 
 
+%--------------------------------------------------------------------------------------------------
+\subsection{Version Space Reduction} \index{version space reduction}
+\label{sub:qbb}
 
+Let us define the version space as the set of all possible hypotheses that are consistent with the
+current training set. Instead of focussing on the uncertainty of individual predictions, we could
+instead try to constrain the size of the version space, thus allowing the search for the optimal
+hypothesis to be more precise. To quantify the size the version space, we can train a committee of
+classifiers, $\B = \{h_1, h_2, ..., h_B\}$, and measure the disagreement among the members about an
+object's class membership. Each committee member needs to have a hypothesis that is as different
+from the others as possible but that is still in the version space \cite{melville04}. In order to
+have this diversity, we give each member only a subset of the training examples. Since there might
+not be enough training data (for example, in our experiments, we have 11 members but only a maximum
+of 300 labelled points), we need to use bootstrapping and select samples with replacement. Hence
+this method is often called Query by Bagging (QBB). \index{query by bagging}
 
-\subsection{Variance Minimisation}
-We can in fact try to minimise a loss function explicitly. For example, for the square loss,
-we can decompose it into three terms, the bias, the variance, and te noise. The noise is an
-inherent part of the data and there is not much we can do about it.
-The bias can be minimised \cite{cohn97}, however
-we will not explore it here. We will instead focus on minimising the variance, which will
-vanish as the training set size grows to infinity.
-Using Taylor series approximation, \citeN{schein07} estimates the variance in multinomial logistic regression as $tr(AF^{-1})$, where $F$ is the Fisher information matrix and $A$ is defined as:
+One way to measure the level of disagreement is to calculate the margin using the class
+probabilities estimated by the committee \cite{melville04}. This looks similar to one of the
+uncertainty sampling heuristic, except now we first average out the probabilities of the members
+before minimising the margin: \index{margin}
+    \begin{IEEEeqnarray*}{lCl}
+        \bm{x}_*
+        &=& \argmin_{x \in \Ecal} r_{QM}(\bm{x}; \B)  \\
+        &=& \argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
+        \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}
+    \end{IEEEeqnarray*}
+where
 	\begin{IEEEeqnarray*}{lCl}
-		A &=& \sum_n \sum_c \mathbf{g}_n(c) ~ \mathbf{g}_n(c)^T
+		p(y | \bm{x}; \B) &=& \dfrac{1}{B} \sum_{b=1}^{B} p(y | \bm{x}, h_b)
 	\end{IEEEeqnarray*}
-where $\mathbf{g}_n(c)$ is the gradient vector. Our implementation involves a vectorised computation of $A$ and $F$.
-
-
-\subsection{Classifier Certainty}
-Finally, we can pick the example that will minimise the expected entropy of the algorithm's prediction. The entropy can be computed as follows:
+In addition to the margin, \citeN{mccallum98} offer an alternative disagreement measure which
+involves picking the candidate with the largest expected Kullback--Leibler (KL) divergence
+\index{KL divergence} from the average:
 	\begin{IEEEeqnarray*}{lCl}
-		CC &=& - \sum_{p \in \text{Pool}} \sum_c p(c \mid \mathbf{x}_p) \log p(c \mid \mathbf{x}_p)
+        \bm{x}_*
+        &=& \argmax_{x \in \Ecal} r_{QK}(\bm{x}; \B)  \\
+		&=& \argmax_{x \in \Ecal} \left\{ \dfrac{1}{B} \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}
 	\end{IEEEeqnarray*}
-	
+where 
+	\begin{IEEEeqnarray*}{lCl}
+		D_{\mathrm{KL}}(p_b\|p_\B) = \sum_{y \in \Y} p(y | \bm{x}; h_b) \,
+		                             \ln\frac{p(y | \bm{x}; h_b)}{p(y | \bm{x}; \B)}
+	\end{IEEEeqnarray*}
+The KL divergence measures the amount of information lost when $p_\B$ is used to approximate $p_b$.
+Intuitively, the larger the KL divergence is, the more disagreement there is between $p_\B$ and
+$p_b$. In the active learning context, $p_\B$ is the average prediction probability distribution of
+the committee, while $p_b$ is the prediction of a particular committee member $h_b$.
 
 
+%--------------------------------------------------------------------------------------------------
+\subsection{Loss Function Minimisation} \index{loss function}
+\label{sub:variance}
 
-\section{Multi-arm Bandit}
+The third approach involves minimising a loss function directly, which in turn will minimise the
+future generalisation error. A commonly used loss function is the squared loss that has the
+following decomposition:
+	\begin{IEEEeqnarray*}{lCl}
+		\E{\text{Squared Loss}} &=& \text{Bias}^2 + \text{Variance} + \text{Noise}
+	\end{IEEEeqnarray*}
+Since the noise is intrinsic to the data and represents the expected loss under the optimal
+hypothesis, there is nothing we can do about it. The squared bias reflects the error due to the model
+class itself. For example, there will be bias if we use a linear hypothesis to learn a non-linear
+function. Thus the bias is fixed under the same classifier. However, under certain assumptions
+like the consistency of parameter estimates, the variance will vanish as the training set size
+approaches infinity. This gives us the heuristic of picking the candidate that would cause the
+greatest drop in the variance if we knew its label. Unfortunately, this is a chicken-and-egg problem
+since we need to know the labelling information before we can calculate the drop in the variance,
+which defeats the purpose of the approach. The next best thing we can do is to pick the candidate
+that will result in the lowest expected variance: \index{variance minimisation}
+    \begin{IEEEeqnarray*}{lCl}
+        \bm{x}_*
+        &=& \argmin_{x \in \Ecal} r_V(\bm{x}; h)  \\
+        &=& \argmin_{x \in \Ecal}  \E{V(\Labelled_T \cup (\bm{x}, y))} \\
+        &=& \argmin_{x \in \Ecal} \left\{ \sum_{y \in \Y} p(y | \bm{x}; h)
+            V(\Labelled_T \cup (\bm{x}, y); h)  \right\}
+    \end{IEEEeqnarray*}
+where the expectation is over the class probability distribution under the current hypothesis and
+$V(\Labelled_T \cup (\bm{x}, y); h)$ is the variance of the model after $(\bm{x}, y)$ has been
+added to the label set $\Labelled_T$. Note that this is quite an expensive computation, since for
+us to assign a score to each candidate, we first need to give it each of the possible labels, add
+it to the training set to get an updated hypothesis, and calculate the new variance.
 
-Define arms, rewards, exploration-exploitation trade-off.
+In addition, estimating $V(\Labelled_T; h)$ requires a bit of work. In multinomial logistic
+regression, we can take the first two terms of the Taylor series expansion of the probability
+	\begin{IEEEeqnarray*}{lCl}
+		p(y | \bm{x}, \bm{\hat{\theta}}, h)
+		&\approx& p(y | \bm{x}, \bm{\theta}, h) + \nabla p(y | \bm{x}, \bm{\theta}, h)^T(\bm{\hat{\theta}} - \bm{\theta})
+	\end{IEEEeqnarray*}
+where $\bm{\theta}$ and $\bm{\hat{\theta}}$ are the expected and the current estimates of the model
+parameters, respectively, and $\nabla p(y | \bm{x}, \bm{\theta}, h)$ is called the gradient vector. Let
+$\mathcal{I}$ be the Fisher information matrix \index{Fisher information matrix} and
+	\begin{IEEEeqnarray*}{lCl}
+		O &=& \sum_{\bm{x} \in \Unlabelled}
+		      \sum_{y \in \Y} \nabla p(y | \bm{x}, \bm{\theta}, h) ~ \nabla p(y | \bm{x}, \bm{\theta}, h)^T
+	\end{IEEEeqnarray*}
+\citeN{schein07} show that
+	\begin{IEEEeqnarray*}{lCl}
+		V(\Labelled_T; h) &=& \tr(O\mathcal{I}^{-1})
+	\end{IEEEeqnarray*}
+where the trace \index{trace} function $\tr(X)$ is the sum of the elements along the main diagonal
+of the square matrix $X$. Note that the above expression is specific to multinomial logistic
+regression. If we use the one-vs-rest strategy with binary logistic regression or another entirely
+different classifier like SVMs in our experiments, the same approximation might not hold and we
+should not expect to get good results. We leave the variance estimation of other learning
+algorithms to future work.
 
-\section{Thompson Sampling}
-We now turn our attention to the problem heuristic selection.
- One of the oldest idea which we will
-study here is Thompson sampling, first introduced by \citeN{thompson33}.
-\citeN{chapelle11} showed that it is a highly effective algorithm and can perform better
-than Upper Confidence Bound, a very popular algorithm that have been studied extensively.
-Algorithm \ref{alg:thompson} shows how Thompson Sampling works in the active learning
-setting.
 
-\begin{algorithm}[tbp]
-	\caption{Thompson Sapmling}
+%--------------------------------------------------------------------------------------------------
+\subsection{Classifier Certainty} \index{classifier certainty}
+\label{sub:cc}
+
+Finally, instead of minimising the variance of $\Unlabelled$, \citeN{mackay91} proposes
+minimising the entropy \index{entropy} of the classifier's predictions on $\Unlabelled$:
+    \begin{IEEEeqnarray*}{lCl}
+		H(\Labelled_T; h) &=& - \sum_{\bm{x} \in \Unlabelled} \sum_{y \in \Y}
+							 p(y | \bm{x}, h) \log \big[ p(y | \bm{x}, h)  \big]
+	\end{IEEEeqnarray*}
+Although this sounds similar to one of the uncertainty sampling heuristics, here instead of picking
+the most uncertain candidate, we pick the candidate that is expected to increase the classifier's
+prediction certainty by the the greatest amount:
+	\begin{IEEEeqnarray*}{lCl}
+        \bm{x}_*
+        &=& \argmin_{x \in \Ecal} r_{H}(\bm{x}; h) \\
+        &=& \argmin_{x \in \Ecal}  \E{H(\Labelled_T \cup (\bm{x}, y))} \\
+		&=& \argmin_{x \in \Ecal} \left\{ \sum_{y\in \Y} p(y|\bm{x}; h) 
+             H(\Labelled_T \cup (\bm{x}, y); h) \right\}  
+	\end{IEEEeqnarray*}
+Like the variance minimisation technique, we need to calculate the expectation over the possible classes.
+Thus to get the score of just one candidate, we need to retrain the classifier $k$ times, where
+$k$ is the number of labels. In practice, both the variance and the classifier certainty
+heuristics are too computationally expensive to run.
+
+\subsection{Summary of Heuristics}
+
+\begin{table}[h]
+	\caption {Summary of active learning heuristics used in our experiments} \label{tab:heuristics}
+	\centering
+	\begin{tabular}{lll}
+		\toprule
+		{Name}  & Notation &  Objective  \\
+		\midrule
+		Entropy & $r_S(\bm{x}; h)$
+			& $\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
+            \log \big[ p(y | \bm{x}; h) \big] \right\}$
+			\\[2ex]
+		Margin & $r_M(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
+            \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}$
+			\\[2ex]
+		QBB Margin & $r_{QM}(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
+            \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}$
+			\\[2ex]
+		QBB KL & $r_{QK}(\bm{x}; h)$
+			& $\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
+               \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
+			\\[2ex]
+		Pool Variance & $r_V(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \sum_{y \in \Y} p(y | \bm{x}; h)
+            V(\Labelled_T \cup (\bm{x}, y); h)  \right\}$
+			\\[2ex]
+		Pool Entropy & $r_{H}(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \sum_{y\in \Y} p(y|\bm{x}; h) 
+               H(\Labelled_T \cup (\bm{x}, y); h) \right\}  $
+			\\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section{Multi-arm Bandit} \index{bandit}
+\label{sec:bandit}
+
+Out of the six heuristics discussed, how do we know which one is the optimal, anyway? There have
+been some attempts in the literature to do a theoretical analysis of them. However proofs are
+scarce, and when there is one available, they normally only work under simplifying assumptions. For
+example, \shortciteN{freund97} show that the query by committee algorithm (a slight variant of our
+QBB heuristics) guarantees an exponential decrease in the prediction error with the training size,
+but only under certain restrictions such as there is no noise. Thus whether any of these heuristics
+is guaranteed to beat random sampling is still an open question. We shall not worry too much about
+the theoretical analysis in this thesis. Instead we shall focus on an empirical analysis in the
+astronomical domain.
+
+To help us automatically choose the optimal heuristic, we now turn our attention to the multi-armed
+bandit problem in probability theory. The colourful name originates from the situation where a
+gambler stands in front of a slot machine with $n$ levers. When pulled, each lever gives out a random
+reward according to some unknown distribution. The goal of the game is to come up with a strategy
+that can maximise the gambler's lifetime rewards while minimising the number of pulls.
+
+Our key novel contribution is the application of this theory to the problem of heuristic selection.
+Suppose we have a set of $n$ heuristics $ \R = \{r_1, ..., r_s \}$. Each heuristic has a different
+ability to identify the candidate whose labelling information is most valuable. An appropriate
+reward is then the incremental increase in the accuracy rate after the candidate is added to the
+training set. We assume that the heuristic rewards are independent of each other. This is
+reasonable since the theories with which we use to derive the heuristics are mostly unrelated.
+
+Let $\rho_i$ be the reward \index{reward} of heuristic $r_i \in \R$. Observe that even with the
+optimal heuristic, there are still two sources of error. First, there could be error during the
+labelling process that causes the accuracy rate to decrease. In addition, even without label noise,
+the classifier trained on finite data might not be the right one, so we still cannot score
+perfectly due to having a poor $h$. Conversely, a bad heuristic might be able to pick an
+informative candidate due to pure luck. Thus there is always a certain level of randomness in the
+reward received. These errors are probably normally distributed, so
+	\begin{IEEEeqnarray*}{lCl}
+		(\rho_i \mid \nu_i) \sim \Normal(\nu_i, \tau_i^2)
+	\end{IEEEeqnarray*}
+and the probably density function (PDF) of the reward is
+    \begin{IEEEeqnarray}{lCl}
+        f(\rho_i \mid \nu_i)
+        &=& \frac{1}{\tau_i \sqrt{2\pi}} \exp\left[ -\frac{(\rho_i - \nu_i)^2}{2 \tau_i^2} \right]
+         \label{eqn:rlike}
+    \end{IEEEeqnarray}
+If we knew both the mean $\nu_i$ and the variance $\tau_i^2$ for all heuristics, the problem would
+become trivially easy since we just need to always use the heuristic that has the highest mean
+reward. In practice, we do not know $\nu_i$, so let us assume that it follows a normal
+distribution
+	\begin{IEEEeqnarray*}{lCl}
+        \nu_i \sim \Normal(\mu_i, \sigma_i^2)
+    \end{IEEEeqnarray*}
+Thus the PDF of $\nu_i$ is
+    \begin{IEEEeqnarray}{lCl}
+        f(\nu_i)
+        &=& \frac{1}{\sigma_i \sqrt{2\pi}} \exp\left[ -\frac{(\rho_i - \mu_i)^2}{2 \sigma_i^2} \right]
+         \label{eqn:rprior}
+    \end{IEEEeqnarray}
+To make the problem tractable, assume that $\tau_i^2$ is a known constant. The goal now is to find a
+good algorithm that can estimate $\mu_i$ and $\sigma_i^2$.
+
+One problem in multi-arm bandits is the trade-off between exploration and exploitation
+\index{exploration vs exploitation}. Suppose we have managed to estimate $\mu_i$ and $\sigma_i^2$
+for all $i$, then by always selecting the heuristic with the highest possible mean, or the greedy
+heuristic, we would be exploiting our current knowledge. If however we select one of the other
+non-greedy heuristics, we would then be exploring with the intention of improving our estimates of
+$\mu_i$ and $\sigma_i^2$. There are many instances in which we find our previously held beliefs to
+be completely wrong. Thus by always exploiting, we could miss out on the optimal heuristic. On the
+other hand, if we explore too much, it might take a long time to reach the desired accuracy and the
+strategy ends up being no different from random sampling.
+
+\section{Thompson Sampling} \index{Thompson sampling}
+\label{sec:thompson}
+
+There are two main methods in the literature that address this exploration vs exploitation problem.
+The algorithm with a strong theoretical guarantee is Upper Confidence Bound \cite{auer02}. We
+shall, however, focus on a simpler and much older algorithm called Thompson sampling. First
+introduced by \citeN{thompson33}, this algorithm solves the trade-off from a Bayesian perspective.
+It has been shown to achieve results that are comparable and sometimes even better than Upper
+Confidence Bound \cite{chapelle11}.
+
+Under the heuristic selection setting, Thompson sampling works as follows. We start with a prior
+knowledge of $\mu_i$ and $\sigma_i^2$ for all $i$. So long as we do not choose anything stupid,
+e.g. a zero variance, our choice of prior should not matter too much in the long run. Since
+initially we do not have any information about the performance of each heuristic, the appropriate
+prior value for $\mu_i$ is $0$, i.e. there is no evidence (yet) that any of the heuristics offer an
+improvement to the accuracy.
+
+In each round, we draw a random sample $\nu_i'$ from the distribution $\Normal(\mu_i, \sigma_i^2)$ for
+each $i$ and select heuristic $r_*$ that has the highest sampled value of the mean reward:
+    \begin{IEEEeqnarray*}{lCl}
+        r_* = \argmax_{i} \nu_i'
+    \end{IEEEeqnarray*}
+We then use this heuristic to assign scores to the candidates. The object that is deemed to be the
+most informative is then added to the training set $\Labelled_T$ and the classifier is retrained.
+Next we use the updated hypothesis to predict the labels of objects in the test set $\Labelled_S$.
+Let $\delta$ be the reward observed, which is the incremental increase in the accuracy rate on
+$\Labelled_S$. We now have a new piece of information that we can use to update our prior belief
+about the mean $\nu_*$ and the variance $\sigma_*^2$ of $r_*$. In the Bayesian setting, \index{Bayesian} 
+(\ref{eqn:rprior}) is called the prior and (\ref{eqn:rlike}) is the likelihood. From Bayes'
+theorem, the posterior distribution is proportional to the product of the prior and the likelihood:
+    \begin{IEEEeqnarray*}{lCl}
+        f(\nu_* \mid \rho_* = \delta)
+        &\propto& f(\nu_*) f(\delta \mid \nu_*) \\
+        &\propto& \exp \left[ -\frac{1}{2 \sigma_*^2} (\nu_* - \mu_*)^2 \right]
+                  \exp \left[ -\frac{1}{2 \tau_*^2} (\delta - \nu_*)^2 \right] \\
+        &=& \exp \left[ -\frac{1}{2 \sigma_*^2} (\nu_* - \mu_*)^2 
+                        -\frac{1}{2 \tau_*^2} (\delta - \nu_*)^2  \right] \\
+        &=& \exp \left[ -\frac{\nu_*^2}{2} \left( \frac{1}{\sigma_*^2} + \frac{1}{\tau_*^2} \right) 
+                        +\nu_* \left( \frac{\mu_*}{\sigma_*^2} + \frac{\delta}{\tau_*^2} \right) 
+                        - \left( \frac{\mu_*^2}{2\sigma_*^2} + \frac{\delta^2}{2 \tau_*^2} \right) 
+                        \right] \\
+        &\propto& \exp \left[ -\frac{\nu_*^2}{2} \left( \frac{1}{\sigma_*^2} + \frac{1}{\tau_*^2} \right) 
+                        +\nu_* \left( \frac{\mu_*}{\sigma_*^2} + \frac{\delta}{\tau_*^2} \right)
+                        \right] \\
+        &=& \exp \left[ -\frac{\nu_*^2}{2} \left( \frac{\sigma_*^2 + \tau_*^2}{\sigma_*^2 \tau_*^2}
+                        \right) 
+                        +\nu_* \left( \frac{\mu_*\tau_*^2 + \delta\sigma_*^2}{\sigma_*^2 \tau_*^2}
+                         \right) \right] \\
+        &=& \exp \left[ -\frac{1}{2 {\sigma'_*}^2} (\nu^2_* - 2\nu_*\mu_*' ) \right] \\ 
+        &\propto& \exp \left[ -\frac{1}{2 {\sigma'_*}^2} (\nu^2_* - 2\nu_*\mu_*'  + {\mu'_*}^2)
+                   \right] \\      
+        &=& \exp \left[ -\frac{1}{2 {\sigma'_*}^2} (\nu_* - \mu'_*)^2 \right]
+    \end{IEEEeqnarray*}
+where we have defined
+    \begin{IEEEeqnarray*}{lClllCl}
+        \mu_*' &=& \frac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*} &\qquad\qquad
+        {\sigma'_*}^2 &=& \frac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}
+    \end{IEEEeqnarray*}
+Thus the posterior distribution of the mean reward of $r_*$ remains normal:
+    \begin{IEEEeqnarray*}{lCl}
+        (\nu_* \mid \rho_* = \delta) \sim \Normal (\mu_*', {\sigma'_*}^2)
+    \end{IEEEeqnarray*}
+For compactness, let:
+    \begin{IEEEeqnarray*}{lClllCl}
+        \bm{\nu} &=& (\nu_1, \nu_2, ..., \nu_s) &\qquad\qquad
+        \bm{\mu} &=& (\mu_1, \mu_2, ..., \mu_s) \\
+        \bm{\sigma}^2 &=& (\sigma^2_1, \sigma^2_2, ..., \sigma^2_s) &\qquad\qquad
+        \bm{\tau^2} &=& (\tau^2_1, \tau^2_2, ..., \tau^2_s)
+    \end{IEEEeqnarray*}
+Algorithm \ref{alg:thompson} on page \pageref{alg:thompson} shows the formal specification of the
+Thompson sampling procedure with normally distributed rewards. If we then combine this with the
+general pool-based active learning algorithm, we end up with a multi-arm bandit version of active
+learning where each arm is a heuristic (Algorithm \ref{alg:bandit}). Note again that in line 8 of
+Algorithm \ref{alg:bandit}, some heuristics have $\argmin$ in place of $\argmax$.
+
+\begin{algorithm}[p]
+	\caption{Thompson sapmling with normally distributed rewards} \index{Thompson sampling}
 	\label{alg:thompson}
 	\begin{algorithmic}[1]
-		\Procedure {ThompsonSampling}{$\R$, $\bm{\mu}$, $\bm{\sigma}$, $\bm{\tau}$}
-		\Foreach {$t \in \{1, 2, ..., n\}$}
-			\Foreach {$r \in \R$}
-				\State $W(r) \leftarrow$ draw a sample from $N(\bm{\mu_r}, \bm{\sigma_r})$
-			\Endforeach
-			\State $r^* \leftarrow \argmax_{r \in \R} W(r)$
-			\State Observe reward $w_t$
-			\State Update $\bm{\mu}_{r^*}$
-			\State Update $\bm{\sigma}_{r^*}$
-		\Endforeach
+		\Procedure {ThompsonSampling}{$\R$, $\bm{\mu}$, $\bm{\sigma}^2$, $\bm{\tau}^2$, n}
+    		\Foreach {$t \in \{1, 2, ..., n\}$}
+        		\Foreach {$i \in \{1, 2, ..., |\R|\}$}
+            		\State $\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$
+        		\Endforeach
+        		\State $r_* \leftarrow \argmax_{i} \nu_i'$
+        		\State Observe reward $\delta$
+        		\State $\mu_* \leftarrow \dfrac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}$
+        		\State $\sigma_*^2 \leftarrow \dfrac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}$
+    		\Endforeach
 		\EndProcedure
 	\end{algorithmic}
 \end{algorithm}
 
-We assume the rewards are normally distributed with prior
-	\begin{IEEEeqnarray*}{lCl}
-		\bm{w} \sim N(\bm{\mu}, \sigma \bm{I})
-	\end{IEEEeqnarray*}
-Let us also assume that the likelihood follows a Normal distribution. This means
-that the posterior is also normal:
-	\begin{IEEEeqnarray*}{lCl}
-		(\bm{w}_i \mid \bm{\tau}) \sim N \left(
-			\frac{\bm{\mu}_i \bm{\tau}_i + \delta \bm{\sigma}_i}{\bm{\tau}_i + \bm{\sigma}_i},
-			\frac{\bm{\sigma}_i \bm{\tau}_i}{\bm{\tau}_i + \bm{\sigma}_i}
-			\right)
-	\end{IEEEeqnarray*}
 
-\begin{algorithm}[tbp]
-	\caption{The multi-arm bandit active learning algorithm}
+\begin{algorithm}[p]
+	\caption{The multi-arm bandit active learning algorithm} \index{bandit}
 	\label{alg:bandit}
 	\begin{algorithmic}[1]
-		\Procedure {ActiveBandit}{$\Unlabelled$, $\Labelled$, $h$, $n$, $t$,
-			                      $\R$, $\bm{\mu}$, $\bm{\sigma}$, $\bm{\tau}$}
-		\While {$|\Labelled| < n$}
-		\State $E$ $\leftarrow$ random sample of size $t$ from $\Unlabelled$
-		\Foreach {$r \in \R$}
-			\State $W(r) \leftarrow$ draw a sample from $N(\bm{\mu_r}, \bm{\sigma_r})$
-		\Endforeach
-		\State $r^* \leftarrow \argmax_{r \in \R} W(r)$
-		\State $\bm{x}^* \leftarrow \argmax_{\bm{x} \in E} r^*(\bm{x})$
-		\State $y^* \leftarrow$ ask the expert to label $\bm{x}^*$
-		\State $\Labelled \leftarrow \Labelled  \cup (\bm{x}^*, y^*)$
-		\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}^*$
-		\State $h_\Labelled(\bm{x}) \leftarrow$ retrain the classifier
-		\State $\delta$ $\leftarrow$ change in the balanced accuracy rate 
-		\State Update $\bm{\mu}_{r^*}$
-		\State Update $\bm{\sigma}_{r^*}$
-		\EndWhile
+		\Procedure {ActiveBandit}{$\Unlabelled$, $\Labelled_T$, $h$, $n$, $E$,
+			                      $\R$, $\bm{\mu}$, $\bm{\sigma}^2$, $\bm{\tau}^2$}
+    		\While {$|\Labelled_T| < n$}
+        		\Foreach  {$i \in \{1, 2, ..., |\R|\}$}
+        			\State $\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$
+        		\Endforeach
+        		\State $r_* \leftarrow \argmax_{i} \nu_i'$
+        		\State $\Ecal$ $\leftarrow$ random sample of size $E$ from $\Unlabelled$
+        		\State $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*(\bm{x})$
+        		\State $y_* \leftarrow$ ask the expert to label $\bm{x}_*$
+        		\State $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$
+        		\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$
+        		\State $h(\bm{x}) \leftarrow$ retrain the classifier
+        		\State $\delta$ $\leftarrow$ incremental increase in the accuracy
+        		\State $\mu_* \leftarrow \dfrac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}$
+                \State $\sigma_*^2 \leftarrow \dfrac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}$
+    		\EndWhile
 		\EndProcedure
 	\end{algorithmic}
 \end{algorithm}
 
+\pagebreak
+How does Thompson sampling balance between exploration and exploitation? If we only wanted to
+exploit our current knowledge, then we would naturally select the heuristic that maximises the
+immediate reward:
+    \begin{IEEEeqnarray*}{lCl}
+        r_*
+        &=& \argmax_{i} \E{\rho_i} \\
+        &=& \argmax_{i} \mathbb{E} \{ \E{\rho_i \given \bm{\nu}} \} \\
+        &=& \argmax_{i} \mathbb{E} \{ \E{\rho_i \given \nu_i} \} \\
+        &=& \argmax_{i} \int_{-\infty}^{+\infty} \E{\rho_i \given \nu_i} f(\nu_i) \, d\nu_i \\
+        &=& \argmax_{i} \int_{-\infty}^{+\infty} \nu_i f(\nu_i) \, d\nu_i \\
+        &=& \argmax_{i} \E{\nu_i} \\
+        &=& \argmax_{i} \mu_i
+    \end{IEEEeqnarray*}
+where we have used the law of total expectation and the fact that both $(\rho_i \mid \nu_i)$ and
+$\nu_i$ are normally distributed. Unsurprisingly, the heuristic that maximises the immediate reward
+is simply the one with the highest $\mu_i$. However, there is a chance that we could be wrong about
+our estimate of $\bm{\mu}$. Thus a better option is to only select a heuristic at the same
+frequency as the probability that it is optimal. For a given heuristic $r_i$, this probability is
+    \begin{IEEEeqnarray*}{lCl}
+        \Prob{ \E{\rho_i} = \max_j \E{\rho_i} }
+        &=& \E{ \Prob{ \E{\rho_i} = \max_j \E{\rho_i} | \bm{\nu}} } \\
+        &=& \int_{\bm{\nu}} \Prob{ \E{\rho_i} = \max_j \E{\rho_i}  \given \bm{\nu} }
+             f(\bm{\nu}) \, d\bm{\nu} \\
+        &=& \int_{\bm{\nu}} \Prob{ \E{\rho_i \given \bm{\nu}} = \max_j \E{\rho_i \given \bm{\nu}} }
+            f(\bm{\nu}) \, d\bm{\nu} \\
+        &=& \int_{\bm{\nu}} \Prob{ \nu_i = \max_j \nu_j }
+            f(\bm{\nu}) \, d\bm{\nu} \\
+        &=& \int_{\bm{\nu}} \mathbb{I}( \nu_i = \max_j \nu_j )
+              f(\bm{\nu}) \, d\bm{\nu}
+    \end{IEEEeqnarray*}
+where $\mathbb{I}$ is the indicator function. In fact we do not have to evaluate this integral
+directly. If in each round, we draw a random sample of $\bm{\nu}$ and act optimally according to
+the sample values, then over the long run, the frequency that we select each heuristic will
+approach its probability of being optimal. This is exactly what Thompson sampling does.
 
-To do: apply Thompson sampling to drifting rewards \cite{gupta11}
+Finally, as we shall see in Chapter \ref{cha:expt2}, the reward function \index{reward!drifting}
+dynamically evolves as the training size increases. Intuitively, the accuracy rate can never go
+beyond 100\%, so we would expect the incremental change in the accuracy to become smaller over
+time. Attempts to address this problem have been made in the literature. For example
+\citeN{gupta11} introduce the Dynamic Thompson Sampling method that can adapt to the evolving
+parameters faster than Algorithm \ref{alg:thompson} and \ref{alg:bandit}. However, we shall leave
+the investigation of this method to future work.
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-\section{Performance Measures}
+\section{Posterior Balanced Accuracy} \index{performance measure} \index{MPBA} \index{accuracy}
 \label{sec:measures}
 
-\subsection{Posterior Balanced Accuracy Rate}
-Certain astronomical objects are either rarer or more difficult to detect than others.
-In the SDSS labelled set, there are 4.5 times as many galaxies as quasars. The problem
-of class imbalance is even more severe in the VST-ATLAS set, with 11 times more stars than
-white dwarfs. An easy fix is to undersample the dominant class when creating training and
-test sets. This, of course, means that the size of these sets are limited by the size
-of the minority class.
+Certain astronomical objects are either rarer or more difficult to detect than others. In the SDSS
+labelled set, there are 4.5 times as many galaxies as quasars. The problem of class imbalance is
+even more severe in the VST-ATLAS set, with 43 times more stars than white dwarfs. An easy fix is
+to undersample the dominant class when creating training and test sets. This, of course, means that
+the size of these sets are limited by the size of the minority class.
 
 When we do not want to alter the underlying class distributions or when larger training and test
 sets are desired, we need a performance measure that can correct for the class imbalance.
-\shortciteN{brodersen10} showed that the posterior balanced accuracy distribution can overcome
-the bias in the binary case. We now extend this idea to the multi-class setting.
+\shortciteN{brodersen10} show that the posterior balanced accuracy distribution can overcome the
+bias in the binary case. We now extend this idea to the multi-class setting.
 
-Suppose we have $k$ classes. For each class $i$ between $1$ and $k$, there are $N_i$ objects
-in the universe. Given a classifier, we can assign a predicted label to every object and
-compare our prediction to the true label. Let $C_i$ be the number of objects in class $i$
-that are correctly predicted. Then we define the accuracy rate $A_i$ of class $i$ as
+Suppose we have $k$ classes. For each class $i$ between $1$ and $k$, there are $N_i$ objects in the
+universe. Given a hypothesis, we can predict the label of every object and compare our prediction
+to the true label. Let $G_i$ be the number of objects in class $i$ that are correctly predicted.
+Then we define the recall $A_i$ of class $i$ as \index{recall}
 	\begin{IEEEeqnarray*}{lCl}
-		A_i &=& \frac{C_i}{N_i}
+		A_i &=& \frac{G_i}{N_i}
 	\end{IEEEeqnarray*}
-Initially we have no information about $C_i$ and $N_i$, so we can assume that each $A_i$ 
-follows a uniform prior from 0 to 1. This is the same as a Beta distribution
-with parameters $\alpha = \beta = 1$:
-	\begin{IEEEeqnarray}{lCl}
-		A_i &\sim& \Beta(1,1) \label{eqn:prior}
-	\end{IEEEeqnarray}
-After we have trained the classifier, suppose we have a test set containing $n_i$
-objects in class $i$. Running the classifier on this test set is the same as conducting
-$k$ binomial experiments, where, in the $i$th experiment, the sample size is
-$n_i$ and the probability of success is simply the accuracy rate $A_i$. Let $c_i$ be
-the number of correctly labelled objects belonging to class $i$ in the test set. Then,
-conditional on the accuracy rate, $c_i$ follows a binomial distribution:
-	\begin{IEEEeqnarray}{lCl}
-		(c_i \mid A_i) &\sim& \Bin(n_i, A_i) \label{eqn:likelihood}
-	\end{IEEEeqnarray}
-In the Bayesian setting, \eqref{eqn:prior} is the prior and \eqref{eqn:likelihood}
+The problem is that it is not feasible to get the actual values of $G_i$ and $N_i$ since that would
+require us to obtain the true label of every object. Thus we need a method to estimate these
+quantities when we only have a sample. Initially we have no information about $G_i$ and
+$N_i$, so we can assume that each $A_i$ follows a uniform prior from 0 to 1. This is the same as a
+Beta distribution with shape parameters $\alpha = \beta = 1$:
+	\begin{IEEEeqnarray*}{lCl}
+		A_i &\sim& \Beta(1,1) 
+	\end{IEEEeqnarray*}
+The PDF of $A_i$ is then
+    \begin{IEEEeqnarray}{lCl}
+        f_{A_i}(a) &=& \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\, 
+        a^{\alpha-1}(1-a)^{\beta-1} \label{eqn:prior} \\
+        &\propto&   a^{1-1}(1-a)^{1-1}  \notag
+    \end{IEEEeqnarray}
+where $\Gamma(\alpha)$ is the gamma function.
+
+After we have trained the classifier, suppose we have a test set containing $n_i$ objects in class
+$i$. Running the classifier on this test set is the same as conducting $k$ binomial experiments,
+where, in the $i$th experiment, the sample size is $n_i$ and the probability of success is simply
+$A_i$. Let $g_i$ be the number of correctly labelled objects belonging to class $i$ in the test
+set. Then, conditional on the accuracy rate, $g_i$ follows a binomial distribution:
+	\begin{IEEEeqnarray*}{lCl}
+		(g_i \mid A_i) &\sim& \Bin(n_i, A_i)
+	\end{IEEEeqnarray*}
+The probability mass function of $(g_i \mid A_i = a)$ is thus
+    \begin{IEEEeqnarray}{lCl}
+        p_{g_i \mid A_i}(g_i) &=& \binom{n_i}{g_i} a^{g_i} (1 - a)^{n_i - g_i} \label{eqn:likelihood} \\
+                              &\propto& a^{g_i} (1 - a)^{n_i - g_i} \notag
+    \end{IEEEeqnarray}
+In the Bayesian \index{Baysian} setting, \eqref{eqn:prior} is the prior and \eqref{eqn:likelihood}
 is the likelihood. To get the posterior PDF, we simply multiply the prior with the likelihood:
 	\begin{IEEEeqnarray*}{lCl}
-		f_{A_i \mid \bm{c}}(a)
-		&\propto& f_{A_i}(a) \times f_{c_i \mid A_i}(c_i) \\
-		&\propto& a^{1-1}(1-a)^{1-1} \times a^{c_i} (1 - a)^{n_i - c_i} \\
-		&=& a^{1 + c_i - 1}(1-a)^{1 + n_i - c_i - 1}
+		f_{A_i \mid \bm{g}}(a)
+		&\propto& f_{A_i}(a) \times f_{g_i \mid A_i}(g_i) \\
+		&\propto& a^{1-1}(1-a)^{1-1} \times a^{g_i} (1 - a)^{n_i - g_i} \\
+		&=& a^{1 + g_i - 1}(1-a)^{1 + n_i - g_i - 1}
 	\end{IEEEeqnarray*}
 Thus, with respect to the binomial likelihood function,
-the Beta distribution is conjugate to itself. The posterior accuracy rate $A_i$
+the Beta distribution is conjugate to itself. The posterior recall rate $A_i$
 also follows a Beta distribution, now with parameters
 	\begin{IEEEeqnarray*}{lCl}
-		(A_i \mid c_i) &\sim& \Beta(1 + c_i, 1 + n_i - c_i)
+		(A_i \mid g_i) &\sim& \Beta(1 + g_i, 1 + n_i - g_i)
 	\end{IEEEeqnarray*}
-Recall that our goal is to have a balanced accuracy rate, $A$, that puts an equal
-weight in each class. This can be achieved by taking the average of all the class accuracy rates:
+Our goal is to have a balanced accuracy rate, $A$, that puts an equal weight in each class. One way
+to achieve this is to take the average of the individual recalls:
 	\begin{IEEEeqnarray*}{lCl}
 		A &=& \frac{1}{k} \sum_{i=1}^k A_i \\
 		&=& \frac{1}{k} A_T
 	\end{IEEEeqnarray*}
-Here we have defined $A_T$ to be the sum of the individual accuracy rates.
-We call  $(A \mid \bm{c})$ the posterior balanced accuracy rate, where
-$\bm{c} =(c_1,...,c_k)$.
-Most of the time, we simply want to calculate its expected value:
+Here we have defined $A_T$ to be the sum of the individual recalls. We call  $(A \mid \bm{g})$ the
+posterior balanced accuracy (PBA), where $\bm{g} =(g_1,...,g_k)$. Most of the time, we simply want
+to calculate its expected value:
 	\begin{IEEEeqnarray*}{lCl}
-		\E{A \given \bm{c}} &=& \frac{1}{k} \, \E{A_T \given \bm{c}} \\
-		&=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{c}}(a) \, da
+		\E{A \given \bm{g}} &=& \frac{1}{k} \, \E{A_T \given \bm{g}} \\
+		&=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{g}}(a) \, da
 	\end{IEEEeqnarray*}
-Note that there is no closed form solution for the PDF $f_{A_T \mid \bm{c}}(a)$.
-However assuming that $A_T$ is a sum of $k$ independent Beta random variables,
-$f_{A_T \mid \bm{c}}(a)$ can be approximated by numerically convolving $k$ Beta distributions.
-The independence assumption is reasonable here, since there should be little to no correlation
-between the individual class accuracy rates. Knowing that a classifier is really good
-at recognising stars does not tell us much about how well that classifier can recognise
-galaxies.
+Let us call this the mean posterior balanced accuracy rate (MPBA). Note that there is no closed
+form solution for the PDF $f_{A_T \mid \bm{g}}(a)$. However assuming that $A_T$ is a sum of $k$
+independent Beta random variables, $f_{A_T \mid \bm{g}}(a)$ can be approximated by numerically
+convolving $k$ Beta distributions. The independence assumption is reasonable here, since there
+should be little to no correlation between the individual class accuracy rates. Knowing that a
+classifier is really good at recognising stars does not tell us much about how well that classifier
+can recognise galaxies.
 
-Having the knowledge of $f_{A \mid \bm{c}}(a)$ will allow us to make violin plots,
+Having the knowledge of $f_{A \mid \bm{g}}(a)$ will allow us to make violin plots,
 construct confidence intervals and do hypothesis tests. To get an expression for this,
-let us first rewrite the CDF as
+let us first rewrite the cumulative distribution function (CDF) as
 	\begin{IEEEeqnarray*}{lCl}
-		F_{A\mid \bm{c}}(a) &=& \Prob{A \leq a \mid \bm{c}} \\
-		&=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{c}} \\
-		&=& \Prob{A_T \leq ka \given \bm{c}} \\
-		&=& F_{A_T \mid \bm{c}}(ka) \IEEEyesnumber \label{eqn:CDF}
+		F_{A\mid \bm{g}}(a) &=& \Prob{A \leq a \mid \bm{g}} \\
+		&=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{g}} \\
+		&=& \Prob{A_T \leq ka \given \bm{g}} \\
+		&=& F_{A_T \mid \bm{g}}(ka) \IEEEyesnumber \label{eqn:CDF}
 	\end{IEEEeqnarray*}
-Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{c})$:
+Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{g})$:
 	\begin{IEEEeqnarray*}{lCl}
-		f_{A \mid \bm{c}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{c}}(ka) \\
-		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{c}}(ka) \\
-		&=& k \cdot f_{A_T \mid \bm{c}}(ka)
+		f_{A \mid \bm{g}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{g}}(ka) \\
+		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{g}}(ka) \\
+		&=& k \cdot f_{A_T \mid \bm{g}}(ka)
 	\end{IEEEeqnarray*}
-
-\subsection{Recall}
-Let $C$ be the confusion matrix, where entry $C_{ij}$ is the number of objects in class $i$
-but have been classified as class $j$.
-Recall measures the classifier's ability to find all the positive examples and avoid
-having false negatives:
-	\begin{IEEEeqnarray*}{lCl}
-		\text{Recall}_i &=& \frac{C_{ii}}{\sum_j C_{ij}}
-	\end{IEEEeqnarray*}
-
+We shall use the posterior balanced accuracy rate throughout the experiments to report the overall
+performance of a classifier on a test set.
 
 %%% Local Variables: 
 %%% mode: latex

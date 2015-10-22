@@ -67,7 +67,7 @@ def save_results(obj, pickle_path):
 
     directory = os.path.dirname(pickle_path)
 
-    if not os.path.exists(pickle_path):
+    if not os.path.exists(directory):
         os.makedirs(directory)
 
     if not os.path.exists(pickle_path):

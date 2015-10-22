@@ -6,16 +6,29 @@
 \label{cha:abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Recent sky surveys have given us a large amount of data to work with. One particular
-problem is that spectroscopic labelling is expensive, so we only want to manually label
-an object if doing so allows us to gain new information. This thesis explores pool-based
-active learning and the application of prominent families of heuristics to the
-domain of photometric classification.
+Recent sky surveys such as the Sloan Digital Sky Survey and the VST ATLAS Survey have given us a large
+amount of data to work with. Spectroscopic labelling, however, is quite expensive, so we only
+want to manually label an object if doing so allows us to gain new information. This thesis
+explores pool-based active learning and the novel application of prominent active learning heuristics to
+the domain of photometric classification.
 
-We begin with an investigation of using
-standard classifiers with random sampling. We then derive a method that allows us to automatically select
-the optimal heuristic without any prior knowledge of their relative performance. This is done by
-using ideas from Thompson sampling and the multi-arm bandit setting to solve the exploration vs exploitation problem. Two best-performing classifiers with reliable probability estimates, logistic regression and support vector machines, are then used to conduct the active learning experiment. The results are very promising, with the margin heuristic outperforming random sampling by as much as 9\% in the VST ATLAS dataset after only 300 samples. Most heuristics still work well even when we have data with extremely unbalanced classes and noise.
+We begin by applying standard supervised machine learning techniques to two astronomical datasets.
+The best-performing classifiers with reliable probability estimates, logistic regression and support
+vector machines, are then used to conduct the active learning experiment. Our key original
+contribution is the application of Thompson sampling, a Bayesian solution to the exploration vs
+exploitation problem, to the selection of six active learning heuristics. To address the problem of
+class imbalance, we derive an extension of the posterior balanced accuracy to the
+multi-class setting. This is used to evaluate the performance of our algorithms.
+
+The results are very promising. Even under simplistic assumptions like a normally distributed
+reward, Thompson sampling manages to automatically identify the optimal heuristic after only 50
+examples. In particular, the margin minimisation technique is a clear winner, outperforming random
+sampling by as much as 9\% in the VST ATLAS dataset after 300 examples. Being very
+computationally efficient, we recommend that astronomers use the margin heuristic with logistic
+regression to decide which objects to label next in future sky surveys. To help them with this task,
+we have created an open-source and extendable Python package that allows others to easily apply
+active learning routines to any dataset and make quick visualisation of photometric data.
+
 
 %%% Local Variables: 
 %%% mode: latex

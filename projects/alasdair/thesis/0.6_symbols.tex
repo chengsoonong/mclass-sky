@@ -26,9 +26,13 @@
 \DeclareMathOperator{\Beta}{Beta}
 \DeclareMathOperator{\Bin}{Bin}
 \DeclareMathOperator{\arsinh}{arsinh}
+\DeclareMathOperator{\tr}{tr}
 \newcommand{\A}{\mathpzc{A}}
+\newcommand{\B}{\mathcal{B}}
 \newcommand{\X}{\mathcal{X}}
 \newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Ecal}{\mathcal{E}}
+\newcommand{\Normal}{\mathcal{N}}
 \newcommand{\Unlabelled}{\mathcal{U}}
 \newcommand{\Labelled}{\mathcal{L}}
 \newcommand{\R}{\mathcal{R}}
@@ -37,91 +41,191 @@
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 %% List of symbols
-\newglossaryentry{A_u}%
-{%
-	name={$\A_u$},
-	text={A_u},
-	description={The extinction value at the u-band},
-	sort={Au}
-}
 
 \newglossaryentry{A}%
 {%
-	name={$A$},
-	text={A},
-	description={The balanced accuracy rate},
-	sort={A}
+    name={$A$},
+    text={A},
+    description={Balanced accuracy},
+    sort={A1}
 }
 
 \newglossaryentry{A_i)}%
 {%
-	name={$A_i$},
-	text={A_i},
-	description={The accuracy rate of class $i$},
-	sort={Ai}
+    name={$A_i$},
+    text={A_i},
+    description={Recall of class $i$},
+    sort={A2}
+}
+
+
+\newglossaryentry{A_u}%
+{%
+	name={$\A_u$},
+	text={A_u},
+	description={Extinction value in the u-band},
+	sort={A3}
+}
+
+\newglossaryentry{a)}%
+{%
+    name={$a$},
+    text={a},
+    description={Inverse hyperbolic sine softening parameter},
+    sort={A4}
+}
+
+\newglossaryentry{alpha)}%
+{%
+    name={$\alpha$},
+    text={alpha},
+    description={First shape parameter of the Beta distribution},
+    sort={A5}
+}
+
+\newglossaryentry{B1)}%
+{%
+    name={$\B$},
+    text={B},
+    description={Committee of classifiers $\B = \{h_1, h_2, ..., h_B\}$},
+    sort={B1}
+}
+
+\newglossaryentry{B2)}%
+{%
+    name={$B$},
+    text={B},
+    description={Size of the committee of classifiers},
+    sort={B2}
 }
 
 \newglossaryentry{b)}%
 {%
-	name={$b$},
-	text={b},
-	description={The asinh softening parameter},
-	sort={b}
+    name={$b$},
+    text={b},
+    description={Bias term in SVMs},
+    sort={B3}
 }
 
-\newglossaryentry{c)}%
+\newglossaryentry{beta)}%
 {%
-	name={$\bm{c}$},
-	text={c},
-	description={The vector $(c_1, c_2,...,c_k)$, where $k$ is the number of classes},
-	sort={c}
+    name={$\beta$},
+    text={beta},
+    description={Second shape parameter of the Beta distribution},
+    sort={B4}
 }
 
-\newglossaryentry{C_i)}%
+\newglossaryentry{Beta}%
 {%
-	name={$C_i$},
-	text={C_i},
-	description={The total number of objects in class $i$ that are correctly predicted},
-	sort={Ci}
+    name={$\Beta(\alpha, \beta)$},
+    text={Beta},
+    description={Beta distribution},
+    sort={Beta}
 }
 
-\newglossaryentry{c_i)}%
+\newglossaryentry{Bin}%
 {%
-	name={$c_i$},
-	text={c_i},
-	description={The number of objects in class $i$ in a sample that are correctly predicted},
-	sort={ci}
+    name={$\Bin(n, p)$},
+    text={Bin},
+    description={Binomial distribution},
+    sort={Bin}
+}
+
+\newglossaryentry{C)}%
+{%
+    name={$C$},
+    text={C},
+    description={Penalty parameter in logistic regression and SVMs},
+    sort={C}
+}
+
+\newglossaryentry{D)}%
+{%
+	name={$D$},
+	text={D},
+	description={Distance between an object and Earth},
+	sort={D1}
+}
+
+\newglossaryentry{DKL)}%
+{%
+    name={$D_{\mathrm{KL}}(p\|q)$},
+    text={DKL},
+    description={Kullback--Leibler divergence},
+    sort={D2}
 }
 
 \newglossaryentry{d)}%
 {%
-	name={$d$},
-	text={d},
-	description={The distance between an object and Earth},
-	sort={d}
+    name={$d$},
+    text={d},
+    description={Number of features},
+    sort={d}
 }
 
-\newglossaryentry{E}%
+\newglossaryentry{del)}%
+{%
+    name={$\nabla p$},
+    text={del},
+    description={Gradient vector},
+    sort={del}
+}
+
+\newglossaryentry{delta)}%
+{%
+    name={$\delta$},
+    text={delta},
+    description={Incremental increase in the accuracy },
+    sort={delta}
+}
+
+
+\newglossaryentry{Expected}%
 {%
 	name={$\E{X}$},
 	text={E(X)},
-	description={The expected value of the random variable $X$},
-	sort={EX}
+	description={Expected value of the random variable $X$},
+	sort={E3}
 }
 
-\newglossaryentry{E(B-V)}%
+\newglossaryentry{Ecal}%
 {%
-	name={$E(B-V)$},
+    name={$\Ecal$},
+    text={Ecal},
+    description={Random subset of the unlabelled pool $\Unlabelled$},
+    sort={E0}
+}
+
+
+\newglossaryentry{E}%
+{%
+    name={$E$},
+    text={E},
+    description={Size of the random subset $\Ecal$},
+    sort={E1}
+}
+
+\newglossaryentry{E_{B-V}}%
+{%
+	name={$E_{B-V}$},
 	text={E(B-V)},
-	description={The reference interstellar reddening value},
-	sort={EBV}
+	description={Reference interstellar reddening value},
+	sort={E2}
+}
+
+\newglossaryentry{eta}%
+{%
+    name={$\eta(\bm{x})$},
+    text={eta(x)},
+    description={Linear predictor in logistic regression},
+    sort={E4}
 }
 
 \newglossaryentry{f)}%
 {%
 	name={$f$},
 	text={f},
-	description={The detected flux of an object},
+	description={Detected flux of an object},
 	sort={f}
 }
 
@@ -129,14 +233,14 @@
 {%
 	name={$f_0$},
 	text={f_0},
-	description={The flux of the object with a conventional magnitude of zero},
+	description={Flux of the object with a conventional magnitude of zero},
 	sort={f0}
 }
 \newglossaryentry{F_X}%
 {%
 	name={$F_X(x)$},
 	text={F_X(x)},
-	description={The cumulative distribution function of the random variable $X$},
+	description={Cumulative distribution function of the random variable $X$},
 	sort={FX}
 }
 
@@ -144,56 +248,144 @@
 {%
 	name={$f_X(x)$},
 	text={f_X(x)},
-	description={The probability density function of the random variable $X$},
+	description={Probability density function of the continuous random variable $X$},
 	sort={fX}
+}
+
+\newglossaryentry{g)}%
+{%
+    name={$\bm{g}$},
+    text={g},
+    description={Vector $(g_1, g_2,...,g_k)$},
+    sort={g2}
+}
+
+\newglossaryentry{G_i)}%
+{%
+    name={$G_i$},
+    text={G_i},
+    description={Total number of objects in class $i$ that are correctly predicted},
+    sort={G1}
+}
+
+\newglossaryentry{g_i)}%
+{%
+    name={$g_i$},
+    text={g_i},
+    description={Number of objects in class $i$ in a sample that are correctly predicted},
+    sort={g3}
+}
+
+\newglossaryentry{gamma}%
+{%
+    name={$\gamma$},
+    text={gamma},
+    description={Free parameter in the RBF kernel},
+    sort={gamma}
+}
+
+\newglossaryentry{Gamma}%
+{%
+    name={$\Gamma(x)$},
+    text={Gamma},
+    description={Gamma function},
+    sort={Gamma}
+}
+
+
+\newglossaryentry{H}%
+{%
+    name={$H(\Labelled_T; h)$},
+    text={H},
+    description={Entropy of predictions under hypothesis $h$ and with training set $\Labelled_T$},
+    sort={H}
+}
+
+\newglossaryentry{h}%
+{%
+    name={$h$},
+    text={h},
+    description={Classifier or hypothesis $h: \X \rightarrow \Y$},
+    sort={h}
+}
+
+\newglossaryentry{Fisher}%
+{%
+    name={$\mathcal{I}$},
+    text={I},
+    description={Fisher information matrix},
+    sort={I1}
+}
+
+\newglossaryentry{Indicator}%
+{%
+    name={$\mathbb{I}$},
+    text={I},
+    description={Indicator function},
+    sort={I2}
 }
 
 \newglossaryentry{i_G(D)}%
 {%
 	name={$\iota_G(D)$},
 	text={i_G(D)},
-	description={The Gini impurity of the set $D$},
+	description={Gini impurity of the set $D$},
 	sort={iGD}
-}
-
-\newglossaryentry{h}%
-{%
-	name={$h$},
-	text={h},
-	description={The classifier or the hypothesis function $h: \X \mapsto \Y$},
-	sort={h}
 }
 
 \newglossaryentry{I(r)}%
 {%
 	name={$I(r)$},
 	text={I(r)},
-	description={The surface brightness profile of a galaxy},
-	sort={Ir}
+	description={Surface brightness profile of a galaxy},
+	sort={I3}
 }
 
 \newglossaryentry{k}%
 {%
 	name={$k$},
 	text={k},
-	description={The number of classes or labels that can be assigned to an object},
+	description={Number of classes or labels},
 	sort={k}
+}
+
+\newglossaryentry{l(x)}%
+{%
+    name={$\ell(x)$},
+    text={l(x)},
+    description={Loss function},
+    sort={lx}
 }
 
 \newglossaryentry{L}%
 {%
 	name={$\Labelled$},
 	text={L},
-	description={The pool of labelled data},
-	sort={L}
+	description={Pool of labelled data},
+	sort={L1}
 }
 
+\newglossaryentry{L_T}%
+{%
+    name={$\Labelled_T$},
+    text={L_T},
+    description={Training set},
+    sort={L3}
+}
+
+\newglossaryentry{L_S}%
+{%
+    name={$\Labelled_S$},
+    text={L_S},
+    description={Test set},
+    sort={L2}
+}
 
 \newglossaryentry{lambda)}%
 {%
 	name={$\lambda$},
 	text={lambda},
-	description={The wavelength of light},
+	description={Wavelength of light},
 	sort={lambda}
 }
 
@@ -201,7 +393,7 @@
 {%
 	name={$M$},
 	text={M},
-	description={The absolute magnitude of an object},
+	description={Absolute magnitude of an object},
 	sort={M}
 }
 
@@ -209,15 +401,59 @@
 {%
 	name={$m$},
 	text={m},
-	description={The apparent magnitude of an object},
+	description={Apparent magnitude of an object},
 	sort={m}
 }
+
+\newglossaryentry{mu1}%
+{%
+    name={$\bm{\mu}$},
+    text={mu1},
+    description={Vector $(\mu_1, \mu_2, ..., \mu_s)$},
+    sort={mu1}
+}
+
+\newglossaryentry{mu2}%
+{%
+    name={$\mu_i$},
+    text={mu2},
+    description={Mean of the prior distribution of the mean reward of heuristic $r_i$},
+    sort={mu2}
+}
+
+\newglossaryentry{n)}%
+{%
+    name={$n$},
+    text={n},
+    description={Size of the training set},
+    sort={n}
+}
+
+
+\newglossaryentry{Normal}%
+{%
+    name={$\Normal(\mu, \sigma^2)$},
+    text={Normal},
+    description={Normal distribution},
+    sort={Normal}
+}
+
+
+\newglossaryentry{O)}%
+{%
+    name={$O$},
+    text={O},
+    description={Outer product of the gradient vector with itself.},
+    sort={O}
+}
+
+
 
 \newglossaryentry{N_i)}%
 {%
 	name={$N_i$},
 	text={N_i},
-	description={The total number of objects belonging to class $i$},
+	description={Total number of objects belonging to class $i$ in the universe},
 	sort={Ni}
 }
 
@@ -225,15 +461,55 @@
 {%
 	name={$n_i$},
 	text={n_i},
-	description={The number of objects belonging to class $i$ in a sample},
+	description={Number of objects belonging to class $i$ in a sample},
 	sort={ni}
+}
+
+\newglossaryentry{nu1}%
+{%
+    name={$\bm{\nu}$},
+    text={nu1},
+    description={Vector $(\nu_1, \nu_2, ..., \nu_s)$},
+    sort={nu1}
+}
+
+\newglossaryentry{nu2}%
+{%
+    name={$\nu_i$},
+    text={nu2},
+    description={Mean of the reward of heuristic $r_i$},
+    sort={nu2}
+}
+
+\newglossaryentry{Prob{A}}%
+{%
+    name={$\Prob{A}$},
+    text={Prob(A)},
+    description={Probability that event $A$ is true},
+    sort={Prob)}
+}
+
+\newglossaryentry{p(y|x; h)}%
+{%
+    name={$p(y|\bm{x}; h)$},
+    text={p(y|x; h)},
+    description={Probability that $\bm{x}$ has label $y$ under hypothesis $h$},
+    sort={py)}
+}
+
+\newglossaryentry{Q_ij)}%
+{%
+    name={$Q_{ij}$},
+    text={Q_ij},
+    description={Entry in the $ith$ row and $jth$ column in the confusion matrix},
+    sort={Qij}
 }
 
 \newglossaryentry{q_D(i)}%
 {%
 	name={$q_D(i)$},
 	text={q_D(i)},
-	description={The frequency of objects belong to class $i$ in set $D$},
+	description={Frequency of objects belong to class $i$ in set $D$},
 	sort={qDi}
 }
 
@@ -241,40 +517,153 @@
 {%
 	name={$\mathfrak{R}_p(r)$},
 	text={R_p(r)},
-	description={The Petrosian ratio},
+	description={Petrosian ratio},
 	sort={Rp}
+}
+
+\newglossaryentry{R(w)}%
+{%
+    name={$R(w)$},
+    text={R(w)},
+    description={Regularisation term in logistic regression and SVMs},
+    sort={Rw}
 }
 
 \newglossaryentry{r_p}%
 {%
 	name={$r_p$},
 	text={r_p},
-	description={The Petrosian radius},
+	description={Petrosian radius},
 	sort={rp}
 }
 
+\newglossaryentry{R}%
+{%
+    name={$\R$},
+    text={R},
+    description={Set of active learning heuristics},
+    sort={R1}
+}
+
+\newglossaryentry{r(x;h)}%
+{%
+    name={$r(\bm{x}; h)$},
+    text={r(x;h)},
+    description={Active learning rule or heuristic},
+    sort={R2}
+}
+
+\newglossaryentry{rho}%
+{%
+    name={$\rho_i$},
+    text={rho},
+    description={Reward of heuristic $r_i$},
+    sort={rho}
+}
+
+\newglossaryentry{s}%
+{%
+    name={$s$},
+    text={s},
+    description={Number of heuristics},
+    sort={s}
+}
+
+\newglossaryentry{sigma1}%
+{%
+    name={$\bm{\sigma}^2$},
+    text={sigma1},
+    description={Vector $(\sigma^2_1, \sigma^2_2, ..., \sigma^2_s)$},
+    sort={sigma1}
+}
+
+\newglossaryentry{sigma2}%
+{%
+    name={$\sigma_i^2$},
+    text={sigma2},
+    description={Variance of the prior distribution of the mean reward of heuristic $r_i$},
+    sort={sigma2}
+}
+
+\newglossaryentry{sigma}%
+{%
+    name={$\sigma(x)$},
+    text={sigma},
+    description={Logistic or sigmoid function},
+    sort={sigmax}
+}
 
 \newglossaryentry{T_lambda)}%
 {%
 	name={$T(\lambda)$},
 	text={T(lambda)},
-	description={The transmission function of a filter},
+	description={Transmission function of a filter},
 	sort={Tlambda}
 }
+
+\newglossaryentry{tau1}%
+{%
+    name={$\bm{\tau}^2$},
+    text={tau1},
+    description={Vector $(\tau_1^2, \tau_2^2, ..., \tau_s^2)$},
+    sort={tau1}
+}
+
+\newglossaryentry{tau2}%
+{%
+    name={$\tau_i^2$},
+    text={tau2},
+    description={Variance of the reward of heuristic $r_i$},
+    sort={tau2}
+}
+
+\newglossaryentry{theta)}%
+{%
+    name={$\bm{\theta}$},
+    text={theta},
+    description={Coefficient vector in logistic regression},
+    sort={theta}
+}
+
+\newglossaryentry{tr}%
+{%
+    name={$\tr(X)$},
+    text={tr},
+    description={Trace of matrix $X$},
+    sort={tr}
+}
+
 
 \newglossaryentry{U}%
 {%
 	name={$\Unlabelled$},
 	text={U},
-	description={The pool of unlabelled data},
+	description={Pool of unlabelled data},
 	sort={U}
+}
+
+\newglossaryentry{V}%
+{%
+    name={$V(\Labelled_T; h)$},
+    text={V},
+    description={Variance under hypothesis $h$ and with training set $L_T$},
+    sort={V}
+}
+
+
+\newglossaryentry{w}%
+{%
+    name={$\bm{w}$},
+    text={w},
+    description={SVM weight vector},
+    sort={w}
 }
 
 \newglossaryentry{X}%
 {%
 	name={$\X$},
 	text={X},
-	description={The feature space},
+	description={Feature space},
 	sort={X}
 }
 
@@ -282,7 +671,7 @@
 {%
 	name={$\bm{x}$},
 	text={x},
-	description={The feature vector of an object},
+	description={Feature vector of an object},
 	sort={x}
 }
 
@@ -290,7 +679,7 @@
 {%
 	name={$\Y$},
 	text={Y},
-	description={The label space},
+	description={Label space},
 	sort={Y}
 }
 
@@ -298,21 +687,25 @@
 {%
 	name={$y$},
 	text={y},
-	description={The label of an object},
+	description={Label or class of an object},
 	sort={y}
 }
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 %% Acronyms
-\newacronym{atlas}{ATLAS}{Australia Telescope Large Area Survey}
+\newacronym{anu}{ANU}{Australian National University}
 \newacronym{cdf}{CDF}{Cumulative Distribution Function}
+\newacronym{cv}{CV}{Cross Validation}
 \newacronym{dec}{dec}{Declination}
 \newacronym{kl}{KL}{Kullback–-Leibler}
+\newacronym{mpba}{MPBA}{Mean of the Posterior Balanced Accuracy}
+\newacronym{pba}{PBA}{Posterior Balanced Accuracy}
 \newacronym{pdf}{PDF}{Probability Density Function}
 \newacronym{psf}{PSF}{Point Spread Function}
+\newacronym{qbb}{QBB}{Query by Bagging}
 \newacronym{ra}{ra}{Right Ascension}
 \newacronym{rbf}{RBF}{Radial Basis Function}
-\newacronym{sdf98}{SDF98}{Schlegel, Finkbeiner, and Davis [1998]}
+\newacronym{sfd98}{SFD98}{Schlegel, Finkbeiner, and Davis [1998]}
 \newacronym{sf11}{SF11}{Schlafly and Finkbeiner [2011]}
 \newacronym{sdss}{SDSS}{Sloan Digital Sky Survey}
 \newacronym{svm}{SVM}{Support Vector Machine}

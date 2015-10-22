@@ -88,6 +88,9 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
             The confusion matrix on the test examples.
 
     """
+
+
+
     if balanced:
         X_train, X_test, y_train, y_test = balanced_train_test_split(
             data[feature_names], data[class_name], train_size=train_size, test_size=test_size,
@@ -129,7 +132,7 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
 def print_classification_result(X_train, X_test, y_train, y_test, report=True,
     recall_maps=True, classifier=None, correct_baseline=None, coords_test=None, output='',
-    fig_dir=''):
+    fig_dir='', trained=False):
     """ Train the specified classifier and print out the results.
 
         Parameters
@@ -176,7 +179,8 @@ def print_classification_result(X_train, X_test, y_train, y_test, report=True,
     """
 
     # train and test
-    classifier.fit(X_train, y_train)
+    if not trained:
+        classifier.fit(X_train, y_train)
     y_pred_test = classifier.predict(X_test)
     confusion_test = metrics.confusion_matrix(y_test, y_pred_test)
     balanced_accuracy = balanced_accuracy_expected(confusion_test)
@@ -772,8 +776,8 @@ def grid_search_logistic(X, y, train_size=300, test_size=300, fig_path=None, pic
 
 
 def predict_unlabelled_objects(file_path, table, classifier,
-    data_cols, feature_cols, chunksize, pickle_paths, fig_paths,
-    scaler_path, extinction=False, verbose=True):
+    data_cols, feature_cols, chunksize, pickle_paths,
+    scaler_path, verbose=True):
     """ Predict the classes of unlabelled objects given a classifier.
 
         Parameters
@@ -784,15 +788,10 @@ def predict_unlabelled_objects(file_path, table, classifier,
 
     sdss_chunks = pd.read_hdf(file_path, table, columns=data_cols, chunksize=chunksize)
 
-    galaxy_map = np.zeros((3600, 3600), 
-        dtype=int)
+    galaxy_map = np.zeros((3600, 3600), dtype=int)
     quasar_map = np.zeros((3600, 3600), dtype=int)
     star_map = np.zeros((3600, 3600), dtype=int)
     object_maps = [galaxy_map, quasar_map, star_map]
-
-    if extinction:
-        ebv = np.zeros((3600, 3600))
-        ebv_count = np.zeros((3600, 3600), dtype=int)
 
     for i, chunk in enumerate(sdss_chunks):
         # apply reddening correction and compute key colours
@@ -801,10 +800,6 @@ def predict_unlabelled_objects(file_path, table, classifier,
         
         chunk['ra'] = np.remainder(np.round(chunk['ra'] * 10) + 3600, 3600)
         chunk['dec'] = np.remainder(np.round(chunk['dec'] * 10) + 3600, 3600)
-
-        # get extinction value
-        if extinction:
-            chunk['ebv'] = chunk['extinction_r'] / 2.751
         
         for index, row in chunk.iterrows():
             if row['prediction'] == 'Galaxy':
@@ -815,23 +810,10 @@ def predict_unlabelled_objects(file_path, table, classifier,
                 star_map[row['ra']][row['dec']] += 1
             else:
                 print('Invalid prediction.')
-
-            if extinction:
-                ebv[row['ra']][row['dec']] += row['ebv']
-                ebv_count[row['ra']][row['dec']] += 1
         
         current_line = i * chunksize
         if verbose and current_line % 1000000 == 0:
             print(current_line // 1000000, end=' ')
-
-        break
-
-    if extinction:
-        ebv /= ebv_count
-        ebv[np.isinf(ebv)] = 0
-        ebv[np.isnan(ebv)] = 0
-        object_maps.append(ebv)
-        object_maps.append(ebv_count)
 
     if verbose: print()
 
@@ -842,6 +824,10 @@ def predict_unlabelled_objects(file_path, table, classifier,
 
 
 
+def map_unlabelled_objects(galaxy_map, quasar_map, star_map, fig_paths):
+    """
+    """
+    
     # print out results
     whole_map = galaxy_map + star_map + quasar_map
     total_galaxies = np.sum(galaxy_map)
@@ -859,7 +845,6 @@ def predict_unlabelled_objects(file_path, table, classifier,
     decs, ras = np.meshgrid(dec, ra)
     decs = decs.flatten()
     ras = ras.flatten()
-
 
     # plot prediction on ra-dec maps
     object_maps = [whole_map, galaxy_map, quasar_map, star_map]

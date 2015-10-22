@@ -85,7 +85,8 @@ def plot_scores(scores, title, x_label, classifier_names):
     plt.show()
 
 
-def plot_final_accuracy(data, labels, sort=True, linewidth=1, inner='box', ax=None):
+def plot_final_accuracy(data, labels, colors=None, sort=True, linewidth=1.5, inner='box',
+    cut=2, ylim=None, ax=None):
     """
     """
     if not ax:
@@ -94,13 +95,17 @@ def plot_final_accuracy(data, labels, sort=True, linewidth=1, inner='box', ax=No
     df = [np.array(h)[:,-1] for h in data]
     df = np.array(df).transpose()
     df = pd.DataFrame(df, columns=labels)
-    df = df.reindex_axis(df.mean().order().index, axis=1)
+    sorted_labels = df.mean().order().index
+    df = df.reindex_axis(sorted_labels, axis=1)
 
-    sns.violinplot(data=df, ax=ax, inner=inner, cut=2, linewidth=linewidth)
+    sns.violinplot(data=df, ax=ax, inner=inner, cut=cut, palette=colors,
+        linewidth=linewidth)
 
     format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
-    ax.set_ylabel('Posterior Balanced Accuracy Rate')
+    ax.set_ylabel('PBA')
+    ax.set_ylim(ylim)
+    ax.tick_params(top='off')
 
     return ax
 
@@ -216,7 +221,7 @@ def plot_average_learning_curve(sample_sizes, learning_curves, curve_labels, ax=
         ax.plot(sample_sizes, mean_curve, label=curve_label)
 
     ax.set_xlabel('Number of Training Examples')
-    ax.set_ylabel('Posterior Balanced Accuracy Rate')
+    ax.set_ylabel('MPBA')
     ax.legend(loc='lower right', frameon=True)
     ax.grid(False)
 
@@ -588,8 +593,7 @@ def plot_validation_accuracy_heatmap(scores, x_range=None, y_range=None,
 
 
 def plot_learning_curve_df(sample_sizes, learning_curves, labels, colors,
-    linestyles, ylim=None,
-    ax=None):
+    linestyles, ylim=None, loc='lower right', upper=None, ax=None):
     """
     """
 
@@ -603,9 +607,12 @@ def plot_learning_curve_df(sample_sizes, learning_curves, labels, colors,
 
     format_as_percent_plot = lambda x, pos: "{:.0f}%".format(x * 100)
     ax.get_yaxis().set_major_formatter(FuncFormatter(format_as_percent_plot))
-    ax.legend(loc='lower right', frameon=True)
+    ax.legend(loc=loc, frameon=True)
     ax.set_xlabel('Number of Training Examples')
-    ax.set_ylabel('Posterior Balanced Accuracy Rate')
+    ax.set_ylabel('MPBA')
+
+    if upper is not None:
+        ax.plot([sample_sizes[0], sample_sizes[-1]], [upper, upper], ls='--', color='#377eb8')
 
     if ylim is not None:
         ax.set_ylim(ylim)
@@ -614,7 +621,7 @@ def plot_learning_curve_df(sample_sizes, learning_curves, labels, colors,
 
 
 def plot_heuristic_selections(sample_sizes, selections, labels, colors, linestyles,
-    loc='lower right', linewidth=1.5, ylim=None, ax=None):
+    loc='lower right', linewidth=1.5, ylim=None, ascending=False, ax=None):
     """ Plot the heuristic selections from active bandit.
     """
 
@@ -627,10 +634,14 @@ def plot_heuristic_selections(sample_sizes, selections, labels, colors, linestyl
         cumulative_i = np.mean(cumulative_i, axis=0)
         cumulatives.append(cumulative_i)
 
+    df = pd.DataFrame(cumulatives, index=labels).transpose()
+
     if not ax:
         ax = plt.gca()
 
-    for curve, label in zip(cumulatives, labels):
+    ordered_labels = df.iloc[-1].order(ascending=ascending).index
+    for label in ordered_labels:
+        curve = df[label]
         inital_n = sample_sizes[0] - 1
         n_selections = sample_sizes - inital_n
         ax.plot(sample_sizes, curve / n_selections, label=label, color=colors[label],
@@ -641,10 +652,40 @@ def plot_heuristic_selections(sample_sizes, selections, labels, colors, linestyl
     ax.legend(loc=loc, frameon=True)
     ax.set_ylim(ylim)
 
+    return ax, cumulatives
+
+
+def plot_sum_selections(sample_sizes, selections, labels, colors, linestyles,
+    loc='lower right', linewidth=1.5, ylim=None, ascending=True, width=0.8, ax=None):
+    """ Plot the heuristic selections from active bandit.
+    """
+
+    cumulatives = []
+    selections = np.asarray(selections)
+    n_labels = len(labels)
+    for i in range(n_labels):
+        cumulative_i = selections == i
+        cumulative_i = np.cumsum(cumulative_i, axis=1)
+        cumulatives.append(cumulative_i[:, -1])
+    df = pd.DataFrame(cumulatives, index=labels).transpose()
+    ordered_labels = df.mean().order(ascending=ascending).index
+    df = df.reindex_axis(ordered_labels, axis=1)
+
+    #ax = sns.barplot(data=df, palette=colors, linewidth=0)
+    ax = sns.barplot(data=df, palette=colors, linewidth=0)
+    #last = sample_sizes[-1] - sample_sizes[0]
+    #last = pd.DataFrame(cumulatives, index=labels)[last]
+    
+
+    #plot(kind='bar', colormap=colors)
+    ax.set_xticklabels(ordered_labels, rotation=45, rotation_mode="anchor", ha="right")
+    ax.set_ylabel('Numer of Selections')
+
     return ax
 
+
 def plot_bandit_parameters(sample_sizes, parameters, labels, colors, linestyles,
-    linewidth=1.5, xlabel='Training Size', ylabel='', yscale='linear', ax=None):
+    linewidth=1.5, xlabel='Training Size', ylabel='', yscale='linear', ascending=False, ax=None):
     """ Plot the parameters from the bandit experiment.
     """
 
@@ -656,12 +697,14 @@ def plot_bandit_parameters(sample_sizes, parameters, labels, colors, linestyles,
         param_avg += np.vstack(param)
 
     param_avg /= len(parameters)
+    df = pd.DataFrame(param_avg, columns=labels)
+    ordered_labels = df.iloc[-1].order(ascending=ascending).index
 
     if not ax:
         ax = plt.gca()
 
-    for i, label in enumerate(labels):
-        ax.plot(sample_sizes, param_avg[:,i], label=label, color=colors[label],
+    for label in ordered_labels:
+        ax.plot(sample_sizes, df[label], label=label, color=colors[label],
             ls=linestyles[label], linewidth=linewidth)
 
     ax.set_xlabel(xlabel)
@@ -673,7 +716,8 @@ def plot_bandit_parameters(sample_sizes, parameters, labels, colors, linestyles,
     return ax
 
 def plot_cumulative_rewards(sample_sizes, parameters, labels, colors, linestyles,
-    linewidth=1.5, xlabel='Training Size', ylabel='Cumulative Reward', loc='upper left', ax=None):
+    linewidth=1.5, xlabel='Training Size', ylabel='Cumulative Reward', loc='upper left',
+    ascending=False, ax=None):
     """ 
     """
 
@@ -686,12 +730,14 @@ def plot_cumulative_rewards(sample_sizes, parameters, labels, colors, linestyles
 
     param_avg /= len(parameters)
     param_avg = np.cumsum(param_avg, axis=0)
+    df = pd.DataFrame(param_avg, columns=labels)
+    ordered_labels = df.iloc[-1].order(ascending=ascending).index
 
     if not ax:
         ax = plt.gca()
 
-    for i, label in enumerate(labels):
-        ax.plot(sample_sizes, param_avg[:,i], label=label, color=colors[label],
+    for label in ordered_labels:
+        ax.plot(sample_sizes, df[label], label=label, color=colors[label],
             ls=linestyles[label], linewidth=linewidth)
 
     ax.set_xlabel(xlabel)

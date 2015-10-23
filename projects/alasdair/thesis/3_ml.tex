@@ -330,7 +330,7 @@ this method is often called Query by Bagging (QBB). \index{query by bagging}
 
 One way to measure the level of disagreement is to calculate the margin using the class
 probabilities estimated by the committee \cite{melville04}. This looks similar to one of the
-uncertainty sampling heuristic, except now we first average out the probabilities of the members
+uncertainty sampling heuristics, except now we first average out the probabilities of the members
 before minimising the margin: \index{margin}
     \begin{IEEEeqnarray*}{lCl}
         \bm{x}_*
@@ -384,7 +384,7 @@ that will result in the lowest expected variance: \index{variance minimisation}
     \begin{IEEEeqnarray*}{lCl}
         \bm{x}_*
         &=& \argmin_{x \in \Ecal} r_V(\bm{x}; h)  \\
-        &=& \argmin_{x \in \Ecal}  \E{V(\Labelled_T \cup (\bm{x}, y))} \\
+        &=& \argmin_{x \in \Ecal}  \E{V(\Labelled_T \cup (\bm{x}, y); h)} \\
         &=& \argmin_{x \in \Ecal} \left\{ \sum_{y \in \Y} p(y | \bm{x}; h)
             V(\Labelled_T \cup (\bm{x}, y); h)  \right\}
     \end{IEEEeqnarray*}
@@ -398,14 +398,14 @@ In addition, estimating $V(\Labelled_T; h)$ requires a bit of work. In multinomi
 regression, we can take the first two terms of the Taylor series expansion of the probability
 	\begin{IEEEeqnarray*}{lCl}
 		p(y | \bm{x}, \bm{\hat{\theta}}, h)
-		&\approx& p(y | \bm{x}, \bm{\theta}, h) + \nabla p(y | \bm{x}, \bm{\theta}, h)^T(\bm{\hat{\theta}} - \bm{\theta})
+		&\approx& p(y | \bm{x}; \bm{\theta}, h) + \nabla p(y | \bm{x}; \bm{\theta}, h)^T(\bm{\hat{\theta}} - \bm{\theta})
 	\end{IEEEeqnarray*}
 where $\bm{\theta}$ and $\bm{\hat{\theta}}$ are the expected and the current estimates of the model
 parameters, respectively, and $\nabla p(y | \bm{x}, \bm{\theta}, h)$ is called the gradient vector. Let
 $\mathcal{I}$ be the Fisher information matrix \index{Fisher information matrix} and
 	\begin{IEEEeqnarray*}{lCl}
 		O &=& \sum_{\bm{x} \in \Unlabelled}
-		      \sum_{y \in \Y} \nabla p(y | \bm{x}, \bm{\theta}, h) ~ \nabla p(y | \bm{x}, \bm{\theta}, h)^T
+		      \sum_{y \in \Y} \nabla p(y | \bm{x}; \bm{\theta}, h) ~ \nabla p(y | \bm{x}; \bm{\theta}, h)^T
 	\end{IEEEeqnarray*}
 \citeN{schein07} show that
 	\begin{IEEEeqnarray*}{lCl}
@@ -415,7 +415,7 @@ where the trace \index{trace} function $\tr(X)$ is the sum of the elements along
 of the square matrix $X$. Note that the above expression is specific to multinomial logistic
 regression. If we use the one-vs-rest strategy with binary logistic regression or another entirely
 different classifier like SVMs in our experiments, the same approximation might not hold and we
-should not expect to get good results. We leave the variance estimation of other learning
+should not expect to get good results. We leave the variance estimation for other learning
 algorithms to future work.
 
 
@@ -427,7 +427,7 @@ Finally, instead of minimising the variance of $\Unlabelled$, \citeN{mackay91} p
 minimising the entropy \index{entropy} of the classifier's predictions on $\Unlabelled$:
     \begin{IEEEeqnarray*}{lCl}
 		H(\Labelled_T; h) &=& - \sum_{\bm{x} \in \Unlabelled} \sum_{y \in \Y}
-							 p(y | \bm{x}, h) \log \big[ p(y | \bm{x}, h)  \big]
+							 p(y | \bm{x}; h) \log \big[ p(y | \bm{x}; h)  \big]
 	\end{IEEEeqnarray*}
 Although this sounds similar to one of the uncertainty sampling heuristics, here instead of picking
 the most uncertain candidate, we pick the candidate that is expected to increase the classifier's
@@ -435,7 +435,7 @@ prediction certainty by the the greatest amount:
 	\begin{IEEEeqnarray*}{lCl}
         \bm{x}_*
         &=& \argmin_{x \in \Ecal} r_{H}(\bm{x}; h) \\
-        &=& \argmin_{x \in \Ecal}  \E{H(\Labelled_T \cup (\bm{x}, y))} \\
+        &=& \argmin_{x \in \Ecal}  \E{H(\Labelled_T \cup (\bm{x}, y); h)} \\
 		&=& \argmin_{x \in \Ecal} \left\{ \sum_{y\in \Y} p(y|\bm{x}; h) 
              H(\Labelled_T \cup (\bm{x}, y); h) \right\}  
 	\end{IEEEeqnarray*}
@@ -498,12 +498,12 @@ astronomical domain.
 
 To help us automatically choose the optimal heuristic, we now turn our attention to the multi-armed
 bandit problem in probability theory. The colourful name originates from the situation where a
-gambler stands in front of a slot machine with $n$ levers. When pulled, each lever gives out a random
+gambler stands in front of a slot machine with $s$ levers. When pulled, each lever gives out a random
 reward according to some unknown distribution. The goal of the game is to come up with a strategy
 that can maximise the gambler's lifetime rewards while minimising the number of pulls.
 
 Our key novel contribution is the application of this theory to the problem of heuristic selection.
-Suppose we have a set of $n$ heuristics $ \R = \{r_1, ..., r_s \}$. Each heuristic has a different
+Suppose we have a set of $s$ heuristics $ \R = \{r_1, ..., r_s \}$. Each heuristic has a different
 ability to identify the candidate whose labelling information is most valuable. An appropriate
 reward is then the incremental increase in the accuracy rate after the candidate is added to the
 training set. We assume that the heuristic rewards are independent of each other. This is
@@ -535,14 +535,14 @@ distribution
 Thus the PDF of $\nu_i$ is
     \begin{IEEEeqnarray}{lCl}
         f(\nu_i)
-        &=& \frac{1}{\sigma_i \sqrt{2\pi}} \exp\left[ -\frac{(\rho_i - \mu_i)^2}{2 \sigma_i^2} \right]
+        &=& \frac{1}{\sigma_i \sqrt{2\pi}} \exp\left[ -\frac{(\nu_i - \mu_i)^2}{2 \sigma_i^2} \right]
          \label{eqn:rprior}
     \end{IEEEeqnarray}
 To make the problem tractable, assume that $\tau_i^2$ is a known constant. The goal now is to find a
 good algorithm that can estimate $\mu_i$ and $\sigma_i^2$.
 
-One problem in multi-arm bandits is the trade-off between exploration and exploitation
-\index{exploration vs exploitation}. Suppose we have managed to estimate $\mu_i$ and $\sigma_i^2$
+One problem in multi-arm bandits is the trade-off between exploration and exploitation.
+\index{exploration vs exploitation} Suppose we have managed to estimate $\mu_i$ and $\sigma_i^2$
 for all $i$, then by always selecting the heuristic with the highest possible mean, or the greedy
 heuristic, we would be exploiting our current knowledge. If however we select one of the other
 non-greedy heuristics, we would then be exploring with the intention of improving our estimates of
@@ -565,7 +565,7 @@ Under the heuristic selection setting, Thompson sampling works as follows. We st
 knowledge of $\mu_i$ and $\sigma_i^2$ for all $i$. So long as we do not choose anything stupid,
 e.g. a zero variance, our choice of prior should not matter too much in the long run. Since
 initially we do not have any information about the performance of each heuristic, the appropriate
-prior value for $\mu_i$ is $0$, i.e. there is no evidence (yet) that any of the heuristics offer an
+prior value for $\mu_i$ is $0$, i.e. there is no evidence (yet) that any of the heuristics offers an
 improvement to the accuracy.
 
 In each round, we draw a random sample $\nu_i'$ from the distribution $\Normal(\mu_i, \sigma_i^2)$ for
@@ -578,7 +578,7 @@ most informative is then added to the training set $\Labelled_T$ and the classif
 Next we use the updated hypothesis to predict the labels of objects in the test set $\Labelled_S$.
 Let $\delta$ be the reward observed, which is the incremental increase in the accuracy rate on
 $\Labelled_S$. We now have a new piece of information that we can use to update our prior belief
-about the mean $\nu_*$ and the variance $\sigma_*^2$ of $r_*$. In the Bayesian setting, \index{Bayesian} 
+about the mean $\mu_*$ and the variance $\sigma_*^2$ of $r_*$. In the Bayesian setting, \index{Bayesian} 
 (\ref{eqn:rprior}) is called the prior and (\ref{eqn:rlike}) is the likelihood. From Bayes'
 theorem, the posterior distribution is proportional to the product of the prior and the likelihood:
     \begin{IEEEeqnarray*}{lCl}
@@ -690,11 +690,11 @@ is simply the one with the highest $\mu_i$. However, there is a chance that we c
 our estimate of $\bm{\mu}$. Thus a better option is to only select a heuristic at the same
 frequency as the probability that it is optimal. For a given heuristic $r_i$, this probability is
     \begin{IEEEeqnarray*}{lCl}
-        \Prob{ \E{\rho_i} = \max_j \E{\rho_i} }
-        &=& \E{ \Prob{ \E{\rho_i} = \max_j \E{\rho_i} | \bm{\nu}} } \\
-        &=& \int_{\bm{\nu}} \Prob{ \E{\rho_i} = \max_j \E{\rho_i}  \given \bm{\nu} }
+        \Prob{ \E{\rho_i} = \max_j \E{\rho_j} }
+        &=& \E{ \Prob{ \E{\rho_i} = \max_j \E{\rho_j} | \bm{\nu}} } \\
+        &=& \int_{\bm{\nu}} \Prob{ \E{\rho_i} = \max_j \E{\rho_j}  \given \bm{\nu} }
              f(\bm{\nu}) \, d\bm{\nu} \\
-        &=& \int_{\bm{\nu}} \Prob{ \E{\rho_i \given \bm{\nu}} = \max_j \E{\rho_i \given \bm{\nu}} }
+        &=& \int_{\bm{\nu}} \Prob{ \E{\rho_i \given \bm{\nu}} = \max_j \E{\rho_j \given \bm{\nu}} }
             f(\bm{\nu}) \, d\bm{\nu} \\
         &=& \int_{\bm{\nu}} \Prob{ \nu_i = \max_j \nu_j }
             f(\bm{\nu}) \, d\bm{\nu} \\
@@ -721,7 +721,7 @@ the investigation of this method to future work.
 
 Certain astronomical objects are either rarer or more difficult to detect than others. In the SDSS
 labelled set, there are 4.5 times as many galaxies as quasars. The problem of class imbalance is
-even more severe in the VST-ATLAS set, with 43 times more stars than white dwarfs. An easy fix is
+even more severe in the VST ATLAS set, with 43 times more stars than white dwarfs. An easy fix is
 to undersample the dominant class when creating training and test sets. This, of course, means that
 the size of these sets are limited by the size of the minority class.
 
@@ -793,7 +793,7 @@ to calculate its expected value:
 		\E{A \given \bm{g}} &=& \frac{1}{k} \, \E{A_T \given \bm{g}} \\
 		&=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{g}}(a) \, da
 	\end{IEEEeqnarray*}
-Let us call this the mean posterior balanced accuracy rate (MPBA). Note that there is no closed
+Let us call this the mean posterior balanced accuracy (MPBA). Note that there is no closed
 form solution for the PDF $f_{A_T \mid \bm{g}}(a)$. However assuming that $A_T$ is a sum of $k$
 independent Beta random variables, $f_{A_T \mid \bm{g}}(a)$ can be approximated by numerically
 convolving $k$ Beta distributions. The independence assumption is reasonable here, since there

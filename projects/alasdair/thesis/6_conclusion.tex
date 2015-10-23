@@ -12,7 +12,7 @@
 This thesis provides an initial set of experiments that explore how active learning can help
 astronomers with photometric classification. Through our novel contribution of bringing the classic
 Thompson sampling algorithm to the setting of heuristic selection, we have managed to learn the
-optimal heuristic automatically very quickly, while still have a reasonable amount of exploration.
+optimal heuristic automatically very quickly, while still having a reasonable amount of exploration.
 The cleaner the dataset is and the better the probability estimates are, the more effective active
 learning will be. For example, we achieve the best improvement with logistic regression and the VST
 ATLAS dataset. The margin heuristic comes out as a clear winner, even under noisy conditions like
@@ -25,7 +25,7 @@ wins at the end of the day.
 
 Our thesis is built mainly upon the work of \citeN{schein07}, who investigate the individual active
 learning heuristics described in this thesis and find that QBB margin provides the most promising
-results. There are other works in the literature that also do an empirical analysis of active
+results. There are works in the literature that do an empirical analysis of active
 learning in other domains such as text classification \cite{tong02} and sequence labelling tasks
 \cite{settles08}. Most of these works suggest that active learning does indeed offer an improvement
 over random sampling . However, as far as we know, this thesis is the first in applying
@@ -50,15 +50,15 @@ investigation in the astronomical domain. It would be an interesting exercise to
 theoretical analysis to see under what assumptions heuristics such as margin would guarantee to
 outperform random sampling. Another possible future direction is to derive a variance estimation
 method for both SVMs and one-vs-rest logistic regression, since the variance estimate that we used here
-is only true under the multinomial logistic regression. We can also try to implement the Dynamic
+is only true under multinomial logistic regression. We can also try to implement the Dynamic
 Thompson Sampling approach to address the reward drifting problem.
 
 In our investigation, the algorithm only works with one sample at a time. What astronomers would
-normally do in practice, however, is batch active learning, where in each round, $n$ objects are
+normally do in practice, however, is batch-mode active learning, where in each round, $n$ objects are
 selected to be labelled simultaneously. This problem is slightly more challenging since we need to
 deal with the setting where we could have two objects whose class membership we are currently very
 uncertain about, but the knowledge of class membership of one of them would allow us to predict the
-other object's class easily. Cluster analysis might be able to help us with this problem of batch
+other object's class easily. Cluster analysis might be able to help us with this problem of batch-mode
 active learning.
 
 %%% Local Variables: 

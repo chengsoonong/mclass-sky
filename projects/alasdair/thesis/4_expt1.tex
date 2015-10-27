@@ -12,7 +12,7 @@ particular, we start by doing feature selection (Section \ref{sec:prep}) and com
 extinction vectors (Section \ref{sub:extinction}) with the SDSS dataset. We then optimise the
 hyperparameters of our classifiers (Section \ref{sub:hyper}) and obtain learning curves of both the
 SDSS and VST ATLAS datasets (Section \ref{sub:lc}). Finally, the best-performing classifier is used
-to predict the unknown class proportion of the 800 unlabelled objects in the SDSS (Section
+to predict the unknown class proportions of the 800 unlabelled objects in the SDSS (Section
 \ref{sub:prop}).
 
 
@@ -79,7 +79,7 @@ set.
 To compare the three extinction vectors (SDF98, SF11, and W14), we first split the labelled pool
 into a balanced training set of size 600,000 and a balanced test set of size 300,000. We then apply
 each correction to the measurements and train a random forest of 300 decision trees. A random
-forest is chosen due to its speed of execution. Finally the balanced posterior accuracy on the test
+forest is chosen due to its speed of execution. Finally the posterior balanced accuracy on the test
 set allows us to decide on the best performing reddening correction set. This set will be applied
 in all subsequent experiments.
 
@@ -106,11 +106,11 @@ with 5 iterations, and then take an average of the results.
 Since we would like to use as much data as possible, no attempt is made to balance the classes.
 Instead we give to the classifiers a weight vector that is proportional to the inverse
 of the class frequencies. This means that rare objects like white dwarfs are given more
-weight during training. In addition, we use the posterior balance accuracy rate to remove
+weight during training. In addition, we use the posterior balanced accuracy rate to remove
 any bias toward the dominant class.
 
 Finally since we have 800 million unlabelled objects in the SDSS, we pick the best performing
-classifier and predict the class proportion on the unlabelled data. Information from the confusion
+classifier and predict the class proportions on the unlabelled data. Information from the confusion
 matrix is used to correct for the potential misclassification.
 
 \section{Results and Discussion}
@@ -125,7 +125,7 @@ the measurements. Appendix \ref{cha:supp} contains more detailed results. Overal
 quite uninteresting since no statistical differences can be found between the three sets. In fact,
 even if we do not apply any correction, the accuracy rate still remains unchanged.
 
-This could be because in the SDSS did not survey many objects in the Milky Way band, the region in
+This could be because the SDSS did not survey many objects in the Milky Way band, the region in
 which there is the most dust extinction. Indeed, if we look back at the reddening map in Figure
 \ref{fig:reddening}, although the extinction amount does vary through the field, such variation is
 probably fairly small and random forests, after all, are quite robust to noise. In any case, for
@@ -139,8 +139,8 @@ extinction vectors provides the biggest improvement to the accuracy rate.
 	\includegraphics[width=\textwidth]{figures/4_expt1/violin_reddening_correction}
 	\caption[Accuracy rates with three extinction vectors]{Violin plots
 		showing the posterior distribution of the balanced accuracy rates: Inside each
-		violin is a boxplot, where the white dot represents the mean. Given the overlapping,
-        there is no statistical difference between the four extinction vectors.}
+		violin is a boxplot, where the white dot represents the mean. Given the overlap,
+        there is no statistical difference between the four approaches.}
 	\label{fig:reddeningviolin}
 \end{figure}
 
@@ -152,14 +152,14 @@ for many different combinations of hyperparameters. For readability, we provide 
 reasoning under each figure of how we choose the optimal values of the parameters.
 Below is a summary of our decisions:
 \begin{itemize}
-	\item \textbf{Logistic Regression}: We do first a degree 2 polynomial transformation of both
+	\item \textbf{Logistic Regression}: We first do a degree 2 polynomial transformation of both
 	the SDSS and the VST ATLAS features. For the classifier, we use the one-vs-rest
 	strategy and an L1-norm for the penalisation, thus giving us sparse solutions. The inverse
 	regularisation term $C$ is 1 in SDSS and 100 in VST ATLAS.
     
 	\item \textbf{Linear SVM}: For the SDSS data, we do a degree 2 polynomial transformation
-	and our classifier uses the one-vs-rest strategy with the squared hinge loss function
-	and, an L1-norm, and $C=0.1$. For the VST ATLAS data, we simply
+	and our classifier uses the one-vs-rest strategy with the squared hinge loss function,
+    an L1-norm, and $C=0.1$. For the VST ATLAS data, we simply
     use the Crammer-Singer approach with $C = 1,000$.
 	\item \textbf{SVM with RBF Kernel}: The optimal hyperparameter values for the SDSS data are
 	$\gamma = 0.01$ and $C = 1,000$. For the VST ATLAS data, they are $\gamma = 0.001$ and
@@ -213,9 +213,9 @@ Below is a summary of our decisions:
 		Heat map of linear SVM's cross-validation accuracy in the VST ATLAS dataset:
 		Interestingly, the optimal combination does not require any polynomial
 		transformation of the features, and instead of the usual one-vs-rest strategy,
-		we use the Crammer-Singer method
+		the Crammer-Singer method
 		with $C = 1000$ gives the best result. In theory, the Crammer-Singer approach
-		can give us true probability estimates, however this has not been implemented
+		can give us true probability estimates. However this has not been implemented
 		in scikit-learn.}
 	\label{fig:vstatlas_grid_poly}
 \end{figure}
@@ -226,7 +226,7 @@ Below is a summary of our decisions:
 	\caption[Heat map of RBF SVM's CV accuracy in SDSS]{
 		Heat map of RBF SVM's cross-validation accuracy in the SDSS dataset:
 		Here the optimal values for the hyperparameters are $\gamma=0.01$
-		and $c = 1,000$, giving an accuracy of around $88\%$.}
+		and $c = 1,000$, giving us an accuracy of around $88\%$.}
 	\label{fig:sdss_grid_rbf}
 \end{figure}
 
@@ -284,7 +284,7 @@ Let us now make some predictions on the unlabelled SDSS data. Although the RBF S
 the best-performing classifier, we nonetheless choose the random forest due to its fast
 training time. We retrain the forest, now with a training set of size 837,000 and a test
 set of size 300,000. Figure \ref{fig:confusion} shows the confusion matrix on the test set.
-Observe that it is easiest to classify galaxies and the main difficulty is distinguishing
+Observe that it is easiest to classify galaxies and the main difficulty is in distinguishing
 between stars and quasars.
 
 There are exactly 794,014,031 objects in the entire database. Out of these, the random 
@@ -299,7 +299,7 @@ for the potential misclassification. For example, only 95.7\% of objects predict
 are actually galaxies, while 0.5\% of objects predicted as stars are galaxies and 1.8\% of
 objects predicted as quasars are galaxies. Let $Q_{ij}$ the entry in the $i$th
 row and $j$th column of the normalised confusion matrix. Let $N_G$, $N_S$, and $N_Q$ be the
-predicted number of galaxies, stars, and quasars, respectively; and let $N'_G$, $N'_S$, and $N'_Q$ be the actual numbers. Then the estimated actual number of galaxies,
+predicted number of galaxies, stars, and quasars, respectively; and let $N'_G$, $N'_S$, and $N'_Q$ be the corrected numbers. Then the estimated actual number of galaxies,
 stars, and quasars in the unlabelled pool are
 	\begin{IEEEeqnarray*}{lCl}
 		N'_G &=& N_G Q_{11} + N_S Q_{12} + N_Q Q_{13} = 376,281,067 \\
@@ -336,19 +336,19 @@ sophisticated methods are needed if we want to recover the true proportions of t
 	\begin{subfigure}{\textwidth}
 		\centering
 		\includegraphics[width=0.73\textwidth]{figures/4_expt1/sdss_train_galaxies}
-		\caption{The distribution of galaxies.}
+		\caption{Distribution of galaxies.}
 		\label{fig:training_g}
 	\end{subfigure}\\
 	\begin{subfigure}{\textwidth}
 		\centering
 		\includegraphics[width=0.73\linewidth]{figures/4_expt1/sdss_train_stars}
-		\caption{The distribution of stars.}
+		\caption{Distribution of stars.}
 		\label{fig:training_s}
 	\end{subfigure}
 	\begin{subfigure}{\textwidth}
 		\centering
 		\includegraphics[width=0.73\linewidth]{figures/4_expt1/sdss_train_quasars}
-		\caption{The distribution of quasars.}
+		\caption{Distribution of quasars.}
 		\label{fig:training_q}
 	\end{subfigure}
 	\caption[Distribution map of labelled objects in the SDSS]{The distribution map of
@@ -379,7 +379,7 @@ sophisticated methods are needed if we want to recover the true proportions of t
 		\label{fig:random3}
 	\end{subfigure}
 	\caption[Map of predicted labels on all SDSS data.]{
-		Map of predicted labels on the whole SDSS dataset using random forest: This
+		Map of the predicted labels on the whole SDSS dataset using random forest: This
 		map is, however, only moderately useful, since it is not a random sample of the sky.}
 	\label{fig:forest}
 \end{figure}

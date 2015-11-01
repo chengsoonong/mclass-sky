@@ -1,5 +1,7 @@
 import numpy as np
 import scipy as sp
+from sklearn.preprocessing import KernelCenterer
+
 
 def null(a, rtol=1e-5):
     u, s, v = np.linalg.svd(a)
@@ -18,7 +20,7 @@ def calculate_knfst(K, labels):
     if n != m:
         raise Exception("Kernel matrix must be quadratic")
         
-    centered_k = center_kernel_matrix(K)
+    centered_k = KernelCenterer().fit_transform(K)
     basis_values, basis_vecs = np.linalg.eig(centered_k)
   
     basis_vecs = basis_vecs[:,basis_values > 1e-12]
@@ -42,21 +44,4 @@ def calculate_knfst(K, labels):
         
     proj = (np.eye(m,m)-M).dot(basis_vecs).dot(eigenvecs)
     return proj
-        
-        
-def center_kernel_matrix(kernel):
-    '''
-    Centers the data in the feature space only using the kernel matrix
-    '''
-    n = np.shape(kernel)[0]
-    column_means = np.mean(kernel, 0)
-    matrix_mean = np.mean(kernel)
-    centered = kernel
-    
-    for idx in range(n):
-        centered[idx, :] = centered[idx, :] - column_means
-        centered[:, idx] = centered[:, idx] - column_means
-        
-    centered += matrix_mean
-    return centered
 

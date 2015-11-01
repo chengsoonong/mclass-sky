@@ -3,7 +3,7 @@ import scipy as sp
 from knfst import calculate_knfst
 
 
-def learn_multiclass_novelty_knfst(K, labels):
+def learn(K, labels):
     '''
     Calculate multi-class KNFST model for multi-class novelty detection
     

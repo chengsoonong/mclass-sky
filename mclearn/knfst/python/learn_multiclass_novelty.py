@@ -20,7 +20,7 @@ def learn(K, labels):
     proj = calculate_knfst(K, labels)
     target_points = []
     for cl in classes:
-        k_cl = K[labels==cl]
+        k_cl = K[labels==cl, :]
         target_points.append(np.mean(k_cl.dot(proj), axis=0))
         
     return proj, np.array(target_points)

@@ -99,7 +99,7 @@ The following nine notebooks accompany Alasdair's thesis on
 
 
 .. _Photometric Classification with Thompson Sampling:
-   https://alasdairtran.github.io/mclearn/thesis.pdf
+   https://alasdairtran.github.io/mclearn/tran15honours-thesis.pdf
 .. _Getting Started:
    projects/alasdair/notebooks/getting_started.ipynb
 .. _Dataset Preparation:

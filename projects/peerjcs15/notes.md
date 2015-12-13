@@ -51,8 +51,17 @@ http://www.princeton.edu/~sbubeck/SurveyBCB12.pdf
 
 ### UCI Data
 
-* binary classification: bupa, ionosphere, pima, sonar, wpbc
-* multiclass: iris, glass, vehicle, wine
+* binary classification:
+  * [bupa](https://archive.ics.uci.edu/ml/datasets/Liver+Disorders): BUPA liver disorders, features are blood tests.
+  * [ionosphere](https://archive.ics.uci.edu/ml/datasets/Ionosphere): Radar data.
+  * [pima](https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes): Pima Indians Diabetes.
+  * [sonar](https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)): We want to discriminate between sonar signals bounced off a metal cylinder and those bounced off a roughly cylindrical rock.
+  * [wpbc](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)): Prognostic Wisconsin breast cancer.
+* multiclass:
+  * [iris](https://archive.ics.uci.edu/ml/datasets/Iris): Well-known dataset from Fisher, three classes.
+  * [glass](https://archive.ics.uci.edu/ml/datasets/Glass+Identification): Glass identification, seven classes.
+  * [vehicle](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)): Classifying a given sihouette as one of four types of vehicle.
+  * [wine](https://archive.ics.uci.edu/ml/datasets/Wine): Using chemical analysis to determine the origin of wines.
 
 ### SDSS
 

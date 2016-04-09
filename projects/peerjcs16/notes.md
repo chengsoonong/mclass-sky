@@ -52,7 +52,6 @@ http://www.princeton.edu/~sbubeck/SurveyBCB12.pdf
 ### UCI Data
 
 * binary classification:
-  * [bupa](https://archive.ics.uci.edu/ml/datasets/Liver+Disorders): BUPA liver disorders, features are blood tests.
   * [ionosphere](https://archive.ics.uci.edu/ml/datasets/Ionosphere): Radar data.
   * [pima](https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes): Pima Indians Diabetes.
   * [sonar](https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)): We want to discriminate between sonar signals bounced off a metal cylinder and those bounced off a roughly cylindrical rock.

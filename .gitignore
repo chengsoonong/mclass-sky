@@ -43,3 +43,5 @@ projects/alasdair/data/sdss_ebv.h5
 projects/alasdair/pickle/05_class_proportion_estimation
 projects/alasdair/literature
 projects/peerjcs16/literature
+projects/peerjcs16/data/sdss.h5
+projects/peerjcs16/data/vstatlas.h5

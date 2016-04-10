@@ -91,7 +91,7 @@ class BaseActive:
                 accuracy = self.accuracy_fn[measure](self.classifier, X_test, y_test)
                 self.learning_curve_[measure].append(accuracy)
 
-    def _update_parameters():
+    def _update_parameters(self):
         pass
 
 

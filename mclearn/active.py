@@ -151,8 +151,12 @@ class BaseActive:
                 If supplied, this will be used to compute an accuracy score for the learning curve.
         """
 
-        pool_size = X_train.shape[0]
-        n_features = X_train.shape[1]
+        # make sure we have numpy array
+        X_train, y_train = np.asarray(X_train), np.asarray(y_train)
+        if X_test is not None and y_test is not None:
+            X_test, y_test = np.asarray(X_test), np.asarray(y_test)
+
+        pool_size, n_features = X_train.shape
 
         # boolean index of the samples which have been queried and are in the training set
         train_mask = np.zeros(pool_size, dtype=bool)

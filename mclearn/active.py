@@ -9,13 +9,14 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.utils import shuffle
 
 from .heuristics import random_h
-from .performance import compute_balanced_accuracy
+from .performance import mpba_score
+from .tools import log
 
 
 class BaseActive:
     """ Base class for active learning. """
 
-    def __init__(self, classifier, best_heuristic=None, accuracy_fn=compute_balanced_accuracy,
+    def __init__(self, classifier, best_heuristic=None, accuracy_fn=mpba_score,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
                  verbose=False, random_state=None, pool_random_state=None, **h_kwargs):
 
@@ -28,11 +29,18 @@ class BaseActive:
         self.n_candidates = n_candidates
         self.sample_size = sample_size
         self.verbose = verbose
-        self.learning_curve_ = []
         self.h_kwargs = h_kwargs
         self.candidate_selections = []
         self.rng = RandomState(random_state)
         self.pool_rng = RandomState(pool_random_state)
+
+        if callable(self.accuracy_fn):
+            self.learning_curve_ = []
+        elif type(self.accuracy_fn) is dict:
+            self.learning_curve_ = {}
+            for measure in self.accuracy_fn:
+                self.learning_curve_[measure] = []
+
 
 
     def _random_sample(self, pool_size, train_mask, sample_size):
@@ -72,18 +80,25 @@ class BaseActive:
         return None
 
 
-    def _store_results(self, accuracy):
+    def _store_results(self, X_test, y_test):
         """ Store results at the end of an iteration. """
 
-        self.learning_curve_.append(accuracy)
+        if callable(self.accuracy_fn):
+            accuracy = self.accuracy_fn(self.classifier, X_test, y_test)
+            self.learning_curve_.append(accuracy)
+        elif type(self.accuracy_fn) is dict:
+            for measure in self.accuracy_fn:
+                accuracy = self.accuracy_fn[measure](self.classifier, X_test, y_test)
+                self.learning_curve_[measure].append(accuracy)
+
+    def _update_parameters(self):
+        pass
 
 
     def _print_progress(self):
         """ Print out current progress. """
-        if self.current_training_size % 1000 == 0:
-            print(self.current_training_size, end='')
-        elif self.current_training_size % 100 == 0:
-            print('.', end='')
+        if self.current_training_size % 100 == 0:
+            log('.', end='')
 
 
     def select_candidates(self, X, y, candidate_mask, train_mask):
@@ -136,8 +151,12 @@ class BaseActive:
                 If supplied, this will be used to compute an accuracy score for the learning curve.
         """
 
-        pool_size = X_train.shape[0]
-        n_features = X_train.shape[1]
+        # make sure we have numpy array
+        X_train, y_train = np.asarray(X_train), np.asarray(y_train)
+        if X_test is not None and y_test is not None:
+            X_test, y_test = np.asarray(X_test), np.asarray(y_test)
+
+        pool_size, n_features = X_train.shape
 
         # boolean index of the samples which have been queried and are in the training set
         train_mask = np.zeros(pool_size, dtype=bool)
@@ -151,8 +170,7 @@ class BaseActive:
 
         # obtain the first data point of the learning curve
         if X_test is not None and y_test is not None:
-            accuracy = self.accuracy_fn(self.classifier, X_test, y_test)
-            self.learning_curve_.append(accuracy)
+            self._store_results(X_test, y_test)
 
         # keep training the classifier until we have a desired sample size
         while np.sum(train_mask) < self.training_size:
@@ -174,8 +192,8 @@ class BaseActive:
 
             # obtain the next data point of the learning curve
             if X_test is not None and y_test is not None:
-                accuracy = self.accuracy_fn(self.classifier, X_test, y_test)
-                self._store_results(accuracy)
+                self._store_results(X_test, y_test)
+                self._update_parameters()
 
             # print progress after every 100 queries
             if self.verbose:
@@ -252,7 +270,7 @@ class ActiveLearner(BaseActive):
             simply the array containing all of these accuracy rates.
     """
 
-    def __init__(self, classifier, heuristic=random_h, accuracy_fn=compute_balanced_accuracy,
+    def __init__(self, classifier, heuristic=random_h, accuracy_fn=mpba_score,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
                  verbose=False, **h_kwargs):
 
@@ -312,7 +330,7 @@ class ActiveBandit(BaseActive):
             simply the array containing all of these accuracy rates.
     """
 
-    def __init__(self, classifier, heuristics, accuracy_fn=compute_balanced_accuracy,
+    def __init__(self, classifier, heuristics, accuracy_fn=mpba_score,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
                  verbose=False, prior_mu=0, prior_sigma=0.02,
                  likelihood_sigma=0.02, **h_kwargs):
@@ -327,9 +345,9 @@ class ActiveBandit(BaseActive):
         self.best_heuristic_idx = None
         self.heuristic_selection = []
 
-        self.prior_mus = np.full(self.n_heuristics, prior_mu)
-        self.prior_sigmas = np.full(self.n_heuristics, prior_sigma)
-        self.likelihood_sigmas = np.full(self.n_heuristics, likelihood_sigma)
+        self.prior_mus = np.full(self.n_heuristics, prior_mu, dtype=np.float64)
+        self.prior_sigmas = np.full(self.n_heuristics, prior_sigma, dtype=np.float64)
+        self.likelihood_sigmas = np.full(self.n_heuristics, likelihood_sigma, dtype=np.float64)
 
         self.all_prior_mus = [self.prior_mus.copy()]
         self.all_prior_sigmas = [self.prior_sigmas.copy()]
@@ -347,13 +365,16 @@ class ActiveBandit(BaseActive):
         self.heuristic_selection.append(self.best_heuristic_idx)
 
 
-    def _store_results(self, accuracy):
+    def _update_parameters(self):
         """ Store results at the end of an iteration. """
 
-        self.learning_curve_.append(accuracy)
+        if callable(self.accuracy_fn):
+            main_learning_curve = self.learning_curve_
+        elif type(self.accuracy_fn) is dict:
+            main_learning_curve = self.learning_curve_['mpba']
 
         # update reward prior with the change in accuracy rate
-        delta = self.learning_curve_[-1] - self.learning_curve_[-2]
+        delta = main_learning_curve[-1] - main_learning_curve[-2]
         mu_0 = self.prior_mus[self.best_heuristic_idx]
         sigma_0 = self.prior_sigmas[self.best_heuristic_idx]
         sigma = self.likelihood_sigmas[self.best_heuristic_idx]

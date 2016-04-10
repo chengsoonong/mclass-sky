@@ -342,9 +342,7 @@ def precision(confusion, classes, classifiers):
     return precisions
 
 
-
-
-def compute_balanced_accuracy(classifier, testing_pool, testing_oracle):
+def mpba_score(classifier, testing_pool, testing_oracle):
     """ Compute the accuracy of a classifier based on some test set.
 
         Parameters
@@ -368,3 +366,9 @@ def compute_balanced_accuracy(classifier, testing_pool, testing_oracle):
     y_pred = classifier.predict(testing_pool)
     confusion_test = metrics.confusion_matrix(testing_oracle, y_pred)
     return balanced_accuracy_expected(confusion_test)
+
+
+def micro_f1_score(clf, X_test, y_test):
+    y_pred = clf.predict(X_test)
+    average = 'binary' if len(np.unique(y_test)) == 2 else 'micro'
+    return metrics.f1_score(y_test, y_pred, average=average)

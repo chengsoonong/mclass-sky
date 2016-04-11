@@ -1,7 +1,7 @@
-%% Submissions for peer-review must enable line-numbering 
+%% Submissions for peer-review must enable line-numbering
 %% using the lineno option in the \documentclass command.
 %%
-%% Preprints and camera-ready submissions do not need 
+%% Preprints and camera-ready submissions do not need
 %% line numbers, and should have this option removed.
 %%
 %% Please note that the line numbering option requires
@@ -48,14 +48,13 @@ Use section and subsection commands to organize your document. \LaTeX{} handles 
 
 \subsection*{Figures and Tables}
 
-Use the table and tabular commands for basic tables --- see Table~\ref{tab:widgets}, for example. You can upload a figure (JPEG, PNG or PDF) using the project menu. To include it in your document, use the includegraphics command as in the code for Figure~\ref{fig:view} below.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\linewidth]{view}
-\caption{An example image.}
-\label{fig:view}
+\begin{figure}[ht]\centering
+\includegraphics[width=\linewidth]{figures/vega_filters_and_spectrum}
+\caption[Spectrum of the star Vega and the ugriz bandpasses]{The black curve is the                spectrum of Vega, the fifth brightest star in the night sky. The spectrum tells us how                much radiation Vega emits at each wavelength. We also show five transmission functions,                one for each of the five ugriz filters. The transmission function tells us how much light                can get through the filter at each wavelength.}
+\label{fig:vega}
 \end{figure}
+
+Reference to Figure \ref{fig:vega}.
 
 \begin{table}[ht]
 \centering
@@ -82,12 +81,12 @@ denote their mean. Then as $n$ approaches infinity, the random variables $\sqrt{
 
 You can make lists with automatic numbering \dots
 
-\begin{enumerate}[noitemsep] 
+\begin{enumerate}[noitemsep]
 \item Like this,
 \item and like this.
 \end{enumerate}
 \dots or bullet points \dots
-\begin{itemize}[noitemsep] 
+\begin{itemize}[noitemsep]
 \item Like this,
 \item and like this.
 \end{itemize}
@@ -122,13 +121,6 @@ We hope you find write\LaTeX\ useful for your PeerJ submission, and please let u
 
 \lipsum[9] % Dummy text
 
-\begin{figure}[ht]\centering
-\includegraphics[width=\linewidth]{results}
-\caption{In-text Picture}
-\label{fig:results}
-\end{figure}
-
-Reference to Figure \ref{fig:results}.
 
 \section*{Results and Discussion}
 
@@ -154,6 +146,6 @@ Reference to Figure \ref{fig:results}.
 
 So long and thanks for all the fish.
 
-\bibliography{sample}
+\bibliography{active}
 
 \end{document}

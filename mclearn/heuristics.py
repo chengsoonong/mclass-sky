@@ -27,6 +27,7 @@ def random_h(candidate_mask, n_candidates, **kwargs):
     """
     
     candidate_index = np.where(candidate_mask)[0]
+    n_candidates = min(n_candidates, len(candidate_index))
     random_index = np.random.choice(candidate_index, n_candidates, replace=False)
     return random_index
 
@@ -66,6 +67,9 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     shannon = np.empty(len(candidate_mask))
     shannon[:] = -np.inf
     shannon[candidate_mask] = candidate_shannon
+
+    # make sure we don't return non-candidates
+    n_candidates = min(n_candidates, len(probs))
     
     # pick the candidate with the greatest Shannon entropy
     best_candidates = np.argsort(-shannon)[:n_candidates]
@@ -112,6 +116,9 @@ def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     margin = np.empty(len(candidate_mask))
     margin[:] = +np.inf
     margin[candidate_mask] = candidate_margin
+
+    # make sure we don't return non-candidates
+    n_candidates = min(n_candidates, len(probs))
     
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(margin)[:n_candidates]
@@ -188,6 +195,9 @@ def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee,
     margin = np.empty(len(candidate_mask))
     margin[:] = +np.inf
     margin[candidate_mask] = candidate_margin
+
+    # make sure we don't return non-candidates
+    n_candidates = min(n_candidates, n_samples)
     
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(margin)[:n_candidates]
@@ -274,6 +284,9 @@ def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committe
     kl = np.empty(len(candidate_mask))
     kl[:] = -np.inf
     kl[candidate_mask] = avg_kl
+
+    # make sure we don't return non-candidates
+    n_candidates = min(n_candidates, n_samples)
     
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(-kl)[:n_candidates]
@@ -461,6 +474,9 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     assert not np.isnan(expected).any(), 'Some expected values are undefined.'
     variance[indices] = expected
 
+    # make sure we don't return non-candidates
+    n_candidates = min(n_candidates, len(probs))
+
     # pick the candidate with the smallest expected variance
     best_candidates = np.argsort(variance)[:n_candidates]
     return best_candidates
@@ -559,6 +575,9 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
     assert not np.isnan(expected).any(), 'Some expected values are undefined.'
 
     entropy[indices] = expected
+
+    # make sure we don't return non-candidates
+    n_candidates = min(n_candidates, len(probs))
 
     # pick the candidate with the smallest expected entropy
     best_candidates = np.argsort(entropy)[:n_candidates]

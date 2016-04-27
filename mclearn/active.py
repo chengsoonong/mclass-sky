@@ -9,6 +9,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.utils import shuffle
 
 from .heuristics import random_h
+from .aggregators import borda_count
 from .performance import mpba_score
 from .tools import log
 
@@ -384,6 +385,116 @@ class ActiveBandit(BaseActive):
 
         self.all_prior_mus.append(self.prior_mus.copy())
         self.all_prior_sigmas.append(self.prior_sigmas.copy())
+
+
+
+class ActiveAggregator(BaseActive):
+    """ Rank Aggregator of active learning heuristics.
+
+        Parameters
+        ----------
+        classifier : Classifier object
+            A classifier object that will be used to train and test the data.
+            It should have the same interface as scikit-learn classifiers.
+
+        heuristics : function
+            This is a list active learning rule. Given a set
+            of training candidates and the classifier as inputs, a rule will
+            return index array of candidate(s) with the highest score(s).
+
+        accuracy_fn : function
+            Given a trained classifier, a test set, and a test oracle, this function
+            will return the accuracy rate.
+
+        initial_n : int
+            The number of samples that the active learner will randomly select at the beginning
+            to get the algorithm started.
+
+        training_size : int
+            The total number of samples that the active learner will query.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        sample_size : int
+            At each iteration, the active learner will pick a random of sample of examples.
+            It will then compute a score for each of example and query the one with the
+            highest score according to the active learning rule. If sample_size is set to 0,
+            the entire training pool will be sampled (which can be inefficient with large
+            datasets).
+
+        verbose : boolean
+            If set to True, progress is printed to standard output after every 100 iterations.
+
+        aggregator : function
+            The rank aggregator to be used. Can use any function in aggretators.py.
+            The aggregator acts like a heuristic, i.e. it needs to return the a list of
+            best candidates.
+
+
+        **kwargs : other keyword arguments
+            All other keyword arguments will be passed onto the heuristic function.
+        
+
+        Attributes
+        ----------
+        learning_curves_ : array
+            Every time the active learner queries the oracle, it will re-train the classifier
+            and run it on the test data to get an accuracy rate. The learning curve is
+            simply the array containing all of these accuracy rates.
+
+    """
+
+
+    def __init__(self, classifier, heuristics, accuracy_fn=mpba_score,
+                 initial_n=20, training_size=100, sample_size=20, n_candidates=1,
+                 verbose=False, aggregator=borda_count, **h_kwargs):
+
+        super().__init__(classifier=classifier,
+                         accuracy_fn=accuracy_fn, initial_n=initial_n,
+                         training_size=training_size, sample_size=sample_size,
+                         n_candidates=n_candidates, verbose=verbose, **h_kwargs)
+
+        self.heuristics = heuristics
+        self.n_heuristics = len(heuristics)
+        self.aggregator = aggregator
+
+
+    def select_candidates(self, X, y, candidate_mask, train_mask):
+        """ Return the indices of the best candidates.
+
+            Parameters
+            ----------
+            X : array
+                The feature matrix of all the data points.
+
+            y : array
+                The target vector of all the data points.
+
+            candidate_mask : boolean array
+                The boolean array that tells us which data points the heuristic should examine.
+
+            **h_kwargs : other keyword arguments
+                All other keyword arguments will be passed onto the heuristic function.
+
+            Returns
+            -------
+            best_candidates : array
+                The list of indices of the best candidates.
+        """
+
+
+        voters = []
+        for heuristic in self.heuristics:
+            voter = heuristic(X=X, y=y, candidate_mask=candidate_mask,
+                             train_mask=train_mask, classifier=self.classifier,
+                             n_candidates=self.sample_size, random_state=self.pool_rng.randint(1000),
+                             **self.h_kwargs)
+            voters.append(voter)
+        
+        best_candidates = self.aggregator(voters, self.n_candidates)
+
+        return best_candidates
 
 
 def run_active_learning_expt(X, y, kfold, classifier, committee, heuristics, pickle_paths,

@@ -35,6 +35,35 @@ def borda_count(voters, n_candidates):
     return rank[:n_candidates]
 
 
+def geometric_mean(voters, n_candidates):
+    """ Geometric mean rank aggregator.
+
+        Parameters
+        ----------
+        voters : list-like
+            A list of arrays where each array correponds to a voter's preference.
+        
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+        
+        Returns
+        -------
+        best_candidates : array
+            The list of indices of the best candidates.
+    """
+
+    points = {}
+
+    # accumulate the points for each candidate
+    for voter in voters:
+        for idx, candidate in enumerate(voter):
+            points[candidate] = points.get(candidate, 1) * (idx + 1)
+
+    # sort the candidates and return the most popular one(s)
+    rank = sorted(points, key=points.__getitem__, reverse=False)
+    return rank[:n_candidates]
+
+
 def schulze_method(voters, n_candidates):
     """ Schulze method of ordering candidates.
 

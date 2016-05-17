@@ -158,6 +158,7 @@ class BaseActive:
             X_test, y_test = np.asarray(X_test), np.asarray(y_test)
 
         pool_size, n_features = X_train.shape
+        assert self.training_size <= pool_size, 'Pool size is too small.'
 
         # boolean index of the samples which have been queried and are in the training set
         train_mask = np.zeros(pool_size, dtype=bool)
@@ -175,7 +176,6 @@ class BaseActive:
 
         # keep training the classifier until we have a desired sample size
         while np.sum(train_mask) < self.training_size:
-            
             # select a random sample from the unlabelled pool
             candidate_mask = self._random_sample(pool_size, train_mask, self.sample_size)
 
@@ -493,7 +493,6 @@ class ActiveAggregator(BaseActive):
             voters.append(voter)
         
         best_candidates = self.aggregator(voters, self.n_candidates)
-
         return best_candidates
 
 

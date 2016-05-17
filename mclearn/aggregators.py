@@ -63,7 +63,7 @@ def schulze_method(voters, n_candidates):
                 points[(i, j)] = points.get((i, j), 0) + 1
 
     # get the id of all candidates
-    candidates = set(itertools.chain(*points.keys()))
+    candidates = set(np.ravel(voters))
 
     # compute the strogest path using a variant of Floyd–Warshall algorithm
     strength = {}
@@ -83,6 +83,6 @@ def schulze_method(voters, n_candidates):
 
     # Schulze method guarantees that there is no cycle, so sorting is well-defined
     compare_strength = lambda x, y: strength[(x, y)] - strength[(y, x)]
-    rank = sorted(candidates, key=functools.cmp_to_key(compare_strength))
+    rank = sorted(candidates, key=functools.cmp_to_key(compare_strength), reverse=True)
     return rank[:n_candidates]
 

@@ -5,7 +5,12 @@
 doc/_build
 doc/generated
 dist
+build
 __pycache__
+
+# Cython files
+*.so
+*.c
 
 # latex files
 *.aux

@@ -9,6 +9,10 @@ from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
+from Cython.Build import cythonize
+import numpy as np
+
+
 
 here = path.abspath(path.dirname(__file__))
 
@@ -36,6 +40,9 @@ setup(
 
     # Choose your license
     license='BSD',
+
+    ext_modules = cythonize('mclearn/*.pyx'),
+    include_dirs = [np.get_include()],
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -69,7 +76,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'seaborn',
-                      'scikit-learn', 'ephem', 'ipython'],
+                      'scikit-learn', 'ephem', 'ipython', 'cython'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

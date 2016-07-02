@@ -19,7 +19,7 @@ class BaseActive:
 
     def __init__(self, classifier, best_heuristic=None, accuracy_fn=mpba_score,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
-                 verbose=False, random_state=None, pool_random_state=None, **h_kwargs):
+                 verbose=False, random_state=None, **h_kwargs):
 
         self.classifier = classifier
         self.best_heuristic = best_heuristic
@@ -32,8 +32,11 @@ class BaseActive:
         self.verbose = verbose
         self.h_kwargs = h_kwargs
         self.candidate_selections = []
-        self.rng = RandomState(random_state)
-        self.pool_rng = RandomState(pool_random_state)
+
+        if type(random_state) is RandomState:
+            self.seed = random_state
+        else:
+            self.seed = RandomState(random_state)
 
         if callable(self.accuracy_fn):
             self.learning_curve_ = []
@@ -68,7 +71,7 @@ class BaseActive:
 
         if 0 < self.sample_size < np.sum(candidate_mask):
             unlabelled_index = np.where(candidate_mask)[0]
-            candidate_index = self.rng.choice(unlabelled_index, self.sample_size, replace=False)
+            candidate_index = self.seed.choice(unlabelled_index, self.sample_size, replace=False)
             candidate_mask = np.zeros(pool_size, dtype=bool)
             candidate_mask[candidate_index] = True
 
@@ -85,11 +88,13 @@ class BaseActive:
         """ Store results at the end of an iteration. """
 
         if callable(self.accuracy_fn):
-            accuracy = self.accuracy_fn(self.classifier, X_test, y_test)
+            y_pred = self.classifier.predict(X_test)
+            accuracy = self.accuracy_fn(y_test, y_pred)
             self.learning_curve_.append(accuracy)
         elif type(self.accuracy_fn) is dict:
+            y_pred = self.classifier.predict(X_test)
             for measure in self.accuracy_fn:
-                accuracy = self.accuracy_fn[measure](self.classifier, X_test, y_test)
+                accuracy = self.accuracy_fn[measure](y_test, y_pred)
                 self.learning_curve_[measure].append(accuracy)
 
     def _update_parameters(self):
@@ -99,7 +104,7 @@ class BaseActive:
     def _print_progress(self):
         """ Print out current progress. """
         if self.current_training_size % 100 == 0:
-            log('.', end='')
+            log('.', end=' ')
 
 
     def select_candidates(self, X, y, candidate_mask, train_mask):
@@ -130,7 +135,7 @@ class BaseActive:
 
         return self.best_heuristic(X=X, y=y, candidate_mask=candidate_mask,
                                    train_mask=train_mask, classifier=self.classifier,
-                                   n_candidates=self.n_candidates, random_state=self.pool_rng.randint(1000),
+                                   n_candidates=self.n_candidates, random_state=self.seed,
                                    **self.h_kwargs)
 
 
@@ -164,7 +169,7 @@ class BaseActive:
         train_mask = np.zeros(pool_size, dtype=bool)
 
         # select an initial random sample from the pool and train the classifier
-        sample = self.rng.choice(np.arange(pool_size), self.initial_n, replace=False)
+        sample = self.seed.choice(np.arange(pool_size), self.initial_n, replace=False)
         self.candidate_selections += list(sample)
         train_mask[sample] = True
         self.classifier.fit(X_train[train_mask], y_train[train_mask])
@@ -201,7 +206,9 @@ class BaseActive:
                 self._print_progress()
 
             assert self.current_training_size == np.sum(train_mask), \
-                   'Mismatch detected in the training size. Check your heuristic.'
+                   'Mismatch detected in the training size. Check your heuristic: ' + \
+                   'current_training_size = {}; np.sum(train_mask) = {}'.format(
+                   self.current_training_size, np.sum(train_mask))
 
 
     def predict(self, X):
@@ -261,7 +268,7 @@ class ActiveLearner(BaseActive):
 
         **kwargs : other keyword arguments
             All other keyword arguments will be passed onto the heuristic function.
-        
+
 
         Attributes
         ----------
@@ -321,7 +328,7 @@ class ActiveBandit(BaseActive):
 
         **kwargs : other keyword arguments
             All other keyword arguments will be passed onto the heuristic function.
-        
+
 
         Attributes
         ----------
@@ -358,7 +365,7 @@ class ActiveBandit(BaseActive):
         """ Choose a heuristic to be used (useful in bandits active learning). """
 
         # take a sample of rewards from the current prior of heuristics
-        sample_rewards = np.random.normal(self.prior_mus, self.prior_sigmas)
+        sample_rewards = self.seed.normal(self.prior_mus, self.prior_sigmas)
 
         # select the heuristic that has the highest reward sample value
         self.best_heuristic_idx = np.argmax(sample_rewards)
@@ -434,7 +441,7 @@ class ActiveAggregator(BaseActive):
 
         **kwargs : other keyword arguments
             All other keyword arguments will be passed onto the heuristic function.
-        
+
 
         Attributes
         ----------
@@ -488,18 +495,21 @@ class ActiveAggregator(BaseActive):
         for heuristic in self.heuristics:
             voter = heuristic(X=X, y=y, candidate_mask=candidate_mask,
                              train_mask=train_mask, classifier=self.classifier,
-                             n_candidates=self.sample_size, random_state=self.pool_rng.randint(1000),
+                             n_candidates=self.sample_size, random_state=self.seed,
                              **self.h_kwargs)
             voters.append(voter)
-        
+
+        voters = np.asarray(voters)
         best_candidates = self.aggregator(voters, self.n_candidates)
         return best_candidates
 
 
+# TODO: update old notebooks
 def run_active_learning_expt(X, y, kfold, classifier, committee, heuristics, pickle_paths,
     initial_n=50, training_size=300, sample_size=300, verbose=True,
     committee_samples=300, pool_n=300, C=1):
     """ Run an active learning experiment
+        DEPRECATED
     """
 
     for heuristic, pickle_path in zip(heuristics, pickle_paths):
@@ -521,21 +531,22 @@ def run_active_learning_expt(X, y, kfold, classifier, committee, heuristics, pic
                                            committee_samples=committee_samples,
                                            pool_n=pool_n,
                                            C=C,
-                                           random_state=i,
-                                           pool_random_state=i)
-            active_learner.fit(X_train, y_train, X_test, y_test)        
+                                           random_state=i)
+            active_learner.fit(X_train, y_train, X_test, y_test)
             learning_curves.append(active_learner.learning_curve_)
             candidate_selections.append(active_learner.candidate_selections)
             print(i, end='')
 
         with open(pickle_path, 'wb') as f:
-            pickle.dump((learning_curves, candidate_selections), f, protocol=4) 
+            pickle.dump((learning_curves, candidate_selections), f, protocol=4)
 
 
+# TODO: update old notebooks
 def run_bandit_expt(X, y, kfold, classifier, committee, heuristics, pickle_paths,
     initial_n=50, training_size=300, sample_size=300, verbose=True,
     committee_samples=300, pool_n=300, C=1):
     """ Run Bandit experiment.
+        DEPRECATED
     """
 
     learning_curves = []
@@ -562,7 +573,7 @@ def run_bandit_expt(X, y, kfold, classifier, committee, heuristics, pickle_paths
                                        C=C)
 
         active_bandit.fit(X_train, y_train, X_test, y_test)
-        
+
         learning_curves.append(active_bandit.learning_curve_)
         heuristic_selections.append(active_bandit.heuristic_selection)
         mus.append(active_bandit.all_prior_mus)

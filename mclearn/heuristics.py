@@ -2,14 +2,16 @@
 
 import numpy as np
 import copy
+import logging
 from joblib import Parallel, delayed
 from numpy.random import RandomState
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.base import clone
 from scipy.stats import itemfreq
 
+logger = logging.getLogger(__name__)
 
-def random_h(candidate_mask, n_candidates, **kwargs):
+def random_h(candidate_mask, n_candidates, random_state=None, **kwargs):
     """ Return a random candidate.
 
         Parameters
@@ -25,10 +27,15 @@ def random_h(candidate_mask, n_candidates, **kwargs):
         best_candidates : int
             The indices of the best candidates (here it is random).
     """
-    
+
+    if type(random_state) is RandomState:
+        seed = random_state
+    else:
+        seed = RandomState(random_state)
+
     candidate_index = np.where(candidate_mask)[0]
     n_candidates = min(n_candidates, len(candidate_index))
-    random_index = np.random.choice(candidate_index, n_candidates, replace=False)
+    random_index = seed.choice(candidate_index, n_candidates, replace=False)
     return random_index
 
 
@@ -56,12 +63,13 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
             The indices of the best candidates.
 
     """
-    
+
     # predict probabilities
     probs = classifier.predict_proba(X[candidate_mask])
-    
+
     # comptue Shannon entropy
-    candidate_shannon = -np.sum(probs * np.log(probs), axis=1)
+    # in case of 1 * log(0), need to tell numpy to set it to zero
+    candidate_shannon = -np.nan_to_num(np.sum(probs * np.log(probs), axis=1))
 
     # index the results properly
     shannon = np.empty(len(candidate_mask))
@@ -70,7 +78,7 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
 
     # make sure we don't return non-candidates
     n_candidates = min(n_candidates, len(probs))
-    
+
     # pick the candidate with the greatest Shannon entropy
     best_candidates = np.argsort(-shannon)[:n_candidates]
     return best_candidates
@@ -78,7 +86,7 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
 
 def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     """ Return the candidate with the smallest margin.
-    
+
         The margin is defined as the difference between the two largest values
         in the prediction vector.
 
@@ -102,13 +110,13 @@ def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
         best_candidates : int
             The indices of the best candidates.
     """
-    
+
     # predict probabilities
     probs = classifier.predict_proba(X[candidate_mask])
-    
+
     # sort the probabilities from smallest to largest
     probs = np.sort(probs, axis=1)
-    
+
     # compute the margin (difference between two largest values)
     candidate_margin = np.abs(probs[:,-1] - probs[:,-2])
 
@@ -119,16 +127,16 @@ def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
 
     # make sure we don't return non-candidates
     n_candidates = min(n_candidates, len(probs))
-    
+
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(margin)[:n_candidates]
     return best_candidates
 
 
-def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee,
+def qbb_margin_h(X, y, candidate_mask, classifier, train_mask, n_candidates, committee,
                  committee_samples, **kwargs):
     """ Return the candidate with the smallest average margin.
-    
+
         We first use bagging to train k classifiers. The margin is then defined as
         the average difference between the two largest values in the prediction vector.
 
@@ -157,19 +165,26 @@ def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee,
         best_candidates : int
             The indices of the best candidates.
     """
-    
+
     # check that the max bagging sample is not too big
     committee.max_samples = min(committee_samples, len(y[train_mask]))
 
     # train and predict
-    committee.fit(X[train_mask], y[train_mask])
+    try:
+        committee.fit(X[train_mask], y[train_mask])
+    # the classifier will fail if there is only one class in the training set
+    except ValueError:
+        logger.info('Iteration {}: Class distribution is too skewed.'.format(np.sum(train_mask)) +
+                    'Falling back to the margin heuristic.')
+        return margin_h(X=X, candidate_mask=candidate_mask, classifier=classifier,
+                        n_candidates=n_candidates)
 
     # predict
     n_samples = len(X[candidate_mask])
     n_classes = len(committee.classes_)
     probs = np.zeros((n_samples, n_classes))
     class_freq = itemfreq(y[train_mask])
-    
+
     for member in committee.estimators_:
         member_prob = member.predict_proba(X[candidate_mask])
         member_n_classes = member_prob.shape[1]
@@ -184,10 +199,10 @@ def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee,
 
     # average out the probabilities
     probs /= len(committee.estimators_)
-    
+
     # sort the probabilities from smallest to largest
     probs = np.sort(probs, axis=1)
-    
+
     # compute the margin (difference between two largest values)
     candidate_margin = np.abs(probs[:,-1] - probs[:,-2])
 
@@ -198,16 +213,16 @@ def qbb_margin_h(X, y, candidate_mask, train_mask, n_candidates, committee,
 
     # make sure we don't return non-candidates
     n_candidates = min(n_candidates, n_samples)
-    
+
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(margin)[:n_candidates]
     return best_candidates
 
 
 def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committee_samples,
-             **kwargs):
+             random_state, **kwargs):
     """ Return the candidate with the largest average KL divergence from the mean.
-    
+
         We first use bagging to train k classifiers. We then choose the candidate
         that has the largest Kullback–Leibler divergence from the average.
 
@@ -241,7 +256,14 @@ def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committe
     committee.max_samples = min(committee_samples, len(y[train_mask]))
 
     # train the committee
-    committee.fit(X[train_mask], y[train_mask])
+    try:
+        committee.fit(X[train_mask], y[train_mask])
+    # the classifier will fail if there is only one class in the training set
+    except ValueError:
+        logger.info('Iteration {}: Class distribution is too skewed.'.format(np.sum(train_mask)) +
+                    'Falling back to passive learning.')
+        return random_h(candidate_mask=candidate_mask, n_candidates=n_candidates,
+                        random_state=random_state)
 
     # predict
     n_samples = len(X[candidate_mask])
@@ -249,10 +271,10 @@ def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committe
     avg_probs = np.zeros((n_samples, n_classes))
     prob_list = []
     class_freq = itemfreq(y[train_mask])
-    
+
     for member in committee.estimators_:
         member_prob = member.predict_proba(X[candidate_mask])
-        member_n_classes = member_prob.shape[1] 
+        member_n_classes = member_prob.shape[1]
 
         if n_classes == member_n_classes:
             avg_probs += member_prob
@@ -271,12 +293,12 @@ def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committe
 
     # compute the KL divergence
     avg_kl = np.zeros(avg_probs.shape[0])
-    
+
     for p in prob_list:
         inner = np.nan_to_num(p * np.log(p / avg_probs))
         member_kl = np.sum(inner, axis=1)
         avg_kl += member_kl
-        
+
     # average out the KL divergence
     avg_kl /= len(committee)
 
@@ -287,7 +309,7 @@ def qbb_kl_h(X, y, candidate_mask, train_mask, n_candidates, committee, committe
 
     # make sure we don't return non-candidates
     n_candidates = min(n_candidates, n_samples)
-    
+
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(-kl)[:n_candidates]
     return best_candidates
@@ -312,18 +334,18 @@ def _compute_A(X, pi, classes):
         A : array
             The A matrix as part of the variance calcucation.
     """
-    
+
     n_classes = len(classes)
     n_features = X.shape[1]
     n_samples = X.shape[0]
     width = n_classes * n_features
     one_in_k = LabelBinarizer(pos_label=1, neg_label=0).fit_transform(classes)
-    
+
     I_same = one_in_k.repeat(n_features, axis=0)
     I_same = np.tile(I_same, n_samples)
-    
+
     I_diff = 1 - I_same
-    
+
     A = np.tile(pi.flatten(), (width, 1))
     B = 1 - A
     C = -A
@@ -333,7 +355,7 @@ def _compute_A(X, pi, classes):
     G = A * B * I_same  + C * D * I_diff
     G = E * G
     outer = np.dot(G, G.transpose())
-    
+
     return np.nan_to_num(outer)
 
 
@@ -359,14 +381,14 @@ def _compute_F(X, pi, classes, C=1):
         F : array
             The F matrix as part of the variance calcucation.
     """
-    
+
     n_classes = len(classes)
     n_features = X.shape[1]
     n_samples = X.shape[0]
     width = n_classes * n_features
-    
+
     I_diag = np.eye(width)
-    
+
     mini_off_diag = 1 - np.eye(n_features)
     mini_zeros = np.zeros((n_features, n_features * n_classes))
     I_mini_off_diag = np.hstack((mini_off_diag, mini_zeros))
@@ -374,19 +396,19 @@ def _compute_F(X, pi, classes, C=1):
     I_mini_off_diag = np.hstack((I_mini_off_diag, mini_off_diag))
     I_mini_off_diag = np.hsplit(I_mini_off_diag, n_classes)
     I_mini_off_diag = np.vstack(I_mini_off_diag)
-    
+
     I_main_off_diag = 1 - I_diag - I_mini_off_diag
-    
+
     M = np.tile(X.transpose(), (n_classes, 1))
     N = pi.transpose().repeat(n_features, axis=0)
-    
+
     F_1 = np.dot(M * N * (1 - N), M.transpose()) + C
     F_2 = np.dot(M * N * (1 - N), M.transpose())
     F_3 = np.dot(M * N, M.transpose() * N.transpose())
-    
+
     F = F_1 * I_diag + F_2 * I_mini_off_diag + F_3 * I_main_off_diag
     F = F / n_samples
-    
+
     return  np.nan_to_num(F)
 
 
@@ -441,13 +463,17 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
         best_candidate : int
             The index of the best candidate.
     """
-    
+
     classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
     n_features = X.shape[1]
     variance = np.empty(len(candidate_mask))
     variance[:] = np.inf
-    rng = RandomState(random_state)
+
+    if type(random_state) is RandomState:
+        seed = random_state
+    else:
+        seed = RandomState(random_state)
 
     # the probabilities used to calculate expected value of pool
     probs = classifier.predict_proba(X[candidate_mask])
@@ -457,7 +483,7 @@ def pool_variance_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
 
     # construct the sample pool (used to estimate the variance)
     unlabelled_indices = np.where(-train_mask)[0]
-    pool_indices = rng.permutation(unlabelled_indices)[:pool_n]
+    pool_indices = seed.permutation(unlabelled_indices)[:pool_n]
     pool_mask = np.zeros(len(candidate_mask), dtype=bool)
     pool_mask[pool_indices] = True
 
@@ -542,13 +568,17 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
         best_candidate : int
             The index of the best candidate.
     """
-    
+
     classes = classifier.classes_ # sorted lexicographically
     n_classes = len(classes)
     n_features = X.shape[1]
     entropy = np.empty(len(candidate_mask))
     entropy[:] = np.inf
-    rng = RandomState(random_state)
+
+    if type(random_state) is RandomState:
+        seed = random_state
+    else:
+        seed = RandomState(random_state)
 
     # the probabilities used to calculate expected value of pool
     probs = classifier.predict_proba(X[candidate_mask])
@@ -558,7 +588,7 @@ def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,
 
     # construct the sample pool (used to estimate the entropy)
     unlabelled_indices = np.where(-train_mask)[0]
-    pool_indices = rng.permutation(unlabelled_indices)[:pool_n]
+    pool_indices = seed.permutation(unlabelled_indices)[:pool_n]
     pool_mask = np.zeros(len(candidate_mask), dtype=bool)
     pool_mask[pool_indices] = True
 

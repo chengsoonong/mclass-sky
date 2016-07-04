@@ -10,6 +10,27 @@
 \documentclass[fleqn,10pt,lineno]{wlpeerj} % for journal submissions
 % \documentclass[fleqn,10pt]{wlpeerj} % for preprint submissions
 
+\usepackage{bm} % bold math symbols
+
+% some convenient symbols
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\DeclareMathOperator{\Beta}{Beta}
+\DeclareMathOperator{\Bin}{Bin}
+\DeclareMathOperator{\arsinh}{arsinh}
+\DeclareMathOperator{\tr}{tr}
+\newcommand{\A}{\mathpzc{A}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Ecal}{\mathcal{E}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\Unlabelled}{\mathcal{U}}
+\newcommand{\Labelled}{\mathcal{L}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand*{\argmin}{\operatornamewithlimits{argmin}\limits}
+\newcommand*{\argmax}{\operatornamewithlimits{argmax}\limits}
+
+
 \title{An Empirical Study on Combining Active Learning Suggestions}
 
 \author[1]{Alasdair Tran}
@@ -31,18 +52,15 @@ Recent advances in sensors and scientific instruments have led to an increasing 
 
 \section*{Introduction}
 
-Your introduction goes here! Some examples of commonly used commands and features are listed below, to help you get started.
+Introduction about active learning.
 
-If you have a question, please use the help menu in the top right of the screen to get in touch. When your article or pre-print is complete, use the "Submit to PeerJ" button in the topbar to send your files to PeerJ.
+Definitions and stuff.
 
-\subsection*{About PeerJ}
-
-PeerJ is an award-winning open access publisher covering the biological and medical sciences.  PeerJ provides authors with three publication venues: \textit{PeerJ} and \textit{PeerJ Computer Science} (peer-reviewed academic journals) and \textit{PeerJ PrePrints} (a 'pre-print server'). See https://peerj.com/about/publications/ for more information.
-
-The PeerJ model allows an author to publish articles in their peer-reviewed journal via the purchase of a lifetime Publication Plan. Prices start from just \$99 (a one-off payment) which entitles an author to the lifetime ability to publish 1 article per year for free. Publication in PeerJ PrePrints is entirely free.
-
-\section*{Some \LaTeX{} Examples}
+\section*{Active Learning Heuristics}
 \label{sec:examples}
+
+We shall use four popular heuristics:
+
 
 Use section and subsection commands to organize your document. \LaTeX{} handles all the formatting and numbering automatically. Use ref and label commands for cross-references.
 
@@ -55,6 +73,37 @@ Use section and subsection commands to organize your document. \LaTeX{} handles 
 \end{figure}
 
 Reference to Figure \ref{fig:vega}.
+
+\begin{table}[h]
+	\caption {Summary of active learning heuristics used in our experiments} \label{tab:heuristics}
+	\centering
+	\begin{tabular}{lll}
+		\toprule
+		{Name}  & Notation &  Objective  \\
+		\midrule
+		Entropy & $r_S(\bm{x}; h)$
+			& $\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
+            \log \big[ p(y | \bm{x}; h) \big] \right\}$
+			\\[2ex]
+		Margin & $r_M(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
+            \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}$
+			\\[2ex]
+		QBB Margin & $r_{QM}(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
+            \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}$
+			\\[2ex]
+		QBB KL & $r_{QK}(\bm{x}; h)$
+			& $\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
+               \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
+			\\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+
+
 
 \begin{table}[ht]
 \centering

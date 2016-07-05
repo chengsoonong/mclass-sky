@@ -85,6 +85,51 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs
     return best_candidates
 
 
+def least_confidence_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs):
+    """ Return the candidate that we are least confident about its most likely labelling.
+
+        Parameters
+        ----------
+        X : array
+                The feature matrix of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        Returns
+        -------
+        best_candidates : int
+            The indices of the best candidates.
+
+    """
+
+    # predict probabilities
+    if y_pred is None:
+        y_pred = classifier.predict_proba(X[candidate_mask])
+
+    # extract the probability of the most likely label
+    most_likely_probs = np.max(y_pred, axis=1)
+
+    # index the results properly
+    least_confidence = np.empty(len(candidate_mask))
+    least_confidence[:] = +np.inf
+    least_confidence[candidate_mask] = most_likely_probs
+
+    # make sure we don't return non-candidates
+    n_candidates = min(n_candidates, len(y_pred))
+
+    # pick the candidate with the smallest probability in the most likely labelling
+    best_candidates = np.argsort(least_confidence)[:n_candidates]
+    return best_candidates
+
+
 def margin_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs):
     """ Return the candidate with the smallest margin.
 

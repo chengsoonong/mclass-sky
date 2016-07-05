@@ -69,8 +69,8 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs
         y_pred = classifier.predict_proba(X[candidate_mask])
 
     # comptue Shannon entropy
-    # in case of 1 * log(0), need to tell numpy to set it to zero
-    candidate_shannon = -np.nan_to_num(np.sum(y_pred * np.log(y_pred), axis=1))
+    # in case of 0 * log(0), need to tell numpy to set it to zero
+    candidate_shannon = -np.sum(np.nan_to_num(y_pred * np.log(y_pred)), axis=1)
 
     # index the results properly
     shannon = np.empty(len(candidate_mask))
@@ -589,7 +589,7 @@ def compute_pool_entropy(pi):
             The estimated entropy on the pool.
     """
 
-    return np.nan_to_num(-np.sum(pi * np.log(pi)))
+    return -np.sum(np.nan_to_num(pi * np.log(pi)))
 
 
 def pool_entropy_h(X, y, candidate_mask, train_mask, classifier, n_candidates,

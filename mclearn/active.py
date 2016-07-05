@@ -492,11 +492,13 @@ class ActiveAggregator(BaseActive):
 
 
         voters = []
+        y_pred = self.classifier.predict_proba(X[candidate_mask])
+
         for heuristic in self.heuristics:
             voter = heuristic(X=X, y=y, candidate_mask=candidate_mask,
                              train_mask=train_mask, classifier=self.classifier,
                              n_candidates=self.sample_size, random_state=self.seed,
-                             **self.h_kwargs)
+                             y_pred=y_pred, **self.h_kwargs)
             voters.append(voter)
 
         voters = np.asarray(voters)

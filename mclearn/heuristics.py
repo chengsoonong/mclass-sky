@@ -39,7 +39,7 @@ def random_h(candidate_mask, n_candidates, random_state=None, **kwargs):
     return random_index
 
 
-def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
+def entropy_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs):
     """ Return the candidate whose prediction vector displays the greatest Shannon entropy.
 
         Parameters
@@ -65,11 +65,12 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     """
 
     # predict probabilities
-    probs = classifier.predict_proba(X[candidate_mask])
+    if y_pred is None:
+        y_pred = classifier.predict_proba(X[candidate_mask])
 
     # comptue Shannon entropy
     # in case of 1 * log(0), need to tell numpy to set it to zero
-    candidate_shannon = -np.nan_to_num(np.sum(probs * np.log(probs), axis=1))
+    candidate_shannon = -np.nan_to_num(np.sum(y_pred * np.log(y_pred), axis=1))
 
     # index the results properly
     shannon = np.empty(len(candidate_mask))
@@ -77,14 +78,14 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     shannon[candidate_mask] = candidate_shannon
 
     # make sure we don't return non-candidates
-    n_candidates = min(n_candidates, len(probs))
+    n_candidates = min(n_candidates, len(y_pred))
 
     # pick the candidate with the greatest Shannon entropy
     best_candidates = np.argsort(-shannon)[:n_candidates]
     return best_candidates
 
 
-def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
+def margin_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs):
     """ Return the candidate with the smallest margin.
 
         The margin is defined as the difference between the two largest values
@@ -112,13 +113,14 @@ def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     """
 
     # predict probabilities
-    probs = classifier.predict_proba(X[candidate_mask])
+    if y_pred is None:
+        y_pred = classifier.predict_proba(X[candidate_mask])
 
     # sort the probabilities from smallest to largest
-    probs = np.sort(probs, axis=1)
+    y_pred = np.sort(y_pred, axis=1)
 
     # compute the margin (difference between two largest values)
-    candidate_margin = np.abs(probs[:,-1] - probs[:,-2])
+    candidate_margin = np.abs(y_pred[:,-1] - y_pred[:,-2])
 
     # index the results properly
     margin = np.empty(len(candidate_mask))
@@ -126,7 +128,7 @@ def margin_h(X, candidate_mask, classifier, n_candidates, **kwargs):
     margin[candidate_mask] = candidate_margin
 
     # make sure we don't return non-candidates
-    n_candidates = min(n_candidates, len(probs))
+    n_candidates = min(n_candidates, len(y_pred))
 
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(margin)[:n_candidates]

@@ -40,7 +40,7 @@ http://plato.stanford.edu/entries/social-choice/
 
 
 ## Bandits
-http://www.princeton.edu/~sbubeck/SurveyBCB12.pdf
+http://research.microsoft.com/en-us/um/people/sebubeck/SurveyBCB12.pdf
 
 * kl-UCB http://arxiv.org/pdf/1210.1136.pdf
 * OC-UCB http://arxiv.org/pdf/1507.07880v2.pdf

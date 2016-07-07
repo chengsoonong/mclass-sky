@@ -10,7 +10,11 @@
 \documentclass[fleqn,10pt,lineno]{wlpeerj} % for journal submissions
 % \documentclass[fleqn,10pt]{wlpeerj} % for preprint submissions
 
-\title{An Empirical Study on Combining Active Learning Suggestions}
+
+
+\newcommand{\cheng}[1]{\textcolor{green}{\textbf{Cheng: }{\footnotesize #1}}}
+
+\title{Combining Active Learning Suggestions}
 
 \author[1]{Alasdair Tran}
 \author[2]{Cheng Soon Ong}
@@ -31,116 +35,166 @@ Recent advances in sensors and scientific instruments have led to an increasing 
 
 \section*{Introduction}
 
-Your introduction goes here! Some examples of commonly used commands and features are listed below, to help you get started.
+Previous surveys~\cite{baram04onlcal,hsu15actll}. We are more comprehensive, and consider other types of combination.
 
-If you have a question, please use the help menu in the top right of the screen to get in touch. When your article or pre-print is complete, use the "Submit to PeerJ" button in the topbar to send your files to PeerJ.
+There are three ideas which are often used for eliciting human
+responses using machine learning predictors. At a high level they are
+similar is spirit, but they have different foundations which lead to
+different formulations. The ideas are active learning, bandits and
+experimental design. Related to this but with literature from a different field is social choice theory, which looks at how individual preferences are aggregated.
 
-\subsection*{About PeerJ}
 
-PeerJ is an award-winning open access publisher covering the biological and medical sciences.  PeerJ provides authors with three publication venues: \textit{PeerJ} and \textit{PeerJ Computer Science} (peer-reviewed academic journals) and \textit{PeerJ PrePrints} (a 'pre-print server'). See https://peerj.com/about/publications/ for more information.
 
-The PeerJ model allows an author to publish articles in their peer-reviewed journal via the purchase of a lifetime Publication Plan. Prices start from just \$99 (a one-off payment) which entitles an author to the lifetime ability to publish 1 article per year for free. Publication in PeerJ PrePrints is entirely free.
+\section*{Binary and Multiclass classification}
 
-\section*{Some \LaTeX{} Examples}
-\label{sec:examples}
-
-Use section and subsection commands to organize your document. \LaTeX{} handles all the formatting and numbering automatically. Use ref and label commands for cross-references.
-
-\subsection*{Figures and Tables}
-
-\begin{figure}[ht]\centering
-\includegraphics[width=\linewidth]{figures/vega_filters_and_spectrum}
-\caption[Spectrum of the star Vega and the ugriz bandpasses]{The black curve is the                spectrum of Vega, the fifth brightest star in the night sky. The spectrum tells us how                much radiation Vega emits at each wavelength. We also show five transmission functions,                one for each of the five ugriz filters. The transmission function tells us how much light                can get through the filter at each wavelength.}
-\label{fig:vega}
-\end{figure}
-
-Reference to Figure \ref{fig:vega}.
-
-\begin{table}[ht]
-\centering
-\begin{tabular}{l|r}
-Item & Quantity \\\hline
-Widgets & 42 \\
-Gadgets & 13
-\end{tabular}
-\caption{\label{tab:widgets}An example table.}
-\end{table}
-
-\subsection*{Citations}
-
-LaTeX formats citations and references automatically using the bibliography records in your .bib file, which you can edit via the project menu. Use the cite command for an inline citation, like \cite{Figueredo:2009dg}, and the citep command for a citation in parentheses \citep{Figueredo:2009dg}.
-
-\subsection*{Mathematics}
-
-\LaTeX{} is great at typesetting mathematics. Let $X_1, X_2, \ldots, X_n$ be a sequence of independent and identically distributed random variables with $\text{E}[X_i] = \mu$ and $\text{Var}[X_i] = \sigma^2 < \infty$, and let
-$$S_n = \frac{X_1 + X_2 + \cdots + X_n}{n}
-      = \frac{1}{n}\sum_{i}^{n} X_i$$
-denote their mean. Then as $n$ approaches infinity, the random variables $\sqrt{n}(S_n - \mu)$ converge in distribution to a normal $\mathcal{N}(0, \sigma^2)$.
-
-\subsection*{Lists}
-
-You can make lists with automatic numbering \dots
-
-\begin{enumerate}[noitemsep]
-\item Like this,
-\item and like this.
-\end{enumerate}
-\dots or bullet points \dots
-\begin{itemize}[noitemsep]
-\item Like this,
-\item and like this.
+\begin{itemize}
+  \item binary classification
+  \item multiclass classification
 \end{itemize}
-\dots or with words and descriptions \dots
+
+Base learner: Logistic regression
+\begin{itemize}
+  \item Warm start?
+  \item polynomial kernel of degree 2
+\end{itemize}
+
+Performance:
+\begin{itemize}
+  \item Accuracy
+  \item Posterior mean balanced accuracy
+  \item F1 score
+\end{itemize}
+
+Random sampling, figure out asymptote of performance.
+
+\section*{Active Learning, Bandits, Choice and Design of Experiments}
+
+\subsection*{Active Learning}
+
+Active learning considers the setting where the agent interacts with
+its environment to procure a training set, rather than passively
+receiving i.i.d. samples from some underlying distribution.
+
+It is often assumed that the environment is infinite (e.g. $R^d$) and
+the agent has to choose a location, $x$, to query. The oracle then returns
+the label $y$. It is often assumed that there is no noise in the label,
+and hence there is no benefit of querying the same point $x$ again. In
+many practical applications, the environment is considered to be
+finite (but large). This is called the pool-based active learning.
+
+The active learning algorithm is often compared to the passive
+learning algorithm.
+
+Reward: improvement in performance.
+
+\begin{itemize}
+  \item uncertainty sampling
+    \begin{itemize}
+      \item entropy of probability
+      \item margin
+    \end{itemize}
+  \item version space reduction
+    \begin{itemize}
+      \item QBB margin
+      \item QBB KL
+    \end{itemize}
+  \item (slow) Reduction of expected variance
+  \item (slow) Reduction of expected entropy
+  \item (maybe) information density http://burrsettles.com/pub/settles.emnlp08.pdf
+\end{itemize}
+
+\subsection*{Bandits}
+
+A bandit problem is a sequential allocation problem defined by a set
+of actions. The agent chooses an action at each time step, and the
+environment returns a reward. The aim of the agent is to maximise reward.
+
+In basic settings, the set of actions is considered to be
+finite. There are three fundamental formalisations of the bandit
+problem, depending on the assumed nature of the reward process:
+stochastic, adversarial and Markovian. In all three settings the
+reward is uncertain, and hence the agent may have to play a particular
+action repeatedly.
+
+The agent is compared to a static agent which has played the best
+action. This difference in reward is called regret.
+
+\begin{itemize}
+  \item survey http://research.microsoft.com/en-us/um/people/sebubeck/SurveyBCB12.pdf
+  \item kl-UCB http://arxiv.org/pdf/1210.1136.pdf
+  \item OC-UCB http://arxiv.org/pdf/1507.07880v2.pdf
+  \item EXP3++ http://jmlr.org/proceedings/papers/v32/seldinb14.pdf
+  \item Thompson sampling
+\end{itemize}
+
+\subsection*{Choice: Rank aggregation}
+
+http://plato.stanford.edu/entries/social-choice/
+
+\begin{itemize}
+  \item Pairwise majority rule
+  \item Borda count
+  \item geometric mean http://arxiv.org/abs/1410.4391
+\end{itemize}
+
+
+\subsection*{Experimental Design}
+
+In contrast to active learning, experimental design considers the problem of regression, i.e. where the label $y\in R$ is a real number.
+
+The problem to be solved in experimental design is to choose a set of
+trials (say of size N) to gather enough information about the object
+of interest. The goal is to maximise the information obtained about
+the parameters of the model (of the object).
+
+It is often assumed that the observations at the N trials are
+independent. When N is finite this is called exact design, otherwise
+it is called approximate or continuous design. The environment is
+assumed to be infinite (e.g. $R^d$) and the observations are scalar real variables.
+
+
+
+
+\section*{Empirical comparison}
+
+\subsection*{Description of datasets}
+
+\subsubsection*{UCI Data}
+
+
+\cheng{This should be a table in the appendix.}
 \begin{description}
-\item[Word] Definition
-\item[Concept] Explanation
-\item[Idea] Text
+  \item[binary classification]\
+  \begin{itemize}
+      \item [ionosphere](https://archive.ics.uci.edu/ml/datasets/Ionosphere): Radar data.
+      \item [pima](https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes): Pima Indians Diabetes.
+      \item [sonar](https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)): We want to discriminate between sonar signals bounced off a metal cylinder and those bounced off a roughly cylindrical rock.
+      \item [wpbc](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)): Prognostic Wisconsin breast cancer.
+  \end{itemize}
+  \item[multiclass]\
+  \begin{itemize}
+    \item [iris](https://archive.ics.uci.edu/ml/datasets/Iris): Well-known dataset from Fisher, three classes.
+    \item [glass](https://archive.ics.uci.edu/ml/datasets/Glass+Identification): Glass identification, seven classes.
+    \item [vehicle](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)): Classifying a given sihouette as one of four types of vehicle.
+    \item [wine](https://archive.ics.uci.edu/ml/datasets/Wine): Using chemical analysis to determine the origin of wines.
+  \end{itemize}
 \end{description}
 
-We hope you find write\LaTeX\ useful for your PeerJ submission, and please let us know if you have any feedback. Further examples with dummy text are included in the following pages.
+\subsubsection*{SDSS}
 
-\section*{Methods}
+\begin{itemize}
+  \item binary classification: stars vs galaxies
+  \item multiclass: stars vs galaxies vs quasars
+\end{itemize}
 
-\lipsum[4] % Dummy text
+\section*{Bits to tidy up, Appendix?}
+\begin{itemize}
+  \item Posterior balanced Accuracy derivation
+  \item Reddening correction
+  \item Feature selection, best kernel is poly degree 2
+  \item Choose value of C
+\end{itemize}
 
-\begin{equation}
-\cos^3 \theta =\frac{1}{4}\cos\theta+\frac{3}{4}\cos 3\theta
-\label{eq:refname2}
-\end{equation}
-
-\lipsum[5] % Dummy text
-
-\subsection*{Subsection}
-
-\lipsum[6] % Dummy text
-
-\paragraph{Paragraph} \lipsum[7] % Dummy text
-\paragraph{Paragraph} \lipsum[8] % Dummy text
-
-\subsection*{Subsection}
-
-\lipsum[9] % Dummy text
-
-
-\section*{Results and Discussion}
-
-\lipsum[10] % Dummy text
-
-\subsection*{Subsection}
-
-\lipsum[11] % Dummy text
-
-\subsubsection*{Subsubsection}
-
-\lipsum[12] % Dummy text
-
-\subsubsection*{Subsubsection}
-
-\lipsum[14] % Dummy text
-
-\subsection*{Subsection}
-
-\lipsum[15-20] % Dummy text
 
 \section*{Acknowledgments}
 

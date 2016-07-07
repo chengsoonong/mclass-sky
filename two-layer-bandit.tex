@@ -11,8 +11,28 @@
 % \documentclass[fleqn,10pt]{wlpeerj} % for preprint submissions
 
 
-
 \newcommand{\cheng}[1]{\textcolor{green}{\textbf{Cheng: }{\footnotesize #1}}}
+
+\usepackage{bm} % bold math symbols
+
+% some convenient symbols
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\DeclareMathOperator{\Beta}{Beta}
+\DeclareMathOperator{\Bin}{Bin}
+\DeclareMathOperator{\arsinh}{arsinh}
+\DeclareMathOperator{\tr}{tr}
+\newcommand{\A}{\mathpzc{A}}
+\newcommand{\B}{\mathcal{B}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\Ecal}{\mathcal{E}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\Unlabelled}{\mathcal{U}}
+\newcommand{\Labelled}{\mathcal{L}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand*{\argmin}{\operatornamewithlimits{argmin}\limits}
+\newcommand*{\argmax}{\operatornamewithlimits{argmax}\limits}
+
 
 \title{Combining Active Learning Suggestions}
 
@@ -87,17 +107,36 @@ learning algorithm.
 
 Reward: improvement in performance.
 
+\begin{table}[h]
+	\caption {Summary of active learning heuristics used in our experiments} \label{tab:heuristics}
+	\centering
+	\begin{tabular}{lll}
+		\toprule
+		{Name}  & Notation &  Objective  \\
+		\midrule
+		Entropy & $r_S(\bm{x}; h)$
+			& $\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
+            \log \big[ p(y | \bm{x}; h) \big] \right\}$
+			\\[2ex]
+		Margin & $r_M(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
+            \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}$
+			\\[2ex]
+		QBB Margin & $r_{QM}(\bm{x}; h)$
+			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
+            \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}$
+			\\[2ex]
+		QBB KL & $r_{QK}(\bm{x}; h)$
+			& $\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
+               \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
+			\\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+
 \begin{itemize}
-  \item uncertainty sampling
-    \begin{itemize}
-      \item entropy of probability
-      \item margin
-    \end{itemize}
-  \item version space reduction
-    \begin{itemize}
-      \item QBB margin
-      \item QBB KL
-    \end{itemize}
   \item (slow) Reduction of expected variance
   \item (slow) Reduction of expected entropy
   \item (maybe) information density http://burrsettles.com/pub/settles.emnlp08.pdf

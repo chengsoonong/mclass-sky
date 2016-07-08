@@ -72,3 +72,11 @@ http://research.microsoft.com/en-us/um/people/sebubeck/SurveyBCB12.pdf
 * Reddening correction
 * Feature selection, best kernel is poly degree 2
 * Choose value of C
+
+## Literature
+
+* http://www.dbs.ifi.lmu.de/~tresp/papers/icml2006_actv.pdf
+* http://papers.nips.cc/paper/2924-robust-design-of-biological-experiments.pdf
+* http://link.springer.com/referenceworkentry/10.1007/978-3-642-04898-2_434
+* http://www.jstor.org/stable/pdf/2346165.pdf
+* http://ai.stanford.edu/~stong/papers/tong_thesis.pdf

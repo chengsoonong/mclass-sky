@@ -10,10 +10,14 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.externals import joblib
 from sklearn.cross_validation import StratifiedShuffleSplit
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances, rbf_kernel
 from sklearn.metrics import accuracy_score
 from time import time
-from mclearn.heuristics import random_h, entropy_h, margin_h, qbb_kl_h, qbb_margin_h, random_h
+from mclearn.heuristics import (random_h, entropy_h, margin_h, least_confidence_h,
+                                info_density_entropy_h, info_density_margin_h,
+                                info_density_least_confidence_h,
+                                qbb_kl_h, qbb_margin_h)
+
 from mclearn.aggregators import borda_count, geometric_mean, schulze_method
 from mclearn.performance import mpba_score, micro_f1_score
 from mclearn.active import ActiveBandit, ActiveLearner, ActiveAggregator
@@ -38,6 +42,7 @@ def run_active_expt(X, y, dataset, kind, kfold=None, classifier=None, random_sta
     # need to be numpy arrays as some indexing syntax works differently with DataFrames
     X, y = np.asarray(X), np.asarray(y)
     X = X.astype(np.float64)
+    gamma = None
 
     # fall back to defaults if not specified by user
     if not classifier:
@@ -47,22 +52,27 @@ def run_active_expt(X, y, dataset, kind, kfold=None, classifier=None, random_sta
         committee = BaggingClassifier(classifier, n_estimators=7, n_jobs=1, max_samples=300,
                                       random_state=seed)
     if not heuristics:
-        heuristics = [random_h, entropy_h, margin_h, qbb_margin_h, qbb_kl_h]
+        heuristics = [random_h, entropy_h, margin_h, least_confidence_h,
+                      info_density_entropy_h, info_density_margin_h,
+                      info_density_least_confidence_h, qbb_margin_h, qbb_kl_h]
     if not kfold:
         kfold = StratifiedShuffleSplit(y, n_iter=10, test_size=test_size,
                                        train_size=train_size, random_state=seed)
     if scale:
         X = StandardScaler().fit_transform(X)
+
     if degree > 1:
         transformer = PolynomialFeatures(degree=degree, interaction_only=False, include_bias=True)
-        X = transformer.fit_transform(X)
+        X_transformed = transformer.fit_transform(X)
     elif rbf_kernel == True:
         # estimate the kernel using the 90th percentile heuristic
         random_idx = seed.choice(X.shape[0], 1000)
         distances = pairwise_distances(X[random_idx], metric='l1')
         gamma = 1 / np.percentile(distances, 90)
         transformer = RBFSampler(gamma=gamma, random_state=seed, n_components=100)
-        X = transformer.fit_transform(X)
+        X_transformed = transformer.fit_transform(X)
+    else:
+        X_transformed = X
     if not accuracy_fns:
         accuracy_fns = {
             'mpba': mpba_score,
@@ -74,13 +84,13 @@ def run_active_expt(X, y, dataset, kind, kfold=None, classifier=None, random_sta
     n_classes = len(np.unique(y))
     start_time = time()
 
-    outputs = Parallel(n_jobs=n_jobs)(delayed(_run_active_fold)(X, y, kind, classifier,
-                                                                random_state, committee,
-                                                                heuristics, accuracy_fns,
-                                                                initial_n, training_size,
-                                                                sample_size, verbose,
-                                                                committee_samples, seed,
-                                                                train_index, test_index)
+    outputs = Parallel(n_jobs=n_jobs)(delayed(_run_active_fold)(X, X_transformed, y, kind,
+                                                                classifier, random_state,
+                                                                committee, heuristics,
+                                                                accuracy_fns, initial_n,
+                                                                training_size, sample_size,
+                                                                verbose, committee_samples, seed,
+                                                                train_index, test_index, gamma)
                                       for (train_index, test_index) in kfold)
 
     # unpack outputs
@@ -94,20 +104,22 @@ def run_active_expt(X, y, dataset, kind, kfold=None, classifier=None, random_sta
     log(' {0:.1f} mins'.format((end_time - start_time) / 60 ))
 
 
-def _run_active_fold(X, y, kind, classifier, random_state, committee, heuristics,
+def _run_active_fold(X, X_transformed, y, kind, classifier, random_state, committee, heuristics,
     accuracy_fns, initial_n, training_size, sample_size, verbose, committee_samples,
-    seed, train_index, test_index):
+    seed, train_index, test_index, gamma):
     """ Helper function. """
 
     output = {}
     bandit_algos = ('thompson', 'exp3pp', 'kl-ucb', 'oc-ucb')
     rank_algos = {'borda': borda_count, 'schulze': schulze_method, 'geometric': geometric_mean}
 
-    X_train = X[train_index]
-    X_test = X[test_index]
+    X_train = X_transformed[train_index]
+    X_test = X_transformed[test_index]
     y_train = y[train_index]
     y_test = y[test_index]
     curr_training_size = min(training_size, X_train.shape[0])
+
+    similarity = rbf_kernel(X, gamma=gamma)
 
     if kind in bandit_algos:
         learner = ActiveBandit(classifier=classifier,
@@ -142,7 +154,7 @@ def _run_active_fold(X, y, kind, classifier, random_state, committee, heuristics
                                    aggregator=rank_algos[kind],
                                    random_state=seed)
 
-    learner.fit(X_train, y_train, X_test, y_test)
+    learner.fit(X_train, y_train, X_test, y_test, similarity=similarity)
     for accuracy in accuracy_fns:
         output[accuracy] = learner.learning_curve_[accuracy]
 

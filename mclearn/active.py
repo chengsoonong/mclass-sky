@@ -107,7 +107,7 @@ class BaseActive:
             log('.', end=' ')
 
 
-    def select_candidates(self, X, y, candidate_mask, train_mask):
+    def select_candidates(self, X, y, candidate_mask, train_mask, similarity):
         """ Return the indices of the best candidates.
 
             Parameters
@@ -136,10 +136,10 @@ class BaseActive:
         return self.best_heuristic(X=X, y=y, candidate_mask=candidate_mask,
                                    train_mask=train_mask, classifier=self.classifier,
                                    n_candidates=self.n_candidates, random_state=self.seed,
-                                   **self.h_kwargs)
+                                   similarity=similarity, **self.h_kwargs)
 
 
-    def fit(self, X_train, y_train, X_test=None, y_test=None):
+    def fit(self, X_train, y_train, X_test=None, y_test=None, similarity=None):
         """ Conduct active learning.
 
             Parameters
@@ -188,7 +188,8 @@ class BaseActive:
             self._select_heuristic()
 
             # pick the index of the best candidates
-            best_candidates = self.select_candidates(X_train, y_train, candidate_mask, train_mask)
+            best_candidates = self.select_candidates(X_train, y_train, candidate_mask, train_mask,
+                                                     similarity)
             self.candidate_selections += list(best_candidates)
 
             # retrain the classifier
@@ -280,12 +281,13 @@ class ActiveLearner(BaseActive):
 
     def __init__(self, classifier, heuristic=random_h, accuracy_fn=mpba_score,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
-                 verbose=False, **h_kwargs):
+                 verbose=False, random_state=None, **h_kwargs):
 
         super().__init__(classifier=classifier, best_heuristic=heuristic,
                          accuracy_fn=accuracy_fn, initial_n=initial_n,
                          training_size=training_size, sample_size=sample_size,
-                         n_candidates=n_candidates, verbose=verbose, **h_kwargs)
+                         n_candidates=n_candidates, verbose=verbose,
+                         random_state=None, **h_kwargs)
 
 
 class ActiveBandit(BaseActive):
@@ -341,12 +343,13 @@ class ActiveBandit(BaseActive):
     def __init__(self, classifier, heuristics, accuracy_fn=mpba_score,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
                  verbose=False, prior_mu=0, prior_sigma=0.02,
-                 likelihood_sigma=0.02, **h_kwargs):
+                 likelihood_sigma=0.02, random_state=None, **h_kwargs):
 
         super().__init__(classifier=classifier,
                          accuracy_fn=accuracy_fn, initial_n=initial_n,
                          training_size=training_size, sample_size=sample_size,
-                         n_candidates=n_candidates, verbose=verbose, **h_kwargs)
+                         n_candidates=n_candidates, verbose=verbose,
+                         random_state=None, **h_kwargs)
 
         self.heuristics = heuristics
         self.n_heuristics = len(heuristics)
@@ -455,19 +458,21 @@ class ActiveAggregator(BaseActive):
 
     def __init__(self, classifier, heuristics, accuracy_fn=mpba_score,
                  initial_n=20, training_size=100, sample_size=20, n_candidates=1,
-                 verbose=False, aggregator=borda_count, **h_kwargs):
+                 verbose=False, aggregator=borda_count,
+                 random_state=None, **h_kwargs):
 
         super().__init__(classifier=classifier,
                          accuracy_fn=accuracy_fn, initial_n=initial_n,
                          training_size=training_size, sample_size=sample_size,
-                         n_candidates=n_candidates, verbose=verbose, **h_kwargs)
+                         n_candidates=n_candidates, verbose=verbose,
+                         random_state=None, **h_kwargs)
 
         self.heuristics = heuristics
         self.n_heuristics = len(heuristics)
         self.aggregator = aggregator
 
 
-    def select_candidates(self, X, y, candidate_mask, train_mask):
+    def select_candidates(self, X, y, candidate_mask, train_mask, similarity):
         """ Return the indices of the best candidates.
 
             Parameters
@@ -498,7 +503,7 @@ class ActiveAggregator(BaseActive):
             voter = heuristic(X=X, y=y, candidate_mask=candidate_mask,
                              train_mask=train_mask, classifier=self.classifier,
                              n_candidates=self.sample_size, random_state=self.seed,
-                             y_pred=y_pred, **self.h_kwargs)
+                             y_pred=y_pred, similarity=similarity, **self.h_kwargs)
             voters.append(voter)
 
         voters = np.asarray(voters)

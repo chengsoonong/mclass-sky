@@ -39,7 +39,8 @@ def random_h(candidate_mask, n_candidates, random_state=None, **kwargs):
     return random_index
 
 
-def entropy_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs):
+def entropy_h(X, candidate_mask, train_mask, classifier, n_candidates, similarity, weighted=False,
+              y_pred=None, **kwargs):
     """ Return the candidate whose prediction vector displays the greatest Shannon entropy.
 
         Parameters
@@ -72,6 +73,12 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs
     # in case of 0 * log(0), need to tell numpy to set it to zero
     candidate_shannon = -np.sum(np.nan_to_num(y_pred * np.log(y_pred)), axis=1)
 
+    # include density information
+    if weighted:
+        density_weight = similarity[np.ix_(candidate_mask, -train_mask)]
+        density_weight = np.mean(density_weight, axis=1)
+        candidate_shannon *= density_weight
+
     # index the results properly
     shannon = np.empty(len(candidate_mask))
     shannon[:] = -np.inf
@@ -85,7 +92,39 @@ def entropy_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs
     return best_candidates
 
 
-def least_confidence_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs):
+def info_density_entropy_h(X, candidate_mask, train_mask, classifier, n_candidates, similarity,
+                   y_pred=None, **kwargs):
+    """ Return the candidate with the greatest entropy, weighted by the information density.
+
+        Parameters
+        ----------
+        X : array
+                The feature matrix of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        Returns
+        -------
+        best_candidates : int
+            The indices of the best candidates.
+
+    """
+
+    return entropy_h(X=X, candidate_mask=candidate_mask, train_mask=train_mask,
+                     classifier=classifier, n_candidates=n_candidates, similarity=similarity,
+                     weighted=True, y_pred=y_pred, **kwargs)
+
+
+def least_confidence_h(X, candidate_mask, train_mask, classifier, n_candidates, similarity,
+                       weighted=False, y_pred=None, **kwargs):
     """ Return the candidate that we are least confident about its most likely labelling.
 
         Parameters
@@ -117,6 +156,12 @@ def least_confidence_h(X, candidate_mask, classifier, n_candidates, y_pred=None,
     # extract the probability of the most likely label
     most_likely_probs = np.max(y_pred, axis=1)
 
+    # include density information
+    if weighted:
+        density_weight = similarity[np.ix_(candidate_mask, -train_mask)]
+        density_weight = 1 - np.mean(density_weight, axis=1)
+        most_likely_probs *= density_weight
+
     # index the results properly
     least_confidence = np.empty(len(candidate_mask))
     least_confidence[:] = +np.inf
@@ -130,7 +175,40 @@ def least_confidence_h(X, candidate_mask, classifier, n_candidates, y_pred=None,
     return best_candidates
 
 
-def margin_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs):
+def info_density_least_confidence_h(X, candidate_mask, train_mask, classifier, n_candidates,
+                                    similarity, y_pred=None, **kwargs):
+    """ Return the candidate with the lowest confidence, weighted by the information density.
+
+        Parameters
+        ----------
+        X : array
+                The feature matrix of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        Returns
+        -------
+        best_candidates : int
+            The indices of the best candidates.
+
+    """
+
+    return least_confidence_h(X=X, candidate_mask=candidate_mask, train_mask=train_mask,
+                              classifier=classifier, n_candidates=n_candidates,
+                              similarity=similarity, weighted=True, y_pred=y_pred, **kwargs)
+
+
+
+def margin_h(X, candidate_mask, train_mask, classifier, n_candidates, similarity, weighted=False,
+             y_pred=None, **kwargs):
     """ Return the candidate with the smallest margin.
 
         The margin is defined as the difference between the two largest values
@@ -167,6 +245,12 @@ def margin_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs)
     # compute the margin (difference between two largest values)
     candidate_margin = np.abs(y_pred[:,-1] - y_pred[:,-2])
 
+    # include density information
+    if weighted:
+        density_weight = similarity[np.ix_(candidate_mask, -train_mask)]
+        density_weight = 1 - np.mean(density_weight, axis=1)
+        candidate_margin *= density_weight
+
     # index the results properly
     margin = np.empty(len(candidate_mask))
     margin[:] = +np.inf
@@ -178,6 +262,37 @@ def margin_h(X, candidate_mask, classifier, n_candidates, y_pred=None, **kwargs)
     # pick the candidate with the smallest margin
     best_candidates = np.argsort(margin)[:n_candidates]
     return best_candidates
+
+
+def info_density_margin_h(X, candidate_mask, train_mask, classifier, n_candidates,
+                          similarity, y_pred=None, **kwargs):
+    """ Return the candidate with the smallest margin, weighted by the information density.
+
+        Parameters
+        ----------
+        X : array
+                The feature matrix of all the data points.
+
+        candidate_mask : boolean array
+            The boolean array that tells us which data points the heuristic should look at.
+
+        classifier : Classifier object
+            A classifier object that will be used to make predictions.
+            It should have the same interface as scikit-learn classifiers.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        Returns
+        -------
+        best_candidates : int
+            The indices of the best candidates.
+
+    """
+
+    return margin_h(X=X, candidate_mask=candidate_mask, train_mask=train_mask,
+                    classifier=classifier, n_candidates=n_candidates,
+                    similarity=similarity, weighted=True, y_pred=y_pred, **kwargs)
 
 
 def qbb_margin_h(X, y, candidate_mask, classifier, train_mask, n_candidates, committee,

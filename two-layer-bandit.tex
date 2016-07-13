@@ -10,17 +10,25 @@
 \documentclass[fleqn,10pt,lineno]{wlpeerj} % for journal submissions
 % \documentclass[fleqn,10pt]{wlpeerj} % for preprint submissions
 
-
 \newcommand{\cheng}[1]{\textcolor{green}{\textbf{Cheng: }{\footnotesize #1}}}
 \newcommand{\alasdair}[1]{\textcolor{blue}{\textbf{Alasdair: }{\footnotesize #1}}}
 
 \usepackage{bm} % bold math symbols
+\usepackage{hyperref} % create hyperlinks
+\usepackage[labelfont=bf]{caption} % figure captions
+\usepackage{algorithm} 
+\usepackage{algpseudocode} % display algorithms in pseudo-code
+
+\hypersetup{
+	colorlinks   = true, % Colours links instead of ugly boxes
+	pdfauthor    = {Alasdair Tran and Cheng Soon Ong},
+	pdftitle	 = {Combining Active Learning Suggestions},
+}
 
 % some convenient symbols
 \DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
 \DeclareMathOperator{\Beta}{Beta}
 \DeclareMathOperator{\Bin}{Bin}
-\DeclareMathOperator{\arsinh}{arsinh}
 \DeclareMathOperator{\tr}{tr}
 \newcommand{\A}{\mathpzc{A}}
 \newcommand{\B}{\mathcal{B}}
@@ -39,7 +47,7 @@
 
 \author[1]{Alasdair Tran}
 \author[2]{Cheng Soon Ong}
-\affil[1]{}
+\affil[1]{is it ok to put ANU here?}
 \affil[2]{Machine Learning Research Group, Data61, CSIRO, Australia}
 
 \keywords{machine learning, astronomy, active learning, bandit, rank aggregation}
@@ -87,7 +95,8 @@ Performance:
   \item F1 score
 \end{itemize}
 
-Random sampling, figure out asymptote of performance.
+Passive sampling, figure out asymptote of performance.
+
 
 \section*{Active Learning, Bandits, Choice and Design of Experiments}
 
@@ -132,6 +141,12 @@ Reward: improvement in performance.
 			& $\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
                \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
 			\\
+        Confidence & $r_{C}(\bm{x}; h)$
+			& $\argmax_{x \in \Ecal} \left\{   \right\}$
+			\\
+        Weighted Margin &
+			&
+			\\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -168,6 +183,40 @@ action. This difference in reward is called regret.
   \item Thompson sampling
 \end{itemize}
 
+Thompson sampling algorithm
+
+\algblock[Name]{Start}{End}
+
+\algblockdefx[Forall]{Foreach}{Endforeach}%
+			[1]{\textbf{for each} #1 \textbf{do}}%
+			{\textbf{end for}}
+
+\begin{algorithm}[tbhp]
+	\caption{The multi-arm bandit active learning algorithm} \index{bandit}
+	\label{alg:bandit}
+	\begin{algorithmic}[1]
+		\Procedure {ActiveBandit}{$\Unlabelled$, $\Labelled_T$, $h$, $n$, $E$,
+			                      $\R$, $\bm{\mu}$, $\bm{\sigma}^2$, $\bm{\tau}^2$}
+    		\While {$|\Labelled_T| < n$}
+        		\Foreach  {$i \in \{1, 2, ..., |\R|\}$}
+        			\State $\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$
+        		\Endforeach
+        		\State $r_* \leftarrow \argmax_{i} \nu_i'$
+        		\State $\Ecal$ $\leftarrow$ random sample of size $E$ from $\Unlabelled$
+        		\State $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*(\bm{x})$
+        		\State $y_* \leftarrow$ ask the expert to label $\bm{x}_*$
+        		\State $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$
+        		\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$
+        		\State $h(\bm{x}) \leftarrow$ retrain the classifier
+        		\State $\delta$ $\leftarrow$ incremental increase in the accuracy
+        		\State $\mu_* \leftarrow \dfrac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}$
+                \State $\sigma_*^2 \leftarrow \dfrac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}$
+    		\EndWhile
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+
 \subsection*{Choice: Rank aggregation}
 
 http://plato.stanford.edu/entries/social-choice/
@@ -202,24 +251,40 @@ assumed to be infinite (e.g. $R^d$) and the observations are scalar real variabl
 
 \subsubsection*{UCI Data}
 
+\begin{table}[h]
+	\caption {Overview of datasets} \label{tab:datasets}
+	\centering
+	\begin{tabular}{lll}
+		\toprule
+		{Dataset}  & $n$ &  $k$  \\
+		\midrule
+		\href{https://archive.ics.uci.edu/ml/datasets/Ionosphere}{Ionosphere}
+        	& $351$ & $2$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes}{Pima}
+        	& $733$ & $2$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)}{Sonar}
+        	& $208$ & $2$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)}{WPBC}
+        	& $194$ & $2$ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)}{Iris}
+        	& $ $ & $ $ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Glass+Identification}{Glass}
+        	& $ $ & $ $ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)}{Vehicle}
+        	& $ $ & $ $ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Wine}{Wine}
+        	& $ $ & $ $ \\
+        \href{}{SDSS}
+        	& $ $ & $ $ \\
+        \href{}{VST ATLAS ?}
+        	& $ $ & $ $ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
 
 \cheng{This should be a table in the appendix.}
-\begin{description}
-  \item[binary classification]\
-  \begin{itemize}
-      \item [ionosphere](https://archive.ics.uci.edu/ml/datasets/Ionosphere): Radar data.
-      \item [pima](https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes): Pima Indians Diabetes.
-      \item [sonar](https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)): We want to discriminate between sonar signals bounced off a metal cylinder and those bounced off a roughly cylindrical rock.
-      \item [wpbc](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)): Prognostic Wisconsin breast cancer.
-  \end{itemize}
-  \item[multiclass]\
-  \begin{itemize}
-    \item [iris](https://archive.ics.uci.edu/ml/datasets/Iris): Well-known dataset from Fisher, three classes.
-    \item [glass](https://archive.ics.uci.edu/ml/datasets/Glass+Identification): Glass identification, seven classes.
-    \item [vehicle](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)): Classifying a given sihouette as one of four types of vehicle.
-    \item [wine](https://archive.ics.uci.edu/ml/datasets/Wine): Using chemical analysis to determine the origin of wines.
-  \end{itemize}
-\end{description}
 
 \subsubsection*{SDSS}
 
@@ -227,6 +292,17 @@ assumed to be infinite (e.g. $R^d$) and the observations are scalar real variabl
   \item binary classification: stars vs galaxies
   \item multiclass: stars vs galaxies vs quasars
 \end{itemize}
+
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/learning_curves}
+	\caption[Some preliminary results.]{Some preliminary results. Active learning seems
+    		 to work better with bigger datasets (perhaps because the unlabelled pool
+             is bigger, so it has more chance to select a good canddiate?). }
+	\label{fig:learning_curves}
+\end{figure}
+
 
 \section*{Bits to tidy up, Appendix?}
 \begin{itemize}

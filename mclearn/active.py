@@ -32,6 +32,8 @@ class BaseActive:
         self.verbose = verbose
         self.h_kwargs = h_kwargs
         self.candidate_selections = []
+        self.time_step = 0
+        self.horizon = self.training_size - self.initial_n
 
         if type(random_state) is RandomState:
             self.seed = random_state
@@ -47,7 +49,7 @@ class BaseActive:
 
 
 
-    def _random_sample(self, pool_size, train_mask, sample_size):
+    def _random_sample(self, train_mask):
         """ Select a random sample from the pool.
 
             Parameters
@@ -72,7 +74,7 @@ class BaseActive:
         if 0 < self.sample_size < np.sum(candidate_mask):
             unlabelled_index = np.where(candidate_mask)[0]
             candidate_index = self.seed.choice(unlabelled_index, self.sample_size, replace=False)
-            candidate_mask = np.zeros(pool_size, dtype=bool)
+            candidate_mask = np.zeros(self.pool_size, dtype=bool)
             candidate_mask[candidate_index] = True
 
         return candidate_mask
@@ -84,7 +86,7 @@ class BaseActive:
         return None
 
 
-    def _store_results(self, X_test, y_test):
+    def _predict_test(self, X_test, y_test):
         """ Store results at the end of an iteration. """
 
         if callable(self.accuracy_fn):
@@ -98,6 +100,9 @@ class BaseActive:
                 self.learning_curve_[measure].append(accuracy)
 
     def _update_parameters(self):
+        pass
+
+    def _prepare(self, X_train, y_train, X_test, y_test, train_mask, similarity):
         pass
 
 
@@ -162,14 +167,14 @@ class BaseActive:
         if X_test is not None and y_test is not None:
             X_test, y_test = np.asarray(X_test), np.asarray(y_test)
 
-        pool_size, n_features = X_train.shape
-        assert self.training_size <= pool_size, 'Pool size is too small.'
+        self.pool_size, n_features = X_train.shape
+        assert self.training_size <= self.pool_size, 'Pool size is too small.'
 
         # boolean index of the samples which have been queried and are in the training set
-        train_mask = np.zeros(pool_size, dtype=bool)
+        train_mask = np.zeros(self.pool_size, dtype=bool)
 
         # select an initial random sample from the pool and train the classifier
-        sample = self.seed.choice(np.arange(pool_size), self.initial_n, replace=False)
+        sample = self.seed.choice(np.arange(self.pool_size), self.initial_n, replace=False)
         self.candidate_selections += list(sample)
         train_mask[sample] = True
         self.classifier.fit(X_train[train_mask], y_train[train_mask])
@@ -177,12 +182,16 @@ class BaseActive:
 
         # obtain the first data point of the learning curve
         if X_test is not None and y_test is not None:
-            self._store_results(X_test, y_test)
+            self._predict_test(X_test, y_test)
+
+        self._prepare(X_train, y_train, X_test, y_test, train_mask, similarity)
 
         # keep training the classifier until we have a desired sample size
         while np.sum(train_mask) < self.training_size:
+            self.time_step += 1
+
             # select a random sample from the unlabelled pool
-            candidate_mask = self._random_sample(pool_size, train_mask, self.sample_size)
+            candidate_mask = self._random_sample(train_mask)
 
             # select the heuristic to be used
             self._select_heuristic()
@@ -199,7 +208,7 @@ class BaseActive:
 
             # obtain the next data point of the learning curve
             if X_test is not None and y_test is not None:
-                self._store_results(X_test, y_test)
+                self._predict_test(X_test, y_test)
                 self._update_parameters()
 
             # print progress after every 100 queries
@@ -290,7 +299,7 @@ class ActiveLearner(BaseActive):
                          random_state=None, **h_kwargs)
 
 
-class ActiveBandit(BaseActive):
+class ActiveThompson(BaseActive):
     """ Active Learner Bandit
 
         Parameters
@@ -396,6 +405,139 @@ class ActiveBandit(BaseActive):
         self.all_prior_mus.append(self.prior_mus.copy())
         self.all_prior_sigmas.append(self.prior_sigmas.copy())
 
+
+
+class ActiveUCB(BaseActive):
+    """ Active Learner Bandit: Optimally Confident UCB
+
+        Parameters
+        ----------
+        classifier : Classifier object
+            A classifier object that will be used to train and test the data.
+            It should have the same interface as scikit-learn classifiers.
+
+        heuristic : function
+            This is the function that implements the active learning rule. Given a set
+            of training candidates and the classifier as inputs, the function will
+            return index array of candidate(s) with the highest score(s).
+
+        accuracy_fn : function
+            Given a trained classifier, a test set, and a test oracle, this function
+            will return the accuracy rate.
+
+        initial_n : int
+            The number of samples that the active learner will randomly select at the beginning
+            to get the algorithm started.
+
+        training_size : int
+            The total number of samples that the active learner will query.
+
+        n_candidates : int
+            The number of best candidates to be selected at each iteration.
+
+        sample_size : int
+            At each iteration, the active learner will pick a random of sample of examples.
+            It will then compute a score for each of example and query the one with the
+            highest score according to the active learning rule. If sample_size is set to 0,
+            the entire training pool will be sampled (which can be inefficient with large
+            datasets).
+
+        verbose : boolean
+            If set to True, progress is printed to standard output after every 100 iterations.
+
+        **kwargs : other keyword arguments
+            All other keyword arguments will be passed onto the heuristic function.
+
+
+        Attributes
+        ----------
+        learning_curves_ : array
+            Every time the active learner queries the oracle, it will re-train the classifier
+            and run it on the test data to get an accuracy rate. The learning curve is
+            simply the array containing all of these accuracy rates.
+    """
+
+    def __init__(self, classifier, heuristics, accuracy_fn=mpba_score,
+                 initial_n=20, training_size=100, sample_size=20, n_candidates=1,
+                 verbose=False, alpha=3, psi=2, random_state=None, **h_kwargs):
+
+        super().__init__(classifier=classifier,
+                         accuracy_fn=accuracy_fn, initial_n=initial_n,
+                         training_size=training_size, sample_size=sample_size,
+                         n_candidates=n_candidates, verbose=verbose,
+                         random_state=None, **h_kwargs)
+
+        self.heuristics = heuristics
+        self.n_heuristics = len(heuristics)
+        self.best_heuristic_idx = None
+        self.heuristic_selection = []
+
+        self.alpha = alpha
+        self.psi = psi
+
+        self.mu = np.zeros(self.n_heuristics)
+        self.mu_sum = np.zeros(self.n_heuristics)
+        self.T = np.zeros(self.n_heuristics)
+
+        self.mu_history = []
+        self.T_history = []
+
+
+    def _prepare(self, X_train, y_train, X_test, y_test, train_mask, similarity):
+        """ Choose each arm once initially. """
+
+        for i, heuristic in enumerate(self.heuristics):
+            self.time_step += 1
+            self.best_heuristic_idx = i
+            candidate_mask = self._random_sample(train_mask)
+            best_candidates = heuristic(X=X_train, y=y_train, candidate_mask=candidate_mask,
+                                        train_mask=train_mask, classifier=self.classifier,
+                                        n_candidates=self.n_candidates, random_state=self.seed,
+                                        similarity=similarity, **self.h_kwargs)
+
+            self.candidate_selections += list(best_candidates)
+
+            # retrain the classifier
+            train_mask[best_candidates] = True
+            self.classifier.fit(X_train[train_mask], y_train[train_mask])
+            self.current_training_size += len(best_candidates)
+
+            # obtain the next data point of the learning curve
+            if X_test is not None and y_test is not None:
+                self._predict_test(X_test, y_test)
+                self._update_parameters()
+
+
+    def _select_heuristic(self):
+        """ Choose a heuristic to be used. """
+
+        ucb = self.mu + np.sqrt((self.alpha / self.T) *
+                                 np.log(self.psi * self.horizon / self.time_step))
+
+        # select the heuristic that has the highest UCB
+        self.best_heuristic_idx = np.argmax(ucb)
+        self.best_heuristic = self.heuristics[self.best_heuristic_idx]
+        self.heuristic_selection.append(self.best_heuristic_idx)
+
+
+    def _update_parameters(self):
+        """ Store results at the end of an iteration. """
+
+        if callable(self.accuracy_fn):
+            main_learning_curve = self.learning_curve_
+        elif type(self.accuracy_fn) is dict:
+            main_learning_curve = self.learning_curve_['mpba']
+
+        # update empirical estimate of the reward and the times an arm is selected
+        reward = main_learning_curve[-1] - main_learning_curve[-2]
+        update_idx = self.best_heuristic_idx
+        self.mu_sum[update_idx] += reward
+        self.T[update_idx] += 1
+        self.mu[update_idx] = self.mu_sum[update_idx] / self.T[update_idx]
+
+        # store current results in history
+        self.mu_history.append(self.mu)
+        self.T_history.append(self.T)
 
 
 class ActiveAggregator(BaseActive):

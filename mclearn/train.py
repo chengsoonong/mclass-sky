@@ -20,7 +20,7 @@ from mclearn.heuristics import (random_h, entropy_h, margin_h, least_confidence_
 
 from mclearn.aggregators import borda_count, geometric_mean, schulze_method
 from mclearn.performance import mpba_score, micro_f1_score
-from mclearn.active import ActiveBandit, ActiveLearner, ActiveAggregator
+from mclearn.active import ActiveThompson, ActiveLearner, ActiveAggregator, ActiveUCB
 from mclearn.tools import log
 
 
@@ -110,7 +110,7 @@ def _run_active_fold(X, X_transformed, y, kind, classifier, random_state, commit
     """ Helper function. """
 
     output = {}
-    bandit_algos = ('thompson', 'exp3pp', 'kl-ucb', 'oc-ucb')
+    # bandit_algos = ('thompson', 'exp3pp', 'kl-ucb', 'oc-ucb')
     rank_algos = {'borda': borda_count, 'schulze': schulze_method, 'geometric': geometric_mean}
 
     X_train = X_transformed[train_index]
@@ -121,17 +121,17 @@ def _run_active_fold(X, X_transformed, y, kind, classifier, random_state, commit
 
     similarity = rbf_kernel(X, gamma=gamma)
 
-    if kind in bandit_algos:
-        learner = ActiveBandit(classifier=classifier,
-                               heuristics=heuristics,
-                               accuracy_fn=accuracy_fns,
-                               initial_n=initial_n,
-                               training_size=curr_training_size,
-                               sample_size=sample_size,
-                               committee=committee,
-                               committee_samples=committee_samples,
-                               verbose=verbose,
-                               random_state=seed)
+    if kind == 'thompson':
+        learner = ActiveThompson(classifier=classifier,
+                                 heuristics=heuristics,
+                                 accuracy_fn=accuracy_fns,
+                                 initial_n=initial_n,
+                                 training_size=curr_training_size,
+                                 sample_size=sample_size,
+                                 committee=committee,
+                                 committee_samples=committee_samples,
+                                 verbose=verbose,
+                                 random_state=seed)
     elif kind == 'passive':
         learner = ActiveLearner(classifier=classifier,
                                 heuristic=random_h,
@@ -141,6 +141,17 @@ def _run_active_fold(X, X_transformed, y, kind, classifier, random_state, commit
                                 sample_size=sample_size,
                                 verbose=verbose,
                                 random_state=seed)
+    elif kind == 'oc-ucb':
+        learner = ActiveUCB(classifier=classifier,
+                            heuristics=heuristics,
+                            accuracy_fn=accuracy_fns,
+                            initial_n=initial_n,
+                            training_size=curr_training_size,
+                            sample_size=sample_size,
+                            committee=committee,
+                            committee_samples=committee_samples,
+                            verbose=verbose,
+                            random_state=seed)
     elif kind in rank_algos:
         learner = ActiveAggregator(classifier=classifier,
                                    heuristics=heuristics,
@@ -158,10 +169,14 @@ def _run_active_fold(X, X_transformed, y, kind, classifier, random_state, commit
     for accuracy in accuracy_fns:
         output[accuracy] = learner.learning_curve_[accuracy]
 
-    if kind in bandit_algos:
+    if kind == 'thompson':
         output['heuristic'] = learner.heuristic_selection
         output['mu'] = learner.all_prior_mus
         output['signma'] = learner.all_prior_sigmas
+    elif kind == 'oc-ucb':
+        output['heuristic'] = learner.heuristic_selection
+        output['mu'] = learner.mu_history
+        output['T'] = learner.T_history
 
     return output
 

@@ -47,13 +47,24 @@
 
 \author[1]{Alasdair Tran}
 \author[2]{Cheng Soon Ong}
-\affil[1]{is it ok to put ANU here?}
+\affil[1]{}
 \affil[2]{Machine Learning Research Group, Data61, CSIRO, Australia}
 
 \keywords{machine learning, astronomy, active learning, bandit, rank aggregation}
 
 \begin{abstract}
-Recent advances in sensors and scientific instruments have led to an increasing use of machine learning techniques for managing the data deluge. Supervised learning has become a widely used paradigm in many big data applications. However,  labeled examples are required during the training phase of supervised machine learning algorithms, and the labeling has become a significant bottleneck. This paper explores the use of machine learning algorithms for identifying informative examples for labeling, the so-called active learning setting. We empirically compare several active learning heuristics on benchmark datasets, and focus on its application to photometric classification of the Sloan Digital Sky Survey. By considering each active learning heuristic as an expert recommendation of which example to label, we propose to combine them using bandit and rank aggregation algorithms. Our results show that combining active learning suggestions improves over each individual heuristic (including passive learning), and provides a promising practical approach.
+Recent advances in sensors and scientific instruments have led to an increasing use of machine
+learning techniques for managing the data deluge. Supervised learning has become a widely used
+paradigm in many big data applications. However,  labeled examples are required during the
+training phase of supervised machine learning algorithms, and the labeling has become a 
+significant bottleneck. This paper explores the use of machine learning algorithms for 
+identifying informative examples for labeling, the so-called active learning setting. We 
+empirically compare several active learning heuristics on benchmark datasets, and focus on its 
+application to photometric classification of the Sloan Digital Sky Survey. By considering each 
+active learning heuristic as an expert recommendation of which example to label, we propose to 
+combine them using bandit and rank aggregation algorithms. Our results show that combining 
+active learning suggestions improves over each individual heuristic (including passive 
+learning), and provides a promising practical approach.
 \end{abstract}
 
 \begin{document}
@@ -64,41 +75,15 @@ Recent advances in sensors and scientific instruments have led to an increasing 
 
 \section*{Introduction}
 
-
-Previous surveys~\cite{baram04onlcal,hsu15actll}. We are more comprehensive, and consider other types of combination.
-
+Previous surveys~\cite{baram04, hsu15}.
+We are more comprehensive, and consider other types of combination.
 There are three ideas which are often used for eliciting human
 responses using machine learning predictors. At a high level they are
 similar is spirit, but they have different foundations which lead to
 different formulations. The ideas are active learning, bandits and
-experimental design. Related to this but with literature from a different field is social choice theory, which looks at how individual preferences are aggregated.
-
-
-
-\section*{Binary and Multiclass classification}
-
-\begin{itemize}
-  \item binary classification
-  \item multiclass classification
-\end{itemize}
-
-Base learner: Logistic regression
-\begin{itemize}
-  \item Warm start?
-  \item polynomial kernel of degree 2
-\end{itemize}
-
-Performance:
-\begin{itemize}
-  \item Accuracy
-  \item Posterior mean balanced accuracy
-  \item F1 score
-\end{itemize}
-
-Passive sampling, figure out asymptote of performance.
-
-
-\section*{Active Learning, Bandits, Choice and Design of Experiments}
+experimental design. Related to this but with literature from a
+different field is social choice theory, which looks at
+how individual preferences are aggregated.
 
 \subsection*{Active Learning}
 
@@ -116,7 +101,50 @@ finite (but large). This is called the pool-based active learning.
 The active learning algorithm is often compared to the passive
 learning algorithm.
 
-Reward: improvement in performance.
+\subsection*{Bandits}
+
+A bandit problem is a sequential allocation problem defined by a set
+of actions. The agent chooses an action at each time step, and the
+environment returns a reward. The aim of the agent is to maximise reward.
+
+In basic settings, the set of actions is considered to be
+finite. There are three fundamental formalisations of the bandit
+problem, depending on the assumed nature of the reward process:
+stochastic, adversarial and Markovian. In all three settings the
+reward is uncertain, and hence the agent may have to play a particular
+action repeatedly.
+
+The agent is compared to a static agent which has played the best
+action. This difference in reward is called regret.
+
+\subsection*{Choice: Rank aggregation}
+
+http://plato.stanford.edu/entries/social-choice/
+
+\begin{itemize}
+  \item Pairwise majority rule
+  \item Borda count
+  \item geometric mean http://arxiv.org/abs/1410.4391
+\end{itemize}
+
+
+\subsection*{Experimental Design}
+
+In contrast to active learning, experimental design considers the problem of regression, i.e. where the label $y\in R$ is a real number.
+
+The problem to be solved in experimental design is to choose a set of
+trials (say of size N) to gather enough information about the object
+of interest. The goal is to maximise the information obtained about
+the parameters of the model (of the object).
+
+It is often assumed that the observations at the N trials are
+independent. When N is finite this is called exact design, otherwise
+it is called approximate or continuous design. The environment is
+assumed to be infinite (e.g. $R^d$) and the observations are scalar real variables.
+
+\section*{Problem Formulation}
+
+We shall consider eight active learning suggestions:
 
 \begin{table}[h]
 	\caption {Summary of active learning heuristics used in our experiments} \label{tab:heuristics}
@@ -151,51 +179,23 @@ Reward: improvement in performance.
 	\end{tabular}
 \end{table}
 
+Reward: improvement in balanced accuracy.
 
+\section*{Combining Suggestions}
 
-\begin{itemize}
-  \item (slow) Reduction of expected variance
-  \item (slow) Reduction of expected entropy
-  \item (maybe) information density http://burrsettles.com/pub/settles.emnlp08.pdf
-\end{itemize}
+We study four bandit algorithms: KL-UCB \cite{cappe13}, OC-UCB \cite{lattimore15}, EXP3++ \cite{seldin14}, and Thompson sampling.
 
-\subsection*{Bandits}
-
-A bandit problem is a sequential allocation problem defined by a set
-of actions. The agent chooses an action at each time step, and the
-environment returns a reward. The aim of the agent is to maximise reward.
-
-In basic settings, the set of actions is considered to be
-finite. There are three fundamental formalisations of the bandit
-problem, depending on the assumed nature of the reward process:
-stochastic, adversarial and Markovian. In all three settings the
-reward is uncertain, and hence the agent may have to play a particular
-action repeatedly.
-
-The agent is compared to a static agent which has played the best
-action. This difference in reward is called regret.
-
-\begin{itemize}
-  \item survey http://research.microsoft.com/en-us/um/people/sebubeck/SurveyBCB12.pdf
-  \item kl-UCB http://arxiv.org/pdf/1210.1136.pdf
-  \item OC-UCB http://arxiv.org/pdf/1507.07880v2.pdf
-  \item EXP3++ http://jmlr.org/proceedings/papers/v32/seldinb14.pdf
-  \item Thompson sampling
-\end{itemize}
-
-Thompson sampling algorithm
 
 \algblock[Name]{Start}{End}
-
 \algblockdefx[Forall]{Foreach}{Endforeach}%
 			[1]{\textbf{for each} #1 \textbf{do}}%
 			{\textbf{end for}}
 
-\begin{algorithm}[tbhp]
-	\caption{The multi-arm bandit active learning algorithm} \index{bandit}
+\begin{algorithm}[tbp]
+	\caption{Thompson sampling} \index{bandit}
 	\label{alg:bandit}
 	\begin{algorithmic}[1]
-		\Procedure {ActiveBandit}{$\Unlabelled$, $\Labelled_T$, $h$, $n$, $E$,
+		\Procedure {ThompsonSampling}{$\Unlabelled$, $\Labelled_T$, $h$, $n$, $E$,
 			                      $\R$, $\bm{\mu}$, $\bm{\sigma}^2$, $\bm{\tau}^2$}
     		\While {$|\Labelled_T| < n$}
         		\Foreach  {$i \in \{1, 2, ..., |\R|\}$}
@@ -216,31 +216,6 @@ Thompson sampling algorithm
 	\end{algorithmic}
 \end{algorithm}
 
-
-\subsection*{Choice: Rank aggregation}
-
-http://plato.stanford.edu/entries/social-choice/
-
-\begin{itemize}
-  \item Pairwise majority rule
-  \item Borda count
-  \item geometric mean http://arxiv.org/abs/1410.4391
-\end{itemize}
-
-
-\subsection*{Experimental Design}
-
-In contrast to active learning, experimental design considers the problem of regression, i.e. where the label $y\in R$ is a real number.
-
-The problem to be solved in experimental design is to choose a set of
-trials (say of size N) to gather enough information about the object
-of interest. The goal is to maximise the information obtained about
-the parameters of the model (of the object).
-
-It is often assumed that the observations at the N trials are
-independent. When N is finite this is called exact design, otherwise
-it is called approximate or continuous design. The environment is
-assumed to be infinite (e.g. $R^d$) and the observations are scalar real variables.
 
 
 
@@ -282,9 +257,8 @@ assumed to be infinite (e.g. $R^d$) and the observations are scalar real variabl
 	\end{tabular}
 \end{table}
 
-
-
 \cheng{This should be a table in the appendix.}
+
 
 \subsubsection*{SDSS}
 
@@ -292,6 +266,7 @@ assumed to be infinite (e.g. $R^d$) and the observations are scalar real variabl
   \item binary classification: stars vs galaxies
   \item multiclass: stars vs galaxies vs quasars
 \end{itemize}
+
 
 
 \begin{figure}[tbp]

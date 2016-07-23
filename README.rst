@@ -46,8 +46,10 @@ Due to their size, the following datasets are not included in this repo: ::
   │   sdss_full.h5  
   │   sdss_subclass.h5
 
-The above datasets (except for `sdss_full.h5`)
-can be downloaded from the `NICTA filestore <http://filestore.nicta.com.au/mlrg-data/astro/>`__.
+The main dataset :code:`sdss.h5` is avaliable on Zenodo:
+
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.58500.svg
+   :target: http://dx.doi.org/10.5281/zenodo.58500
 
 Notebooks
 ---------

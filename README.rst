@@ -10,11 +10,11 @@ mclearn
 :Doc: `<https://mclearn.readthedocs.org/en/latest/>`_
 :Thesis: `Photometric Classification with Thompson Sampling`_ by Alasdair Tran
 
-.. image:: https://travis-ci.org/alasdairtran/mclearn.svg
-    :target: https://travis-ci.org/alasdairtran/mclearn
+.. image:: https://travis-ci.org/chengsoonong/mclass-sky.svg
+    :target: https://travis-ci.org/chengsoonong/mclass-sky
 
-.. image:: https://coveralls.io/repos/alasdairtran/mclearn/badge.svg?branch=master&service=github
-  :target: https://coveralls.io/github/alasdairtran/mclearn?branch=master
+.. image:: https://coveralls.io/repos/chengsoonong/mclass-sky/badge.svg?branch=master&service=github
+  :target: https://coveralls.io/github/chengsoonong/mclass-sky?branch=master
 
 .. image:: https://zenodo.org/badge/doi/10.5281/zenodo.58500.svg
    :target: http://dx.doi.org/10.5281/zenodo.58500

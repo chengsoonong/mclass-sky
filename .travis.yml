@@ -17,7 +17,7 @@ before_install:
 install:
   - conda create -q -n testenv python=$TRAVIS_PYTHON_VERSION pip nose
   - source activate testenv
-  - conda install numpy scipy pandas matplotlib scikit-learn
+  - conda install numpy scipy pandas matplotlib scikit-learn cython
   - conda install seaborn ephem ipython pytables joblib
   - conda install -c dan_blanchard python-coveralls
   - python setup.py install

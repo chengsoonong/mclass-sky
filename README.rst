@@ -16,6 +16,8 @@ mclearn
 .. image:: https://coveralls.io/repos/alasdairtran/mclearn/badge.svg?branch=master&service=github
   :target: https://coveralls.io/github/alasdairtran/mclearn?branch=master
 
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.58500.svg
+   :target: http://dx.doi.org/10.5281/zenodo.58500
 
        
 Introduction
@@ -46,10 +48,8 @@ Due to their size, the following datasets are not included in this repo: ::
   │   sdss_full.h5  
   │   sdss_subclass.h5
 
-The main dataset :code:`sdss.h5` is avaliable on Zenodo:
+The main dataset :code:`sdss.h5` is avaliable on `Zenodo <http://dx.doi.org/10.5281/zenodo.58500>`_:
 
-.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.58500.svg
-   :target: http://dx.doi.org/10.5281/zenodo.58500
 
 Notebooks
 ---------

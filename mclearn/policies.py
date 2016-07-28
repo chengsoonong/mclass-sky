@@ -22,7 +22,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from numpy.random import RandomState
 
-from .schulze import schulze_aggregate_votes
+from mclearn.schulze import schulze_aggregate_votes
 
 __all__ = ['SingleSuggestion',
            'ThompsonSampling',
@@ -99,6 +99,10 @@ class Policy(ABC):
         train_idx = ~self.labels.mask
         self.classifier.fit(self.pool[train_idx], self.labels[train_idx])
 
+    def receive_reward(self, reward):
+        """ Receive a reward from the environment and update the policy's parameters. """
+        pass
+
     def history(self):
         """ Return a dictionary containing the history of the policy. """
         return {}
@@ -165,7 +169,7 @@ class SingleSuggestion(Policy):
                 An array of indices of objects in the pool.
         """
         candidate_mask = self._sample()
-        predictions = self.classifier.predict(self.pool[candidate_mask])
+        predictions = self.classifier.predict_proba(self.pool[candidate_mask])
         best_candidates = self.arm.select(candidate_mask, predictions, self.n_best_candidates)
         return best_candidates
 
@@ -268,11 +272,6 @@ class ActiveBandit(MultipleSuggestions):
         best_candidates = self.arms[self.selected_arm].select(
             candidate_mask, predictions, self.n_best_candidates)
         return best_candidates
-
-    @abstractmethod
-    def receive_reward(self, reward):
-        """ Receive a reward from the environment and update the policy's parameters. """
-        pass
 
 
 class ThompsonSampling(ActiveBandit):
@@ -552,9 +551,9 @@ class ActiveAggregator(MultipleSuggestions):
                 An array of indices of objects in the pool.
         """
         candidate_mask = self._sample()
-        predictions = self.classifier.predict(self.pool[candidate_mask])
+        predictions = self.classifier.predict_proba(self.pool[candidate_mask])
 
-        voters = [arm.select(candidate_mask, predictions, self.n_candidates) for arm in arms]
+        voters = [arm.select(candidate_mask, predictions, self.n_candidates) for arm in self.arms]
         voters = np.array(voters)
         best_candidates = self._aggregate_votes(voters)
         return best_candidates

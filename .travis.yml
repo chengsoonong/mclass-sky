@@ -19,7 +19,7 @@ install:
   - source activate testenv
   - conda install numpy scipy pandas matplotlib scikit-learn cython
   - conda install seaborn ephem ipython pytables joblib
-  - conda install -c dan_blanchard python-coveralls
+  - conda install -c omnia python-coveralls
   - python setup.py install
 
 script:

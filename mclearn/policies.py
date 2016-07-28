@@ -9,6 +9,7 @@
             - ActiveBandit
                 - ThompsonSampling
                 - OCUCB
+                - KLUCB
             - ActiveAggregator
                 - BordaAggregator
                 - GeometricAggregator
@@ -347,7 +348,6 @@ class ThompsonSampling(ActiveBandit):
         self.selected_arm = np.argmax(sample_rewards)
         return self._select_from_arm()
 
-
     def receive_reward(self, reward):
         """ Receive a reward from the environment and updates the polcicy's prior beliefs.
 
@@ -371,7 +371,6 @@ class ThompsonSampling(ActiveBandit):
         self.tau_history.append(self.tau.copy())
         self.T_history.append(self.T.copy())
         self.reward_history.append(reward)
-
 
     def history(self):
         """ Return a dictionary containing the history of the policy.
@@ -467,6 +466,111 @@ class OCUCB(ActiveBandit):
             self.selected_arm = np.argmax(ucb)
             return self._select_from_arm()
 
+    def receive_reward(self, reward):
+        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
+
+            Parameters
+            ----------
+            reward : float
+                The reward from the environment should be a good proxy for the decrease
+                in the generalisation error of the classifier.
+        """
+        # update empirical estimate of the reward and the times an arm is selected
+        self.sum_mu[self.selected_arm] += reward
+        self.T[self.selected_arm] += 1
+        self.mu[self.selected_arm] = self.sum_mu[self.selected_arm] / self.T[self.selected_arm]
+
+        # store results in history
+        self.mu_history.append(self.mu.copy())
+        self.T_history.append(self.T.copy())
+        self.reward_history.append(reward)
+
+    def history(self):
+        """ Return a dictionary containing the history of the policy.
+
+            Returns
+            -------
+            history : dict
+                The dictionary contains the following keys: mu, T, and reward.
+                The corresponding value of each key is an array containing the state
+                in each time step.
+        """
+        history = {}
+        history['mu'] = np.array(self.mu_history)
+        history['T'] = np.array(self.T_history)
+        history['reward'] = np.array(self.reward_history)
+        return history
+
+
+class KLUCB(ActiveBandit):
+    """ kl-UCB policy with normally distributed rewards, as described by Cappé (2013).
+
+        Parameters
+        ----------
+        pool : numpy array of shape [n_samples, n_features]
+            The feature matrix of all the examples (labelled and unlabelled).
+
+        labels : numpy masked array of shape [n_samples].
+            The missing entries of y corresponds to the unlabelled examples.
+
+        classifier : Classifier object
+            The classifier should have the same interface as scikit-learn classifier.
+            In particular, it needs to have the fit and predict methods.
+
+        arms : array of Arm objects
+            Each arm is a particular active learning rule. The arm needs to implement
+            the ``select`` method that returns an array of indices of objects from the
+            pool for labelling.
+
+        random_state : int or RandomState object, optional (default=None)
+            Provide a random seed if the results need to be reproducible.
+
+        n_candidates : int, optional (default=None)
+            The number of candidates in the unlabelled pool to be chosen for evaluation
+            at each iteration. For very large datasets, it might be useful to limit
+            the the number of candidates to a small number (like 300) since some
+            policies can take a long time to run. If not set, the whole unlabelled
+            pool will be used.
+
+        n_best_candidates : int, optional (default=1)
+            The number of candidates returned at each iteration for labelling. Batch-mode
+            active learning is where this parameter is greater than 1.
+
+        mu : float, optional (default=0)
+            The initial estimate of the mean of the distribution of the mean reward
+            from all arms.
+
+        sigma : float, optional (default=0.02)
+            The initial estimate of the variance of the distribution of reward from all arms.
+    """
+    def __init__(self, pool, labels, classifier, arms, random_state=None,
+                 n_candidates=None, n_best_candidates=1, mu=0, sigma=0.02):
+        super().__init__(pool, labels, classifier, arms, random_state,
+                         n_candidates, n_best_candidates)
+        self.mu = np.full(self.n_arms, mu, dtype=np.float64)
+        self.sum_mu = np.full(self.n_arms, mu, dtype=np.float64)
+        self.sigma = sigma
+        self.mu_history = [self.mu.copy()]
+
+    def select(self):
+        """ Use the kl-UCB algorithm to choose the next candidates for labelling.
+
+            Returns
+            -------
+            best_candidates : array of ints
+                An array of indices of objects in the pool.
+        """
+        self.time_step += 1
+
+        if self.time_step <= self.n_arms:
+            self.selected_arm = self.time_step - 1
+            return self._select_from_arm()
+
+        else:
+            max_kl = np.log(self.time_step) / self.T
+            ucb = self.mu + np.sqrt(2 * self.sigma * max_kl)
+            self.selected_arm = np.argmax(ucb)
+            return self._select_from_arm()
 
     def receive_reward(self, reward):
         """ Receive a reward from the environment and updates the polcicy's prior beliefs.

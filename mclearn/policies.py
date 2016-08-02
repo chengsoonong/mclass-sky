@@ -10,10 +10,8 @@
                 - ThompsonSampling
                 - OCUCB
                 - KLUCB
+                - EXP3PP
             - ActiveAggregator
-                - BordaAggregator
-                - GeometricAggregator
-                - SchulzeAggregator
 """
 
 # Author: Alasdair Tran
@@ -23,14 +21,14 @@ import numpy as np
 from abc import ABC, abstractmethod
 from numpy.random import RandomState
 
-from mclearn.schulze import schulze_aggregate_votes
+from mclearn.schulze import _aggregate_votes_schulze
 
 __all__ = ['SingleSuggestion',
            'ThompsonSampling',
            'OCUCB',
-           'BordaAggregator',
-           'GeometricAggregator',
-           'SchulzeAggregator']
+           'KLUCB',
+           'EXP3PP',
+           'ActiveAggregator']
 
 
 class Policy(ABC):
@@ -274,6 +272,41 @@ class ActiveBandit(MultipleSuggestions):
             candidate_mask, predictions, self.n_best_candidates)
         return best_candidates
 
+    def receive_reward(self, reward):
+        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
+
+            Parameters
+            ----------
+            reward : float
+                The reward from the environment should be a good proxy for the decrease
+                in the generalisation error of the classifier.
+        """
+        # update empirical estimate of the reward and the times an arm is selected
+        self.sum_mu[self.selected_arm] += reward
+        self.T[self.selected_arm] += 1
+        self.mu[self.selected_arm] = self.sum_mu[self.selected_arm] / self.T[self.selected_arm]
+
+        # store results in history
+        self.mu_history.append(self.mu.copy())
+        self.T_history.append(self.T.copy())
+        self.reward_history.append(reward)
+
+    def history(self):
+        """ Return a dictionary containing the history of the policy.
+
+            Returns
+            -------
+            history : dict
+                The dictionary contains the following keys: mu, T, and reward.
+                The corresponding value of each key is an array containing the state
+                in each time step.
+        """
+        history = {}
+        history['mu'] = np.array(self.mu_history)
+        history['T'] = np.array(self.T_history)
+        history['reward'] = np.array(self.reward_history)
+        return history
+
 
 class ThompsonSampling(ActiveBandit):
     """ Thompon Sampling with normally distributed rewards.
@@ -357,12 +390,12 @@ class ThompsonSampling(ActiveBandit):
                 The reward from the environment should be a good proxy for the decrease
                 in the generalisation error of the classifier.
         """
-        mu_0 = self.mu[self.selected_arm]
-        sigma_0 = self.sigma[self.selected_arm]
-        sigma = self.tau[self.selected_arm]
+        mu = self.mu[self.selected_arm]
+        sigma = self.sigma[self.selected_arm]
+        tau = self.tau[self.selected_arm]
 
-        self.mu[self.selected_arm] = (mu_0 * sigma + reward * sigma_0) / (sigma + sigma_0)
-        self.sigma[self.selected_arm] = (sigma_0 * sigma) / (sigma + sigma_0)
+        self.mu[self.selected_arm] = (mu * tau + reward * sigma) / (tau + sigma)
+        self.sigma[self.selected_arm] = (sigma * tau) / (tau + sigma)
         self.T[self.selected_arm] += 1
 
         # store results in history
@@ -466,40 +499,8 @@ class OCUCB(ActiveBandit):
             self.selected_arm = np.argmax(ucb)
             return self._select_from_arm()
 
-    def receive_reward(self, reward):
-        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
 
-            Parameters
-            ----------
-            reward : float
-                The reward from the environment should be a good proxy for the decrease
-                in the generalisation error of the classifier.
-        """
-        # update empirical estimate of the reward and the times an arm is selected
-        self.sum_mu[self.selected_arm] += reward
-        self.T[self.selected_arm] += 1
-        self.mu[self.selected_arm] = self.sum_mu[self.selected_arm] / self.T[self.selected_arm]
 
-        # store results in history
-        self.mu_history.append(self.mu.copy())
-        self.T_history.append(self.T.copy())
-        self.reward_history.append(reward)
-
-    def history(self):
-        """ Return a dictionary containing the history of the policy.
-
-            Returns
-            -------
-            history : dict
-                The dictionary contains the following keys: mu, T, and reward.
-                The corresponding value of each key is an array containing the state
-                in each time step.
-        """
-        history = {}
-        history['mu'] = np.array(self.mu_history)
-        history['T'] = np.array(self.T_history)
-        history['reward'] = np.array(self.reward_history)
-        return history
 
 
 class KLUCB(ActiveBandit):
@@ -572,47 +573,12 @@ class KLUCB(ActiveBandit):
             self.selected_arm = np.argmax(ucb)
             return self._select_from_arm()
 
-    def receive_reward(self, reward):
-        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
-
-            Parameters
-            ----------
-            reward : float
-                The reward from the environment should be a good proxy for the decrease
-                in the generalisation error of the classifier.
-        """
-        # update empirical estimate of the reward and the times an arm is selected
-        self.sum_mu[self.selected_arm] += reward
-        self.T[self.selected_arm] += 1
-        self.mu[self.selected_arm] = self.sum_mu[self.selected_arm] / self.T[self.selected_arm]
-
-        # store results in history
-        self.mu_history.append(self.mu.copy())
-        self.T_history.append(self.T.copy())
-        self.reward_history.append(reward)
-
-    def history(self):
-        """ Return a dictionary containing the history of the policy.
-
-            Returns
-            -------
-            history : dict
-                The dictionary contains the following keys: mu, T, and reward.
-                The corresponding value of each key is an array containing the state
-                in each time step.
-        """
-        history = {}
-        history['mu'] = np.array(self.mu_history)
-        history['T'] = np.array(self.T_history)
-        history['reward'] = np.array(self.reward_history)
-        return history
-
 
 class ActiveAggregator(MultipleSuggestions):
-    """ Abstract base class for an aggregator policy that takes multiple active learning rules.
+    """ Aggregator policies that takes multiple active learning rules.
 
-        This class cannot be used directly but instead serves as the base class for
-        all aggregator policies that take multiple active learning rules.
+        The ranks from the arms can be combined using the Borda count, the geometric
+        mean, or the Schulze method.
 
         Parameters
         ----------
@@ -631,6 +597,13 @@ class ActiveAggregator(MultipleSuggestions):
             the ``select`` method that returns an array of indices of objects from the
             pool for labelling.
 
+        aggregator : {'borda', 'geometric', 'schulze'}, optional (default='borda')
+            The type of aggregator function used to combine the ranks from the arms.
+            The arithmetic mean (Borda count) and the geometric mean are the
+            most efficient algorithms. The Schluze method is recommended only when the
+            candidate set is small, since the algorithm uses pariwise counting and runs
+            in ``O(n^3)`` where ``n`` is the number of candidates.
+
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
@@ -645,6 +618,22 @@ class ActiveAggregator(MultipleSuggestions):
             The number of candidates returned at each iteration for labelling. Batch-mode
             active learning is where this parameter is greater than 1.
     """
+    def __init__(self, pool, labels, classifier, arms, aggregator='borda',
+                 random_state=None, n_candidates=None, n_best_candidates=1):
+        super().__init__(pool, labels, classifier, arms, random_state,
+                         n_candidates, n_best_candidates)
+        self.aggregator = aggregator
+
+        if aggregator == 'borda':
+            self._aggregate_votes = self._aggregate_votes_borda
+        elif aggregator == 'geometric':
+            self._aggregate_votes = self._aggregate_votes_geometric
+        elif aggregator == 'schulze':
+            self._aggregate_votes = lambda voters: _aggregate_votes_schulze(
+                                    voters, self.n_best_candidates)
+        else:
+            raise ValueError("The aggregator argument must be one of " +
+                             "{'borda', 'geometric', 'schulze'}")
 
     def select(self):
         """ Use the chosen aggregation method to choose the next candidates for labelling.
@@ -662,46 +651,7 @@ class ActiveAggregator(MultipleSuggestions):
         best_candidates = self._aggregate_votes(voters)
         return best_candidates
 
-    @abstractmethod
-    def _aggregate_votes(self, voters):
-        pass
-
-
-class BordaAggregator(ActiveAggregator):
-    """ Use Borda rule to rank candidates chosen from all arms.
-
-        Parameters
-        ----------
-        pool : numpy array of shape [n_samples, n_features]
-            The feature matrix of all the examples (labelled and unlabelled).
-
-        labels : numpy masked array of shape [n_samples].
-            The missing entries of y corresponds to the unlabelled examples.
-
-        classifier : Classifier object
-            The classifier should have the same interface as scikit-learn classifier.
-            In particular, it needs to have the fit and predict methods.
-
-        arms : array of Arm objects
-            Each arm is a particular active learning rule. The arm needs to implement
-            the ``select`` method that returns an array of indices of objects from the
-            pool for labelling.
-
-        random_state : int or RandomState object, optional (default=None)
-            Provide a random seed if the results need to be reproducible.
-
-        n_candidates : int, optional (default=None)
-            The number of candidates in the unlabelled pool to be chosen for evaluation
-            at each iteration. For very large datasets, it might be useful to limit
-            the the number of candidates to a small number (like 300) since some
-            policies can take a long time to run. If not set, the whole unlabelled
-            pool will be used.
-
-        n_best_candidates : int, optional (default=1)
-            The number of candidates returned at each iteration for labelling. Batch-mode
-            active learning is where this parameter is greater than 1.
-    """
-    def _aggregate_votes(self, voters):
+    def _aggregate_votes_borda(self, voters):
         """ Aggregate the ranks from the arms using Borda count. """
         max_score = len(voters[0])
         points = {}
@@ -715,42 +665,7 @@ class BordaAggregator(ActiveAggregator):
         rank = sorted(points, key=points.__getitem__, reverse=True)
         return rank[:self.n_best_candidates]
 
-
-class GeometricAggregator(ActiveAggregator):
-    """ Use the geometric mean to rank candidates chosen from all arms.
-
-        Parameters
-        ----------
-        pool : numpy array of shape [n_samples, n_features]
-            The feature matrix of all the examples (labelled and unlabelled).
-
-        labels : numpy masked array of shape [n_samples].
-            The missing entries of y corresponds to the unlabelled examples.
-
-        classifier : Classifier object
-            The classifier should have the same interface as scikit-learn classifier.
-            In particular, it needs to have the fit and predict methods.
-
-        arms : array of Arm objects
-            Each arm is a particular active learning rule. The arm needs to implement
-            the ``select`` method that returns an array of indices of objects from the
-            pool for labelling.
-
-        random_state : int or RandomState object, optional (default=None)
-            Provide a random seed if the results need to be reproducible.
-
-        n_candidates : int, optional (default=None)
-            The number of candidates in the unlabelled pool to be chosen for evaluation
-            at each iteration. For very large datasets, it might be useful to limit
-            the the number of candidates to a small number (like 300) since some
-            policies can take a long time to run. If not set, the whole unlabelled
-            pool will be used.
-
-        n_best_candidates : int, optional (default=1)
-            The number of candidates returned at each iteration for labelling. Batch-mode
-            active learning is where this parameter is greater than 1.
-    """
-    def _aggregate_votes(self, voters):
+    def _aggregate_votes_geometric(self, voters):
         """ Aggregate the ranks from the arms using the geometric mean. """
         max_score = len(voters[0])
         points = {}
@@ -763,42 +678,3 @@ class GeometricAggregator(ActiveAggregator):
         # sort the candidates and return the most popular one(s)
         rank = sorted(points, key=points.__getitem__, reverse=True)
         return rank[:n_best_candidates]
-
-
-class SchulzeAggregator(ActiveAggregator):
-    """ Use the Schulze method to rank candidates chosen from all arms.
-
-        Parameters
-        ----------
-        pool : numpy array of shape [n_samples, n_features]
-            The feature matrix of all the examples (labelled and unlabelled).
-
-        labels : numpy masked array of shape [n_samples].
-            The missing entries of y corresponds to the unlabelled examples.
-
-        classifier : Classifier object
-            The classifier should have the same interface as scikit-learn classifier.
-            In particular, it needs to have the fit and predict methods.
-
-        arms : array of Arm objects
-            Each arm is a particular active learning rule. The arm needs to implement
-            the ``select`` method that returns an array of indices of objects from the
-            pool for labelling.
-
-        random_state : int or RandomState object, optional (default=None)
-            Provide a random seed if the results need to be reproducible.
-
-        n_candidates : int, optional (default=None)
-            The number of candidates in the unlabelled pool to be chosen for evaluation
-            at each iteration. For very large datasets, it might be useful to limit
-            the the number of candidates to a small number (like 300) since some
-            policies can take a long time to run. If not set, the whole unlabelled
-            pool will be used.
-
-        n_best_candidates : int, optional (default=1)
-            The number of candidates returned at each iteration for labelling. Batch-mode
-            active learning is where this parameter is greater than 1.
-    """
-    def _aggregate_votes(self, voters):
-        """ Aggregate the ranks from the arms using the Schulze method. """
-        return schulze_aggregate_votes(voters, self.n_best_candidates)

@@ -500,7 +500,107 @@ class OCUCB(ActiveBandit):
             return self._select_from_arm()
 
 
+class EXP3PP(ActiveBandit):
+    """ EXP3++ policy, as described by Seldin (2014).
 
+        Parameters
+        ----------
+        pool : numpy array of shape [n_samples, n_features]
+            The feature matrix of all the examples (labelled and unlabelled).
+
+        labels : numpy masked array of shape [n_samples].
+            The missing entries of y corresponds to the unlabelled examples.
+
+        classifier : Classifier object
+            The classifier should have the same interface as scikit-learn classifier.
+            In particular, it needs to have the fit and predict methods.
+
+        arms : array of Arm objects
+            Each arm is a particular active learning rule. The arm needs to implement
+            the ``select`` method that returns an array of indices of objects from the
+            pool for labelling.
+
+        random_state : int or RandomState object, optional (default=None)
+            Provide a random seed if the results need to be reproducible.
+
+        n_candidates : int, optional (default=None)
+            The number of candidates in the unlabelled pool to be chosen for evaluation
+            at each iteration. For very large datasets, it might be useful to limit
+            the the number of candidates to a small number (like 300) since some
+            policies can take a long time to run. If not set, the whole unlabelled
+            pool will be used.
+
+        n_best_candidates : int, optional (default=1)
+            The number of candidates returned at each iteration for labelling. Batch-mode
+            active learning is where this parameter is greater than 1.
+    """
+    def __init__(self, pool, labels, classifier, arms, random_state=None,
+                 n_candidates=None, n_best_candidates=1):
+        super().__init__(pool, labels, classifier, arms, random_state,
+                         n_candidates, n_best_candidates)
+        self.loss = np.zeros(self.n_arms)
+        self.loss_history = [self.loss]
+
+    def select(self):
+        """ Use the EXP++ algorithm to choose the next candidates for labelling.
+
+            Returns
+            -------
+            best_candidates : array of ints
+                An array of indices of objects in the pool.
+        """
+        self.time_step += 1
+
+        # eta is the learning rate
+        # xi is the exploration parameter
+        beta = 0.5 * np.sqrt(np.log(self.n_arms) / (self.time_step * self.n_arms))
+        gap = np.minimum(1, (1 / self.time_step) * (self.loss - np.min(self.loss)))
+        xi = 18 * np.log(self.time_step)**2 / (self.time_step * gap**2)
+        xi[np.isnan(xi)] = np.inf
+        epsilon = np.minimum(1/(2 * self.n_arms), beta)
+        epsilon = np.minimum(epsilon, xi)
+        eta = beta
+        rho = np.exp(-eta * self.loss)
+        rho /= np.sum(rho)
+        self.rho = (1 - np.sum(epsilon)) * rho + epsilon
+
+        self.selected_arm = self.seed.choice(self.n_arms, p=rho)
+        return self._select_from_arm()
+
+    def receive_reward(self, reward):
+        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
+
+            Parameters
+            ----------
+            reward : float
+                The reward from the environment should be a good proxy for the decrease
+                in the generalisation error of the classifier.
+        """
+        loss = 1 - reward
+        self.loss[self.selected_arm] += loss / self.rho[self.selected_arm]
+
+        self.T[self.selected_arm] += 1
+
+        # store results in history
+        self.T_history.append(self.T.copy())
+        self.reward_history.append(reward)
+        self.loss_history.append(self.loss.copy())
+
+    def history(self):
+        """ Return a dictionary containing the history of the policy.
+
+            Returns
+            -------
+            history : dict
+                The dictionary contains the following keys: mu, sigma, T, and reward.
+                The corresponding value of each key is an array containing the state
+                in each time step.
+        """
+        history = {}
+        history['T'] = np.array(self.T_history)
+        history['reward'] = np.array(self.reward_history)
+        history['loss'] = np.array(self.loss_history)
+        return history
 
 
 class KLUCB(ActiveBandit):

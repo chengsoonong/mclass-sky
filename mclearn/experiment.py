@@ -17,8 +17,7 @@ from sklearn.preprocessing import StandardScaler
 
 from .arms import RandomArm, MarginArm, LeastConfidenceArm, EntropyArm, QBBMarginArm, QBBKLArm
 from .performance import mpba_score
-from .policies import SingleSuggestion, ThompsonSampling, OCUCB
-from .policies import BordaAggregator, GeometricAggregator, SchulzeAggregator
+from .policies import SingleSuggestion, ThompsonSampling, OCUCB, KLUCB, EXP3PP, ActiveAggregator
 
 
 def save_results(dataset, policy, results):
@@ -91,9 +90,11 @@ class ActiveExperiment:
         policies = {
             'thompson': ThompsonSampling(pool, labels, classifier, arms, seed, 300),
             'ocucb': OCUCB(pool, labels, classifier, arms, seed, 300),
-            'borda': BordaAggregator(pool, labels, classifier, arms, seed, 300),
-            'geometric': GeometricAggregator(pool, labels, classifier, arms, seed, 300),
-            'schulze': SchulzeAggregator(pool, labels, classifier, arms, seed, 300)
+            'klucb': OCUCB(pool, labels, classifier, arms, seed, 300),
+            'exp++': EXP3PP(pool, labels, classifier, arms, seed, 300),
+            'borda': ActiveAggregator(pool, labels, classifier, arms, 'borda', seed, 300),
+            'geometric': ActiveAggregator(pool, labels, classifier, arms, 'geometric', seed, 300),
+            'schulze': ActiveAggregator(pool, labels, classifier, arms, 'schulze', seed, 300)
         }
 
         chosen_policy = policies[self.policy]

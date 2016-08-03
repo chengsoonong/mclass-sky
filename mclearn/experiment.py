@@ -118,6 +118,9 @@ class ActiveExperiment:
             y_pred = classifier.predict(X_test)
             learning_curve.append(mpba_score(y_test, y_pred))
             reward = learning_curve[-1] - learning_curve[-2]
+
+            # normalise the reward to [0, 1]
+            reward = (reward + 1) / 2
             chosen_policy.receive_reward(reward)
 
         history = chosen_policy.history()

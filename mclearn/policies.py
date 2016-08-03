@@ -345,7 +345,7 @@ class ThompsonSampling(ActiveBandit):
             The number of candidates returned at each iteration for labelling. Batch-mode
             active learning is where this parameter is greater than 1.
 
-        mu : float, optional (default=0)
+        mu : float, optional (default=0.5)
             The initial estimate of the mean of the distribution of the mean reward
             from all arms.
 
@@ -357,7 +357,7 @@ class ThompsonSampling(ActiveBandit):
             The initial estimate of the variance of the reward received from all arms.
     """
     def __init__(self, pool, labels, classifier, arms, random_state=None,
-                 n_candidates=None, n_best_candidates=1, mu=0, sigma=0.02, tau=0.02):
+                 n_candidates=None, n_best_candidates=1, mu=0.5, sigma=0.02, tau=0.02):
         super().__init__(pool, labels, classifier, arms, random_state,
                          n_candidates, n_best_candidates)
         self.mu = np.full(self.n_arms, mu, dtype=np.float64)

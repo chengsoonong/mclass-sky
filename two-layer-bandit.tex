@@ -25,8 +25,9 @@
 	pdftitle	 = {Combining Active Learning Suggestions},
 }
 
+\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n} % reset caligraphy font
+
 % some convenient symbols
-\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
 \DeclareMathOperator{\Beta}{Beta}
 \DeclareMathOperator{\Bin}{Bin}
 \DeclareMathOperator{\tr}{tr}
@@ -53,18 +54,21 @@
 \keywords{machine learning, astronomy, active learning, bandit, rank aggregation}
 
 \begin{abstract}
-Recent advances in sensors and scientific instruments have led to an increasing use of machine
-learning techniques for managing the data deluge. Supervised learning has become a widely used
-paradigm in many big data applications. However,  labeled examples are required during the
-training phase of supervised machine learning algorithms, and the labeling has become a 
-significant bottleneck. This paper explores the use of machine learning algorithms for 
-identifying informative examples for labeling, the so-called active learning setting. We 
-empirically compare several active learning heuristics on benchmark datasets, and focus on its 
-application to photometric classification of the Sloan Digital Sky Survey. By considering each 
-active learning heuristic as an expert recommendation of which example to label, we propose to 
-combine them using bandit and rank aggregation algorithms. Our results show that combining 
-active learning suggestions improves over each individual heuristic (including passive 
-learning), and provides a promising practical approach.
+Recent advances in sensors and scientific instruments have led to an increasing
+use of machine learning techniques for managing the data deluge. Supervised
+learning has become a widely used paradigm in many big data applications.
+However,  labeled examples are required during the training phase of supervised
+machine learning algorithms, and the labeling has become a  significant
+bottleneck. This paper explores the use of machine learning algorithms for
+identifying informative examples for labeling, the so-called active learning
+setting. We  empirically compare several active learning heuristics on
+benchmark datasets, and focus on its  application to photometric classification
+of the Sloan Digital Sky Survey. By considering each  active learning heuristic
+as an expert recommendation of which example to label, we propose to  combine
+them using bandit and rank aggregation algorithms. Our results show that
+combining  active learning suggestions improves over each individual heuristic
+(including passive  learning), and provides a promising practical approach.
+
 \end{abstract}
 
 \begin{document}
@@ -75,91 +79,69 @@ learning), and provides a promising practical approach.
 
 \section*{Introduction}
 
-There are three ideas which are often used to elicit human responses -
-active learning, bandits, and experimental designs. These ideas are
-similar in spirits
+There are three ideas which are often used to elicit human responses - active
+learning, bandits, and experimental designs. Although similar in spirit, these
+ideas have different foundations which lead to different formulations. Related
+to this but with literature from a different field is social choice theory,
+which looks at how individual preferences are aggregated.
 
+Active learning considers the setting where the agent interacts with its
+environment to procure a training set. This contrasts with passive learning,
+where the agent passively receives i.i.d. samples from some underlying
+distribution. The environment is usually assumed to be infinite and the agent
+has to choose a location to query an oracle for a label. It is often assumed
+that there is no noise in the label, and hence there is no benefit of querying
+the same point again. In many practical applications, the environment is
+considered to be finite (but large). This is called the pool-based active
+learning.
 
+A bandit problem is a sequential allocation problem defined by a set of
+actions. The agent chooses an action at each time step, and the environment
+returns a reward. The aim of the agent is to maximise reward. In basic
+settings, the set of actions is considered to be finite. There are three
+fundamental formalisations of the bandit problem, depending on the assumed
+nature of the reward process: stochastic, adversarial and Markovian. In all
+three settings the reward is uncertain, and hence the agent may have to play a
+particular action repeatedly. The agent is compared to a static agent which has
+played the best action. This difference in reward is called regret.
 
-Previous surveys~\cite{baram04, hsu15}.
-We are more comprehensive, and consider other types of combination.
-There are three ideas which are often used for eliciting human
-responses using machine learning predictors. At a high level they are
-similar is spirit, but they have different foundations which lead to
-different formulations. The ideas are active learning, bandits and
-experimental design. Related to this but with literature from a
-different field is social choice theory, which looks at
-how individual preferences are aggregated.
-
-\subsection*{Active Learning}
-
-Active learning considers the setting where the agent interacts with
-its environment to procure a training set, rather than passively
-receiving i.i.d. samples from some underlying distribution.
-
-It is often assumed that the environment is infinite (e.g. $R^d$) and
-the agent has to choose a location, $x$, to query. The oracle then returns
-the label $y$. It is often assumed that there is no noise in the label,
-and hence there is no benefit of querying the same point $x$ again. In
-many practical applications, the environment is considered to be
-finite (but large). This is called the pool-based active learning.
-
-The active learning algorithm is often compared to the passive
-learning algorithm.
-
-\subsection*{Bandits}
-
-A bandit problem is a sequential allocation problem defined by a set
-of actions. The agent chooses an action at each time step, and the
-environment returns a reward. The aim of the agent is to maximise reward.
-
-In basic settings, the set of actions is considered to be
-finite. There are three fundamental formalisations of the bandit
-problem, depending on the assumed nature of the reward process:
-stochastic, adversarial and Markovian. In all three settings the
-reward is uncertain, and hence the agent may have to play a particular
-action repeatedly.
-
-The agent is compared to a static agent which has played the best
-action. This difference in reward is called regret.
-
-\subsection*{Choice: Rank aggregation}
-
-http://plato.stanford.edu/entries/social-choice/
-
-\begin{itemize}
-  \item Pairwise majority rule
-  \item Borda count
-  \item geometric mean http://arxiv.org/abs/1410.4391
-\end{itemize}
-
-
-\subsection*{Experimental Design}
-
-In contrast to active learning, experimental design considers the problem of regression, i.e. where the label $y\in R$ is a real number.
-
-The problem to be solved in experimental design is to choose a set of
-trials (say of size N) to gather enough information about the object
-of interest. The goal is to maximise the information obtained about
-the parameters of the model (of the object).
-
-It is often assumed that the observations at the N trials are
-independent. When N is finite this is called exact design, otherwise
-it is called approximate or continuous design. The environment is
-assumed to be infinite (e.g. $R^d$) and the observations are scalar real variables.
+In contrast to active learning, experimental design considers the problem of
+regression, i.e. where the label $y\in R$ is a real number. The problem to be
+solved in experimental design is to choose a set of trials (say of size N) to
+gather enough information about the object of interest. The goal is to maximise
+the information obtained about the parameters of the model (of the object). It
+is often assumed that the observations at the N trials are independent. When N
+is finite this is called exact design, otherwise it is called approximate or
+continuous design. The environment is assumed to be infinite (e.g. $R^d$) and
+the observations are scalar real variables.
 
 \section*{Problem Formulation}
 
-Suppose we have a classifier $h$ that maps the input space
+Suppose we have a hypothesis $h$ that maps the input space $\X \subset \mathbb{R}^d$
+to the label space $\Y$. We require that a small number of objects have already
+been labelled--these become the labelled set $\Labelled \subset \X \times \Y$.
+The rest form the unabelled set
+$\Unlabelled \subset \X$. Now consider the problem of choosing the next example
+in $\Unlabelled$ for querying. To quantify this, we need to come up with a rule
+$r(\bm{x}; h)$ that can give each unlabelled example a score based only on
+their feature vector $\bm{x}$ and the current hypothesis $h$. Coming up with a good
+rule is itself a hard problem, but there have been many attempts to derive
+good heurstics. Five common ones are listed in Table \ref{tab:heuristics}.
+They roughly fall into two categories: uncertainty sampling and version space
+reduction.
 
-We shall consider eight active learning suggestions:
+Uncertainty sampling focusses on selecting the example whose class membership
+the current hypothesis is most uncertain about. The most uncertain example can
+be the one whose predicted class probability vector displays the greatest entropy, or
+that has the smallest probability gap between its two mostly labels.
+
 
 \begin{table}[h]
 	\caption {Summary of active learning heuristics used in our experiments} \label{tab:heuristics}
 	\centering
 	\begin{tabular}{lll}
 		\toprule
-		{Name}  & Notation &  Objective  \\
+		{Heuristic}  & Notation &  Objective  \\
 		\midrule
 		Entropy & $r_S(\bm{x}; h)$
 			& $\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
@@ -178,14 +160,48 @@ We shall consider eight active learning suggestions:
                \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
 			\\
         Confidence & $r_{C}(\bm{x}; h)$
-			& $\argmax_{x \in \Ecal} \left\{   \right\}$
-			\\
-        Weighted Margin &
-			&
+			& $\argmax_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) \right\}$
 			\\
 		\bottomrule
 	\end{tabular}
 \end{table}
+
+
+
+
+
+
+
+
+Previous surveys~\cite{baram04, hsu15}.
+We are more comprehensive, and consider other types of combination.
+
+\subsection*{Active Learning}
+
+
+
+
+\subsection*{Bandits}
+
+
+
+\subsection*{Choice: Rank aggregation}
+
+http://plato.stanford.edu/entries/social-choice/
+
+\begin{itemize}
+  \item Pairwise majority rule
+  \item Borda count
+  \item geometric mean http://arxiv.org/abs/1410.4391
+\end{itemize}
+
+
+\subsection*{Experimental Design}
+
+
+
+
+
 
 Reward: improvement in balanced accuracy.
 
@@ -279,10 +295,8 @@ We study four bandit algorithms: KL-UCB \cite{cappe13}, OC-UCB \cite{lattimore15
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=\textwidth]{figures/learning_curves}
-	\caption[Some preliminary results.]{Some preliminary results. Active learning seems
-    		 to work better with bigger datasets (perhaps because the unlabelled pool
-             is bigger, so it has more chance to select a good canddiate?). }
+	\includegraphics[width=\textwidth]{figures/active_learners}
+	\caption[Some preliminary results.]{Some preliminary results. }
 	\label{fig:learning_curves}
 \end{figure}
 
@@ -298,7 +312,7 @@ We study four bandit algorithms: KL-UCB \cite{cappe13}, OC-UCB \cite{lattimore15
 
 \section*{Acknowledgments}
 
-So long and thanks for all the fish.
+SDSS
 
 \bibliography{active}
 

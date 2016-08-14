@@ -13,12 +13,12 @@ class Dataset:
                                  'petroMag_u', 'petroMag_g', 'petroMag_r', 'petroMag_i',
                                  'petroMag_z', 'petroRad_r']
             self.target_col = 'class'
-            
+
         elif name == 'wine':
-            self.feature_cols = ['alcohol', 'malic_acid', 'ash', 'ash_alcalinity',
-                                 'magnesium', 'phenols',  'flavanoids', 'nonfavanoid_phenols',
-                                 'proanthocyanins', 'color', 'hue', 'od280', 'proline'] 
-            self.target_col = 'class'
+            self.feature_cols = ['alcohol', 'malic', 'ash', 'alcash', 'mg',
+                                 'phenols', 'flav', 'nonflav', 'proan',
+                                 'color', 'hue', 'od280', 'proline']
+            self.target_col = 'target'
 
         else:
             raise ValueError('Dataset is not yet defined.')

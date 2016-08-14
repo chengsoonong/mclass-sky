@@ -468,9 +468,14 @@ class OCUCB(ActiveBandit):
 
         psi : float, optional (default=2)
             Lattimore (2015) found that psi=2 leads to good results.
+
+        horizon : int
+            The OC-UCB algorithm requires the knowledge of the horizon, i.e.
+            the maximum number of time steps.
     """
     def __init__(self, pool, labels, classifier, arms, random_state=None,
-                 n_candidates=None, n_best_candidates=1, alpha=3, psi=2):
+                 n_candidates=None, n_best_candidates=1, alpha=3, psi=2,
+                 horizon=1000):
         super().__init__(pool, labels, classifier, arms, random_state,
                          n_candidates, n_best_candidates)
         self.alpha = 3
@@ -478,6 +483,7 @@ class OCUCB(ActiveBandit):
         self.mu = np.zeros(self.n_arms)
         self.sum_mu = np.zeros(self.n_arms)
         self.mu_history = [self.mu.copy()]
+        self.horizon = horizon
 
     def select(self):
         """ Use the OC-UCB algorithm to choose the next candidates for labelling.
@@ -777,4 +783,4 @@ class ActiveAggregator(MultipleSuggestions):
 
         # sort the candidates and return the most popular one(s)
         rank = sorted(points, key=points.__getitem__, reverse=True)
-        return rank[:n_best_candidates]
+        return rank[:self.n_best_candidates]

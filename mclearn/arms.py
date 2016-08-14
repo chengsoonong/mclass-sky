@@ -5,7 +5,7 @@
         - RandomArm
         - WeightedArm
             - MarginArm
-            - LeastConfidenceArm
+            - ConfidenceArm
             - EntropyArm
             - CommitteeArm
                 - QBBMarginArm
@@ -23,7 +23,7 @@ from scipy.stats import itemfreq
 
 __all__ = ['RandomArm',
            'MarginArm',
-           'LeastConfidenceArm',
+           'ConfidenceArm',
            'EntropyArm',
            'QBBMarginArm',
            'QBBKLArm']
@@ -144,7 +144,7 @@ class WeightedArm(Arm):
 
     def _select_from_scores(self, candidate_mask, candidate_scores, n_best_candidates):
         """ Pick the candidates with the highest scores, optionally weighted by the density. """
-        if self.similarity:
+        if self.similarity is not None:
             density_weight = self.similarity[np.ix_(candidate_mask, self.labels.mask)]
             density_weight = np.mean(density_weight, axis=1)
             candidate_scores *= density_weight
@@ -205,7 +205,7 @@ class MarginArm(WeightedArm):
         return best_candidates
 
 
-class LeastConfidenceArm(WeightedArm):
+class ConfidenceArm(WeightedArm):
     """ Suggests the candidate that we are least confident about its most likely labelling.
 
         Parameters
@@ -386,11 +386,11 @@ class QBBMarginArm(CommitteeArm):
         except ValueError:
             logger.info('Iteration {}: Class distribution is too skewed.'.format(
                          np.sum(~self.labels.mask)) +
-                        'Falling back to the margin heuristic.')
-            predictions = np.sort(predictions, axis=1)
-            margin = 1 - np.abs(predictions[:, -1] - predictions[:, -2])
-            best_candidates = self._select_from_scores(candidate_mask, margin)
-            return best_candidates
+                        'Falling back to passive learning.')
+            candidate_indices = np.where(candidate_mask)[0]
+            n_best_candidates = min(n_best_candidates, len(candidate_indices))
+            random_candidates = self.seed.choice(candidate_indices, n_best_candidates, replace=False)
+            return random_candidates
 
         committee_predictions = self._predict(candidate_mask)
 
@@ -490,7 +490,7 @@ class QBBKLArm(CommitteeArm):
                         'Falling back to passive learning.')
             candidate_indices = np.where(candidate_mask)[0]
             n_best_candidates = min(n_best_candidates, len(candidate_indices))
-            random_candidates = seed.choice(candidate_indices, n_best_candidates, replace=False)
+            random_candidates = self.seed.choice(candidate_indices, n_best_candidates, replace=False)
             return random_candidates
 
         avg_probs, prob_list = self._predict(candidate_mask)

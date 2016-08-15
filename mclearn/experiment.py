@@ -17,9 +17,9 @@ from sklearn.metrics.pairwise import pairwise_distances, rbf_kernel
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 
-from .arms import RandomArm, MarginArm, ConfidenceArm, EntropyArm, QBBMarginArm, QBBKLArm
-from .performance import mpba_score, micro_f1_score
-from .policies import SingleSuggestion, ThompsonSampling, OCUCB, KLUCB, EXP3PP, ActiveAggregator
+from mclearn.arms import RandomArm, MarginArm, ConfidenceArm, EntropyArm, QBBMarginArm, QBBKLArm
+from mclearn.performance import mpba_score, micro_f1_score
+from mclearn.policies import SingleSuggestion, ThompsonSampling, OCUCB, KLUCB, EXP3PP, ActiveAggregator
 
 
 def save_results(dataset, policy, results):

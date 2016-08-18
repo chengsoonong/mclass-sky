@@ -1,0 +1,153 @@
+% Preamble
+\documentclass[11pt]{amsart}
+\usepackage{mathtools}
+\usepackage{amssymb,latexsym}
+\usepackage{physics}
+\usepackage{fancyvrb}
+\usepackage[margin=1.4in]{geometry}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true, % set true if you want colored links
+    linktoc=all,     % set to all if you want both sections and subsections 
+                     % linked
+    linkcolor=blue,  % choose some color if you want links to stand out
+}
+\usepackage{parskip}
+
+
+% Commands and definitions 
+\newcommand{\code}[1]{\texttt{#1}}
+
+\begin{document}
+\pagestyle{plain}
+
+\title{A quick start guide for contributing to an existing project on GitHub}
+\author{David Wu}
+
+\maketitle
+
+In this guide you will learn about some of the basic knowledge and commands needed to contribute to an existing project on GitHub. For the purposes of this guide we will use a \code{monospace font} for command line command, web addresses and other similar situations.
+
+So you've installed Git on your machine (if not, see the Git website at \url{https://git-scm.com/}), opened a GitHub account and found a project on GitHub (say the scikit-learn project at \url{http://scikit-learn.org/stable/} and \url{https://github.com/scikit-learn/scikit-learn}) that you would like to contribute to. The current situtation is
+
+\begin{itemize}
+    \item \textbf{Your machine}
+    \begin{itemize}
+        \item \textbf{Files on machine}
+    \end{itemize}
+    \item \textbf{Project's repository.} \emph{This is hosted on GitHub.}
+\end{itemize}
+
+To contribute to the project, you first want to make a copy of the project's GitHub repository on your own machine. This is done in the following way:
+\begin{enumerate}
+    \item Open the command line shell on your machine. (From now onwards, we'll assume the machine is running Mac OS X and the command line shell is Terminal, but the procedure should be analogous on other operating systems.)
+    \item Use the \code{cd} command to move to the location on your machine you would like to make a copy of the project's repository. For example: 
+
+    \begin{BVerbatim}
+    cd Google\ Drive/projects          
+    \end{BVerbatim} 
+
+    \item Go to the project's repository on GitHub and click on the \textbf{Clone or Download} button and copy the \code{https://} url within. For instance, for the scikit-learn project this looks like \code{https://github.com/scikit-learn/scikit-learn.git}.
+    \item Use the command
+
+    \begin{BVerbatim}
+    git clone https://github.com/scikit-learn/scikit-learn.git
+    \end{BVerbatim} 
+
+    to make a copy of the repository on your machine. If the present working directory is as above, then we would have \code{/Users/john/Google\ Drive/projects/scikit-learn} for the location of the cloned repository.
+\end{enumerate}
+
+Having done this, the situtation now looks like this: 
+\begin{itemize}
+    \item \textbf{Your machine}
+    \begin{itemize}
+        \item \textbf{Files on your machine}
+        \item \textbf{Local repository.} \emph{A local copy of the project's repository on your machine.} 
+    \end{itemize}
+    \item \textbf{Your GitHub repository} \emph{A copy of the project's repository hosted on GitHub.}
+    \item \textbf{Project's repository}
+\end{itemize}
+
+You will now have a folder on your machine that contains the files from the project's repository, which you can directly access through the standard means, say the file browser Finder or Terminal. It is \emph{very important} to note that if you make alterations to the copy of the repository contained in this folder nothing has changed in your local repository until you have indicated so to Git. So suppose you want to add a new file to your local repository. This is done as follows: 
+\begin{enumerate}
+    \item With your present working directory (use the command \code{pwd} to see where you are) set to the local repository on your machine (this can be changed via the \code{cd} command) enter the command
+
+    \begin{BVerbatim}
+    git add recipes/soup.txt
+    \end{BVerbatim} 
+
+    Of course, replace \code{recipes/soup.txt} with the file you wish to add to your repository. We say that the indicated file has been \emph{staged}. To see what files are currently staged (and other useful information regarding your local repository) we can use the command
+
+    \begin{BVerbatim}
+    git status
+    \end{BVerbatim}
+
+    \item To then add, or in Git terminology \emph{commit}, this file to our local repository we use the command
+
+    \begin{BVerbatim}
+    git commit -m "This is a recipe for soup"
+    \end{BVerbatim}
+
+    where the string following \code{-m} is a message to attach to this \emph{commit}. Here if we again use the \code{git status} command we see that this file is no longer staged.
+\end{enumerate}
+
+The situtation now looks like this: 
+\begin{itemize}
+    \item \textbf{Your machine}
+    \begin{itemize}
+        \item \textbf{Files on your machine}
+        \item \textbf{Local repository.} \emph{With \code{soup.txt} added.}
+    \end{itemize}
+    \item \textbf{Your GitHub repository}
+    \item \textbf{Project's repository}
+\end{itemize}
+
+To add this file to your GitHub repository we then use the command 
+
+\begin{BVerbatim}
+    git push
+\end{BVerbatim}
+
+which will update your GitHub repository with \emph{all} commits that have been staged. So the situation is:
+\begin{itemize}
+    \item \textbf{Your machine}
+    \begin{itemize}
+        \item \textbf{Files on your machine}
+        \item \textbf{Local repository.} \emph{With \code{soup.txt} added.}
+    \end{itemize}
+    \item \textbf{Your GitHub repository.} \emph{With \code{soup.txt} added.}
+    \item \textbf{Project's repository}
+\end{itemize}
+    
+Finally, if you would like to add this file to the project's GitHub repository also, you can make a \emph{pull request}, which is a request  to those that operate the project's repository to merge the alterations you have made into the project's repository. This is done as follows: 
+\begin{enumerate}
+    \item Navigate to your repository on the GitHub site. 
+    \item Press the \textbf{New pull request button}.
+    \item Follow the instructions on this page.
+\end{enumerate}
+
+Given they accept this pull request, the situation is then
+\begin{itemize}
+    \item \textbf{Your machine}
+    \begin{itemize}
+        \item \textbf{Files on your machine}
+        \item \textbf{Local repository.} \emph{With \code{soup.txt} added.}
+    \end{itemize}
+    \item \textbf{Your GitHub repository.} \emph{With \code{soup.txt} added.}
+    \item \textbf{Project's GitHub repository.} \emph{With \code{soup.txt} added.}
+\end{itemize}
+
+In this guide we have described some of the basic steps needed to contribute to a GitHub project as well as some of the basic functionality of the most common commands, i.e., \code{clone, add, commit, push} and \code{pull}, with the aim of conveying a basic understanding of the Git version control system, which is commonly used together with GitHub. 
+
+As things can get more complicated when one wishes to replace existing files and particuarly so when multiple developers may be doing this simultaneously, for learning about how to handle these situtations we recommend the user consult the sources in the bibliography. 
+
+\renewcommand\refname{Bibliography}
+\begin{thebibliography}{99}
+    \bibitem{AT} \url{https://www.atlassian.com/git/tutorials}
+    \bibitem{HG} \url{http://hginit.com/}
+\end{thebibliography}
+
+\end{document}

@@ -12,6 +12,9 @@ __pycache__
 *.so
 *.c
 
+# Explicitly add pdf files if needed
+*.pdf
+
 # latex files
 *.aux
 *.log
@@ -37,6 +40,8 @@ __pycache__
 *.alg
 *.acn
 *.acr
+*.fdb_latexmk
+*.fls
 _minted*
 
 # project-specific exclusions

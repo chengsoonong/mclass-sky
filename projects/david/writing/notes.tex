@@ -1,0 +1,109 @@
+% Preamble
+\documentclass[11pt]{amsart}
+\usepackage{mathtools}
+\usepackage{amssymb,latexsym}
+\usepackage{physics}
+\usepackage{bm}
+\usepackage[margin=1.4in]{geometry}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true, % set true if you want colored links
+    linktoc=all,     % set to all if you want both sections and subsections 
+                     % linked
+    linkcolor=blue,  % choose some color if you want links to stand out
+}
+\usepackage{parskip}
+
+% Environments
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem*{main}{Main Theorem}
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\theoremstyle{remark}
+\newtheorem*{notation}{Notation}
+
+% Commands
+\newcommand*{\Cdot}{\raisebox{-0.25ex}{\scalebox{1.3}{$\cdot$}}}
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\transpose}{\text{T}}
+
+
+\begin{document}
+\pagestyle{plain}
+
+\title{Notes}
+\author{David Wu}
+
+\maketitle
+
+\tableofcontents
+
+\section{Linear Regression}\label{s:linear_regression}
+    We first recall the standard linear regression model. The set up is as follows:
+    \begin{itemize}
+        \item $D$ input variables $x_1, \dots, x_D$ with additional dummy input variable $x_0 = 1$. We represent this as an input vector $\vect{x} = (x_0, \dots, x_D)^\transpose$.
+        \item $M$ basis functions $\phi_1(\vect{x}), \dots, \phi_{M-1}(\vect{x})$ with additional dummy basis function $\phi_0(\vect{x}) = 1$. We represent this by the vector-valued function $\bm{\phi}(\vect{x}) = (\phi_0(\vect{x}), \dots, \phi_M(\vect{x}))^\transpose$. We may use the notation $\bm{\phi}(\vect{x}) = \bm{\phi}$ also.
+        \item $M$ parameters $w_0, \dots, w_{M-1}$ where we $w_0$ is the bias parameter. We represent this by the vector $\vect{w} = (w_0, \dots, w_{M-1})$.
+    \end{itemize}
+    The model is then given by
+    \begin{equation*}
+        y(\vect{x}, \vect{w}) = \sum_{j=0}^{M-1} w_j \phi_j(\vect{x}) = \vect{w}^\transpose \bm{\phi}(\vect{x}).
+    \end{equation*}
+\section{Logistic Regression}\label{s:logistic_regression}
+    % Useful notation for future use:
+    % p(\mathcal{C}_1 | \bm{\phi})
+    % p(\mathcal{C}_2 | \bm{\phi}) = 1 -  p(\mathcal{C}_1 | \bm{\phi})
+    % -\ln{p(\vect{t} | \vect{w})}
+    For logistic regression we start with the setup for linear regression (Section \ref{s:linear_regression}). The logistic regression model is then given by 
+    \begin{equation*}
+        y(\bm{\phi}) = \sigma(\vect{w}^\transpose \bm{\phi}),
+    \end{equation*}
+    where $\sigma$ is the logistic sigmoid function defined by
+    \begin{equation*}
+        \sigma(a) = \frac{1}{1 + \exp(-a)}.
+    \end{equation*}
+    This function has the useful property
+    \begin{equation*}
+        \dv{\sigma}{a} = \sigma(1 - \sigma).
+    \end{equation*}
+    
+    We now consider finding the optimal parameter vector $\vect{w}$ for our model. Here we have:
+    \begin{itemize}
+        \item A training set with $N$ data points $\{(\bm{\phi}_n, t_n)\}_{n=1}^{N}$ where $t_n \in \{0, 1\}$ and $\bm{\phi}_n = \bm{\phi}(\vect{x}_n)$. (We've applied $\bm{\phi}$ to the original input data points $\{\vect{x}_n\}_{n=1}^{N}$.) We represent the target data points by the vector $\vect{t} = (t_1, \dots, t_N)^\transpose$.
+        \item We introduce the notation $y_n = y(\bm{\phi}_n) = \sigma(\vect{w}^\transpose \bm{\phi}_n)$.
+    \end{itemize}
+    The optimal parameter vector $\vect{w}$ is the parameter vector $\vect{w}$ which minimizes the \emph{cross-entropy} error function
+    \begin{equation*}
+        E(\vect{w}) =  - \sum_{n=1}^{N} 
+                       \{t_n \ln y_n + (1 - t_n)\ln(1 - y_n)\}.
+    \end{equation*}
+    For solving this minimization problem, the gradient of the error function is useful. It is given by
+    \begin{equation*}
+        \nabla E(\vect{w}) = \sum_{i=1}^{N} (y_n - t_n)\bm{\phi}_n.
+    \end{equation*}
+
+\renewcommand\refname{Bibliography}
+\begin{thebibliography}{99}
+    \bibitem[Bishop]{bishop} Christopher Bishop, Pattern Recognition and Machine Learning
+    \bibitem[Ng]{ng} Andrew Ng, CS229 Lecture notes, \url{http://cs229.stanford.edu/notes/cs229-notes1.pdf}
+    \bibitem[Shalizi]{shalizi} Cosma Rohilla Shalizi, Advanced Data Analysis
+from an Elementary Point of View, \url{http://www.stat.cmu.edu/~cshalizi/ADAfaEPoV/ADAfaEPoV.pdf} 
+\end{thebibliography}
+
+% Examples:
+% \bibitem[AHU]{ahu} Aho, A.,\ Hopcroft, J.,\ and Ullman, J.\ (1976). {\em{The Design and Analysis of Computer Algorithms.}} Addison Wesley, Reading, Mass.
+
+% \bibitem[AT]{AT} Auslander, L. and Tolmieri, R. (1979). Is Computing with the Fast Fourier Transform Pure or Applied Mathematics? {\em{Bulletin (New Series) of the AMS Vol. 1}} 847-897.
+
+% [Lee03] John Lee, \emph{Introduction to Topological Manifolds}, Springer Science, New York, USA, 2003.
+
+% [Rat06] John Ratcliffe, \emph{Foundations of Hyperbolic Manifolds}, Springer Science, New York, USA, 2006.
+
+\end{document}

@@ -29,6 +29,17 @@ def save_results(dataset, policy, results):
     joblib.dump(results, dump_path)
 
 
+def load_results(dataset, policy, measure=None, mean=False):
+    dump_path = os.path.join('results', dataset, policy, 'results.pkl')
+    try:
+        results = joblib.load(dump_path)
+        results = results[measure] if measure else results
+        results = results.mean(axis=0) if mean else results
+        return results
+    except FileNotFoundError:
+        return None
+
+
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
     def __init__(self, X, y, dataset, policy_name, scale=True, n_iter=10):
@@ -52,7 +63,7 @@ class ActiveExperiment:
         self.kfold = StratifiedShuffleSplit(self.y, n_iter=n_iter, test_size=test_size,
                                             train_size=train_size, random_state=seed)
 
-    def run(self):
+    def run_policies(self):
         start_time = time()
         outputs = Parallel(n_jobs=-1)(delayed(self._run_fold)(train_index, test_index)
                                       for train_index, test_index in self.kfold)
@@ -65,6 +76,32 @@ class ActiveExperiment:
             results[key] = np.asarray(results[key])
             results['time'] = end_time - start_time
         save_results(self.dataset, self.policy_name, results)
+
+    def run_asymptote(self):
+        results = {
+            'asymptote_mpba': [],
+            'asymptote_accuracy': [],
+            'asymptote_f1': []}
+
+        for train_index, test_index in self.kfold:
+            X_train = self.X_transformed[train_index]
+            X_test = self.X_transformed[test_index]
+            y_train = self.y[train_index]
+            y_test = self.y[test_index]
+            n_classes = len(np.unique(y_test))
+            seed = RandomState(1234)
+            classifier = LogisticRegression(multi_class='ovr', penalty='l2', C=1000,
+                                            random_state=seed, class_weight='balanced')
+            classifier.fit(X_train, y_train)
+            y_pred = classifier.predict(X_test)
+            results['asymptote_mpba'].append(mpba_score(y_test, y_pred))
+            results['asymptote_accuracy'].append(accuracy_score(y_test, y_pred))
+            results['asymptote_f1'].append(micro_f1_score(y_test, y_pred, n_classes))
+
+        for key in results:
+            results[key] = np.array(results[key])
+
+        save_results(self.dataset, 'asymptote', results)
 
     def _run_fold(self, train_index, test_index):
         # reset the seed
@@ -132,7 +169,7 @@ class ActiveExperiment:
     def _get_policy(self, request, pool, labels, classifier,
                     committee, seed, similarity, horizon):
 
-        similarity = similarity if request.startswith('weighted') else None
+        similarity = similarity if request.startswith('w-') else None
 
         arms = [
             RandomArm(pool, labels, seed),
@@ -147,15 +184,15 @@ class ActiveExperiment:
             policy = SingleSuggestion(pool, labels, classifier,
                                       RandomArm(pool, labels, seed))
 
-        elif request in ['margin', 'weighted-margin']:
+        elif request in ['margin', 'w-margin']:
             policy = SingleSuggestion(pool, labels, classifier,
                                       MarginArm(pool, labels, seed, similarity))
 
-        elif request in ['confidence', 'weighted-confidence']:
+        elif request in ['confidence', 'w-confidence']:
             policy = SingleSuggestion(pool, labels, classifier,
                                       ConfidenceArm(pool, labels, seed, similarity))
 
-        elif request in ['entropy', 'weighted-entropy']:
+        elif request in ['entropy', 'w-entropy']:
             policy = SingleSuggestion(pool, labels, classifier,
                                       EntropyArm(pool, labels, seed, similarity))
 

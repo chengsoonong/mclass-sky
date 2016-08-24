@@ -16,7 +16,7 @@ class TestExperiment:
         for policy in self.policies:
             expt = ActiveExperiment(self.data.features, self.data.target,
                                     'wine', policy, n_iter=1)
-            expt.run()
+            expt.run_policies()
 
     @classmethod
     def teardown_class(cls):

@@ -7,8 +7,8 @@ class TestExperiment:
     @classmethod
     def setup_class(cls):
         cls.data = Dataset('wine')
-        cls.policies = ['passive', 'margin', 'weighted-margin', 'confidence',
-                        'weighted-confidence', 'entropy', 'weighted-entropy',
+        cls.policies = ['passive', 'margin', 'w-margin', 'confidence',
+                        'w-confidence', 'entropy', 'w-entropy',
                         'qbb-margin', 'qbb-kl', 'thompson', 'ocucb', 'klucb',
                         'exp++', 'borda', 'geometric', 'schulze']
 

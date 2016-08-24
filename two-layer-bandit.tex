@@ -62,7 +62,7 @@ machine learning algorithms, and the labeling has become a  significant
 bottleneck. This paper explores the use of machine learning algorithms for
 identifying informative examples for labeling, the so-called active learning
 setting. We  empirically compare several active learning heuristics on
-benchmark datasets, and focus on its  application to photometric classification
+benchmark UCI datasets, and focus on its  application to photometric classification
 of the Sloan Digital Sky Survey. By considering each  active learning heuristic
 as an expert recommendation of which example to label, we propose to  combine
 them using bandit and rank aggregation algorithms. Our results show that
@@ -122,11 +122,11 @@ to the label space $\Y$. We require that a small number of objects have already
 been labelled--these become the labelled set $\Labelled \subset \X \times \Y$.
 The rest form the unabelled set
 $\Unlabelled \subset \X$. Now consider the problem of choosing the next example
-in $\Unlabelled$ for querying. To quantify this, we need to come up with a rule
-$r(\bm{x}; h)$ that can give each unlabelled example a score based only on
+in $\Unlabelled$ for querying, using a rule
+$r(\bm{x}; h)$ that gives each unlabelled example a score based only on
 their feature vector $\bm{x}$ and the current hypothesis $h$. Coming up with a good
 rule is itself a hard problem, but there have been many attempts to derive
-good heurstics. Five common ones are listed in Table \ref{tab:heuristics}.
+good heuristics. Five common ones are listed in Table \ref{tab:heuristics}.
 They roughly fall into two categories: uncertainty sampling and version space
 reduction.
 
@@ -141,26 +141,26 @@ that has the smallest probability gap between its two mostly labels.
 	\centering
 	\begin{tabular}{lll}
 		\toprule
-		{Heuristic}  & Notation &  Objective  \\
+		{Heuristic}  &  Objective  \\
 		\midrule
-		Entropy & $r_S(\bm{x}; h)$
-			& $\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
+		Entropy &
+			$\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
             \log \big[ p(y | \bm{x}; h) \big] \right\}$
 			\\[2ex]
-		Margin & $r_M(\bm{x}; h)$
-			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
+		Margin &
+			$\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}$
 			\\[2ex]
-		QBB Margin & $r_{QM}(\bm{x}; h)$
-			& $\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
+		QBB Margin &
+			$\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}$
 			\\[2ex]
-		QBB KL & $r_{QK}(\bm{x}; h)$
-			& $\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
+		QBB KL &
+			$\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
                \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
 			\\
-        Confidence & $r_{C}(\bm{x}; h)$
-			& $\argmax_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) \right\}$
+        Confidence &
+			$\argmax_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) \right\}$
 			\\
 		\bottomrule
 	\end{tabular}

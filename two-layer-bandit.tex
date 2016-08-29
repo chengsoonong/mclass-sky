@@ -115,7 +115,12 @@ is finite this is called exact design, otherwise it is called approximate or
 continuous design. The environment is assumed to be infinite (e.g. $R^d$) and
 the observations are scalar real variables.
 
+Previous surveys~\cite{baram04, hsu15}.
+We are more comprehensive, and consider other types of combination.
+
 \section*{Problem Formulation}
+
+\subsection*{Active Learning Suggestions}
 
 Suppose we have a hypothesis $h$ that maps the input space $\X \subset \mathbb{R}^d$
 to the label space $\Y$. We require that a small number of objects have already
@@ -126,15 +131,34 @@ in $\Unlabelled$ for querying, using a rule
 $r(\bm{x}; h)$ that gives each unlabelled example a score based only on
 their feature vector $\bm{x}$ and the current hypothesis $h$. Coming up with a good
 rule is itself a hard problem, but there have been many attempts to derive
-good heuristics. Five common ones are listed in Table \ref{tab:heuristics}.
+good heuristics.
+Five common ones are listed in Table \ref{tab:heuristics}.
 They roughly fall into two categories: uncertainty sampling and version space
 reduction.
 
-Uncertainty sampling focusses on selecting the example whose class membership
-the current hypothesis is most uncertain about. The most uncertain example can
-be the one whose predicted class probability vector displays the greatest entropy, or
-that has the smallest probability gap between its two mostly labels.
+\cite{lewis94} introduce the idea of uncertainty sampling, where we select the example whose class
+membership the classifier is least certain about. These tend to be points that are near the
+decision boundary of the classifier. Perhaps the simplest way to quantify uncertainty is \cite{culotta05}'s least confidence heuristic, where we pick the candidate whose most likely label the classifier is most uncertain about. A second option is to calculate the
+entropy \citep{shannon48}, which measures the amount of information needed to encode a distribution.
+Intuitively, the closer class probabilities of an object are to random guessing, the higher its
+entropy will be. This gives us the heuristic of picking the candidate with the highest entropy.
+Finally we can pick the candidate with the smallest margin, which is defined to be the difference between the two highest class probabilities \citep{scheffer01} Since the sum of all probabilities must be 1, the smaller the margin is, the more uncertain we are about the object's class membership. 
 
+Instead of focussing on the uncertainty of individual predictions, we could
+instead try to constrain the size of the version space, thus allowing the search for the optimal
+hypothesis to be more precise. The version space is defined as the set of all possible hypotheses that are consistent with the current training set. To quantify the size the space, we can train a committee of
+classifiers, $\B = \{h_1, h_2, ..., h_B\}$, and measure the disagreement among the members about an
+object's class membership. Each committee member needs to have a hypothesis that is as different
+from the others as possible but that is still in the version space \cite{melville04}. In order to
+have this diversity, we give each member only a subset of the training examples. Since there might
+not be enough training data, we need to use bootstrapping and select samples with replacement. Hence
+this method is often called Query by Bagging (QBB).
+
+One way to measure the level of disagreement is to calculate the margin using the class
+probabilities estimated by the committee \cite{melville04}. This looks similar to one of the
+uncertainty sampling heuristics, except now we first average out the probabilities of the members
+before minimising the margin. \cite{mccallum98} offer an alternative disagreement measure which
+involves picking the candidate with the largest expected Kullback--Leibler (KL) divergence from the average.
 
 \begin{table}[h]
 	\caption {Summary of active learning heuristics used in our experiments} \label{tab:heuristics}
@@ -143,72 +167,66 @@ that has the smallest probability gap between its two mostly labels.
 		\toprule
 		{Heuristic}  &  Objective  \\
 		\midrule
-		Entropy &
+        Least Confidence &
+			$\argmax_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) \right\}$
+			\\
+		Highest Entropy &
 			$\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
             \log \big[ p(y | \bm{x}; h) \big] \right\}$
 			\\[2ex]
-		Margin &
+		Smallest Margin &
 			$\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}$
 			\\[2ex]
-		QBB Margin &
+		Smallest QBB Margin &
 			$\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}$
 			\\[2ex]
-		QBB KL &
+		Largest QBB KL &
 			$\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
                \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
-			\\
-        Confidence &
-			$\argmax_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) \right\}$
 			\\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
+\subsection*{Combining the Suggestions with Bandits}
+
+Out of the five heuristics discussed, how do we know which one is the optimal, anyway? There have
+been some attempts in the literature to do a theoretical analysis of them. However proofs are
+scarce, and when there is one available, they normally only work under simplifying assumptions. For
+example, \cite{freund97} show that the query by committee algorithm (a slight variant of our
+QBB heuristics) guarantees an exponential decrease in the prediction error with the training size,
+but only under certain restrictions such as there is no noise. Thus whether any of these heuristics
+is guaranteed to beat random sampling is still an open question. We shall not worry too much about
+the theoretical analysis in this thesis. Instead we shall focus on an empirical analysis in the
+astronomical domain.
+
+To help us automatically choose the optimal heuristic, we now turn our attention to the multi-armed
+bandit problem in probability theory. The colourful name originates from the situation where a
+gambler stands in front of a slot machine with $s$ levers. When pulled, each lever gives out a random
+reward according to some unknown distribution. The goal of the game is to come up with a strategy
+that can maximise the gambler's lifetime rewards while minimising the number of pulls.
+
+Suppose we have a set of $s$ heuristics $ \R = \{r_1, ..., r_s \}$. Each heuristic has a different
+ability to identify the candidate whose labelling information is most valuable. An appropriate
+reward is then the incremental increase in the accuracy rate after the candidate is added to the
+training set. We assume that the heuristic rewards are independent of each other. This is
+reasonable since the theories with which we use to derive the heuristics are mostly unrelated.
+
+One problem in multi-arm bandits is the trade-off between exploring random heuristics and exploiting the best heuristic so far.
+There are many instances in which we find our previously held beliefs to
+be completely wrong. Thus by always exploiting, we could miss out on the optimal heuristic. On the
+other hand, if we explore too much, it might take a long time to reach the desired accuracy and the
+strategy ends up being no different from random sampling.
+
+There are two main methods in the literature that address this exploration vs exploitation problem.
+The algorithm with a strong theoretical guarantee is Upper Confidence Bound \cite{auer02}. There is also an older algorithm called Thompson sampling \cite{thompson33} that solves the trade-off from a Bayesian perspective first. In this paper we shall consider four variants: Thompson sampling with normally distributed rewards, Optimally Confident UCB \cite{lattimore15}, KL-UCB \cite{cappe13}, and EXP3++ \cite{seldin14}.
 
 
+\subsection*{Combining the Suggestions with Social Choice Theory}
 
-
-
-
-
-Previous surveys~\cite{baram04, hsu15}.
-We are more comprehensive, and consider other types of combination.
-
-\subsection*{Active Learning}
-
-
-
-
-\subsection*{Bandits}
-
-
-
-\subsection*{Choice: Rank aggregation}
-
-http://plato.stanford.edu/entries/social-choice/
-
-\begin{itemize}
-  \item Pairwise majority rule
-  \item Borda count
-  \item geometric mean http://arxiv.org/abs/1410.4391
-\end{itemize}
-
-
-\subsection*{Experimental Design}
-
-
-
-
-
-
-Reward: improvement in balanced accuracy.
-
-\section*{Combining Suggestions}
-
-We study four bandit algorithms: KL-UCB \cite{cappe13}, OC-UCB \cite{lattimore15}, EXP3++ \cite{seldin14}, and Thompson sampling.
-
+http://plato.stanford.edu/entries/social-choice/. Pairwise majority rule. Borda count. Geometric mean \cite{bedo14}
 
 \algblock[Name]{Start}{End}
 \algblockdefx[Forall]{Foreach}{Endforeach}%
@@ -248,48 +266,44 @@ We study four bandit algorithms: KL-UCB \cite{cappe13}, OC-UCB \cite{lattimore15
 
 \subsection*{Description of datasets}
 
-\subsubsection*{UCI Data}
-
 \begin{table}[h]
 	\caption {Overview of datasets} \label{tab:datasets}
 	\centering
-	\begin{tabular}{lll}
+	\begin{tabular}{lrrr}
 		\toprule
-		{Dataset}  & $n$ &  $k$  \\
+		{Dataset}  & Size &  Classes & Majority  \\
 		\midrule
-		\href{https://archive.ics.uci.edu/ml/datasets/Ionosphere}{Ionosphere}
-        	& $351$ & $2$ \\
-		\href{https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes}{Pima}
-        	& $733$ & $2$ \\
-		\href{https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)}{Sonar}
-        	& $208$ & $2$ \\
-		\href{https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)}{WPBC}
-        	& $194$ & $2$ \\
-        \href{https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)}{Iris}
-        	& $ $ & $ $ \\
-        \href{https://archive.ics.uci.edu/ml/datasets/Glass+Identification}{Glass}
-        	& $ $ & $ $ \\
-        \href{https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)}{Vehicle}
-        	& $ $ & $ $ \\
-        \href{https://archive.ics.uci.edu/ml/datasets/Wine}{Wine}
-        	& $ $ & $ $ \\
-        \href{}{SDSS}
-        	& $ $ & $ $ \\
-        \href{}{VST ATLAS ?}
-        	& $ $ & $ $ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Glass+Identification}{glass}
+        	& $214$ & $6$ & $33\%$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Ionosphere}{ionosphere}
+        	& $351$ & $2$ & $64\%$ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)}{iris}
+        	& $150$ & $3$ & $33\%$ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/MAGIC+Gamma+Telescope}{magic}
+        	& $19~020$ & $2$ & $65\%$ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/MiniBooNE+particle+identification}{miniboone}
+        	& $129~596$ & $2$ & $72\%$ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Page+Blocks+Classification}{pageblock}
+        	& $5~473$ & $5$ & $90\%$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes}{pima}
+        	& $733$ & $2$ & $66\%$ \\
+        \href{http://dx.doi.org/10.5281/zenodo.58500}{sdss}
+        	& $2~801~002$ & $3$ & $61\%$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)}{sonar}
+        	& $208$ & $2$ & $53\%$ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)}{vehicle}
+        	& $846$ & $4$ & $26\%$ \\
+        \href{https://archive.ics.uci.edu/ml/datasets/Wine}{wine}
+        	& $178$ & $3$ & $40\%$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)}{wpbc}
+        	& $194$ & $2$ & $76\%$ \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-\cheng{This should be a table in the appendix.}
+\subsubsection*{Experimental Setup}
 
-
-\subsubsection*{SDSS}
-
-\begin{itemize}
-  \item binary classification: stars vs galaxies
-  \item multiclass: stars vs galaxies vs quasars
-\end{itemize}
+Reward: improvement in balanced accuracy. Posterior balanced Accuracy derivation.
 
 \begin{figure}[tbp]
 	\centering
@@ -305,15 +319,6 @@ We study four bandit algorithms: KL-UCB \cite{cappe13}, OC-UCB \cite{lattimore15
 	\caption[Selected learning curves]{Selected learning curves.}
 	\label{fig:learning_curves}
 \end{figure}
-
-
-\section*{Bits to tidy up, Appendix?}
-\begin{itemize}
-  \item Posterior balanced Accuracy derivation
-  \item Reddening correction
-  \item Feature selection, best kernel is poly degree 2
-  \item Choose value of C
-\end{itemize}
 
 
 \section*{Acknowledgments}

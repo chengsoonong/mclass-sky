@@ -16,7 +16,7 @@
 \usepackage{bm} % bold math symbols
 \usepackage{hyperref} % create hyperlinks
 \usepackage[labelfont=bf]{caption} % figure captions
-\usepackage{algorithm} 
+\usepackage{algorithm}
 \usepackage{algpseudocode} % display algorithms in pseudo-code
 
 \hypersetup{
@@ -48,8 +48,10 @@
 
 \author[1]{Alasdair Tran}
 \author[2]{Cheng Soon Ong}
+\author[3]{Christian Wolf}
 \affil[1]{}
 \affil[2]{Machine Learning Research Group, Data61, CSIRO, Australia}
+\affil[3]{Research School of Astronomy and Astrophysics, Australian National University}
 
 \keywords{machine learning, astronomy, active learning, bandit, rank aggregation}
 
@@ -142,7 +144,7 @@ decision boundary of the classifier. Perhaps the simplest way to quantify uncert
 entropy \citep{shannon48}, which measures the amount of information needed to encode a distribution.
 Intuitively, the closer class probabilities of an object are to random guessing, the higher its
 entropy will be. This gives us the heuristic of picking the candidate with the highest entropy.
-Finally we can pick the candidate with the smallest margin, which is defined to be the difference between the two highest class probabilities \citep{scheffer01} Since the sum of all probabilities must be 1, the smaller the margin is, the more uncertain we are about the object's class membership. 
+Finally we can pick the candidate with the smallest margin, which is defined to be the difference between the two highest class probabilities \citep{scheffer01} Since the sum of all probabilities must be 1, the smaller the margin is, the more uncertain we are about the object's class membership.
 
 Instead of focussing on the uncertainty of individual predictions, we could
 instead try to constrain the size of the version space, thus allowing the search for the optimal

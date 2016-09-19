@@ -42,13 +42,14 @@ def load_results(dataset, policy, measure=None, mean=False):
 
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
-    def __init__(self, X, y, dataset, policy_name, scale=True, n_iter=10):
+    def __init__(self, X, y, dataset, policy_name, scale=True, n_iter=10, passive=True):
         seed = RandomState(1234)
         self.X = np.asarray(X, dtype=np.float64)
         self.y = np.asarray(y)
         self.X = StandardScaler().fit_transform(self.X) if scale else self.X
         self.policy_name = policy_name
         self.dataset = dataset
+        self.passive = passive
 
         # estimate the kernel using the 90th percentile heuristic
         random_idx = seed.choice(X.shape[0], 1000)
@@ -75,7 +76,8 @@ class ActiveExperiment:
             results[key] = [fold[key] for fold in outputs]
             results[key] = np.asarray(results[key])
             results['time'] = end_time - start_time
-        save_results(self.dataset, self.policy_name, results)
+        save_name = self.policy_name if self.passive else self.policy_name + '-wop'
+        save_results(self.dataset, save_name, results)
 
     def run_asymptote(self):
         results = {
@@ -171,14 +173,13 @@ class ActiveExperiment:
 
         similarity = similarity if request.startswith('w-') else None
 
-        arms = [
-            RandomArm(pool, labels, seed),
+        arms = [RandomArm(pool, labels, seed)] if self.passive else []
+        arms += [
             MarginArm(pool, labels, seed),
             ConfidenceArm(pool, labels, seed),
             EntropyArm(pool, labels, seed),
             QBBMarginArm(pool, labels, committee, 100, seed),
-            QBBKLArm(pool, labels, committee, 100, seed)
-        ]
+            QBBKLArm(pool, labels, committee, 100, seed)]
 
         if request == 'passive':
             policy = SingleSuggestion(pool, labels, classifier,

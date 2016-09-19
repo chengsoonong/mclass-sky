@@ -39,6 +39,7 @@
 \newcommand{\transpose}{\text{T}}
 \DeclareMathOperator{\interior}{int}
 \DeclareMathOperator{\domain}{dom}
+\DeclareMathOperator{\diag}{diag}
 
 
 \begin{document}
@@ -186,6 +187,55 @@
         \begin{theorem}[Minimums and subgradients]\label{t:minimums_and_subgrads}
             A point $x^\star$ is a minimizer of a function $f$ if and only if $f$ is subdifferentiable at $x^\star$ and $0 \in \partial f(x^\star)$.
         \end{theorem}
+
+\section{Algorithms}
+    \subsection{The set-up}
+        In this section we discuss methods for solving the unconstrained optimization problem 
+        \begin{equation*}\label{e:unconstrained_opt_problem}
+            \min_{\domain f} f(x)
+        \end{equation*}
+        where 
+        \begin{itemize}
+            \item $f: \mathbb{R}^n \to \mathbb{R}$ is convex and twice continuously differentiable.
+            \item We assume the problem is solvable, i.e., there exists an optimal point $x^\star$, and denote the optimal value by $p^\star \coloneqq f(x^\star)$.
+        \end{itemize} 
+        Now, as $f$ is differentiable and convex, a point $x^\star$ is optimal if and only if $\nabla f(x^\star) = 0$, and so the problem \eqref{e:unconstrained_opt_problem} is equivalent to finding a solution to $\nabla f(x) = 0$, a set of $n$ equations in $n$ variables. In general, solving $\nabla f(x) = 0$ analytically is impossible so we aim to find an approximate solution via a iterative algorithm. That is, an algorithm that computes a sequence of points $x^{(0)}, x^{(1)}, \dots \in \domain f$ where $f(x^{(k)}) \to p^\star$ as $k \to \infty$, called  a \emph{minimizing sequence} for the problem \eqref{e:unconstrained_opt_problem}, and terminates when $f(x^{(k)}) - p^\star \leq \epsilon$, where $\epsilon > 0$ is a given \emph{tolerance}. 
+    \subsection{Descent methods}
+        In this section we introduce the \emph{conceptual} (or \emph{general}) \emph{descent method} which we can see as the template on which many common minimization algorithms are based. It is as follows:
+
+        \begin{algorithm}[Conceptual descent method]
+        \label{a:conceptual_descent_method}\mbox{}\\
+            \ind \textbf{given} a starting point $x \in \domain f$\\
+            \ind \textbf{repeat} \\
+            \ind\ind 1. Determine a descent direction $\Delta x$. \\
+            \ind\ind 2. \emph{Line search.} Choose a step size $t > 0$. \\
+            \ind\ind 3. \emph{Update.} $x \coloneqq x + t \Delta x$. \\
+            \ind \textbf{until} stopping criterion is satisfied. \\
+        \end{algorithm} 
+    \subsection{Backtracking line search}
+         \begin{algorithm}[Backtracking line search]
+        \label{a:basic_conceptual_cp_alg}\mbox{}\\
+            \ind \textbf{given} a descent direction $\Delta x$ for $f$ at $x \in \domain f$, $\alpha \in (0, 0.5), \beta \in (0, 1).$ \\
+            \ind $t \coloneqq 1$. \\
+            \ind \textbf{while} $f(x + t\Delta x) > f(x) + \alpha t \Delta f(x)^\transpose \Delta x$ \\
+            \ind\ind $t \coloneqq \beta t$.
+        \end{algorithm}        
+
+    \subsection{Newton's method}
+        Here we discuss \emph{Newton's method}.
+
+        \begin{algorithm}[Newton's method]
+        \label{a:basic_conceptual_cp_alg}\mbox{}\\
+            \ind \textbf{given} a starting point $x \in \domain f$, tolerance $\epsilon > 0.$ \\
+            \ind \textbf{repeat} \\
+            \ind\ind 1. \emph{Compute the Newton step and decrement.} \\
+            \ind\ind\ind $\Delta x_{nt} \coloneqq -\nabla^2 f(x)^{-1} \nabla f(x)$ \\
+            \ind\ind\ind $\lambda^2 \coloneqq \nabla f(x)^\transpose \nabla^2 f(x)^{-1} \nabla f(x).$ \\
+            \ind\ind 2. \emph{Stopping criterion.} \textbf{quit} if $\lambda^2/2 \leq \epsilon.$\\
+            \ind\ind 3. \emph{Line search.} Choose step size $t$ by backtracking line search. \\
+            \ind\ind 4. \emph{Update.} $x \coloneqq x + t\Delta x_{nt}.$ \\
+        \end{algorithm} 
+
 \section{Cutting plane methods}
     \subsection{The basic conceptual cutting-plane/localization algorithm}
         In this section we describe and present the basic conceptual cutting-plane (or localization) algorithm. The initial set-up is as follows:
@@ -249,19 +299,21 @@
             g_0^\transpose(z-x) \leq 0.
         \end{equation*}
 
-    \subsection{Analytic center cutting-plane method}
-        In this section we discuss the analytic center cutting-plane method. The analytic center cutting-plane method (ACCPM) generates the query point at each iteration in the following way. Suppose at iteration $k$ we have
-        \begin{equation*}
-            \mathcal{P}_k = \{z \;|\; c_i^\transpose z \leq d_i, i = 1, \dots, m_0, a_i^\transpose z \leq b_i, i = 1, \dots, m_k\}
-        \end{equation*}
-        where the constraints $c_i^\transpose z \leq d_i$ are those that specify $\mathcal{P}_0$ and the constraints $a_i^\transpose z \leq b_i$ are the $m_k$ cutting planes from the previous $k$ iterations. (We can make the choice to return multiple cutting plans each iteration.) We choose the query point for the $k+1$-th iteration to be the \emph{analytic center} of $\mathcal{P}_k$, which is the point $x \in \interior \mathcal{P}_k$ that solves the minimization problem
+\section{The analytic center cutting-plane method}
+    \subsection{The algorithm}
+        The analytic center cutting-plane method (ACCPM) is a cutting plane algorithm with both theoretical and practical applicability. For our purposes we specialise to convex optimization problems of the form 
         \begin{equation*}
             \begin{aligned}
-            & {\text{minimize}} && -\sum_{i=1}^{m_0}\log(d_i - c_i^\transpose x) - \sum_{i=1}^{m_k} \log(b_i - a_i^\transpose x).
+            & {\text{minimize}} && f_0(x) \\
+            & \text{subject to} && f_i(x) \leq 0, \gap i = 1, \dots, m
             \end{aligned}
         \end{equation*}
-
-        To summarize this discussion we have the following:
+        where $f_0, \dots, f_m$ are convex functions. We introduce the ACCPM here, and will discuss details of the algorithm and its implementation in seperate sections, namely:
+        \begin{itemize}
+            \item How to construct an appropriate cutting plane if it is determined that the query point $x^{(k+1)}$ for a given iteration $k$ is not in the target set $X$.
+            \item How to generate the query point $x^{(k+1)}$ for each iteration $k$.
+        \end{itemize}
+        For convenience of the reader we will review some of what has been discussed in previous sections. The ACCPM is as follows: 
         \begin{algorithm}[Analytic center cutting-plane method (ACCPM)]
         \label{a:basic_conceptual_cp_alg}\mbox{}\\
             \ind \textbf{given} an initial polyhedron $\mathcal{P}_0 = \{z \:|\: Cz \preceq d\}$ known to contain $X$. \\
@@ -273,7 +325,54 @@
             \ind\ind Else, update $\mathcal{P}_k$ by adding the new cutting-plane: $\mathcal{P}_{k+1} \coloneqq \mathcal{P}_k \cap \{z \:|\: a_{k+1}^\transpose z \leq b_{k+1} \}$. \\
             \ind\ind If $\mathcal{P}_{k+1} = \emptyset$, quit. \\
             \ind\ind $k \coloneqq k+1$.
+        \end{algorithm}
+        In the algorithm $X$ is either the optimal set or $\epsilon$-suboptimal set, for some fixed $\epsilon > 0$, for the optimization problem.
+
+    \subsection{Query point generation for the ACCPM: the analytic center}
+        At each iteration $k$ the query point $x^{(k+1)}$ is given by the \emph{analytic center} of the inequalities that specify $\mathcal{P}_k$, which we discuss in this section. Consider the function,
+        \begin{equation}
+            \phi(x) = - \sum_{i=1}^{m+k}{\log{(b_i - a_i^\transpose x)}}
+        \end{equation}
+        with 
+        \begin{equation}
+            \domain \phi = \{x \;|\; a_i^\transpose x < b_i, i = 1, \dots, m, m+1, \dots, m+k\}
+        \end{equation}
+        called the \emph{logarithmic barrier} or \emph{log barrier} for (the inequalities which specify) the polyhedron $\mathcal{P}_k$. (We may simplify the constraint inequalities as $Ax \preceq b$.) The analytic center of the inequalities which specify the polyhedron $\mathcal{P}_k$ is then given by the solution of the problem 
+        \begin{equation}\label{e:log_barrier_problem}
+            \min_{\domain \phi} \phi.
+        \end{equation}
+        We will refer to this simply as the analytic center of $\mathcal{P}_k$ for convenience while acknowledging that $\mathcal{P}_k$ can be specified by (infinitely) many different choices of half planes and that this choice determines the solution of \eqref{e:log_barrier_problem}.
+
+    \subsection{Computing the analytic center}
+        The approach we take in computing the analytic center is as follows:
+        \begin{enumerate}
+            \item Use a phase I optimization method to find a point in $\domain \phi$.
+            \item Use the standard Newton method to compute the analytic center.
+        \end{enumerate}
+        We first discuss the Newton method in the context of computing the analytic center. We give the Newton method applied to $\phi$
+        \begin{algorithm}[Newton's method]
+        \label{a:basic_conceptual_cp_alg}\mbox{}\\
+            \ind \textbf{given} a starting point $x \in \domain \phi$, tolerance $\epsilon > 0.$ \\
+            \ind \textbf{repeat} \\
+            \ind\ind 1. \emph{Compute the Newton step and decrement.} \\
+            \ind\ind\ind $\Delta x_{nt} \coloneqq -\nabla^2 \phi(x)^{-1} \nabla \phi(x)$ \\
+            \ind\ind\ind $\lambda^2 \coloneqq \nabla \phi(x)^\transpose \nabla^2 \phi(x)^{-1} \nabla \phi(x).$ \\
+            \ind\ind 2. \emph{Stopping criterion.} \textbf{quit} if $\lambda^2/2 \leq \epsilon.$\\
+            \ind\ind 3. \emph{Line search.} Choose step size $t$ by backtracking line search. \\
+            \ind\ind 4. \emph{Update.} $x \coloneqq x + t\Delta x_{nt}.$ \\
         \end{algorithm} 
+        For the gradient and Hessian of $\phi$ we have
+        \begin{align}
+            &\nabla \phi(x) = \sum_{i=1}^{m+k} \frac{1}{b_i - a_i^\transpose x}a_i = A^\transpose d \\
+            &\nabla^2 \phi(x) = \sum_{i=1}^{m+k} \frac{1}{(b_i - a_i^\transpose x)^2}a_i a_i^\transpose = A^\transpose \diag(d)^2 A
+        \end{align}
+        where for $d \in \mathbb{R}^{m+k}$ we have
+        \begin{align*}
+            d_i = \frac{1}{b_i - a_i^\transpose x}.
+        \end{align*}
+        Observe that since $x$ is strictly feasible, $d \succ 0$, which implies $\det(d) \neq 0$ 
+
+
 
 
 

@@ -35,7 +35,7 @@
 
 21 Oct
 - Tentative seminar date (10%)
-- Assignment (10 marks): Complete experiemnt in Louche and Ralaivola with ACCPM, compare to active SVM.
+- Assignment (10 marks): Complete experiment in Louche and Ralaivola with ACCPM, compare to active SVM. Show results for a subset of SDSS.
 
 4 Nov
 - Tentative report date (60%)

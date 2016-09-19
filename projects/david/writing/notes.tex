@@ -188,7 +188,7 @@
             A point $x^\star$ is a minimizer of a function $f$ if and only if $f$ is subdifferentiable at $x^\star$ and $0 \in \partial f(x^\star)$.
         \end{theorem}
 
-\section{Algorithms}
+\section{Descent methods}
     \subsection{The set-up}
         In this section we discuss methods for solving the unconstrained optimization problem 
         \begin{equation*}\label{e:unconstrained_opt_problem}
@@ -234,7 +234,157 @@
             \ind\ind 2. \emph{Stopping criterion.} \textbf{quit} if $\lambda^2/2 \leq \epsilon.$\\
             \ind\ind 3. \emph{Line search.} Choose step size $t$ by backtracking line search. \\
             \ind\ind 4. \emph{Update.} $x \coloneqq x + t\Delta x_{nt}.$ \\
-        \end{algorithm} 
+        \end{algorithm}
+
+\section{Interior-point methods} 
+    \subsection{Inequality constrained convex optimization problems and their approximations}
+        In this section we discuss \emph{interior-point methods} for solving inequality constrained convex optimization problems. Specifically, those with the form
+        \begin{equation}\label{e:ineq_constrd_cvx_opt_problem}
+            \begin{aligned}
+            & {\text{minimize}} && f_0(x) \\
+            & \text{subject to} && f_i(x) \leq 0, \gap i = 1, \dots, m \\
+            &                   && Ax = b
+            \end{aligned}
+        \end{equation}
+        where $f_0, \dots, f_m: \mathbb{R}^n \to \mathbb{R}$ are convex and twice continuously differentiable, and $A \in \mathbb{R}^{p \times n}$ with $\rank A = p < n$. We assume that the problem is solvable, i.e., a optimal $x^\star$ exists and write $p^\star \coloneqq f_0(x^\star)$. We assume also that the problem is strictly feasible, i.e., there exists $x \in \mathcal{D}$ that satisfies $f_i(x)<0$ for $i = 1, \dots, m$ and $Ax = b$.
+
+        The approach is this: approximately formulate the inequality constrained problem \eqref{e:ineq_constrd_cvx_opt_problem} as an equality constrained problem to which Newton's method can be applied.
+
+        Now, making the inequality constraints implicit we have that \eqref{e:ineq_constrd_cvx_opt_problem} is equivalent to the problem
+        \begin{equation}\label{e:impl_ineq_constrd_cvx_opt_problem}
+            \begin{aligned}
+            & {\text{minimize}} && f_0(x) + \sum_{i=1}^{m}{I_{-}(f_i(x))} \\
+            & \text{subject to} && Ax = b.
+            \end{aligned}
+        \end{equation}
+        This is close to what we want, but its objective function is not (in general) differentiable, so Newton's method cannot be applied.
+
+        Therefore, approximating $I_{-}$ by the function
+        \begin{equation}
+            \widehat{I}_{-} \coloneqq -\left(\frac{1}{t}\right)\log(-u)
+        \end{equation}
+        where $t > 0$ is a given parameter (observe that the approximation to $I_{-}$ increases as $t$ increases) we may may re-write \eqref{e:ineq_constrd_cvx_opt_problem} as
+        \begin{equation}\label{e:ineq_constrd_cvx_opt_problem_approx_equiv}
+            \begin{aligned}
+            & {\text{minimize}} && f_0(x) + \sum_{i=1}^{m}{\widehat{I}_{-}(f_i(x))} =
+            f_0(x) + \sum_{i=1}^{m}{-\left(\frac{1}{t}\right)\log(-f_i(x))}  \\
+            & \text{subject to} && Ax = b.
+            \end{aligned}
+        \end{equation}
+        From the following observations it is clear this is what we want:
+        \begin{itemize}
+            \item $\widehat{I}_{-}$ is convex and nondecreasing.
+            \item $\widehat{I}_{-}$ is twice differentiable and closed.
+         \end{itemize} 
+        For reasons of convenience the equivalent problem
+        \begin{equation}\label{e:ineq_constrd_cvx_opt_problem_approx}
+            \begin{aligned}
+            & {\text{minimize}} && 
+            tf_0(x) + \phi(x)  \\
+            & \text{subject to} && Ax = b.
+            \end{aligned}
+        \end{equation}
+        will be preferred. Now, this of course is a approximation of \eqref{e:ineq_constrd_cvx_opt_problem}. The question then, is how close this approximation is.  
+
+        For the purposes of answering this let us assume that for each $t>0$ there is a unique solution $x^\star(t)$ of the problem \eqref{e:ineq_constrd_cvx_opt_problem_approx}, attained by, say, Newton's method. We call the set $\{x^\star(t) \;|\; t>0 \}$ the \emph{central path} and the points within it the \emph{central points}. We do not justify why this is the case, but the important fact is this:
+        \begin{equation*}
+            f_0(x^\star(t)) - p^\star \leq \frac{m}{t},
+        \end{equation*}
+        i.e., $x^\star(t)$ is no more than $\frac{m}{t}$-suboptimal.
+
+        Therefore, if we want to solve the problem \eqref{e:ineq_constrd_cvx_opt_problem} to $\epsilon$ accuracy then we simply put $t \coloneqq \frac{m}{\epsilon}$ and solve the equality constrained problem 
+        \begin{equation}\label{e:ineq_constrd_cvx_opt_problem_epsilon_approx}
+            \begin{aligned}
+            & {\text{minimize}} && 
+            \left(\frac{m}{\epsilon}\right)f_0(x) + \phi(x)  \\
+            & \text{subject to} && Ax = b.
+            \end{aligned}
+        \end{equation}
+        using Newton's method. We call this the \emph{unconstrained minimization method}. For a number of practical reasons, this method is rarely used, and instead the \emph{barrier method} is used.
+
+    \subsection{The barrier method}
+        The barrier method is as follows
+         \begin{algorithm}[Barrier method]
+        \label{a:basic_conceptual_cp_alg}\mbox{}\\
+            \ind \textbf{given} strictly feasible $x$, $t \coloneqq t^{(0)} > 0$, $\mu > 1$, tolerance $\epsilon > 0$ \\
+            \ind $k \coloneqq 0$. \\
+            \ind \textbf{repeat} \\
+            \ind\ind 1. \emph{Centering step.} \\
+            \ind\ind\ind Compute $x^\star(t)$ by solving \eqref{e:ineq_constrd_cvx_opt_problem_approx} via Newton's method starting at $x$. \\
+            \ind\ind 2. \emph{Update.} $x \coloneqq x^\star(t)$ \\
+            \ind\ind 3. \emph{Stopping criterion.} \textbf{quit} if $\frac{m}{t} < \epsilon$. \\
+            \ind\ind 4. \emph{Increase $t$.} $t \coloneqq \mu t$
+        \end{algorithm}
+
+        With regards to implementation we have the following points
+        \begin{itemize}
+            \item \emph{Choice of $\mu$.} Values of around 10 to 20 work well. 
+        \end{itemize}
+
+    \subsection{Feasbility and the basic phase I method}
+        The barrier method requires a strictly feasible starting point $x^{(0)}$. If such a point is not known, the barrier method is preceded by a preliminary stage, called \emph{phase I}, in which such a point is computed (or the constraints are found to be infeasible).
+
+        Suppose we have a set of inequalities and equalities in the variables $x \in \mathbb{R}^n$,
+        \begin{equation*}
+            f_i(x) \leq 0, i = 1, \dots, m, \qquad Ax = b
+        \end{equation*}
+        where $f_i: \mathbb{R}^n \to \mathbb{R}$ are convex with continuous second derivatives. We assume that we are given a point $x^{(0)}$ in the domain of all $f_i$ with $Ax^{(0)} = b$. To find a strictly feasible solution of these inequalities and equalities (or determine that none exists) we form the following optimization problem:
+        \begin{equation}\label{e:phase_i}
+            \begin{aligned}
+            & {\text{minimize}} && s  \\
+            & \text{subject to} && f_i(x) \leq s, i = 1, \dots, m \\
+            & && Ax = b
+            \end{aligned}
+        \end{equation}
+        in the variables $x \in \mathbb{R}^n, s \in \mathbb{R}$ (or equivalently $(x, s) \in \mathbb{R}^n \times \mathbb{R}$). If we have found a point $x$ that solves this and $s < 0$ we are done.
+
+        This problem is always strictly feasible as we can choose $x^{(0)}$ as our starting point for $x$ and then we simply put $s > \max_{i=1, \dots, m}{f_i(x^{(0)})}$. To solve \eqref{e:phase_i} we apply the barrier method and call this problem the \emph{phase I optimization problem} associated with \eqref{e:phase_i}. 
+
+        The details of applying the barrier method are as follows. We re-write \eqref{e:phase_i} to match \eqref{e:ineq_constrd_cvx_opt_problem} as 
+        \begin{equation}\label{e:phase_i_ineq_constrd_cvx_opt_problem}
+            \begin{aligned}
+            & {\text{minimize}} && s  \\
+            & \text{subject to} && f_i(x) - s \leq 0, i = 1, \dots, m \\
+            & && Ax = b.
+            \end{aligned}
+        \end{equation}
+        Matching \eqref{e:impl_ineq_constrd_cvx_opt_problem} this is then equivalent to
+        \begin{equation}\label{e:phase_i_impl_ineq_constrd_cvx_opt_problem}
+            \begin{aligned}
+            & {\text{minimize}} && f_0(x) + \sum_{i=1}^{m}{I_{-}(f_i(x)-s)} \\
+            & \text{subject to} && Ax = b,
+            \end{aligned}
+        \end{equation}
+        which can then be approximated by 
+        \begin{equation}\label{e:phase_i_ineq_constrd_cvx_opt_problem_approx_equiv}
+            \begin{aligned}
+            & {\text{minimize}} && 
+            f_0(x) + \sum_{i=1}^{m}{-\left(\frac{1}{t}\right)\log(s-f_i(x))}  \\
+            & \text{subject to} && Ax = b,
+            \end{aligned}
+        \end{equation}
+        or equivalently
+        \begin{equation}\label{e:phase_i_ineq_constrd_cvx_opt_problem_approx}
+            \begin{aligned}
+            & {\text{minimize}} && 
+            tf_0(x) + \sum_{i=1}^{m}{-\log(s-f_i(x))}  \\
+            & \text{subject to} && Ax = b.
+            \end{aligned}
+        \end{equation}
+
+        The barrier method is then
+         \begin{algorithm}[Barrier method applied to phase I optimization problem]
+        \label{a:basic_conceptual_cp_alg}\mbox{}\\
+            \ind \textbf{given} strictly feasible $z = (x, s) \in \mathbb{R}^n \times \mathbb{R}$, $t \coloneqq t^{(0)} > 0$, $\mu > 1$, tolerance $\epsilon > 0$ \\
+            \ind $k \coloneqq 0$. \\
+            \ind \textbf{repeat} \\
+            \ind\ind 1. \emph{Centering step.} \\
+            \ind\ind\ind Compute $z^\star(t) = (x^\star(t), s^\star(t))$ by solving \eqref{e:ineq_constrd_cvx_opt_problem_approx} via Newton's method starting at $z$. \\
+            \ind\ind 2. \emph{Update.} $z \coloneqq z^\star(t)$ \\
+            \ind\ind 3. \emph{Stopping criterion.} \textbf{quit} if $s < 0$. \\
+            \ind\ind 4. \emph{Increase $t$.} $t \coloneqq \mu t$
+        \end{algorithm}
+
 
 \section{Cutting plane methods}
     \subsection{The basic conceptual cutting-plane/localization algorithm}
@@ -372,13 +522,13 @@
         \end{align*}
         Observe that since $x$ is strictly feasible, $d \succ 0$, which implies $\det(d) \neq 0$ 
 
-
-
-
+    \subsection{Stopping criterion}
 
 \renewcommand\refname{Bibliography}
 \begin{thebibliography}{99}
     \bibitem[Bis06]{bishop_06} C. Bishop. \emph{Pattern Recognition and Machine Learning}. Springer, 2006.
+    \bibitem[Boy08A] S. Boyd. \emph{Lecture 6 $|$ Convex Optimization II (Stanford)}. 2008. \url{https://youtu.be/N3vJOq5ZmKc}.
+    \bibitem[Boy08B] S. Boyd. \emph{Lecture 7 $|$ Convex Optimization II (Stanford)}. 2008. \url{https://youtu.be/t0MmgkV4YrA}.
     \bibitem[BV04]{boyd_vandenberghe_04} S. Boyd and L. Vandenberghe. \emph{Convex Optimization}. Cambridge University Press, 2004.
     \bibitem[BVS08]{boyd_vandenberghe_skaf_08} S. Boyd, L. Vandenberghe and J. Skaf. \emph{Analytic Center Cutting-Plane Method}. 2008. \url{https://see.stanford.edu/materials/lsocoee364b/06-accpm_notes.pdf}.
     \bibitem[BV11]{boyd_vandenberghe_11} S. Boyd and L. Vandenberghe. \emph{Localization and Cutting-Plane Methods}. 2011. \url{http://web.stanford.edu/class/ee364b/lectures/localization_methods_notes.pdf}.

@@ -41,7 +41,6 @@
 \DeclareMathOperator{\domain}{dom}
 \DeclareMathOperator{\diag}{diag}
 
-
 \begin{document}
 \lstset{language=}
 \pagestyle{plain}
@@ -236,6 +235,18 @@
             \ind\ind 4. \emph{Update.} $x \coloneqq x + t\Delta x_{nt}.$ \\
         \end{algorithm}
 
+\section{Duality}
+    In this section we discuss duality. We consider a standard optimization problem
+    \begin{equation}\label{e:opt_problem}
+        \begin{aligned}
+        & {\text{minimize}} && f_0(x) \\
+        & \text{subject to} && f_i(x) \leq 0, \gap i = 1, \dots, m \\
+        &                   && h_i(x) = 0, \gap i = 1, \dots, p
+        \end{aligned}
+    \end{equation}
+    with variable $x \in \mathbb{R}^n$. We assume its domain $\mathcal{D}$ is non-empty and denote the optimal value by $p^\star$. To clarify, we do not assume it is convex.  
+
+
 \section{Interior-point methods} 
     \subsection{Inequality constrained convex optimization problems and their approximations}
         In this section we discuss \emph{interior-point methods} for solving inequality constrained convex optimization problems. Specifically, those with the form
@@ -351,7 +362,7 @@
         Matching \eqref{e:impl_ineq_constrd_cvx_opt_problem} this is then equivalent to
         \begin{equation}\label{e:phase_i_impl_ineq_constrd_cvx_opt_problem}
             \begin{aligned}
-            & {\text{minimize}} && f_0(x) + \sum_{i=1}^{m}{I_{-}(f_i(x)-s)} \\
+            & {\text{minimize}} && s + \sum_{i=1}^{m}{I_{-}(f_i(x)-s)} \\
             & \text{subject to} && Ax = b,
             \end{aligned}
         \end{equation}
@@ -359,7 +370,7 @@
         \begin{equation}\label{e:phase_i_ineq_constrd_cvx_opt_problem_approx_equiv}
             \begin{aligned}
             & {\text{minimize}} && 
-            f_0(x) + \sum_{i=1}^{m}{-\left(\frac{1}{t}\right)\log(s-f_i(x))}  \\
+            s + \sum_{i=1}^{m}{-\left(\frac{1}{t}\right)\log(s-f_i(x))}  \\
             & \text{subject to} && Ax = b,
             \end{aligned}
         \end{equation}
@@ -367,7 +378,7 @@
         \begin{equation}\label{e:phase_i_ineq_constrd_cvx_opt_problem_approx}
             \begin{aligned}
             & {\text{minimize}} && 
-            tf_0(x) + \sum_{i=1}^{m}{-\log(s-f_i(x))}  \\
+            ts + \sum_{i=1}^{m}{-\log(s-f_i(x))}  \\
             & \text{subject to} && Ax = b.
             \end{aligned}
         \end{equation}
@@ -375,7 +386,7 @@
         The barrier method is then
          \begin{algorithm}[Barrier method applied to phase I optimization problem]
         \label{a:basic_conceptual_cp_alg}\mbox{}\\
-            \ind \textbf{given} strictly feasible $z = (x, s) \in \mathbb{R}^n \times \mathbb{R}$, $t \coloneqq t^{(0)} > 0$, $\mu > 1$, tolerance $\epsilon > 0$ \\
+            \ind \textbf{given} strictly feasible $z = (x, s) \in \mathbb{R}^n \times \mathbb{R}$, $t \coloneqq t^{(0)} > 0$, $\mu > 1$ \\
             \ind $k \coloneqq 0$. \\
             \ind \textbf{repeat} \\
             \ind\ind 1. \emph{Centering step.} \\
@@ -499,7 +510,44 @@
             \item Use a phase I optimization method to find a point in $\domain \phi$.
             \item Use the standard Newton method to compute the analytic center.
         \end{enumerate}
-        We first discuss the Newton method in the context of computing the analytic center. We give the Newton method applied to $\phi$
+
+        We first discuss the the phase I optimization problem that we must solve, that is, the problem
+        \begin{equation}\label{e:phase_i_accpm}
+            \begin{aligned}
+            & {\text{minimize}} && s  \\
+            & \text{subject to} && f_i(x) \coloneqq a_i^\transpose x - b_i \leq s, i = 1, \dots, m+k \\
+            \end{aligned}
+        \end{equation}
+
+        Following \eqref{e:phase_i_ineq_constrd_cvx_opt_problem_approx} we can therefore approximate \eqref{e:phase_i_accpm} by the problem
+        \begin{equation}\label{e:phase_i_accpm_approx}
+            \begin{aligned}
+            & {\text{minimize}} && 
+            f_0(x, s)\coloneqq ts + \sum_{i=1}^{m+k}{-\log(s+b_i - a_i^\transpose x)}.
+            \end{aligned}
+        \end{equation}
+        To solve this using the barrier method, we will need to use Newton's method. Therefore we will need the gradient of the objective $f_0(x, s)$ which is
+        \begin{align*}
+            &\nabla f_0(x, s)_i = \sum_{i=1}^{m+k} \frac{1}{s+b_i-a_i^\transpose x}a_i \text{, $i = 1, \dots, n$} \\ 
+            &\nabla f_0(x, s)_{n+1} = t - \sum_{i=1}^{m+k} \frac{1}{s+b_i-a_i^\transpose x}. 
+        \end{align*}
+
+        At this point we recall the barrier method:
+        \begin{algorithm}[Barrier method applied to phase I optimization problem]
+        \label{a:basic_conceptual_cp_alg}\mbox{}\\
+            \ind \textbf{given} strictly feasible $z = (x, s) \in \mathbb{R}^n \times \mathbb{R}$, $t \coloneqq t^{(0)} > 0$, $\mu > 1$ \\
+            \ind $k \coloneqq 0$. \\
+            \ind \textbf{repeat} \\
+            \ind\ind 1. \emph{Centering step.} \\
+            \ind\ind\ind Compute $z^\star(t) = (x^\star(t), s^\star(t))$ by solving \eqref{e:ineq_constrd_cvx_opt_problem_approx} via Newton's method starting at $z$. \\
+            \ind\ind 2. \emph{Update.} $z \coloneqq z^\star(t)$ \\
+            \ind\ind 3. \emph{Stopping criterion.} \textbf{quit} if $s < 0$. \\
+            \ind\ind 4. \emph{Increase $t$.} $t \coloneqq \mu t$
+        \end{algorithm}
+
+        Now, from our prior discussion we know that we need pick initial $x^{(0)}$ in the domain of all $f_i$ and then any initial $s > \max_{i=1, \dots, m}\{a_i^\transpose x - b_i\}$.
+
+        We discuss the Newton method in the context of computing the analytic center. We give the Newton method applied to $\phi$
         \begin{algorithm}[Newton's method]
         \label{a:basic_conceptual_cp_alg}\mbox{}\\
             \ind \textbf{given} a starting point $x \in \domain \phi$, tolerance $\epsilon > 0.$ \\

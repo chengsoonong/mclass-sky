@@ -16,11 +16,10 @@
 \usepackage{bm} % bold math symbols
 \usepackage{hyperref} % create hyperlinks
 \usepackage[labelfont=bf]{caption} % figure captions
-\usepackage{algorithm} % display algorithms blocks
-\usepackage{algpseudocode} % display algorithms in pseudo-code
+\usepackage{algorithm2e} % provide environment and layout to write pseudo-code
 \usepackage{IEEEtrantools} % more flexible formatting of equations
 \usepackage{mathtools} % use DeclarePairedDelimiterXPP 
-
+\usepackage{etoolbox}
 \hypersetup{
 	colorlinks   = true, % Colours links instead of ugly boxes
 	pdfauthor    = {Alasdair Tran and Cheng Soon Ong},
@@ -46,6 +45,11 @@
 \newcommand*{\argmax}{\operatornamewithlimits{argmax}\limits}
 \newcommand{\MPBA}{\text{MPBA}}
 \newcommand{\passive}{\text{passive}}
+\newcommand{\Select}{\textsc{Select}}
+\newcommand{\Update}{\textsc{Update}}
+\newcommand{\bmu}{\bm{\mu}}
+\newcommand{\bsigma}{\bm{\sigma}}
+\newcommand{\btau}{\bm{\tau}}
 
 % Expected value
 \providecommand\given{}
@@ -66,6 +70,7 @@
 		\allowbreak}
 	#1
 }
+
 
 \title{Combining Active Learning Suggestions}
 
@@ -140,6 +145,8 @@ is finite this is called exact design, otherwise it is called approximate or
 continuous design. The environment is assumed to be infinite (e.g. $R^d$) and
 the observations are scalar real variables.
 
+\section*{Related Works}
+
 Previous surveys~\cite{baram04, hsu15}.
 We are more comprehensive, and consider other types of combination.
 
@@ -147,9 +154,9 @@ We are more comprehensive, and consider other types of combination.
 
 \subsection*{Active Learning Suggestions}
 
-
 Suppose we have a hypothesis $h$ that maps the input space $\X \subset
-\mathbb{R}^d$ to the label space $\Y$. We require that a small number of
+\mathbb{R}^d$ to the label space $\Y$. In pool-based active learning,
+we require that a small number of
 objects have already been labelled--these become the labelled set $\Labelled
 \subset \X \times \Y$. The rest form the unabelled set $\Unlabelled \subset
 \X$. Now consider the problem of choosing the next example in $\Unlabelled$ for
@@ -229,7 +236,7 @@ divergence from the average.
 	\end{tabular}
 \end{table}
 
-\subsection*{Combining the Suggestions with Bandits}
+\subsection*{Combining Suggestions with Bandit Theory}
 
 Out of the five heuristics discussed, how do we know which one is the optimal,
 anyway? There have been some attempts in the literature to do a theoretical
@@ -276,7 +283,7 @@ EXP3++ \citep{seldin14}.
 
 
 
-\subsection*{Combining the Suggestions with Social Choice Theory}
+\subsection*{Combining Suggestions with Social Choice Theory}
 
 A drawback of the bandit methods is that at each iteration, we could only use
 information from one particular suggestion. Since most suggestions have
@@ -389,35 +396,10 @@ SDSS
 
 \section*{Appendix A: Algorithms}
 
-\algblock[Name]{Start}{End}
-\algblockdefx[Forall]{Foreach}{Endforeach}%
-			[1]{\textbf{for each} #1 \textbf{do}}%
-			{\textbf{end for}}
 
-\begin{algorithm}[tbp]
-	\caption{Thompson sampling} \index{bandit}
-	\label{alg:bandit}
-	\begin{algorithmic}[1]
-		\Procedure {ThompsonSampling}{$\Unlabelled$, $\Labelled_T$, $h$, $n$, $E$,
-			                      $\R$, $\bm{\mu}$, $\bm{\sigma}^2$, $\bm{\tau}^2$}
-    		\While {$|\Labelled_T| < n$}
-        		\Foreach  {$i \in \{1, 2, ..., |\R|\}$}
-        			\State $\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$
-        		\Endforeach
-        		\State $r_* \leftarrow \argmax_{i} \nu_i'$
-        		\State $\Ecal$ $\leftarrow$ random sample of size $E$ from $\Unlabelled$
-        		\State $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*(\bm{x})$
-        		\State $y_* \leftarrow$ ask the expert to label $\bm{x}_*$
-        		\State $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$
-        		\State $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$
-        		\State $h(\bm{x}) \leftarrow$ retrain the classifier
-        		\State $\delta$ $\leftarrow$ incremental increase in the accuracy
-        		\State $\mu_* \leftarrow \dfrac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}$
-                \State $\sigma_*^2 \leftarrow \dfrac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}$
-    		\EndWhile
-		\EndProcedure
-	\end{algorithmic}
-\end{algorithm}
+
+
+
 
 \section*{Appendix B: Posterior Balanced Accuracy}
 

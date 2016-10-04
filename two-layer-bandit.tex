@@ -16,7 +16,7 @@
 \usepackage{bm} % bold math symbols
 \usepackage{hyperref} % create hyperlinks
 \usepackage[labelfont=bf]{caption} % figure captions
-\usepackage{algorithm2e} % provide environment and layout to write pseudo-code
+\usepackage[boxed]{algorithm2e} % provide environment and layout to write pseudo-code
 \usepackage{IEEEtrantools} % more flexible formatting of equations
 \usepackage{mathtools} % use DeclarePairedDelimiterXPP 
 \usepackage{etoolbox}
@@ -71,6 +71,8 @@
 	#1
 }
 
+% Settings for algorithm blocks
+\DontPrintSemicolon
 
 \title{Combining Active Learning Suggestions}
 
@@ -396,7 +398,49 @@ SDSS
 
 \section*{Appendix A: Algorithms}
 
+\begin{algorithm}[htbp]
+	\KwIn{
+    	unlabelled set $\Unlabelled$,
+        labelled training set $\Labelled_T$,
+        hypothesis $h$,
+        desired training size $n$,
+        query size $E$,
+        set of active learning suggestions $\R$,
+        and bandit algorithm $B$ with two functions \Select\,and \Update.
+        }
+    \BlankLine
+	\While{$|\Labelled_T| < n$}{
+    	Select a suggestion $r_* \in \R$ according to \Select. \;
+        $\Ecal$ $\leftarrow$ random sample of size $E$ from
+            $\Unlabelled$ \;
+        $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*
+            (\bm{x})$ \;
+        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
+        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
+        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
+        $h(\bm{x}) \leftarrow$ retrain the classifier \;
+        Update the parameters of $B$ with \Update. \;
+    }
+    \caption{Pool-based active learning with bandit theory}
+    \label{alg:bandit}
+\end{algorithm}
 
+\SetKwFunction{SelectFn}{Select}%
+\begin{algorithm}[htbp]
+	\KwIn{
+    	hypothesis $h$,
+        posterior mean vector $\bmu$,
+        posterior variance vector $\bsigma^2$,
+        likelihood variance vector $\btau^2$.
+    }
+    \BlankLine
+    \SelectFn{} {
+    
+    }
+    
+	\caption{Thompson sampling with normally distributed rewards}
+    \label{alg:thompson}
+\end{algorithm}
 
 
 

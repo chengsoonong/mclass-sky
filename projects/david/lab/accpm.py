@@ -2,22 +2,22 @@ import numpy as np
 import scipy.optimize as opt
 import scipy.linalg as splinalg
 
-def log_barrier(x, A, b):
-    """
-    Returns the value of the log barrier function associated with the 
-    set of inequalities Ax <= b at x.
+# def log_barrier(x, A, b):
+#     """
+#     Returns the value of the log barrier function associated with the 
+#     set of inequalities Ax <= b at x.
     
-    It is preferable x, A, b are of type ndarray.
-    """
-    return -np.log(np.prod(b-np.dot(A, x)))
+#     It is preferable x, A, b are of type ndarray.
+#     """
+#     return -np.log(np.prod(b-np.dot(A, x)))
 
-def logb_grad(x, A, b):
-    """
-    Returns the value of the gradient of the log barrier function 
-    associated with the set of inequalities Ax <= b at x.
-    """
-    d = 1./(b-np.dot(A,x))
-    return np.dot(np.transpose(A), d)
+# def logb_grad(x, A, b):
+#     """
+#     Returns the value of the gradient of the log barrier function 
+#     associated with the set of inequalities Ax <= b at x.
+#     """
+#     d = 1./(b-np.dot(A,x))
+#     return np.dot(np.transpose(A), d)
 
 # def logb_hess(x, A, b):
 #     """
@@ -27,7 +27,7 @@ def logb_grad(x, A, b):
 #     d = 1./(b-np.dot(A,x))
 #     diagd = np.diag(d)
 #     return np.dot(np.transpose(A), 
-                  np.dot(np.linalg.matrix_power(diagd, 2), A))    
+                  # np.dot(np.linalg.matrix_power(diagd, 2), A))    
 
 # Analytic center computation: phase I problem and the Newton method.
 
@@ -164,7 +164,7 @@ def newton_step(x, y, v, A, b):
     delta_v = np.dot(-H, delta_y) - g - v
     return (delta_x, delta_y, delta_v)
 
-def analytic_center(A, b, x=None, y=None, rtol=10e-10, etol=10e-10, alpha=0.01, beta=0.7, 
+def analytic_center(A, b, x=None, y=None, rtol=10e-10, etol=10e-10, alpha=0.01, beta=0.99, 
                     maxiter=50):
     i = 0
     if x == None or y == None: 

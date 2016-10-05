@@ -190,27 +190,36 @@ def analytic_center(A, b, x=None, y=None, rtol=10e-10, etol=10e-10, alpha=0.01, 
     # print('i =', i)
     return x
 
-def feasible(x, constr, epsilon):
+def feasible(x, constr):
     for i in range(len(constr)):
         fi_x = constr[i](x)
         if fi_x > 0:
-            return (False, fi_x, 
-                    opt.approx_fprime(x, constr[i], epsilon))
+            return i
         else: 
-            return (True, )
+            return True
         
-def oracle(x, func, grad, constr, epsilon):
-    feasibility = feasible(x, constr, epsilon)[0]
-    if feasibility == False:
-        fi_x = feasibility[1]
-        grad_fi_x = feasibility[2]
-        (a, b) = (feasibility[2], 
-                  np.dot(grad_fi_x, x) - fi_x)
+def oracle(ac, func, grad_func, constr, grad_constr, fbest):
+    feasibility = feasible(x, constr)
+    if feasibility != True:
+        # TO-DO: what if constr[i] == None? 
+        i = feasibility
+        fi = constr[i]
+        grad_fi = grad_constr[i]
+        fi_ac = fi(ac)
+        grad_fi_ac = grad_fi(ac) 
+        a = grad_fi_ac
+        b = np.dot(grad_fi_ac, ac) - fi_ac
+        return ((a, b), fbest)
     else:
-        (a, b) = (grad(x), np.dot(grad(x), x))
-    return (feasibility, (a, b))
+        func_ac = func(ac)
+        grad_func_ac = grad_func(ac)
+        if func_ac <= fbest:
+            fbest = func_ac 
+        a = grad_func_ac
+        b = np.dot(grad_func_ac, ac) - func_ac + f_best
+        return ((a, b), fbest)
 
-def accpm(func, constr, epsilon, A, b, maxiter):
+def accpm(func, constr, A, b, grad_func=None, grad_constr=None, tol=10e-4,  maxiter=50):
     """
     Solves the specified inequality constrained convex optimization 
     problem or feasbility problem via the analytic center cutting
@@ -218,9 +227,9 @@ def accpm(func, constr, epsilon, A, b, maxiter):
     
     Implementation applies to (inequality constrained) convex 
     optimization problems of the form
-        minimize f_0(x)
-        subject to f_i(x) <= 0, i = 1, ..., m,
-    where f_0, ..., f_m are convex functions. The target set X is the
+        minimize f_obj(x)
+        subject to f_i(x) <= 0, i = 0, ..., m,
+    where f_obj, f_0, ..., f_m are convex functions. The target set X is the
     epsilon-suboptimal set where epsilon is an argument of accpm.
     The ACCPM requires a set of linear inequality constraints,
     which represents a polyhedron, that all points in X satisfy. 
@@ -229,10 +238,10 @@ def accpm(func, constr, epsilon, A, b, maxiter):
     Parameters for convex optimization problems
     ----------------
     func : callable, func(x)
-        The objective function f_0 to be minimized.
+        The objective function f_obj to be minimized.
     constr : tuple with callable elements
-        The required format is constr = (f_1, ..., f_m) where  
-        f_i(x) is callable for i = 1, ...., m, 
+        The required format is constr = (f_0, ..., f_m) where  
+        f_i(x) is callable for i = 0, ...., m, 
         So constr[i-1](x) = f_i(x) for i = 1, ..., m.
     epsilon : float
         Specifies the value to be used for the target set,
@@ -245,23 +254,75 @@ def accpm(func, constr, epsilon, A, b, maxiter):
         Maximum number of iterations to perform.
     """
     k = 0
-    # func_values = [] 
-    # feasible_values = []
-    # f_best = None
-    while k < maxiter + 1:
-        ac = analytic_center(polyhead) # Compute the analytic center of
-        if ac == False: 
-            return False
-        # func_k.append(func(ac))
-        if stopping() == True:
-            return (True, ac, func(ac), A, b, k)
-        data = oracle(ac, func, grad, constr, epsilon)
-        feasibility = data[0]
-        func_values.append(func(ac))
-        #if feasibility == True:
-        #    feasible_values.append(func(ac))
-        cp = data[1]
-        (a, b) = (cp[0], cp[1])
-        (A, b) = (np.vstack(A, np.transpose(a)),
-                  np.vstack(b, b))
-        k = k + 1                                            
+    fbest = np.inf
+    while k < maxiter:
+        print('Starting iteration', k)
+        ac = analytic_center(A, b)
+        print('ac at iteration', k, 'is', ac)
+        all_zeros = not np.any(grad_func(ac))
+        if all_zeros == True:
+            print('Success!')
+            return ac
+        data = oracle(ac, func, grad_func, constr, grad_constr, fbest)
+        (a_cp, b_cp) = data[0]
+        fbest = data[1]
+        A = np.vstack((A, a_cp))
+        b = np.hstack((b, b_cp))
+        k = k + 1 
+    print('Failure!') 
+
+# def accpm(func, constr, epsilon=10e-4, A, b, maxiter=50):
+#     """
+#     Solves the specified inequality constrained convex optimization 
+#     problem or feasbility problem via the analytic center cutting
+#     plane method (ACCPM). 
+    
+#     Implementation applies to (inequality constrained) convex 
+#     optimization problems of the form
+#         minimize f_0(x)
+#         subject to f_i(x) <= 0, i = 1, ..., m,
+#     where f_0, ..., f_m are convex functions. The target set X is the
+#     epsilon-suboptimal set where epsilon is an argument of accpm.
+#     The ACCPM requires a set of linear inequality constraints,
+#     which represents a polyhedron, that all points in X satisfy. 
+#     That is, a matrix A and b that give constraints Ax <= b. 
+    
+#     Parameters for convex optimization problems
+#     ----------------
+#     func : callable, func(x)
+#         The objective function f_0 to be minimized.
+#     constr : tuple with callable elements
+#         The required format is constr = (f_1, ..., f_m) where  
+#         f_i(x) is callable for i = 1, ...., m, 
+#         So constr[i-1](x) = f_i(x) for i = 1, ..., m.
+#     epsilon : float
+#         Specifies the value to be used for the target set,
+#         an epsilon-suboptimal set.
+#     A : ndarray
+#         Represents the matrix A.
+#     b : ndarray
+#         Represents the vector b. 
+#     maxiter : int, optional
+#         Maximum number of iterations to perform.
+#     """
+#     k = 0
+#     # func_values = [] 
+#     # feasible_values = []
+#     # f_best = None
+#     while k < maxiter + 1:
+#         ac = analytic_center(A, b) # Compute the analytic center of
+#         if ac == False: 
+#             return False
+#         # func_k.append(func(ac))
+#         if stopping() == True:
+#             return (True, ac, func(ac), A, b, k)
+#         data = oracle(ac, func, grad, constr, epsilon)
+#         feasibility = data[0]
+#         func_values.append(func(ac))
+#         #if feasibility == True:
+#         #    feasible_values.append(func(ac))
+#         cp = data[1]
+#         (a, b) = (cp[0], cp[1])
+#         (A, b) = (np.vstack(A, np.transpose(a)),
+#                   np.vstack(b, b))
+#         k = k + 1                                            

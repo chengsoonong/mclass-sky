@@ -199,7 +199,7 @@ def feasible(x, constr):
             return True
         
 def oracle(ac, func, grad_func, constr, grad_constr, fbest):
-    feasibility = feasible(x, constr)
+    feasibility = feasible(ac, constr)
     if feasibility != True:
         # TO-DO: what if constr[i] == None? 
         i = feasibility
@@ -216,10 +216,10 @@ def oracle(ac, func, grad_func, constr, grad_constr, fbest):
         if func_ac <= fbest:
             fbest = func_ac 
         a = grad_func_ac
-        b = np.dot(grad_func_ac, ac) - func_ac + f_best
+        b = np.dot(grad_func_ac, ac) - func_ac + fbest
         return ((a, b), fbest)
 
-def accpm(func, constr, A, b, grad_func=None, grad_constr=None, tol=10e-4,  maxiter=50):
+def accpm(func, constr, A, b, grad_func=None, grad_constr=None, tol=10e-4,  maxiter=5):
     """
     Solves the specified inequality constrained convex optimization 
     problem or feasbility problem via the analytic center cutting
@@ -255,10 +255,12 @@ def accpm(func, constr, A, b, grad_func=None, grad_constr=None, tol=10e-4,  maxi
     """
     k = 0
     fbest = np.inf
+    print('Initially A=\n', A) 
+    print('b =', b)
     while k < maxiter:
-        print('Starting iteration', k)
+        print('At iteration', k, )
         ac = analytic_center(A, b)
-        print('ac at iteration', k, 'is', ac)
+        print('ac is', ac)
         all_zeros = not np.any(grad_func(ac))
         if all_zeros == True:
             print('Success!')
@@ -269,6 +271,8 @@ def accpm(func, constr, A, b, grad_func=None, grad_constr=None, tol=10e-4,  maxi
         A = np.vstack((A, a_cp))
         b = np.hstack((b, b_cp))
         k = k + 1 
+        print('A is\n', A)
+        print('b is', b)
     print('Failure!') 
 
 # def accpm(func, constr, epsilon=10e-4, A, b, maxiter=50):

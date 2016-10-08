@@ -73,13 +73,14 @@
 
 % Settings for algorithm blocks
 \DontPrintSemicolon
+\SetArgSty{textnormal}
 
 \title{Combining Active Learning Suggestions}
 
 \author[1]{Alasdair Tran}
 \author[2]{Cheng Soon Ong}
 \author[3]{Christian Wolf}
-\affil[1]{}
+\affil[1]{Australian National University}
 \affil[2]{Machine Learning Research Group, Data61, CSIRO, Australia}
 \affil[3]{Research School of Astronomy and Astrophysics, Australian National University}
 
@@ -420,10 +421,14 @@ SDSS
         $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
         $h(\bm{x}) \leftarrow$ retrain the classifier \;
         Update the parameters of $B$ with \Update. \;
+        $\delta$ $\leftarrow$ incremental increase in the accuracy \;
     }
     \caption{Pool-based active learning with bandit theory}
     \label{alg:bandit}
 \end{algorithm}
+
+\SetKwProg{Fn}{function}{}{}
+
 
 \SetKwFunction{SelectFn}{Select}%
 \begin{algorithm}[htbp]
@@ -434,10 +439,17 @@ SDSS
         likelihood variance vector $\btau^2$.
     }
     \BlankLine
-    \SelectFn{} {
-    
+    \Fn{\Select()}{
+    	\For{$i \in \{1, 2, ..., |\R|\}$}{
+        	$\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$ \;
+       	}
+        $r_* \leftarrow \argmax_{i} \nu_i'$ \;
     }
-    
+    \BlankLine
+    \Fn{\Update()}{
+    	$\mu_* \leftarrow \dfrac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}$ \;
+        $\sigma_*^2 \leftarrow \dfrac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}$ \;
+    }
 	\caption{Thompson sampling with normally distributed rewards}
     \label{alg:thompson}
 \end{algorithm}

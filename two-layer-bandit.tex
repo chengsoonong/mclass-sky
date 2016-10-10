@@ -72,8 +72,9 @@
 }
 
 % Settings for algorithm blocks
-\DontPrintSemicolon
-\SetArgSty{textnormal}
+\DontPrintSemicolon % don't display semicolons at the end of each line
+\SetArgSty{textnormal} % no need to italicise
+\SetKwProg{Fn}{function}{}{} % function keyword
 
 \title{Combining Active Learning Suggestions}
 
@@ -420,14 +421,40 @@ SDSS
         $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
         $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
         $h(\bm{x}) \leftarrow$ retrain the classifier \;
-        Update the parameters of $B$ with \Update. \;
         $\delta$ $\leftarrow$ incremental increase in the accuracy \;
+        Update the parameters of $B$ with \Update. \;
     }
     \caption{Pool-based active learning with bandit theory}
     \label{alg:bandit}
 \end{algorithm}
 
-\SetKwProg{Fn}{function}{}{}
+\begin{algorithm}[htbp]
+	\KwIn{
+    	unlabelled set $\Unlabelled$,
+        labelled training set $\Labelled_T$,
+        hypothesis $h$,
+        desired training size $n$,
+        query size $E$,
+        set of active learning suggestions $\R$,
+        and rank aggregator $G$.
+        }
+    \BlankLine
+	\While{$|\Labelled_T| < n$}{
+        $\Ecal$ $\leftarrow$ random sample of size $E$ from
+            $\Unlabelled$ \;
+        \For{$r \in \R$}{
+        	Rank all the candidates in $\Ecal$. \;
+        }
+        Aggregate all the rankings into one ranking using $G$. \;
+        $\bm{x}_* \leftarrow$ The highest ranked candidate in the aggregation. \;
+        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
+        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
+        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
+        $h(\bm{x}) \leftarrow$ retrain the classifier \;
+    }
+    \caption{Pool-based active learning with social choice theory}
+    \label{alg:bandit}
+\end{algorithm}
 
 
 \SetKwFunction{SelectFn}{Select}%
@@ -454,6 +481,7 @@ SDSS
     \label{alg:thompson}
 \end{algorithm}
 
+\pagebreak
 
 
 

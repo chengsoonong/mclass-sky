@@ -124,7 +124,7 @@ def is_positive(x):
     Returns True if every entry of the vector x is positive. 
     """
     zeros = np.zeros_like(x)
-    return np.all(np.greater(x, zero))
+    return np.all(np.greater(x, zeros))
 
 def start0(A, b, x, y):
     """
@@ -255,10 +255,10 @@ def analytic_center(A, b, x0=None, y0=None, rtol=10e-5, etol=10e-5,
         # print('    At iteration', i, 'x is', x, 'and y is', y, 'with t=', t)
         if (np.linalg.norm(y + np.dot(A, x) - b) <= etol) and \
            (norm_res(x, y, v, A, b) <= rtol):
-            print('    SUCCESS with i =', i)
+            #print('    SUCCESS with i =', i)
             return x
         i = i + 1  
-    print('    FAILURE with i =', i)
+    #print('    FAILURE with i =', i)
     return x
 
 def feasible(x, constr):
@@ -273,9 +273,8 @@ def feasible(x, constr):
     for i in range(len(constr)):
         fi_x = constr[i](x)
         if fi_x > 0:
-            return i
-        else: 
-            return True
+            return i 
+    return True
         
 def oracle(ac, func, constr, grad_func, grad_constr, fbest):
     """
@@ -321,7 +320,8 @@ def normalize(A, b):
 
 def accpm(func, constr, A, b, x0=None, y0=None, 
           grad_func=None, grad_constr=None, 
-          alpha=0.01, beta=0.7, start=0, tol=10e-4, maxiter=50):
+          alpha=0.01, beta=0.7, start=0, tol=10e-4, maxiter=50,
+          testing=False):
     """
     Solves the specified inequality constrained convex optimization 
     problem or feasbility problem via the analytic center cutting
@@ -382,19 +382,18 @@ def accpm(func, constr, A, b, x0=None, y0=None,
     (A, b) = normalize(A, b)
     k = 0
     fbest = np.inf
-    # print('Initially A=\n', A) 
-    # print('b =', b)
+
+    if testing == True:
+        np.set_printoptions(precision=4)
+        print('Initially: b =', b, 'and A =\n', A)
+        print('----------------')
+
     while k < maxiter:
         # print('At iteration', k, )
         ac = analytic_center(A, b, x0=x0, y0=y0, alpha=alpha, beta=beta, start=start)
         (x0, y0) = (ac, None)
         # print('    AC is', ac)
-        if (np.linalg.norm(logb_grad(ac, A, b)) <= 10e-4):
-            print('******** At iteration', k, 'AC computation SUCCESSFUL!')
-            print('******** At iteration', k, 'AC is', ac)
-        else:
-            print('******** At iteration', k, 'AC computation FAILED!')
-            print('******** At iteration', k, 'AC is', ac)
+
         all_zeros = not np.any(grad_func(ac))
         if all_zeros == True:
             print('Success!')
@@ -405,6 +404,15 @@ def accpm(func, constr, A, b, x0=None, y0=None,
         a_cp = a_cp/norm_a_cp
         b_cp = b_cp/norm_a_cp
         fbest = data[1]
+
+        if testing == True:
+            if (np.linalg.norm(logb_grad(ac, A, b)) <= 10e-4):
+                print('At iteration', k, 'AC computation SUCCEEDED with AC', ac, 'where')
+                print('        a_cp =', a_cp, 'and', 'b_cp =', np.array([b_cp]))
+            else:
+                print('At iteration', k, 'AC computation FAILED with AC', ac, 'where')
+                print('        a_cp =', a_cp, 'and', 'b_cp =', np.array([b_cp]))
+
         A = np.vstack((A, a_cp))
         b = np.hstack((b, b_cp))
         k = k + 1 

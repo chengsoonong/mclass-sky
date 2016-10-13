@@ -1,2 +1,2 @@
-__all__ = ['active', 'classifier', 'heuristics', 'performance',
-           'photometry', 'preprocessing', 'tools', 'viz']
+__all__ = ['arms', 'classifier', 'experiment', 'performance',
+           'policies', 'photometry', 'preprocessing', 'tools', 'viz']

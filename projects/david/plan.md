@@ -16,25 +16,29 @@
 12 Aug
 - Feed forward neural networks (Chapter 5.1-5.4, Bishop)
 - Logistic Regression (Chapter 4.3, Bishop)
+- Assignment (due 12 August): 2 marks, closing issue #103
+- Assignemnt (due 18 August): 8 marks, Logistic regression notebook, closing issue #102
 
 26 Aug
+- Perceptron (Chapter 4.1.7, Bishop)
 - Active Learning (Settles paper)
-- Newton Method (Chapter 9.5, Boyd and Vandenberghe)
-- Cutting Plane (Boyd, Vandenberghe lecture notes)
+- Cutting Plane (Boyd, Vandenberghe lecture notes). Close issue #104
 
 23 Sept (2 week break)
-- Convergence of cuts (Ye)
-- Active Learning (Dasgupta paper)
+- Newton Method (Chapter 9.5, Boyd and Vandenberghe)
+- Assignment (10 marks): Implement ACCPM in numpy
 
 7 Oct
 - Cutting Plane for Active Learning (Louche and Ralaivola)
+- (?) Convergence of cuts (Ye)
+- (?) Active Learning (Dasgupta paper)
 
 21 Oct
 - Tentative seminar date (10%)
+- Assignment (10 marks): Complete experiment in Louche and Ralaivola with ACCPM, compare to active SVM. Show results for a subset of SDSS.
 
 4 Nov
-- Tentative report date (50%)
-- Software (40%)
+- Tentative report date (60%)
 
 ## References
 

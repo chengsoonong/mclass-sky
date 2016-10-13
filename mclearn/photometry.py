@@ -4,7 +4,7 @@ import os
 import numpy as np
 from urllib.request import urlopen
 from urllib.parse import urlencode
-from .tools import load_results
+from mclearn.tools import load_results
 
 def reddening_correction_sfd98(extinction_r):
     """ Compute the reddening values using the SFD98 correction set.
@@ -153,7 +153,7 @@ def compute_colours(data, colours, suffix):
         suffix : array
             A suffix is added to the colour name to distinguish between correction sets.
     """
-    
+
     for colour in colours:
         prefix = 'psf' if colour[0].startswith('psf') else 'petro'
         colour_name = prefix + colour[0][-2:] + colour[1][-2:]
@@ -226,15 +226,15 @@ def fetch_filter(filter, download_url, filter_dir=''):
             The downloaded filter data.
 
     """
-    
+
     assert filter in 'ugriz'
     url = download_url % filter
-    
+
     if not os.path.exists(filter_dir):
         os.makedirs(filter_dir)
 
     loc = os.path.join(filter_dir, '%s.dat' % filter)
-    
+
     if not os.path.exists(loc):
         filter_file = urlopen(url)
         with open(loc, 'wb') as f:
@@ -273,7 +273,7 @@ def fetch_spectrum(spectrum_url, spectra_dir=''):
 
     with open(refspec_file, 'rb') as f:
         data = np.loadtxt(f)
-    
+
     return data
 
 
@@ -312,7 +312,7 @@ def clean_up_subclasses(classes, subclasses):
     subclasses.replace('A4p (G_37-26)', 'A4p', inplace=True)
 
     not_empty = subclasses != ''
-    subclasses.loc[not_empty] = classes[not_empty] + ' ' + subclasses[not_empty] 
+    subclasses.loc[not_empty] = classes[not_empty] + ' ' + subclasses[not_empty]
 
 
 def optimise_sdss_features(sdss, scaler_path):

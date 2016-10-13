@@ -1,6 +1,6 @@
 language: python
 python:
-  - "3.4"
+  - "3.5"
 notifications:
   email: false
 
@@ -19,8 +19,8 @@ install:
   - source activate testenv
   - conda install numpy scipy pandas matplotlib scikit-learn cython
   - conda install seaborn ephem ipython pytables joblib
-  - conda install -c dan_blanchard python-coveralls
-  - python setup.py install
+  - conda install -c omnia python-coveralls
+  - python setup.py develop
 
 script:
   - nosetests --with-coverage --cover-package=mclearn

@@ -30,14 +30,12 @@
 
 7 Oct
 - Cutting Plane for Active Learning (Louche and Ralaivola)
-- (?) Convergence of cuts (Ye)
-- (?) Active Learning (Dasgupta paper)
 
-21 Oct
-- Tentative seminar date (10%)
+26 Oct
 - Assignment (10 marks): Complete experiment in Louche and Ralaivola with ACCPM, compare to active SVM. Show results for a subset of SDSS.
 
 4 Nov
+- Tentative seminar date (10%)
 - Tentative report date (60%)
 
 ## References

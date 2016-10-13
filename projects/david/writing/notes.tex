@@ -171,7 +171,7 @@
     \subsection{Subgradients}
         In this section we recall some of the basics of subgradients. Recall that a vector $g \in \mathbb{R}^n$ is a \emph{subgradient} of $f: \mathbb{R}^n \to \mathbb{R}$ at $x \in \domain f$ if 
         \begin{equation}\label{d:subgrad}
-            f(z) \leq f(x) + g^\transpose(z-x)
+            f(z) \geq f(x) + g^\transpose(z-x)
         \end{equation}
         for all $z \in \domain f$.
 
@@ -504,8 +504,8 @@
         \end{equation}
         We will refer to this simply as the analytic center of $\mathcal{P}_k$ for convenience while acknowledging that $\mathcal{P}_k$ can be specified by (infinitely) many different choices of half planes and that this choice determines the solution of \eqref{e:log_barrier_problem}.
 
-    \subsection{Computing the analytic center}
-        The approach we take in computing the analytic center is as follows:
+    \subsection{Computing the analytic center, phase I optimization and the Newton method}
+        The approach we take in computing the analytic center in this section is as follows:
         \begin{enumerate}
             \item Use a phase I optimization method to find a point in $\domain \phi$.
             \item Use the standard Newton method to compute the analytic center.
@@ -569,6 +569,19 @@
             d_i = \frac{1}{b_i - a_i^\transpose x}.
         \end{align*}
         Observe that since $x$ is strictly feasible, $d \succ 0$, which implies $\det(d) \neq 0$ 
+
+    \subsection{Computing the analytic center and the infeasible start Newton method}
+        The approach we take in computing the analytic center in this section is to use an infeasible start Newton method. The advantage of this approach is that we do not require the initial points and subsequent iterates to be feasible points. 
+
+        Now, we re-write \eqref{e:log_barrier_problem} as
+        \begin{equation*}
+            \begin{aligned}
+            & {\text{minimize}} && -\sum{i=1}^{m+k} \log{y_i} \\
+            & \text{subject to} && y \coloneqq b - Ax
+            \end{aligned}
+        \end{equation*}
+
+
 
     \subsection{Stopping criterion}
 

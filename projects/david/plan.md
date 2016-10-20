@@ -31,12 +31,12 @@
 7 Oct
 - Cutting Plane for Active Learning (Louche and Ralaivola)
 
-26 Oct
-- Assignment (10 marks): Complete experiment in Louche and Ralaivola with ACCPM, compare to active SVM. Show results for a subset of SDSS.
+27 Oct
+- Assignment (10 marks): Complete experiment following the Louche and Ralaivola paper, comparing the center being (i) the analytic center; (ii) a uniformly sampled point; and (if time permits) (iii) the Chebyshev center. Show results for the Iris dataset and diabetes dataset. 
 
 4 Nov
-- Tentative seminar date (10%)
-- Tentative report date (60%)
+- Seminar date (10%)
+- Report submission date (60%)
 
 ## References
 

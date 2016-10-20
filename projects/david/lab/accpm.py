@@ -110,7 +110,7 @@ def newton_step(x, y, v, A, b, testing=0):
     delta_v = np.dot(-H, delta_y) - g - v
     return (delta_x, delta_y, delta_v)
 
-def analytic_center(A, b, x0=None, y0=None, rtol=10e-5, etol=10e-5, 
+def analytic_center(A, b, x0=None, y0=None, rtol=10e-6, etol=10e-6, 
                     start=0, alpha=0.01, beta=0.5,
                     testing=0, maxiter=50):
     """

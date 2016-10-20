@@ -100,8 +100,7 @@ def initial_polyhedron(X):
 #         print('******** Desired number of points queried ********')    
 #     return w_best
 
-def active(X, Y, iterations, center='ac', sample=1, M=None,
-           testing=1):
+def active(X, Y, iterations, center='ac', sample=1, testing=1, M=None):
 
     if center == 'ac':
         center = accpm.analytic_center

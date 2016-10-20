@@ -5,20 +5,23 @@ import scipy.linalg as splinalg
 myfloat = np.float64
 np.set_printoptions(precision=2)
 
+
 def logb_grad(x, A, b):
     """
-    Returns the value of the gradient of the log barrier function 
+    Returns the value of the gradient of the log barrier function
     associated with the set of inequalities Ax <= b at x.
     """
-    d = 1./(b-np.dot(A,x))
-    return np.dot(np.transpose(A), d) 
+    d = 1./(b-np.dot(A, x))
+    return np.dot(np.transpose(A), d)
+
 
 def is_positive(x):
     """
-    Returns True if every entry of the vector x is positive. 
+    Returns True if every entry of the vector x is positive.
     """
     zeros = np.zeros_like(x)
     return np.all(np.greater(x, zeros))
+
 
 def start0(A, b, x, y):
     """
@@ -30,10 +33,11 @@ def start0(A, b, x, y):
     for i in range(len(y)):
         if b[i] > 0:
             y[i] = b[i]
-        else: 
+        else:
             y[i] = 1
     # print((x, np.asarray(y)))
     return (x, np.asarray(y))
+
 
 def start1(A, b, x0, y0):
     """
@@ -45,36 +49,37 @@ def start1(A, b, x0, y0):
             print('y0 is not positive!')
             return (None, None)
 
-    if x0 is None: 
+    if x0 is None:
         x0 = np.zeros(np.shape(A)[1])
-        if y0 is None: 
+        if y0 is None:
             y0 = [0]*np.shape(A)[0]
             for i in range(len(y0)):
                 if b[i] > 0:
                     y0[i] = b[i]
-                else: 
+                else:
                     y0[i] = 1
             y0 = np.asarray(y0)
             return (x0, y0)
-        else: 
-            return (x0, y0)      
-    else: 
+        else:
+            return (x0, y0)
+    else:
         if y0 is None:
             y0 = [0]*np.shape(A)[0]
             for i in range(len(y0)):
                 # if b[i] - np.dot(A[i], x0) > 0:
                 if b[i] - np.dot(A[i], x0) > 1e10-15:
                     y0[i] = b[i] - np.dot(A[i], x0)
-                else: 
+                else:
                     y0[i] = 1
             y0 = np.asarray(y0)
             return (x0, y0)
-        else: 
+        else:
             return (x0, y0)
+
 
 def norm_res(x, y, v, A, b):
     """
-    Computes the norm of the vector of residuals 
+    Computes the norm of the vector of residuals
     (r_dual(x, y, v), r_primal(x, y, v)).
     """
     g = -(1./y)
@@ -84,15 +89,16 @@ def norm_res(x, y, v, A, b):
     r = np.concatenate((r_d1, r_d2, r_p))
     return np.linalg.norm(r)
 
+
 def newton_step(x, y, v, A, b, testing=0):
     """
-    Computes the Newton step (delta_x, delta_y, delta_v). 
-    """ 
+    Computes the Newton step (delta_x, delta_y, delta_v).
+    """
     r_p = y + np.dot(A, x) - b
     g = -(1./y)
     H = np.diag(1./np.power(y, 2))
     A_chol = np.dot(np.dot(np.transpose(A), H), A)
-    
+
     if testing == 2:
         print('Computing the Newton step:')
         print('    H has diag', 1./np.power(y, 2))
@@ -104,13 +110,14 @@ def newton_step(x, y, v, A, b, testing=0):
     L = splinalg.cholesky(A_chol, lower=True)
     if np.linalg.norm(A_chol - np.dot(L, np.transpose(L))) > 10e-6:
         print('**** Cholesky factorization FAILED or INACCURATE ****')
-    z = splinalg.solve_triangular(L, b_chol, check_finite=False) 
+    z = splinalg.solve_triangular(L, b_chol, check_finite=False)
     delta_x = splinalg.solve_triangular(np.transpose(L), z, check_finite=False)
     delta_y = np.dot(-A, delta_x) - r_p
     delta_v = np.dot(-H, delta_y) - g - v
     return (delta_x, delta_y, delta_v)
 
-def analytic_center(A, b, x0=None, y0=None, rtol=10e-6, etol=10e-6, 
+
+def analytic_center(A, b, x0=None, y0=None, rtol=10e-5, etol=10e-5,
                     start=0, alpha=0.01, beta=0.5,
                     testing=0, maxiter=50):
     """
@@ -130,12 +137,12 @@ def analytic_center(A, b, x0=None, y0=None, rtol=10e-6, etol=10e-6,
         print('    b is', b)
         print('    x0 =', x)
         print('    y0 =', y)
-    
+
     v = np.zeros(np.shape(A)[0])
     while i < maxiter:
-        (delta_x, delta_y, delta_v) = newton_step(x, y, v, A, b, 
-                                                  testing=testing)  
-        # print('at iteration', i,'delta_x is\n', delta_x) 
+        (delta_x, delta_y, delta_v) = newton_step(x, y, v, A, b,
+                                                  testing=testing)
+        # print('at iteration', i,'delta_x is\n', delta_x)
         # print('    delta_x=', delta_x)
         # print('    delta_y=', delta_y)
         # print('    delta_v=', delta_v)
@@ -146,18 +153,18 @@ def analytic_center(A, b, x0=None, y0=None, rtol=10e-6, etol=10e-6,
             t = beta*t
         while (norm_res(x + t*delta_x, y + t*delta_y, v + t*delta_v, A, b)) > \
               ((1 - alpha*t) * norm_res(x, y, v, A, b)):
-            t = beta*t     
-        # while (np.all(np.less_equal(y + t * delta_y, zeros))) and \ 
+            t = beta*t
+        # while (np.all(np.less_equal(y + t * delta_y, zeros))) and \
         #       ((norm_res(x + t*delta_x, y + t*delta_y, v + t*delta_v, A, b)) > \
         #       ((1 - alpha*t) * norm_res(x, y, v, A, b))):
-        #     t = beta*t    
+        #     t = beta*t
         (x, y, v) = (x + t*delta_x, y + t*delta_y, v + t*delta_v)
         # print('    At iteration', i, 'x is', x, 'and y is', y, 'with t=', t)
         if (np.linalg.norm(y + np.dot(A, x) - b) <= etol) and \
            (norm_res(x, y, v, A, b) <= rtol):
             #print('    SUCCESS with i =', i)
             return x
-        i = i + 1  
+        i = i + 1
     #print('    FAILURE with i =', i)
     return x
 
@@ -172,12 +179,12 @@ def feasible(x, constr):
     for i in range(len(constr)):
         fi_x = constr[i](x)
         if fi_x > 0:
-            return i 
+            return i
     return True
-        
+
 def oracle(ac, func, grad_func, fbest, args=(), constr=None, grad_constr=None):
     """
-    Returns ((a, b), fbest) where (a, b) specifies the cutting plane 
+    Returns ((a, b), fbest) where (a, b) specifies the cutting plane
     a.x <= b and fbest is the lowest objective value encountered so far.
     """
     feasibility = feasible(ac, constr)
@@ -186,7 +193,7 @@ def oracle(ac, func, grad_func, fbest, args=(), constr=None, grad_constr=None):
         fi = constr[i]
         grad_fi = grad_constr[i]
         fi_ac = fi(ac)
-        grad_fi_ac = grad_fi(ac) 
+        grad_fi_ac = grad_fi(ac)
         a = grad_fi_ac
         b = np.dot(grad_fi_ac, ac) - fi_ac
         return ((a, b), fbest)
@@ -194,14 +201,14 @@ def oracle(ac, func, grad_func, fbest, args=(), constr=None, grad_constr=None):
         func_ac = func(ac, *args)
         grad_func_ac = grad_func(ac, *args)
         if func_ac <= fbest:
-            fbest = func_ac 
+            fbest = func_ac
         a = grad_func_ac
         b = np.dot(grad_func_ac, ac) - func_ac + fbest
         return ((a, b), fbest)
 
 def normalize(A, b):
     """
-    Normalizes the inequalities Ax <= b. That is, divides each  
+    Normalizes the inequalities Ax <= b. That is, divides each
     inequality ai.x <= bi by norm(ai).
     """
     A_normalized = []
@@ -218,27 +225,27 @@ def normalize(A, b):
     b_normalized = np.asarray(b_normalized, dtype=myfloat)
     return (A_normalized, b_normalized)
 
-def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(), 
-          alpha=0.01, beta=0.7, x0=None, y0=None, start=1, 
+def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
+          alpha=0.01, beta=0.7, x0=None, y0=None, start=1,
           tol=10e-3, maxiter=50,
           summary=1, testing=0):
     """
-    Solves the specified inequality constrained convex optimization 
+    Solves the specified inequality constrained convex optimization
     problem or feasbility problem via the analytic center cutting
-    plane method (ACCPM). 
-    
+    plane method (ACCPM).
+
     Implementation applies to (inequality constrained or unconstrained)
     convex optimization problems of the form
         minimize f_obj(x)
         subject to f_i(x) <= 0, i = 0, ..., m,
-    where f_obj, f_0, ..., f_m are convex differentiable functions. 
-    The ACCPM requires a set of initial linear inequality constraints 
-    that represent the initial polyhedron in which to search for 
-    satisfcatory solutions. That is, a matrix A and b that give 
+    where f_obj, f_0, ..., f_m are convex differentiable functions.
+    The ACCPM requires a set of initial linear inequality constraints
+    that represent the initial polyhedron in which to search for
+    satisfcatory solutions. That is, a matrix A and b that give
     constraints Ax <= b. The algorithm terminates when a point x
     is found that satisfies norm(grad f_obj(x)) <= tol.
 
-    
+
     Parameters
     ----------------
     A : ndarray
@@ -250,32 +257,32 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
     grad_func : callable, grad_func(x, *args)
         The gradient of the objective function f_obj.
     constr : tuple (or list) with callable elements, optional
-        The required format is constr = (f_0, ..., f_m) where  
-        f_i(x) is callable for i = 0, ..., m. 
+        The required format is constr = (f_0, ..., f_m) where
+        f_i(x) is callable for i = 0, ..., m.
         So constr[i](x) = f_i(x) for i = 1, ..., m.
         Similarly if a list.
     grad_constr : tuple (or list) with callable elements, optional
-        The required format is constr = (gradf_0, ..., gradf_m) where  
-        gradf_i(x) is callable for i = 0, ..., m. 
+        The required format is constr = (gradf_0, ..., gradf_m) where
+        gradf_i(x) is callable for i = 0, ..., m.
     args : tuple, optional
         Optional arguments for func and grad_func.
     alpha : float, optional
     beta : float, optional
         Parameters for the ACCPM. Default values are alpha = 0.01 and
-        beta = 0.7, which are sufficient for most applications. 
-    x0 : ndarray, optional 
+        beta = 0.7, which are sufficient for most applications.
+    x0 : ndarray, optional
     y0 : ndarray, optional
         The initial points x0 and y0 to be used for the generation of
         the AC on the 0th iteration. If x0 = y = None, points will be
         generated.
     start : 0, 1, optional
-        Specifies how starting points for the AC omputation, via the 
-        infeasible start Newton method, will be chosen.  Default is 
-        0 where x0 = 0 and y0 is chosen accordingly. If 1, then 
-        x0 = x_prev where x_prev is the AC generated during 
-        the previous iteration and y0 is chosen accordingly. 
+        Specifies how starting points for the AC omputation, via the
+        infeasible start Newton method, will be chosen.  Default is
+        0 where x0 = 0 and y0 is chosen accordingly. If 1, then
+        x0 = x_prev where x_prev is the AC generated during
+        the previous iteration and y0 is chosen accordingly.
     tol : float, optional
-        Specifies the tolerance of the algorithm. 
+        Specifies the tolerance of the algorithm.
     maxiter : int, optional
         Maximum number of iterations to perform.
     summary : int, 0, 1, optional
@@ -292,7 +299,7 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
     ac : ndarray
         The last AC calculated. This is the solution if outcome = True.
     value_attained : float
-        The value of f_obj at the last ac calculated. 
+        The value of f_obj at the last ac calculated.
     iterations : int
         The number of iterations performed which is the number of
         analytic centers generated.
@@ -303,7 +310,7 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
     # TO-DO:
     # - Incorporate checking of lower bound.
     # - Description of what is returned.
-    # - Return useful information. 
+    # - Return useful information.
 
     (A, b) = normalize(A, b)
     k = 0
@@ -319,8 +326,8 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
         if testing != 0:
             print('Entering iteration', k)
 
-        ac = analytic_center(A, b, x0=x0, y0=y0, 
-                             alpha=alpha, beta=beta, start=start, 
+        ac = analytic_center(A, b, x0=x0, y0=y0,
+                             alpha=alpha, beta=beta, start=start,
                              testing=testing)
         (x0, y0) = (ac, None)
 
@@ -330,12 +337,12 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
             iterations = k + 1
             if summary == 1:
                 print('******** ACCPM SUCCEEDED ********')
-                print('    Solution point:', ac) 
+                print('    Solution point:', ac)
                 print('    Objective value:', value_attained)
                 print('    Iterations:', iterations)
             return (outcome, ac, value_attained, iterations)
 
-        data = oracle(ac, func, grad_func, fbest, args=args, 
+        data = oracle(ac, func, grad_func, fbest, args=args,
                       constr=constr, grad_constr=grad_constr)
         (a_cp, b_cp) = data[0]
         norm_a_cp = np.linalg.norm(a_cp)
@@ -366,5 +373,5 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
         print('    Objective value at last AC:', value_attained)
         print('    Iterations:', iterations)
         print('    Best objective value was:', fbest)
-        
+
     return (outcome, ac, value_attained, k, fbest)

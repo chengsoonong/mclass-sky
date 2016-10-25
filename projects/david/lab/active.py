@@ -1,8 +1,10 @@
 import numpy as np
 import accpm
+import scipy.optimize as opt
 
 def linear_predictor(X, w):
-    return np.sign(np.dot(X, w))
+    predictions = np.sign(np.dot(X, w))
+    return predictions
 
 def initial_polyhedron(X):
     dimension = X.shape[1]
@@ -104,10 +106,13 @@ def active(X, Y, iterations, center='ac', sample=1, testing=1, M=None):
 
     if center == 'ac':
         center = accpm.analytic_center
+    if center == 'cc':
+        center = chebyshev_center
     if center == 'random':
         center = random_vector
 
     (A, b) = initial_polyhedron(X)
+    weights = []
     i = 0
     j = 0
 
@@ -120,6 +125,7 @@ def active(X, Y, iterations, center='ac', sample=1, testing=1, M=None):
             print('\nEntering iteration', i) 
 
         w_best = center(A, b)
+        weights.append(w_best)
         query_outcome = query(A, b, X, Y, M, 
                               sample=sample, w_best=w_best)
         (x_chosen, y_chosen) = query_outcome[0]
@@ -149,7 +155,7 @@ def active(X, Y, iterations, center='ac', sample=1, testing=1, M=None):
         i = i + 1
 
     if testing == 3:
-        return (w_best, j)
+        return (w_best, j, weights)
 
     if testing == 1 or testing == 2:
         print('******** Desired number of points queried ********')
@@ -158,6 +164,25 @@ def active(X, Y, iterations, center='ac', sample=1, testing=1, M=None):
 
     if testing == 0:
         return w_best
+
+def chebyshev_center(A, b):
+    dimension = A.shape[1] + 1
+
+    bounds = []
+    for i in range(dimension):
+        bounds.append((None, None))
+
+    c = np.zeros(dimension)
+    c[-1] = -1
+    norms = []
+    for a_i in A:
+        norm_a_i = np.linalg.norm(a_i)
+        norms.append([norm_a_i])
+    norms = np.asarray(norms)
+    A = np.hstack((A, norms))
+    result = opt.linprog(c, A, b, bounds=bounds)
+    cc = result.x[:-1]
+    return cc
 
 def random_vector(A, b):
     dimension = A.shape[1]

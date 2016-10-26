@@ -1,6 +1,7 @@
 import numpy as np
 import accpm
 import scipy.optimize as opt
+import config
 
 def linear_predictor(X, w):
     """
@@ -58,9 +59,16 @@ def random_vector(A, b):
     Generates a random vector satisfying Ax <= b through rejection
     sampling.
     """
+
     dimension = A.shape[1]
     not_feasible = True
     while not_feasible == True:
+
+        config.reject_counter = config.reject_counter + 1
+        if config.reject_counter == config.milestone:
+            config.milestone = config.milestone * 10
+            print(config.reject_counter, 'random vectors have been generated so far')
+
         rand_vec = np.random.uniform(-0.5, 0.5, dimension)
         if np.all(np.dot(A, rand_vec) <= b) == True:
             not_feasible = False

@@ -305,12 +305,13 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
         analytic centers generated.
     (Only when outcome = False) fbest : float
         The minimum value attained by f_obj over all iterations.
-    """
 
-    # TO-DO:
-    # - Incorporate checking of lower bound.
-    # - Description of what is returned.
-    # - Return useful information.
+
+    Future extensions
+    ----------------
+    - Incorporate checking of the lower bound.
+
+    """
 
     (A, b) = normalize(A, b)
     k = 0

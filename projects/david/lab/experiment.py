@@ -1,5 +1,6 @@
 import numpy as np
 import active
+import config
 
 def compute_accuracy(w, X_testing, Y_testing):
     size = X_testing.shape[0]
@@ -21,6 +22,8 @@ def weights_matrix(n, iterations, X_training, Y_training, center='ac',
 
 def experiment(n, iterations, X_testing, Y_testing, X_training, Y_training,
                center='ac', sample = 1, M=None):
+    config.reset()
+
     testing=3
     matrix_of_weights = weights_matrix(n, iterations, X_training, Y_training, 
                                        center=center, sample=sample, M=M)
@@ -37,10 +40,3 @@ def experiment(n, iterations, X_testing, Y_testing, X_training, Y_training,
     sum_of_accuracies = matrix_of_accuracies.sum(axis=0)
     average_accuracies = sum_of_accuracies/n
     return average_accuracies
-
-#     queries = np.arange(1, n + 1)
-#     plt.plot(table['points queried'], table['accuracy'])
-#     plt.xlabel('Number of iterations')
-#     plt.ylabel('Average accuracy over %d tests' % n)
-#     plt.title('Average accuracy of a cutting plane active learning algorithm')
-#     plt.show()

@@ -40,6 +40,7 @@
 \DeclareMathOperator{\interior}{int}
 \DeclareMathOperator{\domain}{dom}
 \DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\sign}{sign}
 
 \begin{document}
 \lstset{language=}
@@ -581,9 +582,35 @@
             \end{aligned}
         \end{equation*}
 
-
-
     \subsection{Stopping criterion}
+
+\section*{Active Learning}
+    In this section we discuss active learning and how its relation to cutting planes.
+    \subsection*{The problem of interest}
+        The problems we are considered with here are linear classification problems. The set up is as follows:
+        \begin{itemize}
+            \item We have a training sample $D = \{(x_n, y_n)\}_{n \in [N]}$ with $x_n \in \mathcal{X} = \mathbb{R}^n$ and $y_n \in \mathcal{Y} = \{-1, +1\}$.
+            \item We are looking for a classification vector $w \in \mathcal{X}$ for the linear predictor 
+            \begin{align*}
+                f_w(x) = \sign(w \cdot x).
+            \end{align*}
+            \item In particular, we look for a classification vector from the version space
+            \begin{align*}
+                \mathcal{W}_0(D) = \{w \in \mathcal{X} \;|\; y_n(w \cdot x_n) \geq 0 \text{ for all } n \in [N] \},
+            \end{align*}
+            which means that $f_w(\cdot)$ makes no mistakes on $D$.
+            \item We assume that $W_0(D)$ is not empty.
+        \end{itemize}
+        The problem can be summarized as 
+        \begin{align*}
+            \text{find } w \text{ s.t. } 
+            \begin{cases} 
+                w \in \mathcal{X} \\
+                y_n(w \cdot x_n) \geq 0 \text{ for all } n \in [N]
+            \end{cases}
+        \end{align*}
+
+    \subsection*{Another conceptual cutting plane algorithm and its application to linear classification problems.}
 
 \renewcommand\refname{Bibliography}
 \begin{thebibliography}{99}

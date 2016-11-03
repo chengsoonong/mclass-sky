@@ -7,8 +7,12 @@
 \usepackage{bm}
 \usepackage{enumerate}
 \usepackage{graphicx}
+\usepackage{placeins}
 \usepackage{color}
 \usepackage{hyperref}
+\usepackage{pgf,tikz}
+\usepackage{mathrsfs}
+\usetikzlibrary{arrows}
 
 % Environments
 \theoremstyle{definition}
@@ -53,7 +57,7 @@
 \section{Introduction}
 
     \subsection{Outline.}
-        In this report we present a general cutting-plane algorithm for the problem of finding a point in a target set contained in a bounded convex polyhedron. We then show how this general algorithm can be specialized to (i) solve convex optimization problems, giving the so-called \emph{analytic center cutting plane method} (ACCPM); and (ii) solve an active learning problem in the context of binary linear classification. Crucial to these algorithms is finding the approximate center of a bounded convex polyhedron. The center of a bounded convex polyhedron has no clear definition, so we present several definitions from the literature: (i) the analytic center (AC); (ii) the Chebyshev center (CC); and (iii) the center of gravity (CG). The AC and CC are used in the algorithms we present while the CG is of theoretical interest. Therefore, we explain how the AC and CC can be computed. Furthermore, we present several experiments involving the active learning algorithm on real data.
+        In this report we present a general cutting-plane algorithm for the problem of finding a point in a target set contained in a bounded convex polyhedron. We then show how this general algorithm can be specialized to (i) solve convex optimization problems, giving the so-called analytic center cutting plane method (ACCPM); and (ii) solve an active learning problem in the context of binary linear classification. Crucial to these algorithms is finding the approximate center of a bounded convex polyhedron. The center of a bounded convex polyhedron has no clear definition, so we present several definitions from the literature: (i) the analytic center (AC); (ii) the Chebyshev center (CC); and (iii) the center of gravity (CG). The AC and CC are used in the algorithms we present while the CG is of theoretical interest. Therefore, we explain how the AC and CC can be computed. Furthermore, we present an experiment involving training logistic regression using the ACCPM and several experiments involving the active learning algorithm on real data. The code and notebooks corresponding to this report can be found in the project's GitHub repository \footnote{The GitHub repository is \url{https://github.com/davidjwu/mclass-sky/tree/master/projects/david}}.
 
     \subsection{Related and background works.}
         Our exposition of the material on the general cutting-plane algorithm, computing the AC and ACCPM closely follows notes on the topic by S. Boyd et al. \cite{BVS08} \cite{BV11} \cite{BDV15}. S. Boyd's textbook on convex optimization \cite{BV04} was an invaluable source for background knowledge also. Our exposition of the material on active learning closely follows a paper by U. Louche and L. Ralaivola \cite{LR15}.
@@ -75,7 +79,23 @@
         The general cutting-plane algorithm address the problem of how to efficiently find a point in a set $X \subset \mathbb{R}^n$, which we call the \emph{target set}, known to be contained in a bounded convex polyhedron $\mathcal{P}_0$ defined by linear inequalities $a_i^\transpose x \leq b, i = 1, \dots, m$. 
 
         \begin{figure}
-            \caption{A simple two-dimensional example showing the set-up of the problem.}
+            \centering
+                \begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1.0cm,y=1.0cm]
+                \clip(-4.,-4.) rectangle (4.,4.);
+                \fill[fill=black,fill opacity=0.1] (-2.18,1.66) -- (-2.,-1.) -- (1.,-3.16) -- (2.44,1.3) -- (-0.72,3.12) -- cycle;
+                \draw [domain=-4.:4.] plot(\x,{(-5.6064-1.46*\x)/-1.46});
+                \draw [domain=-4.:4.] plot(\x,{(-5.5-2.66*\x)/0.18});
+                \draw [domain=-4.:4.] plot(\x,{(-7.32-2.16*\x)/3.});
+                \draw [domain=-4.:4.] plot(\x,{(-9.0104--4.46*\x)/1.44});
+                \draw [domain=-4.:4.] plot(\x,{(-8.5488--1.82*\x)/-3.16});
+                \draw (-2.18,1.66)-- (-2.,-1.);
+                \draw (-2.,-1.)-- (1.,-3.16);
+                \draw (1.,-3.16)-- (2.44,1.3);
+                \draw (2.44,1.3)-- (-0.72,3.12);
+                \draw (-0.72,3.12)-- (-2.18,1.66);
+                \draw [rotate around={81.1193408494798:(-1.6,1.48)},fill=black,fill opacity=0.15] (-1.6,1.48) ellipse (0.6998119774724771cm and 0.2648335398206404cm);
+                \end{tikzpicture}
+            \caption{The initial polyhedron given by five linear inequality constraints. The oval set is the target set.}
         \end{figure}
 
         The strategy used by this algorithm is to iteratively make \emph{cuts} in the polyhedron $\mathcal{P}_0$ until a point in $X$ is found. Formally, starting at the $0$-th iteration we find a point $x^{(1)}$, which we call a \emph{query point}, in the current (or $0$-th) iteration's polyhedron $\mathcal{P}_0$. We then check $x^{(1)}$ for membership in the target set $X$. If $x^{(1)}$ is a member of $X$ then we are done. If $x^{(1)}$ is not a member of $X$, then we construct a halfspace $a_{1}^\transpose x \leq b_{1}$, which we call a \emph{cutting plane}, that separates, or rather \emph{cuts} $x^{(1)}$ from the current iteration's polyhedron $\mathcal{P}_0$. (Cuts are allowed to pass directly through $x^{(1)}$.) We then end the $0$-th iteration by defining the polyhedron $\mathcal{P}_1$ of the $1$-th iteration to be the union of the $0$-th polyhedron and the $1-th$ cutting plane. In the $1$-th iteration we then repeat this process with $1$-th polyhedron $\mathcal{P}_1$. Formally:
@@ -85,25 +105,69 @@
             \ind $k \coloneqq 0$. \\
             \ind \textbf{repeat} \\
             \ind\ind Choose a query point $x^{(k+1)} \in \mathcal{P}_k$. \\
-            \ind\ind Query the cutting-plane oracle at $x^{(k+1)}$. \\
-            \ind\ind \textbf{if} the oracle determines that $x^{(k+1)} \in X$: \\
+            \ind\ind \textbf{if} $x^{(k+1)} \in X$: \\
             \ind\ind\ind\textbf{return} $x^{(k+1)}$. \\
-            \ind\ind \textbf{else}, update $\mathcal{P}_k$ by adding the cutting-plane returned by the oracle: \\ 
+            \ind\ind \textbf{else}: \\
+            \ind\ind\ind Construct a cutting-plane $\{x \:|\: a_{k+1}^\transpose x \leq b_{k+1} \}$ \\
+            \ind\ind\ind Update $\mathcal{P}_k$ by adding the cutting-plane: \\ 
             \ind\ind\ind $\mathcal{P}_{k+1} \coloneqq \mathcal{P}_k \cap \{x \:|\: a_{k+1}^\transpose x \leq b_{k+1} \}$. \\
             \ind\ind \textbf{if} $\mathcal{P}_{k+1} = \emptyset$, \textbf{quit}. \\
             \ind\ind $k \coloneqq k+1$.
         \end{algorithm}
 
+        For the purposes of providing a general framework, we employ a \emph{oracle model}, which in our case we simply mean that there is an function that is able to provide us with the necessary information, such as cutting-plane data. We refer the interested reader to S. Boyd and L. Vandenberghe's textbook \cite[Section 4.1.4]{BV04}.
+
     \subsection{Deep cuts and neutral cuts}
         We make a distinction between two types of cuts, deep cuts and shallow cuts. A \emph{deep cut with respect to the current iteration's query point $x^{(k+1)}$} is a cut that completely separates that point from the next iteration's polyhedron $\mathcal{P}_{k+1}$ while a \emph{neutral cut with respect to the current iteration's query point $x^{(k+1)}$} is a cut such that that point lies on the boundary of $\mathcal{P}_{k+1}$. (That is, a cut that passes directly through the query point $x^{(k+1)}$.)
 
-        \begin{figure}
+        \begin{figure}[hb]\label{f:deep}
+            \centering
+            \begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1.0cm,y=1.0cm]
+            \clip(-4.,-4.) rectangle (4.,4.);
+            \fill[fill=black,fill opacity=0.1] (-2.18,1.66) -- (-2.,-1.) -- (1.,-3.16) -- (2.44,1.3) -- (-0.72,3.12) -- cycle;
+            \draw [domain=-4.:4.] plot(\x,{(-5.6064-1.46*\x)/-1.46});
+            \draw [domain=-4.:4.] plot(\x,{(-5.5-2.66*\x)/0.18});
+            \draw [domain=-4.:4.] plot(\x,{(-7.32-2.16*\x)/3.});
+            \draw [domain=-4.:4.] plot(\x,{(-9.0104--4.46*\x)/1.44});
+            \draw [domain=-4.:4.] plot(\x,{(-8.5488--1.82*\x)/-3.16});
+            \draw (-2.18,1.66)-- (-2.,-1.);
+            \draw (-2.,-1.)-- (1.,-3.16);
+            \draw (1.,-3.16)-- (2.44,1.3);
+            \draw (2.44,1.3)-- (-0.72,3.12);
+            \draw (-0.72,3.12)-- (-2.18,1.66);
+            \draw [rotate around={81.1193408494798:(-1.6,1.48)},fill=black,fill opacity=0.15] (-1.6,1.48) ellipse (0.6998119774724771cm and 0.2648335398206404cm);
+            \draw [domain=-4.:4.] plot(\x,{(-1.434464353569918-5.858898727052687*\x)/-0.1767771167645208});
+            \draw [->] (-0.2284304493558555,0.5436986776226944) -- (-0.6470492509991373,0.5556692684449995);
+            \begin{scriptsize}
+            \draw [fill=black] (-0.034431088086562124,0.37895249068175696) circle (1.0pt);
+            \end{scriptsize}
+            \end{tikzpicture}
             \caption{A deep cut.}
         \end{figure}
-
         \begin{figure}
+            \begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1.0cm,y=1.0cm]
+            \clip(-4.,-4.) rectangle (4.,4.);
+            \fill[fill=black,fill opacity=0.1] (-2.18,1.66) -- (-2.,-1.) -- (1.,-3.16) -- (2.44,1.3) -- (-0.72,3.12) -- cycle;
+            \draw [domain=-4.:4.] plot(\x,{(-5.6064-1.46*\x)/-1.46});
+            \draw [domain=-4.:4.] plot(\x,{(-5.5-2.66*\x)/0.18});
+            \draw [domain=-4.:4.] plot(\x,{(-7.32-2.16*\x)/3.});
+            \draw [domain=-4.:4.] plot(\x,{(-9.0104--4.46*\x)/1.44});
+            \draw [domain=-4.:4.] plot(\x,{(-8.5488--1.82*\x)/-3.16});
+            \draw (-2.18,1.66)-- (-2.,-1.);
+            \draw (-2.,-1.)-- (1.,-3.16);
+            \draw (1.,-3.16)-- (2.44,1.3);
+            \draw (2.44,1.3)-- (-0.72,3.12);
+            \draw (-0.72,3.12)-- (-2.18,1.66);
+            \draw [rotate around={81.1193408494798:(-1.6,1.48)},fill=black,fill opacity=0.15] (-1.6,1.48) ellipse (0.6998119774724771cm and 0.2648335398206404cm);
+            \draw [domain=-4.:4.] plot(\x,{(-1.434464353569918-5.858898727052687*\x)/-0.1767771167645208});
+            \draw [->] (-0.2284304493558555,0.5436986776226944) -- (-0.6470492509991373,0.5556692684449995);
+            \begin{scriptsize}
+            \draw [fill=black] (-0.23315429331371954,0.3364088754049248) circle (1.0pt);
+            \end{scriptsize}
+            \end{tikzpicture}
             \caption{A neutral cut.}
         \end{figure}
+        \FloatBarrier
 
     \subsection{Adapting the general cutting-plane algorithm for applications}\label{ss:adapt}
         To specialize the general cutting-plane algorithm we must specify
@@ -121,6 +185,28 @@
 
         For specializing the general algorithm to both convex optimization and active learning we will apply the \emph{heuristic} that at each iteration we should try to choose the query point and construct the cutting-plane that enable us to reduce the volume of the current polyhedron as much as possible. Intuitively, if the chosen query point lies close to the approximate center of the current iteration's polyhedron then the resultant cut should significantly reduce the current iteration's polyhedron. We follow this strategy. 
 
+        \begin{figure}[t]
+            \centering
+            \begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1.0cm,y=1.0cm]
+            \clip(-4.,-4.) rectangle (4.,4.);
+            \fill[fill=black,fill opacity=0.1] (-2.18,1.66) -- (-2.,-1.) -- (1.,-3.16) -- (2.44,1.3) -- (-0.72,3.12) -- cycle;
+            \draw [domain=-4.:4.] plot(\x,{(-5.6064-1.46*\x)/-1.46});
+            \draw [domain=-4.:4.] plot(\x,{(-5.5-2.66*\x)/0.18});
+            \draw [domain=-4.:4.] plot(\x,{(-7.32-2.16*\x)/3.});
+            \draw [domain=-4.:4.] plot(\x,{(-9.0104--4.46*\x)/1.44});
+            \draw [domain=-4.:4.] plot(\x,{(-8.5488--1.82*\x)/-3.16});
+            \draw (-2.18,1.66)-- (-2.,-1.);
+            \draw (-2.,-1.)-- (1.,-3.16);
+            \draw (1.,-3.16)-- (2.44,1.3);
+            \draw (2.44,1.3)-- (-0.72,3.12);
+            \draw (-0.72,3.12)-- (-2.18,1.66);
+            \draw [rotate around={81.1193408494798:(-1.6,1.48)},fill=black,fill opacity=0.15] (-1.6,1.48) ellipse (0.6998119774724771cm and 0.2648335398206404cm);
+            \draw [domain=-4.:4.] plot(\x,{(--6.702000862159635-2.8988310021314687*\x)/1.773402495421606});
+            \draw [->] (1.4529808038969814,1.4041116265200582) -- (0.9819486169465895,1.1315396929539856);
+            \end{tikzpicture}
+            \caption{A cutting-plane with undesirable volume reduction. Figure \ref{f:deep} shows a cutting-plane with desirable volume reduction.}
+        \end{figure}
+        \FloatBarrier
 \section{Approximating the center of a convex polyhedron}
     In this section we will make the notion of approximate center precise. We present the concepts of (i) the analytic center (AC); (ii) the Chebyshev center (CC) and (iii) center of gravity (CG) to do this. Our exposition closely follows S. Boyd and L. Vandenberghe's lecture notes on this topic \cite[Section 4]{BV11}.  
 
@@ -165,14 +251,17 @@
         \begin{align*}
             \nabla \phi(x) \coloneqq - \sum_{i=1}^{m} \frac{1}{b_i - a_i^\transpose x}a_i = 0.     
         \end{align*} 
-        Solving this analytically is not practical, as sample calculations of a simple application of the ACCPM in Appendix \ref{a:sample} show, and therefore we instead choose to solve for the analytic center $\AC(\mathcal{P})$ of $\mathcal{P}$ using a infeasible start Newton method. 
+        Solving this analytically is not practical. (We refer the interested reader to the notebook \texttt{test\_accpm\_toy.ipynb} for sample calculations for a simple problem that make this difficulty apparent.) Therefore we instead choose to solve for the analytic center $\AC(\mathcal{P})$ of $\mathcal{P}$ using a infeasible start Newton method.
 
     \subsection{An alternative approach for computing the analytic center}
         The infeasible start Newton method is one of two approaches suggested by S. Boyd, L. Vandenberghe and J. Skaf in their notes on the ACCPM \cite[p. 3]{BVS08}. It has the advantage that the starting point need not be contained in $\domain \phi$. The other approach they suggest is to (i) use a phase I optimization method \cite[Section 11.4]{BV04} to find a point in $\domain \phi$ (or determine that $\domain \phi$ is empty); and then (ii) use this as a starting point for a standard Newton method. 
 
-        In this project I initially tried to solve for the AC using this approach. After failing to do so over a number of weeks I decided to use the infeasible start Newton method instead. As this was successful I did not resume my work on this approach. It is unclear whether or not this failure was due to theoretical or technical issues. I suspect there were theoretical issues and so for completeness have included in Appendix \ref{a:barrier} some theoretical exposition of this approach, that reflects
-        %%%% TO-DO: double-check the reference to the .py file  is correct %%%% 
-        my (possibly incorrect) understanding at the time. To this end I have also included some suggestions for further pursuing this approach. The corresponding code can be found in the GitHub repository of this project with the name $\texttt{accpm\_barrier.py}$ 
+        In this project we initially tried to solve for the AC using this approach. After failing to do so over a number of weeks we decided to use the infeasible start Newton method instead. As this was successful we did not resume work on this approach. It is unclear whether or not this failure was due to theoretical or technical issues. In hindsight, after implementing the infeasible start Newton method correctly, we have the following suggestions for the reader that might be interested in doing so:
+        \begin{itemize}
+            \item when initializing the algorithm and after each iteration ensure the linear inequality constraints have been normalized. That is, if we have the linear inequality constraints $a_i^\transpose x \leq b_i, i = 1, \dots, m, m + 1, \dots, m + k$ corresponding to the $m$ linear inequalities that define $\mathcal{P}_0$ and having completed $k$ iterations, then $\frac{a_i}{\norm{a_i}}^\transpose x \leq \frac{b_i}{\norm{a_i}}, i = 1, \dots, m, m + 1, \dots, m + k$ define the same linear inequalities;
+            \item consider first making the substitution $y = b - Ax$;
+            \item be wary of numerical issues occurring, particularly those that involve numbers in a neighborhood of $0$ where rounding to $0$ may be necessary or where values that should be positive become negative and vice-versa.
+        \end{itemize}
 
     \subsection{The infeasible start Newton method}\label{ss:infeasible} To use the infeasible start Newton method to compute the AC we first reformulate the problem \eqref{e:log_barrier_problem} as 
     \begin{equation}\label{e:log_barrier_problem_sub}
@@ -181,7 +270,7 @@
         & \text{subject to} && y = b - Ax, 
         \end{aligned}
     \end{equation}
-    in the variables $x \in \mathbb{R}^n$ and $y \in \mathbb{R}^m$. The advantage of the infeasible start Newton method is that we can start it from any $x \in \mathbb{R}^n$ and any $y \succ 0$. Given the context of cutting-plane algorithms S. Boyd, L. Vandenberghe and J. Skaf recommend $x \coloneqq x_\text{previous}$, the query point from the previous iteration and $y$ as 
+    in the variables $x \in \mathbb{R}^n$ and $y \in \mathbb{R}^m$. The advantage of the infeasible start Newton method is that we can start it from any $x \in \mathbb{R}^n$ and any $y \succ 0$. S. Boyd, L. Vandenberghe and J. Skaf \cite[Section 2]{BVS08} recommend $x \coloneqq x_\text{previous}$, the query point from the previous iteration and $y$ as 
     \begin{equation*}
         y_i \coloneqq
         \begin{cases} 
@@ -222,7 +311,7 @@
         &\Delta v = - H\Delta y - g - v.
     \end{align*}
 
-    In our implementation we computed $\Delta x$ using a \emph{Cholesky factorization}, which we outline in Appendix \ref{a:cholesky}. 
+    In our implementation we computed $\Delta x$ using a \emph{Cholesky factorization} \cite[Appendix C.3]{BV04}. 
 
     The infeasible start Newton method is then
     \begin{algorithm}[Infeasible start Newton method]
@@ -235,12 +324,18 @@
         \ind\ind 2. \emph{Backtracking line search on $\norm{r}$}. \\
         \ind\ind\ind $t \coloneqq 1$. \\
         \ind\ind\ind \textbf{while } $y + t\Delta y \not\succ 0$: \\
-        \ind\ind\ind\ind \textbf{update } $t \coloneqq \beta t$. \\
+        \ind\ind\ind\ind $t \coloneqq \beta t$. \\
         \ind\ind\ind \textbf{while} $\norm{r(x + t\Delta x, y + t \delta y, v + t \Delta v} > (1 - \alpha t)\norm{r(x, y, v)}$: \\
-        \ind\ind\ind\ind \textbf{update } $t \coloneqq \beta t$. \\
-        \ind\ind 3. \textbf{update} $x \coloneqq x +  t\Delta x, y \coloneqq y + t \Delta y, v \coloneqq v + t \Delta v.$ \\
+        \ind\ind\ind\ind $t \coloneqq \beta t$. \\
+        \ind\ind 3. Update $x \coloneqq x +  t\Delta x, y \coloneqq y + t \Delta y, v \coloneqq v + t \Delta v.$ \\
         \ind \textbf{until} $y = b - Ax$ and $\norm{r(x, y, v)} \leq \epsilon$.
     \end{algorithm}
+    \subsection{Implementation details}
+        Our implementation can be found in the repository of this project with file name \texttt{accpm.py} and tests of this can be found in the notebooks \texttt{test\_accpm\_log\_regression.ipynb} and \texttt{test\_accpm\_toy.ipynb}. 
+
+        As suggested by S. Boyd, L. Vandenberghe, and J. Skaf in their lecture notes \cite[Section 2]{BVS08} we found $\alpha \coloneqq 0.01$ and $\beta \coloneqq 0.7$ to work quite effectively. 
+
+        We computed the Cholesky factorization using the function \texttt{scipy.linalg.cholesky}. We found that if the polyhedron was too large, often \texttt{scipy.linalg.cholesky} would encounter numerical difficulty.
 
     \subsection{The Chebyshev center}\label{ss:computing_cc}
         Our strategy for computing the CC is to formulate it as a linear program (LP). Formally, let $\mathcal{B}(x_c, r)$ be the ball centered at $x_c$ with radius $r > 0$. Then the CC of a polyhedron $\mathcal{P}$ given by the linear inequalities $a_i^\transpose x \leq b_i, i = 1, \dots, m$ is given by the maximization problem
@@ -271,6 +366,7 @@
             \end{aligned}
         \end{equation}
 
+    \subsection{Implementation details} The implementation of the $CC$ computation can be found in \texttt{active.py} with tests in the note book \texttt{test\_chebyshev.ipynb}. We computed it using the function \texttt{scipy.optimize.linprog}.
 
 \section{The analytic center cutting plane method (ACCPM) for solving convex optimization problems}\label{s:accpm}
     In this section we specialize the general cutting-plane method to solve convex optimization problems. This involves specifying (i) the target set $X$; (ii) how query points are chosen; (iii) how cutting-planes are constructed; and (iv) stopping criterion for the algorithm. The specialized algorithm is referred to as the ACCPM
@@ -288,7 +384,13 @@
     \subsection{Specifying the general cutting-plane method}\label{ss:accpm_cp}
         \subsubsection{The target set} We typically take the target set $X$ to be the $\epsilon$-suboptimal set for some fixed $\epsilon > 0$. The important property is that there must exist some bounded polyhedron $\mathcal{P}$ that contains $X$.
 
-        \subsubsection{Choosing query points and constructing cutting-planes} Suppose we are at iteration $k$ with polyhedron $\mathcal{P}_k$. Then we choose the query point $x^{(k)}$ to be $\AC(\mathcal{P}_k)$, the analytic center of the current iteration's polyhedron $\mathcal{P}_k$. If we have determined that $x^{(k)}$ is not in the target set $X$ then we check $x^{(k)}$ for feasibility, that is, whether or not it satisfies all inequality constraints $f_i(x) \leq 0, \gap i = 1, \dots, m$. 
+        \subsubsection{Choosing query points and constructing cutting-planes} Suppose we are at iteration $k$ with polyhedron $\mathcal{P}_k$. Then we choose the query point $x^{(k)}$ to be $\AC(\mathcal{P}_k)$, the analytic center of the current iteration's polyhedron $\mathcal{P}_k$. If we have determined that $x^{(k)}$ is not in the target set $X$ then we check $x^{(k)}$ for feasibility, that is, whether or not it satisfies all inequality constraints $f_i(x) \leq 0, \gap i = 1, \dots, m$. Feasibility determines how we construct the cutting-plane for $x^{(k)}$.
+
+        The construct of cutting-planes relies on the following result \cite[Section 3.1]{BV04}, and particularly, the inequality: suppose $f$ is differentiable. Then $f$ is convex if and only if $\domain f$ is convex and
+        \begin{equation*}
+            f(y) \geq f(x) + \nabla f(x)^\transpose (y - x),     
+        \end{equation*} 
+        for all $x, y \in \domain f$.
 
         Suppose $x^{(k)}$ is not a feasible point. Then there exists some index $j \in \{1, \dots, m\}$ with $f_j(x) > 0$, that is, the $j$-th constraint has been violated. The cutting plane we will define comes from the following discussion. As $f_j$ is convex and differentiable we have
         \begin{equation*}
@@ -296,7 +398,7 @@
         \end{equation*}
         for all $x$ in the problem's domain. Therefore,
         \begin{equation*}
-            f_j(\nabla f_j(x^{(k)})) + \nabla f_j(x^{(k)})^\transpose(z-x) > 0 \implies f_j(x) > 0,
+            f_j(x^{(k)}) + \nabla f_j(x^{(k)})^\transpose(z-x) > 0 \implies f_j(x) > 0,
         \end{equation*}
         or equivalenty,
         \begin{equation*}
@@ -306,9 +408,9 @@
         \begin{equation*}
             \{x \;|\; f_j(x) + \nabla f_j(x^{(k)})^\transpose(x-x^{(k)}) \leq 0\}.
         \end{equation*}
-        Observe also that substituting $x^{(k)}$ into this inequality reduces to $f_j(x^{(k)}) \leq 0$ but in actuality $f_j(x^{(k)}) > 0$, so therefore this is a deep cut with respect to $x^{(k)}$, which is what we want. To summarize, using the notation of Algorithm \ref{a:general_cp_alg} we have
+        Observe also that substituting $x^{(k)}$ into this inequality reduces to $f_j(x^{(k)}) \leq 0$ but in actuality $f_j(x^{(k)}) > 0$, so therefore this is a deep cut with respect to $x^{(k)}$, which is what we want. To summarize, using the notation of the general cutting-plane algorithm we have
         \begin{equation}
-            a \coloneqq \nabla f_j(x^{(k)}), \quad b \coloneqq \nabla f_j(x^{(k)})^\transpose x^{(k)} - f_j(x^{(k)})
+            a \coloneqq \nabla f_j(x^{(k)}), \quad b \coloneqq \nabla f_j(x^{(k)})^\transpose x^{(k)} - f_j(x^{(k)}).
         \end{equation}
 
         On the other hand, suppose $x^{(k)}$ is a feasible point. Observe that if a point $x$ satisfies $\nabla f_0(x^{(k)})^\transpose(x-x^{(k)}) > 0$, then this implies $f_0(x) \geq f_0(x^{(k)})$. That is, $x$ is not optimal. Therefore, we might define the cutting-plane as 
@@ -325,9 +427,9 @@
         \begin{equation*}
             \{x \;|\; \nabla f_0(x^{(k)})^\transpose(x-x^{(k)}) + f_0(x^{(k)}) - f_\text{best} \leq 0\}.
         \end{equation*}
-        To summarize, using the notation of Algorithm \ref{a:general_cp_alg} we have
+        To summarize, using the notation of the general cutting-plane algorithm we have
         \begin{equation}
-            a \coloneqq \nabla f_0(x^{(k)}), \quad b \coloneqq \nabla f_0(x^{(k)})^\transpose x^{(k)} - f_0(x^{(k)} + f_\text{best}
+            a \coloneqq \nabla f_0(x^{(k)}), \quad b \coloneqq \nabla f_0(x^{(k)})^\transpose x^{(k)} - f_0(x^{(k)} + f_\text{best}.
         \end{equation}
 
         \subsubsection*{Stopping criterion}
@@ -340,16 +442,16 @@
             \ind $k \coloneqq 0$. \\
             \ind \textbf{repeat} \\
             \ind\ind Compute $x^{(k+1)}$, the analytic center of $\mathcal{P}_k$. \\
-            \ind\ind Query the cutting-plane oracle at $x^{(k+1)}$. \\
-            \ind\ind \textbf{if} the oracle determines that $x^{(k+1)} \in X$, \textbf{quit}. \\
-            \ind\ind \textbf{else} update $\mathcal{P}_k$ by adding the new cutting-plane: \\
-            \ind\ind\ind $\mathcal{P}_{k+1} \coloneqq \mathcal{P}_k \cap \{z \:|\: a_{k+1}^\transpose z \leq b_{k+1} \}$. \\
+            \ind\ind \textbf{if} $x^{(k+1)} \in X$, \textbf{quit}. \\
+            \ind\ind \textbf{else}:\\
+            \ind\ind\ind Check whether or not $x^{(k+1)}$ is feasible. \\
+            \ind\ind\ind Update $\mathcal{P}_k$ by adding the corresponding cutting-plane: \\
+            \ind\ind\ind\ind $\mathcal{P}_{k+1} \coloneqq \mathcal{P}_k \cap \{z \:|\: a_{k+1}^\transpose z \leq b_{k+1} \}$. \\
             \ind\ind \textbf{if} $\mathcal{P}_{k+1} = \emptyset$, \textbf{quit}. \\
             \ind\ind $k \coloneqq k+1$.
         \end{algorithm}
 
-        \subsection{Numerical toy cases}
-
+        \subsection{Implementation details} Our implementation can be found in the file \texttt{accpm.py} in the GitHub repository. 
 
 \section{Cutting plane methods for active learning}\label{s:cp_active}
     In this section we introduce active learning in the context of a binary linear classification problem. We then specialize the general cutting plane algorithm to attain a active learning algorithm for these types of problems. Our treatment here and the algorithm we present closely follows Section D of U. Louche and L. Ralaivola's paper \cite{LR15}. We extend their work to include the AC.
@@ -379,7 +481,7 @@
         To address this, suppose we have identified that a subset $W'$ of $W$ is contained in a bounded set $\mathcal{C}$ of candidate classification vectors. Applying heuristic $(1)$ from Section \ref{ss:active} we would want to label a data point $(x, y)$ that allows us to obtain a set $\mathcal{C}'$ contained within $\mathcal{C}$ of reduced volume. Cutting plane methods are well suited for this task.
     
     \subsection{From general cutting plane algorithm to active learning algorithm}
-        As observed in Section \ref{ss:adapt} to adapt the general cutting plane algorithm (Algorithm \ref{a:general_cp_alg}) some work is required. Particularly, we must specify
+        As observed in Section \ref{ss:adapt} to adapt the general cutting plane algorithm some work is required. Particularly, in this case we must specify
         \begin{enumerate}
             \item the target set;
             \item the initial polyhedron containing the target set;
@@ -404,9 +506,9 @@
 
             \subsubsection*{Choosing a point to label }We follow the approach taken by U. Louche and L. Ralaivola's paper \cite[Section III.D]{LR15} which is summarized by their $\textsc{Query}$ function. (To be consistent with our terminology, we will call this function \textsc{Label}.)
 
-            This involves uniformly sampling $M$ points from the current iteration's candidate space. U. Louche and L. Ralaivola provide a number of references for uniform sampling methods \cite[Section III.D]{LR15}. In my implementation I chose to use rejection sampling to achieve this, which is known to be very inefficient. 
+            This involves uniformly sampling $M$ points from the current iteration's candidate space. U. Louche and L. Ralaivola provide a number of references for uniform sampling methods \cite[Section III.D]{LR15}. In our implementation we chose to use rejection sampling to achieve this, which is known to be very inefficient. 
         
-            Overall, for the purposes of this project, and partially because the U. Louche and L. Ralaivola's paper \cite[Section III.D]{LR15} commented little on this function, I took the $\textsc{Query}$ function for granted. 
+            Overall, for the purposes of this project, and partially because the U. Louche and L. Ralaivola's paper \cite[Section III.D]{LR15} commented little on this function, we took the $\textsc{Query}$ function for granted. 
 
             \subsubsection*{Constructing cutting-planes and stopping criterion} Suppose we have so far labeled points $(x_{n_1}, y_{n_1}), (x_{n_2}, y_{n_2}), \dots, (x_{n_{k}}, y_{n_{k}})$ and have computed $w^{(k+1)}$ and labeled $(x_{n_{k+1}}, y_{n_{k+1}})$. Then, we first check if $w^{(k+1)}$ is able to correctly predict the label of the point $(x_{n_{k+1}}, y_{n_{k+1}})$. If it is, then we finish the current iteration of the algorithm without returning a cutting-plane. If it is incorrect, that is, if $y_{n_{k+1}} ({w^{(k+1)}}^\transpose x_{n_{k+1}}) < 0$, then we are able to make a \emph{deep} cut with respect to $w^{(k+1)}$ through the cutting-plane
             \begin{align*}
@@ -425,8 +527,7 @@
             \ind $k \coloneqq 0$. \\
             \ind \textbf{repeat} \\
             \ind\ind Compute the query point $w^{(k+1)} \coloneqq \centerr({P}_k)$. \\
-            \ind\ind Query the cutting-plane oracle at $w^{(k+1)}$. \\
-            \ind\ind \textbf{if} the oracle determines that $w^{(k+1)} \in \mathcal{W}^\star$: \\
+            \ind\ind \textbf{if} $w^{(k+1)} \in \mathcal{W}^\star$: \\
             \ind\ind\ind\textbf{return} $w^{(k+1)}$. \\
             \ind\ind \textbf{else}: \\
             \ind\ind\ind Label a data point $(x_{n_{k+1}}, y_{n_{k+1}}) \coloneqq \textsc{Label}(\mathcal{C}_k, \mathcal{D}_k)$. \\
@@ -443,25 +544,51 @@
             \ind\ind Obtain the label $y$ of $x$. \\
             \ind \textbf{return} $(x, y) $     
             \end{algorithm}
+        \subsection{Implementation details} Our implementation can be found in the GitHub repository in the file \texttt{active.py}.
 
-\section{Active learning experiments}
-    In this section we present two experiments that compare the performance of the active learning algorithm with query point chosen as (i) the CC; (ii) the AC; and (iii) a randomly chosen point of the current iteration's candidate space. 
+\section{Experiments}
+    In this section we present one experiment using the ACCPM to train logistic regression and two experiments that compare the performance of the active learning algorithm with query point chosen as (i) the CC; (ii) the AC; and (iii) a randomly chosen point of the current iteration's candidate space. 
 
     \subsection{Computational set-up} 
-        I ran the experiments on my mid-2012, 13-inch MacBook Air with 1.8 GHz Intel Core i5 processor, 8 GB 1600 MHz DDR3 memory and Intel HD Graphics 4000 1536 MB graphics. The code used in these experiments can be found in this project's GitHub repository.
-        %%%% TO-DO: add references to the corresponding notebooks %%%% 
-
+        We ran the experiments on a mid-2012, 13-inch MacBook Air with 1.8 GHz Intel Core i5 processor, 8 GB 1600 MHz DDR3 memory and Intel HD Graphics 4000 1536 MB graphics.
     \subsection{The data sets} 
-        We work with two data sets and produce an experiment for each data set. In both cases we assess the ability of our implementation of Algorithm \ref{a:active} to find a linear predictor for the data set. 
-        %%%% TO-DO: add footnotes showing where the data came from %%%%
-        Specifically, we work with the Iris flower data set and the diabetes data set. The Iris flower data set consists of 150 data points split evenly between three classes, corresponding to three different species of Iris flower. Each data point has four features and a class label. It is well known that the class corresponding to the species \emph{Iris setosa} can be linearly separated from the other two classes. Therefore, we consider the problem of linearly separating the class \emph{Iris setosa} from the other two classes. In addition to this, we work only with the first two of four features. The diabetes data set consists of 768 data points split between two classes, corresponding to testing positive (268) for  and \emph{not} testing positive (500) for diabetes. Each data point has eight features and a class label. This data set is not linearly separable. For both the Iris flower data set and diabetes data we add a bias variable fixed at one to each input vector therefore giving us two plus one features for each data point and eight plus one features for each data point in each data set, respectively.  
-
-        Our experimental procedure for both data sets is almost the same. Therefore, we explain it using the general set-up introduced in Section \ref{ss:classification} where in total we have $N$ data points. (This is useful also for the reader that might want to replicate these experiments.) 
+        We work with two data sets and produce an experiment for each data set. In both cases we assess the ability of our implementation of Algorithm \ref{a:active} to find an accurate linear predictor for the data set. 
+        
+        Specifically, we work with the Iris flower data set \footnote{Found at \url{http://archive.ics.uci.edu/ml/datasets/Iris}.} and the diabetes data set \footnote{See \url{https://archive.ics.uci.edu/ml/datasets/Pima+Indians+Diabetes} for details. We use a normalized version found at \url{http://mldata.org/repository/data/download/csv/diabetes_scale/}}. The Iris flower data set consists of 150 data points split evenly between three classes, corresponding to three different species of Iris flower. Each data point has four features and a class label. It is well known that the class corresponding to the species \emph{Iris setosa} can be linearly separated from the other two classes. Therefore, we consider the problem of linearly separating the class \emph{Iris setosa} from the other two classes. In addition to this, we work only with the first two of four features. The diabetes data set consists of 768 data points split between two classes, corresponding to testing positive (268) for  and \emph{not} testing positive (500) for diabetes. Each data point has eight features and a class label. This data set is not linearly separable. For both the Iris flower data set and diabetes data we add a bias variable fixed at one to each input vector therefore giving us two plus one features for each data point and eight plus one features for each data point in each data set, respectively.  
 
         In our experiment we random uniformly evenly split the data set into a training set $\mathcal{D}_\text{training}$ and testing set $\mathcal{D}_\text{testing}$. We take the training set $\mathcal{D}_\text{training}$ as the pool of unlabeled data.
 
-    \subsection{The experiments} 
+    \subsection{ACCPM experiment}
+        We do binary classification using logistic regression on the diabetes data set. Our model has nine features $x \coloneqq x^{[0]}, \dots, x^{[8]}$ where $x^{[0]}$ is the dummy input variable fixed at 1. (The fixed dummy input variable could easily be $x^{[5]}$ or $x^{[8]}$, it's index is unimportant.) We set the basis functions to the simplest choice $\phi_0(x) = x^{[0]}, \dots, \phi_8(x) = x^{[8]}$. Our model then has the form
+        \begin{align*}
+          y(x) = \sigma(w^\transpose x.)
+        \end{align*}
+        We train our model by finding the parameter vector $w$ which minimizes the (data-dependent) cross-entropy error function \cite[Section 4.3.2]{Bis06}
+        \begin{align*}
+          E_D(w) =  - \sum_{n=1}^{N} \{y_n \ln \sigma(w^\transpose x_n) + (1 - y_n)\ln(1 - \sigma(w^\transpose x_n))\}.
+        \end{align*}
+
+        The gradient of this function is given by
+        \begin{align*}
+          \nabla E(w) = \sum_{i=1}^{N} (\sigma(w^\transpose x_n) - y_n)x_n.
+        \end{align*}
+
+        We take the initial polyhedron $\mathcal{P}_0$ to be the $9$-dimensional hypercube centered at the origin with sides of length 20. We run the algorithm once until the stopping criterion is satisfied. Each iteration we remember the query point, which in the case of the ACCPM corresponds to a parameter vector for logistic regression. Therefore, comparing against $\mathcal{D}_\text{testing}$ we can compute an associated accuracy for each iteration. This allows us to measure the performance of the algorithm.
+        \FloatBarrier
+        \begin{figure}[h]
+            \includegraphics[width=\linewidth]{figures/accpm_experiment.png}
+        \end{figure}  
+        \FloatBarrier
+
+    \subsection{Discussion of ACCPM experiment}
+        The ACCPM successfully converged after 140 iterations. It is re-assuring to know that the ACCPM performed as well as using the model trained using $\texttt{scipy.optimize}$, in both cases achieving an upper-bound of 75\% accuracy. Indeed, we see that convergence in accuracy was rapid, which matches our intuition that as the polyhedron becomes smaller, the points within it should be more accurate parameter vectors. 
+
+        It is interesting to observe that accuracy reached its upperbound well before the stopping criterion was satisfied.
+
+    \subsection{Active learning experiments} 
         %%%% TO-DO: check the indices in this section are all correct, I think some ones might have to be 0s or vice-versa %%%%
+        Our experimental procedure for both data sets is almost the same. Therefore, we explain it using the general set-up introduced in Section \ref{ss:classification} where in total we have $N$ data points. (This is useful also for the reader that might want to replicate these experiments.) 
+
         The aim of our experimental procedure is to approximate the average change in accuracy from labeling an additional point. To see how we will achive this, we consider a single run of Algorithm \ref{a:active} on the training set $\mathcal{D}_\text{training}$ with the stopping criterion being to label no more than $p$ points. Now, suppose in this single run we label the points such as to produce the sequence $(x_{n_1}, y_{n_1}), (x_{n_1}, y_{n_1}), \dots, (x_{n_{p}}, y_{n_{p}})$. Then at each iteration $i = 0, \dots, p - 1$ we compute a classification vector $w^{(i + 1)}$ which is associated with the sequence of labeled points $(x_{n_1}, y_{n_1}), (x_{n_2}, y_{n_2}), \dots, (x_{n_{i}}, y_{n_{i}})$. For each $i = 1, \dots, p$ we can then test the predictions of $f_{w^{(i)}}$ against $\mathcal{D}_\text{testing}$ to compute an accuracy $r^{(1)}_i \in [0, 1]$. (The reason for the upper-index will be made clear shortly.) Now, as choosing the point to be labeled involves a random process, each time we run the algorithm we may produce a different sequence of weights $w_1, \dots, w_p$. Therefore, we run the algorithm $q$ times and the run we are up to is indicated by the upper-index. Doing this we produce a $q \times p$ matrix of accuracies
         \begin{equation*}
             R \coloneqq \begin{bmatrix}
@@ -487,31 +614,31 @@
 
         For the experiment using the diabetes data set we also computed (i) the average accuracy of logistic regression trained on half of the points from $\mathcal{D}_\text{training}$, computed by averaging over 10 runs of training logistic regression on a randomly selecting subset of $\mathcal{D}_\text{training}$ that is half the size of $\mathcal{D}_\text{training}$; and (ii) the accuracy from training logistic regression on the entire training data set $\mathcal{D}_\text{training}$
 
-        I used my own implementation of logistic regression where the training is completed using the $\texttt{scipy.optimize}$ package. It is worth noting that when computing the classification vector for logistic regression the minimization function $\texttt{scipy.optimize.minimize(method='BFGS')}$ often failed to converge, although it would still produce a classification vector. I went ahead and used these classification vectors.
-        %%%% TO-DO: Add figures back in once compiled %%%%
+        We used our own implementation of logistic regression where the training is completed using the $\texttt{scipy.optimize.minimize(method='BFGS')}$ function. It is worth noting that when computing the classification vector for logistic regression the minimization function  often failed to converge, although it would still produce a classification vector. We went ahead and used these classification vectors.
 
-        % \newpage
-        % \begin{figure}[h]
-        %     \includegraphics[width=\linewidth]{figures/iris_experiment.png}
-        %     \includegraphics[width=\linewidth]{figures/diabetes_experiment.png}
-        % \end{figure}
-        % \newpage
+        \subsection{Implementation details} The notebooks corresponding to these experiments can be found in the GitHub repository in \texttt{experiment\_active\_iris.ipynb} and \texttt{experiment\_active\_diabetes.ipynb}. 
 
-    \subsection{Discussion}
-        In both the experiment on the Iris flower data set and the diabetes data set we see that our implementation of logistic regression (LR) trained on a random sample outperformed the active learning algorithm with query point as the AC (AC), CC (CC) and random center (Random). In Section \ref{s:conc} I will give suggestions on how the performance of the active learning algorithm could be improved.
+        \newpage
+        \begin{figure}[h]
+            \includegraphics[width=\linewidth]{figures/iris_experiment.png}
+            \includegraphics[width=\linewidth]{figures/diabetes_experiment.png}
+        \end{figure}
+        \newpage
+
+    \subsection{Discussion of active learning experiments}
+        In both the experiment on the Iris flower data set and the diabetes data set we see that our implementation of logistic regression (LR) trained on a random sample outperformed the active learning algorithm with query point as the AC (AC), CC (CC) and random center (Random). In Section \ref{s:conc} we will give suggestions on how the performance of the active learning algorithm could be improved.
 
         In the experiment with the Iris flower data set we see that overall CC outperformed AC and Random and performed on par with LR after approximately $55$ iterations. AC performed similarly to CC, and outperformed Random with the exception that after aproximately $45$ iterations the average accuracy of AC dropped signficantly. 
 
-        Although I have not investigated this, it is possible that this can be attributed to a numerical computing error occuring once the candidate space $\mathcal{C}_k$ gets very small. This seems a reasonable suggestion given that the implementation of the AC computation is my own and numerical computing did arise during its development. Moreover, the smoother behavior of CC could be in part due to relying on the \texttt{scipy.optimize.linprog} function to compute the CC. 
+        Although we have not investigated this, it is possible that this can be attributed to a numerical computing error occurring once the candidate space $\mathcal{C}_k$ becomes very small. This seems a reasonable cause given that the implementation of the AC computation was our own and numerical computing issues did arise during its development. Consistent with this, the smoother behavior of CC could be in part due to relying on the robust \texttt{scipy.optimize.linprog} function to compute the CC. 
 
-        In the experiment with the diabetes data set we first observe that on average logistic regression trained on half the training data set (LR-- half) and the whole training data set (LR--all) performed the best but still with average accuracy less than 80\%. Indeed, it is interested to observe that LR--half ourperformed LR--all, which could possibly be attributed to the data set not being linearly seperable. Like the experiment on the Iris flower data set we see that AC and CC outperformed random and CC outperformed AC.
+        In the experiment with the diabetes data set we first observe that on average logistic regression trained on half the training data set (LR-- half) and the whole training data set (LR--all) performed the best but still with average accuracy less than 80\%. Indeed, it is interested to observe that LR--half outperformed LR--all, which could possibly be attributed to the data set not being linearly separable. Like the experiment on the Iris flower data set we see that AC and CC outperformed random and CC outperformed AC.
 
-        LR signficantly outperformed AC and CC on the Iris flower data set and while it also outperformed AC and CC on the diabetes data set this was not as significantly and after roughly $9$ iterations, LR, AC and CC performed approximately equally. 
+        LR significantly outperformed AC and CC on the Iris flower data set and while it also outperformed AC and CC on the diabetes data set this was not as significantly and after roughly $9$ iterations, LR, AC and CC performed approximately equally. 
 
-        In regards to the experiment on the diabetes data set, it is worth noting that I only included data up to labelling at most $15$ points as the computation time grew exponentially with the maximum number of points to be labelled. Having said this, there is partial date for labelling at most $30$ points, which took approxiately $36$ hours to compute. This running time growth be attributed to using rejection sampling to sample the points in the \textsc{Query} function. Specifically, random vectors were drawn from a nine-dimensional hypercube centered at the origin and were rejected if they did not lie in the current candidate space $\mathcal{C}_k$. We see this in how computing each of AC, CC and Random in the case of labelling at most $15$ points involved generating at least $1, 000, 000$ random vectors while the case of labeling at most $30$ points involved generating at least $1, 000, 000, 000$ random vectors.
+        In regards to the experiment on the diabetes data set, it is worth noting that we only included data up to labeling at most $15$ points as the computation time grew exponentially with the maximum number of points to be labeled. Having said this, there is partial data for labeling at most $30$ points, which took approximately $36$ hours to compute. For the interested reader, this can be found in the GitHub repository. This running time growth can be attributed to using rejection sampling to sample the points in the \textsc{Query} function. Specifically, random vectors were drawn from a nine-dimensional unit hypercube centered at the origin and were rejected if they did not lie in the current candidate space $\mathcal{C}_k$. We remark that it is known that as the dimension increases, rejection sampling tends to perform exponentially worse. We see this in how computing each of AC, CC and Random in the case of labeling at most $15$ points involved generating at least $1, 000, 000$ random vectors while the case of labeling at most $30$ points involved generating at least $1, 000, 000, 000$ random vectors.
 
 \section{Conclusion}\label{s:conc}
-    
     In this report we showed how a general cutting-plane algorithm can be specialized for the purposes of convex optimization and an active learning problem. This specialization involves specifying (i) the target set; (ii) how query points are chosen; (iii) how cutting-planes are constructed; and (iv) stopping criterion. And as we saw in the case of the active learning problem, these choices effect the performance of the algorithm. Now, the experiments on both the Iris flower data set and diabetes data set LR outperformed both the CC and AC based cutting-plane algorithms. This raises the general question of what options there are to improve the performance of a cutting-plane algorithm? (Specifically, the question I am interested in is what can be done to improve the performance of the active learning algorithm.) In their 2011 notes S. Boyd and L. Vandenberghe \cite[Section 5]{BV11} provide a number of suggestions for extending the general cutting-plane algorithm:
     \begin{enumerate}
         \item each iteration instead of returning a single cutting-plane, we can return \emph{ multiple} cutting-planes;
@@ -519,80 +646,11 @@
         \item we can limit the number of inequality constraints; and
         \item we can allow \emph{non-linear} cuts.
     \end{enumerate}
-    In my implementation I did not include any of these extensions. Of particular promise is the suggestion to limit the number of inequality constraints as it is suggested that this can lead to improved accuracy iteration-by-iteration \cite[Section 5]{BV11}. Therefore, we see that the general cutting-plane algorithm is a highly adaptable algorithm.
+    In our implementation we did not include any of these extensions. Of particular promise is the suggestion to limit the number of inequality constraints as it is suggested that this can lead to improved accuracy iteration-by-iteration \cite[Section 5]{BV11}. Therefore, we see that the general cutting-plane algorithm is a highly adaptable algorithm.
 
-\appendix
-\section{Barrier method}
- \subsection{Computing the analytic center, phase I optimization and the Newton method}
-        The approach we take in computing the analytic center in this section is as follows:
-        \begin{enumerate}
-            \item Use a phase I optimization method to find a point in $\domain \phi$.
-            \item Use the standard Newton method to compute the analytic center.
-        \end{enumerate}
-
-        We first discuss the the phase I optimization problem that we must solve, that is, the problem
-        \begin{equation}\label{e:phase_i_accpm}
-            \begin{aligned}
-            & {\text{minimize}} && s  \\
-            & \text{subject to} && f_i(x) \coloneqq a_i^\transpose x - b_i \leq s, i = 1, \dots, m+k \\
-            \end{aligned}
-        \end{equation}
-
-        Following \eqref{e:phase_i_ineq_constrd_cvx_opt_problem_approx} we can therefore approximate \eqref{e:phase_i_accpm} by the problem
-        \begin{equation}\label{e:phase_i_accpm_approx}
-            \begin{aligned}
-            & {\text{minimize}} && 
-            f_0(x, s)\coloneqq ts + \sum_{i=1}^{m+k}{-\log(s+b_i - a_i^\transpose x)}.
-            \end{aligned}
-        \end{equation}
-        To solve this using the barrier method, we will need to use Newton's method. Therefore we will need the gradient of the objective $f_0(x, s)$ which is
-        \begin{align*}
-            &\nabla f_0(x, s)_i = \sum_{i=1}^{m+k} \frac{1}{s+b_i-a_i^\transpose x}a_i \text{, $i = 1, \dots, n$} \\ 
-            &\nabla f_0(x, s)_{n+1} = t - \sum_{i=1}^{m+k} \frac{1}{s+b_i-a_i^\transpose x}. 
-        \end{align*}
-
-        At this point we recall the barrier method:
-        \begin{algorithm}[Barrier method applied to phase I optimization problem]
-        \label{a:general_conceptual_cp_alg}\mbox{}\\
-            \ind \textbf{given} strictly feasible $z = (x, s) \in \mathbb{R}^n \times \mathbb{R}$, $t \coloneqq t^{(0)} > 0$, $\mu > 1$ \\
-            \ind $k \coloneqq 0$. \\
-            \ind \textbf{repeat} \\
-            \ind\ind 1. \emph{Centering step.} \\
-            \ind\ind\ind Compute $z^\star(t) = (x^\star(t), s^\star(t))$ by solving \eqref{e:ineq_constrd_cvx_opt_problem_approx} via Newton's method starting at $z$. \\
-            \ind\ind 2. \emph{Update.} $z \coloneqq z^\star(t)$ \\
-            \ind\ind 3. \emph{Stopping criterion.} \textbf{quit} if $s < 0$. \\
-            \ind\ind 4. \emph{Increase $t$.} $t \coloneqq \mu t$
-        \end{algorithm}
-
-        Now, from our prior discussion we know that we need pick initial $x^{(0)}$ in the domain of all $f_i$ and then any initial $s > \max_{i=1, \dots, m}\{a_i^\transpose x - b_i\}$.
-
-        We discuss the Newton method in the context of computing the analytic center. We give the Newton method applied to $\phi$
-        \begin{algorithm}[Newton's method]
-        \label{a:general_conceptual_cp_alg}\mbox{}\\
-            \ind \textbf{given} a starting point $x \in \domain \phi$, tolerance $\epsilon > 0.$ \\
-            \ind \textbf{repeat} \\
-            \ind\ind 1. \emph{Compute the Newton step and decrement.} \\
-            \ind\ind\ind $\Delta x_{nt} \coloneqq -\nabla^2 \phi(x)^{-1} \nabla \phi(x)$ \\
-            \ind\ind\ind $\lambda^2 \coloneqq \nabla \phi(x)^\transpose \nabla^2 \phi(x)^{-1} \nabla \phi(x).$ \\
-            \ind\ind 2. \emph{Stopping criterion.} \textbf{quit} if $\lambda^2/2 \leq \epsilon.$\\
-            \ind\ind 3. \emph{Line search.} Choose step size $t$ by backtracking line search. \\
-            \ind\ind 4. \emph{Update.} $x \coloneqq x + t\Delta x_{nt}.$ \\
-        \end{algorithm} 
-        For the gradient and Hessian of $\phi$ we have
-        \begin{align}
-            &\nabla \phi(x) = \sum_{i=1}^{m+k} \frac{1}{b_i - a_i^\transpose x}a_i = A^\transpose d \\
-            &\nabla^2 \phi(x) = \sum_{i=1}^{m+k} \frac{1}{(b_i - a_i^\transpose x)^2}a_i a_i^\transpose = A^\transpose \diag(d)^2 A
-        \end{align}
-        where for $d \in \mathbb{R}^{m+k}$ we have
-        \begin{align*}
-            d_i = \frac{1}{b_i - a_i^\transpose x}.
-        \end{align*}
-        Observe that since $x$ is strictly feasible, $d \succ 0$, which implies $\det(d) \neq 0$ 
 \renewcommand\refname{Bibliography}
 \begin{thebibliography}{99}
-    % \bibitem[Bis06]{bishop_06} C. Bishop. \emph{Pattern Recognition and Machine Learning}. Springer, 2006.
-    % \bibitem[Boy08a]{Boy08} S. Boyd. \emph{Lecture 6 $|$ Convex Optimization II (Stanford)}. 2008. \url{https://youtu.be/N3vJOq5ZmKc}.
-    % \bibitem[Boy08b]{Boy08b} S. Boyd. \emph{Lecture 7 $|$ Convex Optimization II (Stanford)}. 2008. \url{https://youtu.be/t0MmgkV4YrA}.
+    \bibitem[Bis06]{Bis06} C. Bishop. \emph{Pattern Recognition and Machine Learning}. Springer, 2006.
     \bibitem[BV04]{BV04} S. Boyd and L. Vandenberghe. \emph{Convex Optimization}. Cambridge University Press, 2004.
     \bibitem[BVS08]{BVS08} S. Boyd, L. Vandenberghe and J. Skaf. \emph{Analytic Center Cutting-Plane Method}. 2008. \url{https://see.stanford.edu/materials/lsocoee364b/06-accpm_notes.pdf}.
     \bibitem[BV11]{BV11} S. Boyd and L. Vandenberghe. \emph{Localization and Cutting-Plane Methods}. 2011. \url{http://web.stanford.edu/class/ee364b/lectures/localization_methods_notes.pdf}.

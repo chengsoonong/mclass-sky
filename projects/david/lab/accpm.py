@@ -288,9 +288,10 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
     summary : int, 0, 1, optional
         If 0 will not print summary of results. If 2 will print summary
         of results.
-    testing : int, 0, 1, 2, optional
+    testing : int, 0, 1, 2, 3 optional
         If 0 will not print testing results. If 1 brief testing results
         will be printed. If 2 detailed testing results will be printed.
+        If 3 a list of the query points will be returned.
 
     Returns
     ----------------
@@ -313,6 +314,7 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
 
     """
 
+    queries = []
     (A, b) = normalize(A, b)
     k = 0
     fbest = np.inf
@@ -330,6 +332,7 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
         ac = analytic_center(A, b, x0=x0, y0=y0,
                              alpha=alpha, beta=beta, start=start,
                              testing=testing)
+        queries.append(ac)
         (x0, y0) = (ac, None)
 
         if np.linalg.norm(grad_func(ac, *args)) <= tol:
@@ -341,6 +344,8 @@ def accpm(A, b, func, grad_func, constr=None, grad_constr=None, args=(),
                 print('    Solution point:', ac)
                 print('    Objective value:', value_attained)
                 print('    Iterations:', iterations)
+            if testing == 3:
+                return (outcome, ac, queries, value_attained, iterations)
             return (outcome, ac, value_attained, iterations)
 
         data = oracle(ac, func, grad_func, fbest, args=args,

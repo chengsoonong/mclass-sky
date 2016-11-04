@@ -1,3 +1,5 @@
+# For counting the number of rejections made in rejection sampling
+
 reject_counter = 0
 milestone = 10
 

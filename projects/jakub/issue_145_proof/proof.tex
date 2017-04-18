@@ -1,0 +1,35 @@
+\documentclass[11pt, oneside]{article}
+\usepackage{mathtools}
+\usepackage{bm}
+
+
+\begin{document}
+We show that create new features that are pairwise differences between existing features does not affect a linear model since the same predictor can be found using the original features.
+
+Consider a dataset with $n$ features. Let $\mathbf{x}$ be the $n$-dimensional feature vector.
+
+Let $\mathbf{D}$ be an $n \times n$ matrix such that \[
+    \mathbf{D}_{ij} \coloneqq \mathbf{x}_i - \mathbf{x}_j \text{.}
+\]
+
+Let $\bm{\alpha}$ be an $n$-dimensional weights vector for $\mathbf{x}$ and let $\mathcal{B}$ be an $n \times n$ weights matrix for $\mathbf{D}$. Let our predictor be\[
+    y = \bm{\alpha} \cdot \mathbf{x} + \langle \mathcal{B}, \mathbf{D} \rangle_F \text{,}\label{eq:pred1}\tag{$*$}
+\] where $\langle \mathcal{B}, \mathbf{D} \rangle_F$ is a Frobenius inner product.
+
+Let $\hat{\bm{\alpha}}$ be an $n$-dimensional vector such that \[
+    \hat{\bm{\alpha}}_i \coloneqq \bm{\alpha}_i + \sum_{j=1}^n \mathcal{B}_{ij} - \sum_{j=1}^n \mathcal{B}_{ji} \text{.}
+\] We show that a predictor defined as \[
+    y = \hat{\bm{\alpha}} \cdot \mathbf{x}
+\] is equivalent to \eqref{eq:pred1}.
+
+We have that\begin{align*}
+    \hat{\bm{\alpha}} \cdot \mathbf{x} &= \sum_{i=1}^n \mathbf{x}_i\left( \bm{\alpha}_i + \sum_{j=1}^n \mathcal{B}_{ij} - \sum_{j=1}^n \mathcal{B}_{ji} \right) \\
+    &= \sum_{i=1}^n \mathbf{x}_i\bm{\alpha}_i +  \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ij} - \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ji} \\
+    &= \sum_{i=1}^n \mathbf{x}_i\bm{\alpha}_i +  \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ij} - \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_j \mathcal{B}_{ij} \\
+    &= \bm{\alpha}\cdot\mathbf{x} +  \sum_{i=1}^n \sum_{j=1}^n \mathcal{B}_{ij} \left(\mathbf{x}_i - \mathbf{x}_j \right) \\
+    &= \bm{\alpha}\cdot\mathbf{x} + \langle \mathcal{B}, \mathbf{D} \rangle_F
+\end{align*} as desired.
+
+Note that this does not apply to non-linear models where a nonlinear transformation is applied to $\mathbf{D}$.
+
+\end{document}

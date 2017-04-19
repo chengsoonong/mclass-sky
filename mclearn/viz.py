@@ -314,7 +314,7 @@ def plot_hex_map(ra, dec, origin=180, title=None, projection='mollweide', gridsi
 
     # plot data on map
     if not ax:
-        ax = plt.gca(projection=projection, axisbg=axisbg)
+        ax = plt.gca(projection=projection, facecolor=axisbg)
     hex_quasar = ax.hexbin(np.radians(ra), np.radians(dec), gridsize=gridsize, cmap=cmap,
                            mincnt=mincnt, zorder=-1, vmin=vmin, vmax=vmax, C=C, norm=norm,
                            reduce_C_function=reduce_C_function)
@@ -675,7 +675,7 @@ def plot_sum_selections(sample_sizes, selections, labels, colors, linestyles,
     ax = sns.barplot(data=df, palette=colors, linewidth=0)
     #last = sample_sizes[-1] - sample_sizes[0]
     #last = pd.DataFrame(cumulatives, index=labels)[last]
-    
+
 
     #plot(kind='bar', colormap=colors)
     ax.set_xticklabels(ordered_labels, rotation=45, rotation_mode="anchor", ha="right")
@@ -718,7 +718,7 @@ def plot_bandit_parameters(sample_sizes, parameters, labels, colors, linestyles,
 def plot_cumulative_rewards(sample_sizes, parameters, labels, colors, linestyles,
     linewidth=1.5, xlabel='Training Size', ylabel='Cumulative Reward', loc='upper left',
     ascending=False, ax=None):
-    """ 
+    """
     """
 
     n_samples = len(sample_sizes)
@@ -755,5 +755,5 @@ def order_learning_curves(data, labels, ascending=False):
     df = np.array(df).transpose()
     df = pd.DataFrame(df, columns=labels)
     df = df.reindex_axis(df.iloc[-1].order(ascending=ascending).index, axis=1)
-    
+
     return df

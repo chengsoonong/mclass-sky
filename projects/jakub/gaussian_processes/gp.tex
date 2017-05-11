@@ -1,0 +1,81 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{cleveref}
+\usepackage{geometry}
+\usepackage{mathtools}
+\geometry{a4paper}
+
+% Define common symbols
+\newcommand\bE{\mathbb{E}}
+\newcommand\bR{\mathbb{R}}
+\newcommand\cG{\mathcal{G}}
+\newcommand\cN{\mathcal{N}}
+\newcommand\cP{\mathcal{P}}
+\newcommand\cov{\mathrm{cov}}
+\newcommand\var{\mathrm{var}}
+
+
+\title{A Crash Course in Gaussian Processes}
+\author{J. L. Nabaglo}
+
+\begin{document}
+\maketitle
+
+Consider the task of reconstructing a function $f: \bR^d \to y$ from finitely many samples. As a complication, each target sample contains is noisy, with the noise having a variance $\sigma^2$.
+
+More formally, we are given a finite set of tuples\[
+    \{ (\vec{x_1}, y_1), \dots, (\vec{x_n}, y_n) \}\text,
+\] where \[
+    y_i \sim \cN\left(f(\vec{x_i}), \sigma^2\right)\text.
+\] We wish to be able to predict $f(\vec{x})$, given an arbitrary $\vec{x}$.
+
+A Gaussian process is a distribution over functions. Formally, a Gaussian process is defined as a `collection of random variables, any finite number of which have a joint Gaussian distribution.'\footnote{C. E. Rasmussen \& C. K. I. Williams, Gaussian Processes for Machine Learning, the MIT Press, 2006, ISBN 026218253X.}
+
+Defining \begin{align*}
+    m(\vec{x}) &\coloneqq \bE[f(\vec{x})] \text, \\
+    k(\vec{x}, \vec{x}') &\coloneqq \bE[(f(\vec{x}) - m(\vec{x}))(f(\vec{x'}) - m(\vec{x'}))],
+\end{align*} we write \[
+    f(\vec{x}) \sim \cG\cP(m(\vec{x}), k(\vec{x}, \vec{x'}))\text.
+\]
+
+We write \begin{align*}
+    \vec y &\coloneqq (y_1, \dots, y_n)^\intercal \text, \\
+    X &\coloneqq (\vec{x_1}, \dots, \vec{x_n})^\intercal \text, \\
+    K(X, X) &\coloneqq \begin{bmatrix}
+        k(\vec{x_1}, \vec{x_1}) & \cdots & k(\vec{x_1}, \vec{x_n}) \\
+        \vdots & \ddots & \vdots \\
+        k(\vec{x_n}, \vec{x_1}) & \cdots & k(\vec{x_n}, \vec{x_n})
+    \end{bmatrix}\text.
+\end{align*}
+
+Then $\cov(\vec{y}) = K(X, X) + \sigma_n^2I$.
+
+Let $\vec{f_*}$ be the test predictions and $X_*$ be the test inputs. Under the prior, we have that the joint distribution of the observed targets and of the function values at the test locations is \[
+    \begin{bmatrix}
+        \vec{y} \\ \vec{f_*}
+    \end{bmatrix} \sim \cN\left(\vec0, \begin{bmatrix}
+        K(X, X) + \sigma_n^2I & K(X, X_*) \\
+        K(X_*, X) & K(X_*, X_*)
+    \end{bmatrix}\right)\text.
+\]
+
+It can then be derived that \[
+    \vec{f_*} \mid X, \vec{y}, X_* \sim \cN\left(\overline{\vec{f_*}}, \cov(\vec{f_*})\right)\text,
+\] where \[
+    \overline{\vec{f_*}} = K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}\vec{y}\text,
+\] and \[
+    \cov(\vec{f_*}) = K(X_*, X_*) - K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}K(X, X_*)\text.
+\]
+
+The value for $\vec{f_*}$ that has the highest probability is the mean of the Gaussian from which it is sampled. Hence, we can predict that \begin{equation}
+    \label{eq:pred}
+    \vec{f_*} \approx K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}\vec{y}\text,
+\end{equation} with the variance for each element of the vector being\[
+    \var(\vec{f_*}_i) = \left( K(X_*, X_*) - K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}K(X, X_*) \right)_{ii}\text.
+\]
+
+One can observe from \cref{eq:pred} that the prediction is a linear combination of the observations $\vec{y}$. This is in contrast to linear regression, where the prediction is a linear combination of the inputs.
+\end{document}

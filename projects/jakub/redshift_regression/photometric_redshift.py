@@ -6,6 +6,7 @@ import numpy as np
 import sklearn.dummy
 import sklearn.gaussian_process
 import sklearn.linear_model
+import sklearn.kernel_approximation
 
 
 LABEL_COL = 4
@@ -16,15 +17,34 @@ INPUT_ROW_VALID = lambda row: row[2] == "Galaxy"
 DEFAULT_TRAINING_SAMPLES_NUM = 1000
 DEFAULT_TESTING_SAMPLES_NUM = 1000
 
+
 def load_gp_regressor():
-    kernel = (sklearn.gaussian_process.kernels.ConstantKernel()
-              + sklearn.gaussian_process.kernels.Matern(length_scale=2, nu=3/2)
-              + sklearn.gaussian_process.kernels.WhiteKernel(noise_level=1))
+    kernel = sklearn.gaussian_process.kernels.RationalQuadratic()
     return sklearn.gaussian_process.GaussianProcessRegressor(kernel=kernel)
+
+
+def load_sgd_regressor():
+    return sklearn.linear_model.SGDRegressor(
+            # alpha=1e-2,
+            # n_iter=100
+        )
 
 PREDICTOR_LOADERS = {'const': sklearn.dummy.DummyRegressor,
                      'GP': load_gp_regressor,
-                     'SGD': sklearn.linear_model.SGDRegressor}
+                     'SGD': load_sgd_regressor}
+
+def preprocess_sgd(x):
+    rbf_feature = sklearn.kernel_approximation.RBFSampler(
+        gamma=1,
+        random_state=1)
+    x = rbf_feature.fit_transform(x)
+    return x
+
+
+NOOP = lambda x: x
+PREPROCESSING = {'const': NOOP,
+                 'GP': NOOP,
+                 'SGD': preprocess_sgd}
 
 ADMIT_SIGMA = { 'GP' }
 
@@ -112,6 +132,7 @@ def main():
     args = parser.parse_args()
 
     predictor = PREDICTOR_LOADERS[args.predictor]()
+    preprocessor = PREPROCESSING[args.predictor]
 
     # Load data.
     with open(args.path) as f:
@@ -123,10 +144,12 @@ def main():
 
     # Fit.
     train_X, train_y = training_samples
+    train_X = preprocessor(train_X)
     predictor.fit(train_X, train_y)
 
     # Predict and get score.
     test_X, test_y = testing_samples
+    test_X = preprocessor(test_X)
     score = predictor.score(test_X, test_y)
     print('R^2 score: {}'.format(score))
 

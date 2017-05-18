@@ -31,7 +31,8 @@ def load_sgd_regressor():
 
 PREDICTOR_LOADERS = {'const': sklearn.dummy.DummyRegressor,
                      'GP': load_gp_regressor,
-                     'SGD': load_sgd_regressor}
+                     'SGD': load_sgd_regressor,
+                     'linearSGD': load_sgd_regressor}
 
 def preprocess_sgd(x):
     rbf_feature = sklearn.kernel_approximation.RBFSampler(
@@ -44,7 +45,8 @@ def preprocess_sgd(x):
 NOOP = lambda x: x
 PREPROCESSING = {'const': NOOP,
                  'GP': NOOP,
-                 'SGD': preprocess_sgd}
+                 'SGD': preprocess_sgd,
+                 'linearSGD': NOOP}
 
 ADMIT_SIGMA = { 'GP' }
 
@@ -129,6 +131,8 @@ def main():
                         help='plot result of the regression')
     parser.add_argument('-t', '--test', action='store_true',
                         help='perform tests of R^2 values')
+    parser.add_argument('-d', '--diffs', action='store_true',
+                        help='investigate differences')
     args = parser.parse_args()
 
     predictor = PREDICTOR_LOADERS[args.predictor]()
@@ -142,13 +146,32 @@ def main():
         training_samples = take_samples(reader, args.train_n)
         testing_samples = take_samples(reader, args.test_n)
 
-    # Fit.
     train_X, train_y = training_samples
+    test_X, test_y = testing_samples
+
+    # Add differences if wanted.
+    if args.diffs:
+        diffs_train_X = np.empty((train_X.shape[0], train_X.shape[1] - 1))
+
+        for i in range(train_X.shape[1] - 1):
+            print(train_X[:,i])
+            diffs_train_X[:,i] = train_X[:,i] - train_X[:,i+1]
+
+        train_X = np.concatenate((train_X, diffs_train_X), axis=1)
+
+        diffs_text_X = np.empty((test_X.shape[0], test_X.shape[1] - 1))
+
+        for i in range(test_X.shape[1] - 1):
+            print(test_X[:,i])
+            diffs_text_X[:,i] = test_X[:,i] - test_X[:,i+1]
+
+        test_X = np.concatenate((test_X, diffs_text_X), axis=1)
+
+    # Fit.
     train_X = preprocessor(train_X)
     predictor.fit(train_X, train_y)
 
     # Predict and get score.
-    test_X, test_y = testing_samples
     test_X = preprocessor(test_X)
     score = predictor.score(test_X, test_y)
     print('R^2 score: {}'.format(score))

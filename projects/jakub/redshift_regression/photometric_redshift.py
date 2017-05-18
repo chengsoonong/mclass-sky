@@ -154,7 +154,7 @@ def main():
         diffs_train_X = np.empty((train_X.shape[0], train_X.shape[1] - 1))
 
         for i in range(train_X.shape[1] - 1):
-            print(train_X[:,i])
+            # print(train_X[:,i])
             diffs_train_X[:,i] = train_X[:,i] - train_X[:,i+1]
 
         train_X = np.concatenate((train_X, diffs_train_X), axis=1)

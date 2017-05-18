@@ -162,7 +162,7 @@ def main():
         diffs_text_X = np.empty((test_X.shape[0], test_X.shape[1] - 1))
 
         for i in range(test_X.shape[1] - 1):
-            print(test_X[:,i])
+            # print(test_X[:,i])
             diffs_text_X[:,i] = test_X[:,i] - test_X[:,i+1]
 
         test_X = np.concatenate((test_X, diffs_text_X), axis=1)

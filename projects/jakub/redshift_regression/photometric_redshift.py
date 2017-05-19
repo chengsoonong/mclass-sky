@@ -37,7 +37,7 @@ PREDICTOR_LOADERS = {'const': sklearn.dummy.DummyRegressor,
 
 def preprocess_sgd(x):
     rbf_feature = sklearn.kernel_approximation.RBFSampler(
-        gamma=1,
+        gamma=1e-1,
         random_state=1)
     x = rbf_feature.fit_transform(x)
     return x

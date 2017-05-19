@@ -3,6 +3,7 @@ import csv
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import sklearn.dummy
 import sklearn.gaussian_process
 import sklearn.linear_model
@@ -112,6 +113,43 @@ def plot(predictor, X, y, admits_sigma):
     plt.show()
 
 
+def load_data(
+        path,
+        train_samples_num,
+        test_samples_num,
+        x_cols=('psfMag_u', 'psfMag_g', 'psfMag_r', 'psfMag_i', 'psfMag_z'),
+        y_col='redshift',
+        class_col='class',
+        class_val='Galaxy'):
+
+    # Cast x_cols to list so Pandas doesn't complain…
+    x_cols_l = list(x_cols)
+
+    data_iter = pd.read_csv(
+        path,
+        iterator=True,
+        chunksize=100000,
+        usecols=x_cols_l + [y_col, class_col])
+
+    # Filter out anything that is not a galaxy without loading the whole file into memory.
+    data = pd.concat(chunk[chunk[class_col] == class_val]
+                     for chunk in data_iter)
+
+    train_X = data[:train_samples_num][x_cols_l].as_matrix()
+    test_X = data[train_samples_num
+                  :train_samples_num+test_samples_num][x_cols_l].as_matrix()
+    train_y = data[:train_samples_num][y_col].as_matrix()
+    test_y = data[train_samples_num
+                  :train_samples_num+test_samples_num][y_col].as_matrix()
+
+    assert train_X.shape == (train_samples_num, len(x_cols))
+    assert train_y.shape == (train_samples_num,)
+    assert test_X.shape == (test_samples_num, len(x_cols))
+    assert test_y.shape == (test_samples_num,)
+
+    return train_X, train_y, test_X, test_y
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=('Perform regression on photometric '
@@ -138,16 +176,9 @@ def main():
     predictor = PREDICTOR_LOADERS[args.predictor]()
     preprocessor = PREPROCESSING[args.predictor]
 
-    # Load data.
-    with open(args.path) as f:
-        reader = csv.reader(f)
-        next(reader)  # Skip headers.
-
-        training_samples = take_samples(reader, args.train_n)
-        testing_samples = take_samples(reader, args.test_n)
-
-    train_X, train_y = training_samples
-    test_X, test_y = testing_samples
+    train_X, train_y, test_X, test_y = load_data(args.path,
+                                                 args.train_n,
+                                                 args.test_n)
 
     # Add differences if wanted.
     if args.diffs:

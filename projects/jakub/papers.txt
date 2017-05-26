@@ -1,0 +1,17 @@
+Active learning literature review http://s3.amazonaws.com/academia.edu.documents/30743174/settles_active_learning.pdf?AWSAccessKeyId=AKIAIWOWYYGZ2Y53UL3A&Expires=1494205321&Signature=2bAWekGsI11jZSVM7Sx5g0EuImA%3D&response-content-disposition=inline%3B%20filename%3DActive_learning_literature_survey.pdf
+The Application of the Annealing Algorithm to the Construction of Exact Optimal Designs for Linear-Regression Models https://www.jstor.org/stable/pdf/1269455.pdf
+Uncertainty estimation for multivariate regression coefficients http://www.sciencedirect.com/science/article/pii/S0169743902001028
+LANDMARK Prediction With Gaussian Processes: From Linear Regression To Linear Prediction And Beyond (1997) http://citeseerx.ist.psu.edu/viewdoc/citations?doi=10.1.1.38.878
+Gaussian processes for machine learning (2006) http://citeseerx.ist.psu.edu/viewdoc/citations;jsessionid=B26B8F68883349E765CDDEEEDA833CC1?doi=10.1.1.86.3414
+The Sloan Digital Sky Survey: Technical Summary (2000) http://iopscience.iop.org/article/10.1086/301513/meta
+The Sloan Digital Sky Survey Photometric System (1996) http://adsabs.harvard.edu/full/1996AJ....111.1748F7
+The Seventh Data Release of The Sloan Digital Sky Survey (2009) http://iopscience.iop.org/article/10.1088/0067-0049/182/2/543/meta
+Bayesian Photometric Redshift Estimation (2000) http://iopscience.iop.org/article/10.1086/308947/meta
+New Approaches To Photometric Redshift Prediction Via Gaussian Process Regression In The Sloan Digital Sky Survey (2009) http://iopscience.iop.org/article/10.1088/0004-637X/706/1/623/meta
+The Application of Photometric Redshifts to the SDSS Early Data Release (2003) http://iopscience.iop.org/article/10.1086/345883/meta
+Photometric redshift estimation using Gaussian processes (2010) https://academic.oup.com/mnras/article/405/2/987/1180242/Photometric-redshift-estimation-using-Gaussian
+Photometric Redshift Estimation on SDSS Data Using Random Forests (2007) https://arxiv.org/abs/0711.2477
+Reinforcement learning with Gaussian processes (2005) http://dl.acm.org/citation.cfm?id=1102377
+Optimal Design in Random-Effects Regression Models (1997) http://www.jstor.org/stable/2337468?seq=1#page_scan_tab_contents
+Optimal Design of Experiments (2006) http://epubs.siam.org/doi/pdf/10.1137/1.9780898719109.bm
+Kernel regression for determining photometric redshifts from Sloan broad-band photometry (2007) https://academic.oup.com/mnras/article/382/4/1601/1145380/Kernel-regression-for-determining-photometric

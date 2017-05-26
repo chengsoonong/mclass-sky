@@ -1,0 +1,15 @@
+A redshift is the change in the wavelength of a photon emitted by an object that is moving away from the observer. When applied to the visible spectrum, a redshift makes an object appear more red.
+
+Redshifts are important in astronomy, as they are used for a variety of tasks. The most important of these tasks is finding distances to objects.
+
+Currently, redshifts are found using specroscopy. A spectroscope is applied to a galaxy, and its spectral profile is measured. From these measurements, we can isolate the hydrogen lines, which are then compared against the baseline to obtain the redshift. This method is problematic as it requires a spectroscope to be pointed at each galaxy whose redshift we wish to measure. Since there are many galaxies in the universe, it is impossible to use this method for large extents of the sky.
+
+Instead, we can utilise a technique called 'photometric redshift' prediction. A photometric redshift is one computed from photometric measurements, as opposed to spectroscopic ones. Photometric measurements 'bucket' the spectrum into a small number of distinct intervals, much like a photographic camera buckets the visible spectum into red, green, and blue. These buckets can then be used as input to a regressor, and the redshift can be predicted.
+
+Photometric have their own disadvantages. Currently, they only cover a limited range of redshifts. Further, they tend to rely on limited datasets, whose spectra have been measured without much regard to the impact of the sample on the prediction.
+
+It therefore is appropriate to apply optimal design techniques to the problem. Optimal design allows us to choose, from a pool of unlabelled galaxies (i.e., galaxies for which we know the photometric data, but not the exact redshift from spectroscopic data), the one that would bring the most value to the regression problem if it were labelled. In other words, towards which galaxy should we point the spectroscope next so as to give us the most new information?
+
+This method of selection of new training samples has advantages of greater cost effectiveness. It will also permit us to increase the range of current photometric redshift models with the lowest effort.
+
+Optimal design requires us to be able to assess the uncertainties in the prediction for each point in the input space. This provides a useful heuristic for choosing the next sample to label.

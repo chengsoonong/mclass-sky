@@ -1,0 +1,13 @@
+Astronomers have many uses for redshifts. They are used in the computation of distance to galaxies. This is due to the doppler effect and to the expansion of space.
+
+The issue with redshifts is that they are typically computed using spectrometers. A spectrometer captures the entire spectum of light reaching the observer from a galaxy. By comparing the hydrogen lines againtst a baseline, we are able to accurately compute the redshift
+
+This is an expensive process since it requires us to point a spectroscope at each galaxy we wish to study. Since there are many galaxies in the univwerse, it would take much money to study them all.
+
+Instead, we can take photometric measurements in a few bands for manty galaxies at a time. This amounts to a 'bucketed' spectrum: one that has significantly less information that the reading from a spectrometer. The issue is that there are no clearly visible hgydrogen lines so we cannot compare them against a baseline to find the actual redshift.
+
+Instead, we can apply machine learning techniques to find the relationship between the photometric measurements and the redshift.
+
+This has been done before, but only on limited datasets, and it is an unrelable method for redshift outside a range.
+
+What I wish to achieve is to apply optimal design techniques to this problem. By telling astronomers which unlabelled galaxies (ones for which we have photometric data but not spectroscopic data) to assess next with a spectroscope, we can extend the range for which this technique works with a minimal amount of time and money.

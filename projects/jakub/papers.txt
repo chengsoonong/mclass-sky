@@ -1,3 +1,28 @@
+Rasmussen and Williams, Gaussiam Processes for Machine Learning, 2006 (at least Chapter 2)
+
+Niranjan Srinivas, Andreas Krause, Sham M. Kakade, Matthias Seeger,
+Gaussian Process Optimization in the Bandit Setting: No Regret and Experimental Design
+https://arxiv.org/abs/0912.3995
+
+Wolf et al. 2017, The 2-degree Field Lensing Survey: photometric redshifts from a large new training sample to r < 19.5
+http://adsabs.harvard.edu/abs/2017MNRAS.466.1582W
+
+Eric Brochu, Vlad M. Cora, Nando de Freitas
+A Tutorial on Bayesian Optimization of Expensive Cost Functions, with Application to Active User Modeling and Hierarchical Reinforcement Learning
+https://arxiv.org/abs/1012.2599
+
+Bobak Shahriari, Kevin Swersky, Ziyu Wang, Ryan P. Adams and Nando de Freitas
+Taking the Human Out of the Loop: A Review of Bayesian Optimization
+https://www.cs.ox.ac.uk/people/nando.defreitas/publications/BayesOptLoop.pdf
+
+Choose one or two software packages to integrate
+https://github.com/chengsoonong/acton/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement
+
+
+
+
+
+
 Active learning literature review http://s3.amazonaws.com/academia.edu.documents/30743174/settles_active_learning.pdf?AWSAccessKeyId=AKIAIWOWYYGZ2Y53UL3A&Expires=1494205321&Signature=2bAWekGsI11jZSVM7Sx5g0EuImA%3D&response-content-disposition=inline%3B%20filename%3DActive_learning_literature_survey.pdf
 The Application of the Annealing Algorithm to the Construction of Exact Optimal Designs for Linear-Regression Models https://www.jstor.org/stable/pdf/1269455.pdf
 Uncertainty estimation for multivariate regression coefficients http://www.sciencedirect.com/science/article/pii/S0169743902001028

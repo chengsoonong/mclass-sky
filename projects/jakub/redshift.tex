@@ -1,0 +1,28 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage[separate-uncertainty=true]{siunitx}
+
+\DeclareSIUnit{\parsec}{pc}
+
+\begin{document}
+Redshift is a property of all signals we observe from astronomical objects. It is often not easy to measure, but finding it permits us to learn important facts about the object being observed.
+
+The electromagnetic waves that we observe from distant objects are subject to the Doppler effect. This is the phenomenon by which waves produced by an object that is moving away from the observer appear to have a longer wavelength. Consider an ambulance driving away from you: the tone of the siren appears lower than if the ambulance was stationary. In a similar way, a galaxy moving away from us appears redder, giving rise to the term `redshift'. The converse effect, affecting objects moving towards the observer, is termed `blueshift'.
+
+The redshift of an object is then directly correlated to its velocity perpendicular to the line of sight from the observer. For a redshift $z$, the line-of-sight velocity is\[
+    v \approx cz \text{,}
+\] where $c$ is the speed of light constant.
+
+This permits us to approximate the distance from the observed object. Due to the expansion of space, distant objects are moving away from us at a velocity proportional to their distance. For a velocity $v$, that distance is \[
+    D \approx \frac{v}{H_0} \text{,}
+\] where $D$ is the hubble constant, equalling approximately $\SI{70}{\kilo\meter\per\second\per\mega\parsec}$. For faraway objects then, the redshift is hence proportional to distance.
+
+Since the speed of light is finite, electromagnetic waves coming from distant objects represent the past. Hence, observing distant objects permits u to study the history of the universe. For example, the universe is denser at larger distances, as a remnant of the earlier stages of the big bang. Similarly, large distances contain more quasars and more brighter objects. The ability to compute distance from the redshift is important in studying the past of the universe as the distance is a proxy for the age of the object we observe.
+
+The mass of an object is correlated to its luminosity\footnote{the total amount of light emitted}. The luminosity can be approximated from the brightness using the object's distance. Hence, computing the distance of an object from the redshift permits us to approximate its size.
+
+However, for some objects, we can approximate the size more directly. For closer objects, we can measure their apparent radius as the angle they span on the sky. Using trigonometry, we can then compute the actual radius of such an object from its apparent radius and redshift-derived distance.
+
+For closer galaxies, we are able to observe the movements of stars inside the galaxy. When a star orbits the centre of a galaxy, the internal motion can cancel or amplify the star's line-of-sight velocity. Measuring the stars' velocities from redshift hence permits us to to study galaxy dynamics.
+\end{document}

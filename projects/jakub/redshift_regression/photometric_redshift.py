@@ -20,15 +20,13 @@ DEFAULT_TESTING_SAMPLES_NUM = 1000
 
 
 def load_gp_regressor():
-    kernel = sklearn.gaussian_process.kernels.RationalQuadratic()
+    kernel = sklearn.gaussian_process.kernels.RBF(length_scale=0.05623413252)
     return sklearn.gaussian_process.GaussianProcessRegressor(kernel=kernel)
 
 
 def load_sgd_regressor():
-    return sklearn.linear_model.SGDRegressor(
-            # alpha=1e-2,
-            # n_iter=100
-        )
+    return sklearn.linear_model.SGDRegressor()
+
 
 PREDICTOR_LOADERS = {'const': sklearn.dummy.DummyRegressor,
                      'GP': load_gp_regressor,

@@ -18,9 +18,10 @@ INPUT_ROW_VALID = lambda row: row[2] == "Galaxy"
 DEFAULT_TRAINING_SAMPLES_NUM = 1000
 DEFAULT_TESTING_SAMPLES_NUM = 1000
 
+GAMMA = 0.05623413252  # Found by binary search
 
 def load_gp_regressor():
-    kernel = sklearn.gaussian_process.kernels.RBF(length_scale=0.05623413252)
+    kernel = sklearn.gaussian_process.kernels.RBF(length_scale=GAMMA)
     return sklearn.gaussian_process.GaussianProcessRegressor(kernel=kernel)
 
 
@@ -35,7 +36,7 @@ PREDICTOR_LOADERS = {'const': sklearn.dummy.DummyRegressor,
 
 def preprocess_sgd(x):
     rbf_feature = sklearn.kernel_approximation.RBFSampler(
-        gamma=1e-1,
+        gamma=GAMMA,
         random_state=1)
     x = rbf_feature.fit_transform(x)
     return x
@@ -48,23 +49,6 @@ PREPROCESSING = {'const': NOOP,
                  'linearSGD': NOOP}
 
 ADMIT_SIGMA = { 'GP' }
-
-
-def take_samples(reader, num):
-    X = np.empty((num, INPUT_DIM))
-    y = np.empty((num,))
-
-    for i, row in enumerate(filter(INPUT_ROW_VALID, reader)):
-        if i == num:
-            break
-
-        y[i] = float(row[LABEL_COL])
-        for j, col in enumerate(INPUT_COLS):
-            X[i, j] = float(row[col])
-    else:
-        raise Exception("Not enough samples in file.")
-
-    return X, y
 
 
 def compute_R_sq(predictor, X, y):

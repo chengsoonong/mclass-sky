@@ -1,0 +1,70 @@
+\documentclass[11pt, oneside]{article}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{txfonts}
+
+\geometry{a4paper}
+
+% Define shortcuts for special characters
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bbN}{\mathbb{N}}
+\newcommand{\bbR}{\mathbb{R}}
+
+\begin{document}
+Consider the problem of regression. We are given a function $f : \bbR^d \to \bbR$ for some $d \in \bbN$. We are also given $n$ points $\bx_1, \dots, \bx_n$ for which we know the values. In other words, we know $y_1, \dots, y_n$ where \[
+    y_i \coloneqq f(\bx_i)\text{ for }i = 1, \dots, n\text{.}
+\]
+
+If we are performing linear regression, then we want to find $\bw$ such that \[
+    f(\bx) \approx \bx^T\bw \text{.}
+\]
+
+Let $k : \bbR^d \times \bbR^d \to \bbR$ be a kernel. Define the matrix $K$ to be \[
+    K \coloneqq \begin{bmatrix}
+        K(\bx_1, \bx_1) & \dots & K(\bx_1, \bx_n) \\
+        \dots & \dots & \dots \\
+        K(\bx_n, \bx_1) & \dots & K(\bx_n, \bx_n)
+    \end{bmatrix} \text{.}
+\] Define also\[
+    \by \coloneqq \begin{bmatrix}
+        y_1 \\
+        \dots \\
+        y_n
+    \end{bmatrix} \text.
+\]
+
+We can define the error function to be \[
+    E(\bw) \coloneqq \frac12 \left(\by - K \bw\right)^T\left(\by - K \bw\right) \text{,}
+\] which is the least-squares error. We wish to find $\bw$ that minimises it.
+
+Using differentiation, we can find\[
+    \bw = \left(K^T K \right)^{-1} K^T \by \text.
+\] For $K$ invertible, this is \[
+    \bw = K^{-1}\by\text.
+\]
+
+For a given input $\bx$, defining $K_*$ as \[
+    K_* = \begin{bmatrix}
+        K(\bx, \bx_1) \\
+        \dots \\
+        K(\bx, \bx_n)
+    \end{bmatrix} \text{,}
+\]the prediction  is then \[
+    y = K_*^T\bw = K_*^T K^{-1}\by \approx f(\bx) \text{.}
+\]
+
+This is very similar to Gaussian Process regression, where the prediction is \[
+    y = K_*^T\left(K + \sigma^2 I\right)^{-1}\by \text{.}
+\]
+
+Kernelised linear regression is then equivalent to Gaussian Process regression when $\sigma = 0$.
+
+
+
+
+\end{document}

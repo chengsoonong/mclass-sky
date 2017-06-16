@@ -1,0 +1,62 @@
+\documentclass[11pt]{report}
+
+\usepackage{amsmath}
+\usepackage[separate-uncertainty=true]{siunitx}
+
+\DeclareSIUnit{\parsec}{pc}
+
+\title{Optimising Experiments for Photometric Redshift Prediction}
+\author{Jakub Nabaglo, u5558578}
+\date{October 2017}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+A redshift is the change in the wavelength of a photon emitted by an object that is moving away from the observer. When applied to the visible spectrum, a redshift makes an object appear more red.
+
+Redshifts are important in astronomy, as they are used for a variety of tasks. The most important of these tasks is finding distances to objects.
+
+Currently, redshifts are found using specroscopy. A spectroscope is applied to a galaxy, and its spectral profile is measured. From these measurements, we can isolate the hydrogen lines, which are then compared against the baseline to obtain the redshift. This method is problematic as it requires a spectroscope to be pointed at each galaxy whose redshift we wish to measure. Since there are many galaxies in the universe, it is impossible to use this method for large extents of the sky.
+
+Instead, we can utilise a technique called `photometric redshift' prediction. A photometric redshift is one computed from photometric measurements, as opposed to spectroscopic ones. Photometric measurements `bucket' the spectrum into a small number of distinct intervals, much like a photographic camera buckets the visible spectum into red, green, and blue. These buckets can then be used as input to a regressor, and the redshift can be predicted.
+
+Photometric have their own disadvantages. Currently, they only cover a limited range of redshifts. Further, they tend to rely on limited datasets, whose spectra have been measured without much regard to the impact of the sample on the prediction.
+
+It therefore is appropriate to apply optimal design techniques to the problem. Optimal design allows us to choose, from a pool of unlabelled galaxies (i.e., galaxies for which we know the photometric data, but not the exact redshift from spectroscopic data), the one that would bring the most value to the regression problem if it were labelled. In other words, towards which galaxy should we point the spectroscope next so as to give us the most new information?
+
+This method of selection of new training samples has advantages of greater cost effectiveness. It will also permit us to increase the range of current photometric redshift models with the lowest effort.
+
+Optimal design requires us to be able to assess the uncertainties in the prediction for each point in the input space. This provides a useful heuristic for choosing the next sample to label.
+
+
+\chapter{Photometric redshifts}
+
+\section{Redshift}
+Redshift is a property of all signals we observe from astronomical objects. It is often not easy to measure, but finding it permits us to learn important facts about the object being observed.
+
+The electromagnetic waves that we observe from distant objects are subject to the Doppler effect. This is the phenomenon by which waves produced by an object that is moving away from the observer appear to have a longer wavelength. Consider an ambulance driving away from you: the tone of the siren appears lower than if the ambulance was stationary. In a similar way, a galaxy moving away from us appears redder, giving rise to the term `redshift'. The converse effect, affecting objects moving towards the observer, is termed `blueshift'.
+
+The redshift of an object is then directly correlated to its velocity perpendicular to the line of sight from the observer. For a redshift $z$, the line-of-sight velocity is\[
+    v \approx cz \text{,}
+\] where $c$ is the speed of light constant.
+
+This permits us to approximate the distance from the observed object. Due to the expansion of space, distant objects are moving away from us at a velocity proportional to their distance. For a velocity $v$, that distance is \[
+    D \approx \frac{v}{H_0} \text{,}
+\] where $H_0$ is the Hubble parameter, equalling approximately $\SI{70}{\kilo\meter\per\second\per\mega\parsec}$. For faraway objects then, the redshift is hence proportional to distance.
+
+Since the speed of light is finite, electromagnetic waves coming from distant objects represent the past. Hence, observing distant objects permits us to study the history of the universe. For example, the universe is denser at larger distances, as a remnant of the earlier stages of the big bang. Similarly, large distances contain more quasars and more brighter objects. The ability to compute distance from the redshift is important in studying the past of the universe as the distance is a proxy for the age of the object we observe.
+
+The mass of an object is correlated to its luminosity\footnote{the total amount of light emitted}. The luminosity can be approximated from the brightness using the object's distance. Hence, computing the distance of an object from the redshift permits us to approximate its size.
+
+However, for some objects, we can approximate the size more directly. For closer objects, we can measure their apparent radius as the angle they span on the sky. Using trigonometry, we can then compute the actual radius of such an object from its apparent radius and redshift-derived distance.
+
+For closer galaxies, we are able to observe the movements of stars inside the galaxy. When a star orbits the centre of a galaxy, the internal motion can cancel or amplify the star's line-of-sight velocity. Measuring the stars' velocities from redshift hence permits us to to study galaxy dynamics.
+
+\chapter{Regression on Photometric Redshifts}
+\section{Gaussian Processes}
+
+
+\end{document}

@@ -2,107 +2,74 @@ import concurrent.futures
 import json
 import sys
 
+import pandas as pd
 import sklearn.gaussian_process
 import sklearn.linear_model
 import sklearn.kernel_approximation
+
+# Import splitter
+sys.path.insert(1, '..')
+import splitter
 
 
 TRAINING_SAMPLES_NUM = 1000000
 TESTING_SAMPLES_NUM = 500000
 
 MAX_SGD = 5000
-MAX_GP = 5000
-STEP = 1000
+MAX_GP = 1600
+STEP = 100
 
 
-def load_data(
-        path,
-        x_cols=('psfMag_u', 'psfMag_g', 'psfMag_r', 'psfMag_i', 'psfMag_z'),
-        y_col='redshift',
-        class_col='class',
-        class_val='Galaxy'):
-
-    import pandas as pd
-
-    # Cast x_cols to list so Pandas doesn't complain…
-    x_cols_l = list(x_cols)
-
-    data_iter = pd.read_csv(
-        path,
-        iterator=True,
-        chunksize=100000,
-        usecols=x_cols_l + [y_col, class_col])
-
-    # Filter out anything that is not a galaxy without loading the whole file into memory.
-    data = pd.concat(chunk[chunk[class_col] == class_val]
-                     for chunk in data_iter)
-
-    train_X = data[:TRAINING_SAMPLES_NUM][x_cols_l].as_matrix()
-    test_X = data[TRAINING_SAMPLES_NUM
-                  :TRAINING_SAMPLES_NUM
-                   +TESTING_SAMPLES_NUM][x_cols_l].as_matrix()
-    train_y = data[:TRAINING_SAMPLES_NUM][y_col].as_matrix()
-    test_y = data[TRAINING_SAMPLES_NUM
-                  :TRAINING_SAMPLES_NUM
-                   +TESTING_SAMPLES_NUM][y_col].as_matrix()
-
-    assert train_X.shape == (TRAINING_SAMPLES_NUM, len(x_cols))
-    assert train_y.shape == (TRAINING_SAMPLES_NUM,)
-    assert test_X.shape == (TESTING_SAMPLES_NUM, len(x_cols))
-    assert test_y.shape == (TESTING_SAMPLES_NUM,)
-
-    return train_X, train_y, test_X, test_y
+def preprocess_sgd(train_X, train_y, test_X):
+    kernel = sklearn.gaussian_process.kernels.Matern()
+    subset = train_X[:1000]
+    sgd_train_X = kernel(train_X, subset)
+    sgd_test_X = kernel(test_X, subset)
+    return sgd_train_X, sgd_test_X
 
 
-def preprocess_sgd(X):
-    rbf_feature = sklearn.kernel_approximation.RBFSampler(
-        gamma=1e-1,
-        random_state=1)
-    return rbf_feature.fit_transform(X)
+    # rbf_feature = sklearn.kernel_approximation.RBFSampler(
+    #     1 / (2 * ALPHA * ALPHA))
+    # sgd_train_X = rbf_feature.fit_transform(train_X, train_y)
+    # sgd_test_X = rbf_feature.fit_transform(test_X)
+    # return sgd_train_X, sgd_test_X
 
 
 def perform_sgd(train_X, train_y, test_X, test_y):
-    sgd = sklearn.linear_model.SGDRegressor()
+    sgd = sklearn.linear_model.SGDRegressor(alpha=0, n_iter=100)
     sgd.fit(train_X, train_y)
-    return sgd.score(test_X, test_y)
+    out = sgd.score(test_X, test_y)
+    print('Done one SGD')
+    return out
 
 
 def perform_gp(train_X, train_y, test_X, test_y):
-    kernel = sklearn.gaussian_process.kernels.RationalQuadratic()
-    gp = sklearn.gaussian_process.GaussianProcessRegressor(kernel=kernel)
+    kernel = sklearn.gaussian_process.kernels.Matern()
+    gp = sklearn.gaussian_process.GaussianProcessRegressor(kernel=kernel, alpha=0)
     gp.fit(train_X, train_y)
-    return gp.score(test_X, test_y)
+    out = gp.score(test_X, test_y)
+    print('Done one GP')
+    return out
 
 
 def main(path):
-    train_X, train_y, test_X, test_y = load_data(path)
-    sgd_train_X, sgd_test_X = preprocess_sgd(train_X), preprocess_sgd(test_X)
+    (train_X, train_y), (test_X, test_y) = splitter.load(
+        path, TRAINING_SAMPLES_NUM, TESTING_SAMPLES_NUM)
+
+    gp_x = list(range(STEP, MAX_GP+1, STEP))
+    gp_y = [perform_gp(train_X[:n], train_y[:n], test_X, test_y)
+            for n in gp_x]
+
+    sgd_train_X, sgd_test_X = preprocess_sgd(train_X[:MAX_SGD], train_y[:MAX_SGD], test_X)
 
     sgd_x = list(range(STEP, MAX_SGD+1, STEP))
-    gp_x = list(range(STEP, MAX_GP+1, STEP))
+    sgd_y = [perform_sgd(sgd_train_X[:n], train_y[:n], sgd_test_X, test_y)
+             for n in sgd_x]
 
-    sgd_futures = []
-    gp_futures = []
-    e = concurrent.futures.ThreadPoolExecutor()
-    for n in sgd_x:
-        sgd_futures.append(e.submit(perform_sgd,
-                                    sgd_train_X[:n], train_y[:n],
-                                    sgd_test_X, test_y))
-    for n in gp_x:
-        gp_futures.append(e.submit(perform_gp,
-                                   train_X[:n], train_y[:n],
-                                   test_X, test_y))
-
-    concurrent.futures.wait(sgd_futures + gp_futures)
-
-    sgd_y = [f.result() for f in sgd_futures]
-
-    gp_y =  [f.result() for f in gp_futures]
-
-    with open('out.json', 'r') as f:
+    with open('gp2.json', 'w') as f:
         json.dump({
-                'sgd_x': sgd_x,
-                'sgd_y': sgd_y,
+                # 'sgd_x': sgd_x,
+                # 'sgd_y': sgd_y,
                 'gp_x': gp_x,
                 'gp_y': gp_y
             }, f)

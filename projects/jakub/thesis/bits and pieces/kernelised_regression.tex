@@ -26,9 +26,9 @@ If we are performing linear regression, then we want to find $\bw$ such that \[
 
 Let $k : \bbR^d \times \bbR^d \to \bbR$ be a kernel. Define the matrix $K$ to be \[
     K \coloneqq \begin{bmatrix}
-        K(\bx_1, \bx_1) & \dots & K(\bx_1, \bx_n) \\
-        \dots & \dots & \dots \\
-        K(\bx_n, \bx_1) & \dots & K(\bx_n, \bx_n)
+        K(\bx_1, \bx_1) & \cdots & K(\bx_1, \bx_n) \\
+        \vdots & \ddots & \vdots \\
+        K(\bx_n, \bx_1) & \cdots & K(\bx_n, \bx_n)
     \end{bmatrix} \text{.}
 \] Define also\[
     \by \coloneqq \begin{bmatrix}
@@ -38,31 +38,31 @@ Let $k : \bbR^d \times \bbR^d \to \bbR$ be a kernel. Define the matrix $K$ to be
     \end{bmatrix} \text.
 \]
 
-We can define the error function to be \[
-    E(\bw) \coloneqq \frac12 \left(\by - K \bw\right)^T\left(\by - K \bw\right) \text{,}
-\] which is the least-squares error. We wish to find $\bw$ that minimises it.
+We wish to use the least-squares error with $\ell_2$ regularisation. We can define the error function to be \[
+    E(\bw) \coloneqq \frac12 \left(\by - K \bw\right)^T\left(\by - K \bw\right) + \frac\lambda2 \bw^T\bw \text{,}
+\] where $\lambda$ is the regularisation constant. We wish to find $\bw$ that minimises it.
 
-Using differentiation, we can find\[
-    \bw = \left(K^T K \right)^{-1} K^T \by \text.
-\] For $K$ invertible, this is \[
-    \bw = K^{-1}\by\text.
+Differentiating, we find\begin{align*}
+    E'(\bw) = -K^T(\by - K\bw) + \lambda\bw\text{.}
+\end{align*} The minimum exists at $E'(\bw) = 0$. Solving, we find \[
+    \bw = \left(K^TK + \lambda I\right)^{-1}K^T\by\text{.}
 \]
 
 For a given input $\bx$, defining $K_*$ as \[
     K_* = \begin{bmatrix}
-        K(\bx, \bx_1) \\
-        \dots \\
+        K(\bx, \bx_1) &
+        \cdots &
         K(\bx, \bx_n)
     \end{bmatrix} \text{,}
 \]the prediction  is then \[
-    y = K_*^T\bw = K_*^T K^{-1}\by \approx f(\bx) \text{.}
+    y = K_*\bw = K_* \left(K^TK + \lambda I\right)^{-1}K^T\by \approx f(\bx) \text{.}
 \]
 
 This is very similar to Gaussian Process regression, where the prediction is \[
-    y = K_*^T\left(K + \sigma^2 I\right)^{-1}\by \text{.}
+    y = K_*\left(K + \sigma^2 I\right)^{-1}\by \text{.}
 \]
 
-Kernelised linear regression is then equivalent to Gaussian Process regression when $\sigma = 0$.
+Kernelised linear regression is then equivalent to Gaussian Process regression when $\sigma^2 K^T = \lambda I$.
 
 
 

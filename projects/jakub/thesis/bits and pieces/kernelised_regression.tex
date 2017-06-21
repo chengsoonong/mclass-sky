@@ -9,60 +9,75 @@
 \geometry{a4paper}
 
 % Define shortcuts for special characters
+\newcommand{\bbN}{\mathbb{N}}
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\bv}{\mathbf{v}}
 \newcommand{\bw}{\mathbf{w}}
 \newcommand{\bx}{\mathbf{x}}
 \newcommand{\by}{\mathbf{y}}
-\newcommand{\bbN}{\mathbb{N}}
-\newcommand{\bbR}{\mathbb{R}}
+
+% Define miscellaneous commands
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\DeclareMathOperator{\spn}{span}
 
 \begin{document}
 Consider the problem of regression. We are given a function $f : \bbR^d \to \bbR$ for some $d \in \bbN$. We are also given $n$ points $\bx_1, \dots, \bx_n$ for which we know the values. In other words, we know $y_1, \dots, y_n$ where \[
     y_i \coloneqq f(\bx_i)\text{ for }i = 1, \dots, n\text{.}
 \]
 
-If we are performing linear regression, then we want to find $\bw$ such that \[
-    f(\bx) \approx \bx^T\bw \text{.}
+Let $\phi : \bbR^d \to \bbR^r$ be the feature map. If we are performing linear regression, then we want to find $\bw \in \bbR^r$ such that \[
+    f(\bx) \approx \phi(\bx)^T \bw \text{.}
 \]
 
-Let $k : \bbR^d \times \bbR^d \to \bbR$ be a kernel. Define the matrix $K$ to be \[
-    K \coloneqq \begin{bmatrix}
-        K(\bx_1, \bx_1) & \cdots & K(\bx_1, \bx_n) \\
-        \vdots & \ddots & \vdots \\
-        K(\bx_n, \bx_1) & \cdots & K(\bx_n, \bx_n)
-    \end{bmatrix} \text{.}
-\] Define also\[
-    \by \coloneqq \begin{bmatrix}
+Define \[
+    \Phi \coloneqq \begin{bmatrix}
+        \phi(\bx_1)^T \\
+        \vdots \\
+        \phi(\bx_n)^T \\
+    \end{bmatrix} \text{ and }\by \coloneqq \begin{bmatrix}
         y_1 \\
-        \dots \\
+        \vdots \\
         y_n
-    \end{bmatrix} \text.
+    \end{bmatrix} \text{.}
 \]
 
-We wish to use the least-squares error with $\ell_2$ regularisation. We can define the error function to be \[
-    E(\bw) \coloneqq \frac12 \left(\by - K \bw\right)^T\left(\by - K \bw\right) + \frac\lambda2 \bw^T\bw \text{,}
-\] where $\lambda$ is the regularisation constant. We wish to find $\bw$ that minimises it.
+We wish to use the least-squares error with $\ell_2$ regularisation. We can define the error function to be $E : \bbR^r \to [0, \infty)$ such that \[
+    E(\bw) \coloneqq \frac{1}{2}\norm{\by - \Phi\bw}_2^2 + \frac{\lambda}{2} \norm{\bw}_2^2 \text{,}
+\] where $\lambda > 0$ is the regularisation constant.
 
-Differentiating, we find\begin{align*}
-    E'(\bw) = -K^T(\by - K\bw) + \lambda\bw\text{.}
-\end{align*} The minimum exists at $E'(\bw) = 0$. Solving, we find \[
-    \bw = \left(K^TK + \lambda I\right)^{-1}K^T\by\text{.}
+We know that $\bw \in \spn\{\phi(\bx_1), \dots, \phi(\bx_n)\}$. Hence, there exists $\bv \in \bbR^n$ such that \[
+    \bw = \Phi^T\bv \text{.}
 \]
 
-For a given input $\bx$, defining $K_*$ as \[
-    K_* = \begin{bmatrix}
-        K(\bx, \bx_1) &
-        \cdots &
-        K(\bx, \bx_n)
-    \end{bmatrix} \text{,}
-\]the prediction  is then \[
-    y = K_*\bw = K_* \left(K^TK + \lambda I\right)^{-1}K^T\by \approx f(\bx) \text{.}
+We can rewrite the error function as $E : \bbR^n \to [0, \infty)$ such that \[
+    E(\bv) = \frac{1}{2}\norm{\by - \Phi\Phi^T\bv}_2^2 + \frac{\lambda}{2} \norm{\Phi^T\bv}_2^2 \text{.}
+\] Letting $K \coloneqq \Phi\Phi^T$ be the kernel matrix,\[
+    E(\bv) = \frac{1}{2}\norm{\by - K\bv}_2^2 + \frac{\lambda}{2} \bv^T K \bv \text{.}
+\] Then $k(\bx, \bx') \coloneqq \phi(\bx) \cdot \phi(\bx')$ is our kernel function.
+
+Differentiating, we find \begin{align*}
+    E'(\bv) &= -K^T(\by - K\bv) + \frac{\lambda}{2} (K + K^T)\bv \\
+    &= K(K\bv - \by) + \lambda K\bv \text{,}
+\end{align*} since $K$ is symmetric. The minimum exists at $E'(\bv) = 0$. Simplifying, we find,\[
+    K(K + \lambda I)\bv = K\by \text{.}
+\] There may be multiple solutions. One solution is at \[
+    \bv = (K + \lambda I)^{-1}\by \text{.}
+\]
+
+For a given input $\bx$, the prediction is then \begin{align*}
+    f(\bx) \approx \phi(\bx)^T \bw \\
+    &= \phi(\bx)^T \Phi \bv \\
+    &= \phi(\bx)^T \Phi (K + \lambda I)^{-1}\by \\
+    &= K_* (K + \lambda I)^{-1}\by \text{,}
+\end{align*} where we define \[
+    K_* \coloneqq \phi(\bx)^T \Phi \text{.}
 \]
 
 This is very similar to Gaussian Process regression, where the prediction is \[
-    y = K_*\left(K + \sigma^2 I\right)^{-1}\by \text{.}
+    f(\bx) = K_*\left(K + \sigma^2 I\right)^{-1}\by \text{.}
 \]
 
-Kernelised linear regression is then equivalent to Gaussian Process regression when $\sigma^2 K^T = \lambda I$.
+Kernelised linear regression is then equivalent to Gaussian Process regression when $\lambda = \sigma^2$.
 
 
 

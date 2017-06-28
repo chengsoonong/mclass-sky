@@ -10,18 +10,26 @@ def load(path,
     # Cast x_cols to list so Pandas doesn't complain…
     x_cols_l = list(x_cols)
 
-    data_iter = pd.read_csv(
-        path,
-        iterator=True,
-        chunksize=100000,
-        usecols=x_cols_l + [y_col, class_col])
+    if '.h5' in path or '.hdf' in path:
+        # We have an HDF5 file
+        data = pd.read_hdf(path)
+        return data, x_cols_l, y_col
 
-    # Filter out anything that is not a galaxy without loading the
-    # whole file into memory.
-    data = pd.concat(chunk[chunk[class_col] == class_val]
-                     for chunk in data_iter)
+    else:
+        # We have a CSV file
 
-    return (data, x_cols_l, y_col)
+        data_iter = pd.read_csv(
+            path,
+            iterator=True,
+            chunksize=100000,
+            usecols=x_cols_l + [y_col, class_col])
+
+        # Filter out anything that is not a galaxy without loading the
+        # whole file into memory.
+        data = pd.concat(chunk[chunk[class_col] == class_val]
+                         for chunk in data_iter)
+
+        return data[x_cols_l + [y_col]], x_cols_l, y_col
 
 
 def split(data, train_n, test_n):
@@ -30,7 +38,7 @@ def split(data, train_n, test_n):
     X_data = data[x_cols].as_matrix()
     y_data = data[y_col].as_matrix()
     assert X_data.shape[0] == y_data.shape[0] == data.shape[0]
-    assert X_data.shape[1] == data.shape[1] - 2
+    assert X_data.shape[1] == data.shape[1] - 1
     assert len(y_data.shape) == 1
 
     # Shuffle data
@@ -53,6 +61,10 @@ def split(data, train_n, test_n):
     return (train_X, train_y), (test_X, test_y)
 
 
+def save_as_hdf5(path, data):
+    data.to_hdf(path, '👀')
+
+
 if __name__ == '__main__':
     # Tiny test
     import sys
@@ -60,3 +72,6 @@ if __name__ == '__main__':
         data = load(sys.argv[1])
         data = split(data, 2, 1)
         print(data)
+    elif len(sys.argv) == 4 and sys.argv[2] == '--to-hdf5':
+        data, _, _ = load(sys.argv[1])
+        save_as_hdf5(sys.argv[3], data)

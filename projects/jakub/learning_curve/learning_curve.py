@@ -1,79 +1,103 @@
-import concurrent.futures
 import json
 import sys
 
-import pandas as pd
+import numpy as np
 import sklearn.gaussian_process
-import sklearn.linear_model
 import sklearn.kernel_approximation
+import sklearn.linear_model
 
 # Import splitter
 sys.path.insert(1, '..')
+sys.path.insert(2, '../appx_gaussian_processes')
+import appx_gp
 import splitter
 
 
 TRAINING_SAMPLES_NUM = 1000000
-TESTING_SAMPLES_NUM = 500000
+TESTING_SAMPLES_NUM = 50000
 
-MAX_SGD = 5000
-MAX_GP = 1600
+MAX_SGD = 50000
+MAX_GP = 2500
+MAX_AGP = 50000
 STEP = 100
 
-
-def preprocess_sgd(train_X, train_y, test_X):
-    kernel = sklearn.gaussian_process.kernels.Matern()
-    subset = train_X[:1000]
-    sgd_train_X = kernel(train_X, subset)
-    sgd_test_X = kernel(test_X, subset)
-    return sgd_train_X, sgd_test_X
+ALPHA = .003
+LENGTH_SCALE = 1
+GAMMA = .5 / (LENGTH_SCALE ** 2)
+COMPONENTS = 100
 
 
-    # rbf_feature = sklearn.kernel_approximation.RBFSampler(
-    #     1 / (2 * ALPHA * ALPHA))
-    # sgd_train_X = rbf_feature.fit_transform(train_X, train_y)
-    # sgd_test_X = rbf_feature.fit_transform(test_X)
-    # return sgd_train_X, sgd_test_X
+def approximate_kernel(train_X, test_X):
+    sampler = sklearn.kernel_approximation.RBFSampler(gamma=GAMMA, n_components=COMPONENTS)
+    sampler.fit(train_X)
+    appx_train_X = sampler.transform(train_X)
+    appx_test_X = sampler.transform(test_X)
+    return appx_train_X, appx_test_X
 
 
 def perform_sgd(train_X, train_y, test_X, test_y):
-    sgd = sklearn.linear_model.SGDRegressor(alpha=0, n_iter=100)
+    sgd = sklearn.linear_model.SGDRegressor(alpha=ALPHA, n_iter=100, fit_intercept=False, shuffle=True)
     sgd.fit(train_X, train_y)
-    out = sgd.score(test_X, test_y)
-    print('Done one SGD')
+    return sgd.score(test_X, test_y)
+
+
+def perform_agp(train_X, train_y, test_X, test_y):
+    agp = appx_gp.AppxGaussianProcessRegressor(alpha=ALPHA)
+    agp.fit(train_X, train_y)
+    out = agp.score(test_X, test_y)
+    print('Done one approximate GP')
     return out
 
 
 def perform_gp(train_X, train_y, test_X, test_y):
-    kernel = sklearn.gaussian_process.kernels.Matern()
-    gp = sklearn.gaussian_process.GaussianProcessRegressor(kernel=kernel, alpha=0)
+    kernel = sklearn.gaussian_process.kernels.RBF(
+            length_scale=LENGTH_SCALE)
+    gp = sklearn.gaussian_process.GaussianProcessRegressor(
+        kernel=kernel,
+        alpha=ALPHA,
+        copy_X_train=False)
     gp.fit(train_X, train_y)
-    out = gp.score(test_X, test_y)
-    print('Done one GP')
-    return out
+    return gp.score(test_X, test_y)
 
 
-def main(path):
-    (train_X, train_y), (test_X, test_y) = splitter.load(
-        path, TRAINING_SAMPLES_NUM, TESTING_SAMPLES_NUM)
+def main(path_in, path_out):
+    data = splitter.load(path_in)
+    (train_X, train_y), (test_X, test_y) \
+        = splitter.split(data, TRAINING_SAMPLES_NUM, TESTING_SAMPLES_NUM)
 
     gp_x = list(range(STEP, MAX_GP+1, STEP))
-    gp_y = [perform_gp(train_X[:n], train_y[:n], test_X, test_y)
-            for n in gp_x]
+    gp_y = []
+    for i, n in enumerate(gp_x):
+        print('Starting GP', i + 1)
+        gp_y.append(perform_gp(train_X[:n], train_y[:n], test_X, test_y))
 
-    sgd_train_X, sgd_test_X = preprocess_sgd(train_X[:MAX_SGD], train_y[:MAX_SGD], test_X)
+    transformed_train_X, transformed_test_X \
+        = approximate_kernel(train_X[:max(MAX_AGP,MAX_SGD)], test_X)
 
     sgd_x = list(range(STEP, MAX_SGD+1, STEP))
-    sgd_y = [perform_sgd(sgd_train_X[:n], train_y[:n], sgd_test_X, test_y)
-             for n in sgd_x]
+    sgd_y = []
+    for i, n in enumerate(sgd_x):
+        print('Starting SGD', i + 1)
+        sgd_y.append(perform_sgd(transformed_train_X[:n], train_y[:n],
+                                 transformed_test_X, test_y))
 
-    with open('gp2.json', 'w') as f:
+    agp_x = list(range(STEP, MAX_AGP+1, STEP))
+    agp_y = []
+    for i, n in enumerate(agp_x):
+        print('Starting AGP', i + 1)
+        agp_y.append(perform_agp(transformed_train_X[:n], train_y[:n],
+                                 transformed_test_X, test_y))
+
+    with open(path_out, 'w') as f:
         json.dump({
-                # 'sgd_x': sgd_x,
-                # 'sgd_y': sgd_y,
                 'gp_x': gp_x,
-                'gp_y': gp_y
+                'gp_y': gp_y,
+                'sgd_x': sgd_x,
+                'sgd_y': sgd_y,
+                'agp_x': agp_x,
+                'agp_y': agp_y
             }, f)
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main(*sys.argv[1:3])

@@ -1,9 +1,37 @@
 \documentclass[11pt]{report}
 
+\usepackage{amsfonts}
 \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{cleveref}
+\usepackage{color}
+\usepackage{fontspec}
+\usepackage{mathtools}
 \usepackage[separate-uncertainty=true]{siunitx}
 
+\setmainfont{Palatino Linotype}
+
 \DeclareSIUnit{\parsec}{pc}
+
+% Define common symbols
+\newcommand\bw{\mathbf{w}}
+\newcommand\bx{\mathbf{x}}
+\newcommand\by{\mathbf{y}}
+\newcommand\bphi{\bm{\phi}}
+\newcommand\bbE{\mathbb{E}}
+\newcommand\bbN{\mathbb{N}}
+\newcommand\bbR{\mathbb{R}}
+\newcommand\cD{\mathcal{D}}
+\newcommand\cG{\mathcal{G}}
+\newcommand\cN{\mathcal{N}}
+\newcommand\cP{\mathcal{P}}
+\newcommand\cS{\mathcal{S}}
+\newcommand\cX{\mathcal{X}}
+\newcommand\cov{\mathrm{cov}}
+\newcommand\var{\mathrm{var}}
+
+\newcommand\jakub[1]{{\color{red}JAKUB: #1}}
 
 \title{Optimising Experiments for Photometric Redshift Prediction}
 \author{Jakub Nabaglo, u5558578}
@@ -56,7 +84,136 @@ However, for some objects, we can approximate the size more directly. For closer
 For closer galaxies, we are able to observe the movements of stars inside the galaxy. When a star orbits the centre of a galaxy, the internal motion can cancel or amplify the star's line-of-sight velocity. Measuring the stars' velocities from redshift hence permits us to to study galaxy dynamics.
 
 \chapter{Regression on Photometric Redshifts}
+Let $f$ be an unobserved function mapping $\cX$ to $\bbR$, where $\cX \subseteq \bbR^d$ for some $d \in \bbN$. Regression is the task of reconstructing such $f$ from finitely many samples. As a complication, these samples may be noisy.
+
+More formally, we are given a set of $n$ samples\[
+    \cD = \{(\bx_1, y_1), \dots (\bx_n, y_n)\} \text{.}
+\] For each $i = 1, \dots, n$, \[
+    y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP \text{,}
+\] where $\cP$ is some probability distribution of the error.
+
+We wish to find a function $\hat f : \bbR^d \to \bbR$ that maximises the likelihood \[
+    p\left(\by \;\middle|\; \hat f, X\right) \text{,}
+\] where we define\[
+    \by \coloneqq \begin{bmatrix} y_1 \\ \vdots \\ y_n \end{bmatrix}
+    \text{ and }
+    X \coloneqq \begin{bmatrix} \bx_1^\intercal \\ \vdots \\ \bx_n^\intercal \end{bmatrix}
+\]
+
+The formalisation of this likelihood is dependent on our assumptions. For example, it will depend on whether we know $\cP$, we assume it, or it is given to us.
+
+In our case we will always assume that \[
+    \cP = \cN(0, \sigma^2)
+\] for some variance $\sigma^2$.
+
+\section{Linear Regression}
+
+Linear regression is the simplest regression model.
+
+Choose $m \in \bbN$. Choose $\phi_1, \dots, \phi_m$, each mapping $\cX$ to $\bbR$.
+
+We make the assumption that $\hat f$ is a linear combination of $\phi_1, \dots, \phi_m$. Then \[
+    \hat f(\bx) = \bphi^\top \bw \text{,}
+\] where we define \[
+    \bphi \coloneqq \begin{bmatrix} \phi_1(\bx) \\ \vdots \\ \phi_n(\bx) \end{bmatrix}\text{,}
+\] and where $\bw \in \bbR^m$ is the weights vector we wish to find.
+
+We also make the assumption that $p(\by \mid \hat f, X)$ depends only on how well $\hat f$ approximates $f$ at $x_1, \dots, x_n$. More formally, defining \[
+    \hat y_i \coloneqq f(\bx_i) \text{ for }i = 1, \dots, n\text{ and }
+    \hat\by \coloneqq \begin{bmatrix} \hat y_1 \\ \vdots \\ \hat y_n \end{bmatrix} \text{,}
+\] we have that
+\begin{align*}
+    p(\by \mid \hat f, X) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \\
+    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \text.
+\end{align*} We wish to find $\bw$ that maximises this quantity.
+
+\jakub{Compute negative log likelihood and derive optimal $\bw$.}
+
+\subsection{Regularisation}
+
+\section{Kernels}
+
+\subsection{Kernel Approximations}
+
+\subsubsection{Empirical Kernel Map}
+
+\subsection{Rational Quadratic Kernel}
+
+\subsection{Radial Basis Function Kernel}
+
+\subsection{Matern Kernel}
+
+
+\subsection{Kernelised Linear Regression}
+
+
+
+
 \section{Gaussian Processes}
+Consider the task of reconstructing a function $f: \bbR^d \to y$ from finitely many samples. As a complication, each target sample contains is noisy, with the noise having a variance $\sigma^2$.
+
+More formally, we are given a finite set of tuples\[
+    \{ (\vec{x_1}, y_1), \dots, (\vec{x_n}, y_n) \}\text,
+\] where \[
+    y_i \sim \cN\left(f(\vec{x_i}), \sigma^2\right)\text.
+\] We wish to be able to predict $f(\vec{x})$, given an arbitrary $\vec{x}$.
+
+A Gaussian process is a distribution over functions. Formally, a Gaussian process is defined as a `collection of random variables, any finite number of which have a joint Gaussian distribution.'\footnote{C. E. Rasmussen \& C. K. I. Williams, Gaussian Processes for Machine Learning, the MIT Press, 2006, ISBN 026218253X.}
+
+Defining \begin{align*}
+    m(\vec{x}) &\coloneqq \bbE[f(\vec{x})] \text, \\
+    k(\vec{x}, \vec{x}') &\coloneqq \bbE[(f(\vec{x}) - m(\vec{x}))(f(\vec{x'}) - m(\vec{x'}))],
+\end{align*} we write \[
+    f(\vec{x}) \sim \cG\cP(m(\vec{x}), k(\vec{x}, \vec{x'}))\text.
+\]
+
+We write \begin{align*}
+    \vec y &\coloneqq (y_1, \dots, y_n)^\intercal \text, \\
+    X &\coloneqq (\vec{x_1}, \dots, \vec{x_n})^\intercal \text, \\
+    K(X, X) &\coloneqq \begin{bmatrix}
+        k(\vec{x_1}, \vec{x_1}) & \cdots & k(\vec{x_1}, \vec{x_n}) \\
+        \vdots & \ddots & \vdots \\
+        k(\vec{x_n}, \vec{x_1}) & \cdots & k(\vec{x_n}, \vec{x_n})
+    \end{bmatrix}\text.
+\end{align*}
+
+Then $\cov(\vec{y}) = K(X, X) + \sigma_n^2I$.
+
+Let $\vec{f_*}$ be the test predictions and $X_*$ be the test inputs. Under the prior, we have that the joint distribution of the observed targets and of the function values at the test locations is \[
+    \begin{bmatrix}
+        \vec{y} \\ \vec{f_*}
+    \end{bmatrix} \sim \cN\left(\vec0, \begin{bmatrix}
+        K(X, X) + \sigma_n^2I & K(X, X_*) \\
+        K(X_*, X) & K(X_*, X_*)
+    \end{bmatrix}\right)\text.
+\]
+
+It can then be derived that \[
+    \vec{f_*} \mid X, \vec{y}, X_* \sim \cN\left(\overline{\vec{f_*}}, \cov(\vec{f_*})\right)\text,
+\] where \[
+    \overline{\vec{f_*}} = K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}\vec{y}\text,
+\] and \[
+    \cov(\vec{f_*}) = K(X_*, X_*) - K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}K(X, X_*)\text.
+\]
+
+The value for $\vec{f_*}$ that has the highest probability is the mean of the Gaussian from which it is sampled. Hence, we can predict that \begin{equation}
+    \label{eq:pred}
+    \vec{f_*} \approx K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}\vec{y}\text,
+\end{equation} with the variance for each element of the vector being\[
+    \var(\vec{f_*}_i) = \left( K(X_*, X_*) - K(X_*, X)[K(X, X) + \sigma_n^2I]^{-1}K(X, X_*) \right)_{ii}\text.
+\]
+
+One can observe from \cref{eq:pred} that the prediction is a linear combination of the observations $\vec{y}$. This is in contrast to linear regression, where the prediction is a linear combination of the inputs.
+
+\subsection{Equivalence to Kernelised Linear Regression}
+
+\section{Approximating Gaussian Processes}
+
+\subsection{My Favourite Approximation}
+
+\jakub{wtf is it called}
+
+\subsection{Linear Regression and KDE}
 
 
 \end{document}

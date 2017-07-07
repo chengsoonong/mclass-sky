@@ -4,17 +4,16 @@ import sys
 import matplotlib.pyplot as plt
 
 
-def main(path):
-    with open(path) as f:
-        vals = json.load(f)
+def main(paths):
+    vals = {}
+    for path in paths:
+        with open(path) as f:
+            vals_ = json.load(f)
+            vals.update(vals_)
 
-    sgd_x = vals['sgd_x']
-    sgd_y = vals['sgd_y']
-    gp_x = vals['gp_x']
-    gp_y = vals['gp_y']
-
-    plt.plot(sgd_x, sgd_y, label='SGD')
-    plt.plot(gp_x, gp_y, label='GP')
+    plt.plot(vals['sgd_x'], vals['sgd_y'], label='SGD')
+    plt.plot(vals['gp_x'], vals['gp_y'], label='GP')
+    plt.plot(vals['agp_x'], vals['agp_y'], label='AGP')
     plt.title('Learning curve')
     plt.xlabel('Training points')
     plt.ylabel('$R^2$')
@@ -23,5 +22,4 @@ def main(path):
 
 
 if __name__ == '__main__':
-    _, path = sys.argv
-    main(path)
+    main(sys.argv[1:])

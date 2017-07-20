@@ -10,6 +10,8 @@
 \usepackage{mathtools}
 \usepackage[separate-uncertainty=true]{siunitx}
 
+\allowdisplaybreaks
+
 \setmainfont{Palatino Linotype}
 
 \DeclareSIUnit{\parsec}{pc}
@@ -30,6 +32,9 @@
 \newcommand\cX{\mathcal{X}}
 \newcommand\cov{\mathrm{cov}}
 \newcommand\var{\mathrm{var}}
+
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
 
 \newcommand\jakub[1]{{\color{red}JAKUB: #1}}
 
@@ -113,23 +118,85 @@ Linear regression is the simplest regression model.
 Choose $m \in \bbN$. Choose $\phi_1, \dots, \phi_m$, each mapping $\cX$ to $\bbR$.
 
 We make the assumption that $\hat f$ is a linear combination of $\phi_1, \dots, \phi_m$. Then \[
-    \hat f(\bx) = \bphi^\top \bw \text{,}
+    \hat f(\bx) = \bphi(\bx)^\top \bw \text{,}
 \] where we define \[
-    \bphi \coloneqq \begin{bmatrix} \phi_1(\bx) \\ \vdots \\ \phi_n(\bx) \end{bmatrix}\text{,}
+    \bphi(\bx) \coloneqq \begin{bmatrix} \phi_1(\bx) \\ \vdots \\ \phi_n(\bx) \end{bmatrix}\text{,}
 \] and where $\bw \in \bbR^m$ is the weights vector we wish to find.
+
+Define also\[
+    \Phi \coloneqq \begin{bmatrix}
+        \bphi(\bx_1)^\top \\
+        \vdots \\
+        \bphi(\bx_n)^\top
+    \end{bmatrix} \text{.}
+\]
 
 We also make the assumption that $p(\by \mid \hat f, X)$ depends only on how well $\hat f$ approximates $f$ at $x_1, \dots, x_n$. More formally, defining \[
     \hat y_i \coloneqq f(\bx_i) \text{ for }i = 1, \dots, n\text{ and }
     \hat\by \coloneqq \begin{bmatrix} \hat y_1 \\ \vdots \\ \hat y_n \end{bmatrix} \text{,}
 \] we have that
-\begin{align*}
-    p(\by \mid \hat f, X) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \\
-    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \text.
-\end{align*} We wish to find $\bw$ that maximises this quantity.
+\begin{align}
+    p(\by \mid \hat f, X) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \\
+    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \text. \nonumber
+\end{align} We wish to find $\bw$ that maximises this likelihood. This is equivalent to minimising the negative log likelihood,\begin{align*}
+    -\log p(\by \mid \hat f, X) &= - \log \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \\
+    &= - \sum_{i = 1}^{n} \log\left(\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right)\right) \\
+    &= - \sum_{i = 1}^{n} \left(\log\frac{1}{\sqrt{2\pi\sigma^2}} + \log\exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right)\right) \\
+    &= - \sum_{i = 1}^{n} \left(-\frac{1}{2}\log\left(2\pi\sigma^2\right) -\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \\
+    &=  \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i = 1}^{n}\left(\hat y_i - y_i\right)^2 \text{.}
+\end{align*} Since $\frac{n}{2}\log(2\pi\sigma^2)$ is a constant, minimising $-\log p(\by \mid \hat f, X)$ is equivalent to minimising $\frac{1}{2\sigma^2}\sum_{i = 1}^{n}(\hat y_i - y_i)^2$. Further, since $1/\sigma^2$ is constant, this is equivalent to minimising $\frac12\sum_{i = 1}^{n}(\hat y_i - y_i)^2$.
 
-\jakub{Compute negative log likelihood and derive optimal $\bw$.}
+We call this our loss function and write\[
+    E(\bw) = \frac12\sum_{i = 1}^{n}(\hat y_i(\bw) - y_i)^2 \text{.}
+\] Note that we can compute it without knowing $\sigma^2$. For reasons that should be clear, this is called the \textit{sum of squares} error.
+
+The optimal weights vector is then given by \[
+    \argmax_{\bw} p(\by \mid \hat f(\bw), X) = \argmin_{\bw} E(\bw) \text{.}
+\]
+
+We can solve this analytically. We first note that \begin{align*}
+    E(\bw) &= \frac12\sum_{i = 1}^{n}(\bphi(\bx_i)^\top \bw - y_i)^2 \\
+    &= \frac12\sum_{i = 1}^{n}(\Phi \bw - \by)_i^2 \\
+    &= \frac12(\Phi \bw - \by)^\top(\Phi \bw - \by) \text{.}
+\end{align*} Setting the derivative to zero to find the minimum, \[
+    \frac{dE(\bw)}{d\bw} = \Phi^\top (\Phi\bw - \by) = \mathbf{0} \text{.}
+\] Solving, the minimum is \[
+    \bw  = \left(\Phi^\top\Phi\right)^{-1}\Phi^\top\by
+\]
 
 \subsection{Regularisation}
+Often we wish to limit the complexity of $\hat f$ to prevent overfitting. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
+    p(w_i) = \cN(w_i \mid 0, \mu)
+\] for some variance $\mu > 0$.
+
+We can then change the likelihood in \cref{eq:linearlikelihood} to account for this: \begin{align*}
+    p(\by \mid \hat f, X) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \prod_{i = 1}^{m}\cN(w_i \mid 0, \mu) \\
+    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \prod_{i = 1}^{m}\frac{1}{\sqrt{2\pi\mu}} \exp\left(-\frac{w_i^2}{2\mu}\right) \text{.}
+\end{align*}
+
+Computing the negative log likelihood,\[
+    -\log p(\by \mid \hat f, X) = \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{m}{2}\log\left(2\pi\mu\right) + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2 \text{.}
+\]
+
+Eliminating the constant terms, we find that \begin{align*}
+    \argmin_{\bw} - \log p\left(\by \;\middle|\; \hat f, X\right) &= \argmin_{\bw} \left(\frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2\right) \\
+    &= \argmin_{\bw} \frac{1}{\sigma^2}\left(\frac12\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{\lambda}{2}\sum_{i=1}^{m}w_i^2\right) \text{,}
+\end{align*} where we defined $\lambda \coloneqq \sigma^2 / \mu > 0$. Eliminating the positive multiplicative constant,\begin{align*}
+    \argmin_{\bw} - \log p\left(\by \;\middle|\; \hat f, X\right) &= \argmin_{\bw} \left(\frac12\sum
+    _{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{\lambda}{2}\sum_{i=1}^{m}w_i^2\right) \\
+    &= \argmin_{\bw} \left(\frac12\left(\hat \by - \by\right)^\top\left(\hat \by - \by\right) + \frac{\lambda}{2}\bw^\top\bw\right) \\
+    &= \argmin_{\bw} \left(\frac12\left(\Phi \bw - \by\right)^\top\left(\Phi \bw - \by\right) + \frac{\lambda}{2}\bw^\top\bw\right) \text.
+\end{align*}
+
+Our loss now depends on $\bw$ and $\lambda$ and is given by \[
+    E(\bw, \lambda) = \frac12\left(\Phi \bw - \by\right)^\top\left(\Phi \bw - \by\right) + \frac{\lambda}{2}\bw^\top\bw \text{,}
+\] where $\lambda$ is our \textit{regularisation constant}: a higher value implies a simpler model, reducing the likelihood of overfitting, but increasing the chance of underfitting.
+
+We can find $\bw$ that minimises the loss. Taking the derivative and setting it to $\mathbf{0}$,\[
+    \frac{dE(\bw, \lambda)}{d\bw} = \Phi^\top(\Phi\bw - \by) + \lambda \bw = \mathbf{0} \text{.}
+\] Solving,\[
+    \bw = \left(\Phi^\top\Phi + \lambda I\right)^{-1}\Phi^\top\by \text.
+\]
 
 \section{Kernels}
 

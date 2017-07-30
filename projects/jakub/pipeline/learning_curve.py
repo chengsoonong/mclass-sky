@@ -1,9 +1,9 @@
 import json
 import sys
-
+import os
 import numpy as np
-import sklearn.model_selection
 
+import sklearn.model_selection
 import model
 
 # Import splitter
@@ -15,6 +15,7 @@ TRAINING_SAMPLES_NUM = 1000000
 TESTING_SAMPLES_NUM = 50000
 
 MAX_AGP = 5000
+START = 500
 STEP = 100
 
 
@@ -47,7 +48,7 @@ def simulate_active_learning(strategy, repeat_cv,
         out_scores = [agp.score(test_X, test_y)]
         print('Done', STEP)
 
-        for s in range(2 * STEP, MAX_AGP + 1, STEP):
+        for s in range(START + STEP, MAX_AGP + 1, STEP):
             recommendations = strategy(agp, train_X)
             all_X = np.append(all_X, train_X[recommendations], 0)
             all_y = np.append(all_y, train_y[recommendations], 0)
@@ -73,7 +74,7 @@ def simulate_active_learning(strategy, repeat_cv,
         out_scores = [agp.score(test_X, test_y)]
         print('Done', STEP)
 
-        for s in range(2 * STEP, MAX_AGP + 1, STEP):
+        for s in range(START + STEP, MAX_AGP + 1, STEP):
             recommendations = strategy(agp, train_X)
             new_train_X = train_X[recommendations]
             new_train_y = train_y[recommendations]
@@ -109,9 +110,25 @@ def get_curve(data, strategy, repeat_cv, label):
 
     # TODO: Is this necessary or can json.dump handle np.ndarray?
     avg_plot_y = list(np.mean(plot_ys, axis=0))
-
     print('Finished', label)
     return {'x': plot_x, 'y': avg_plot_y, 'label': label}
+
+
+def json_append(fname, entry):
+    """If output file does not exist, create it.
+    Otherwise append to it (in a list)"""
+    if not os.path.isfile(fname):
+        a = []
+        a.append(entry)
+        with open(fname, mode='w') as f:
+            f.write(json.dumps(a, indent=2))
+    else:
+        with open(fname) as feedsjson:
+            feeds = json.load(feedsjson)
+
+        feeds.append(entry)
+        with open(fname, mode='w') as f:
+            f.write(json.dumps(feeds, indent=2))
 
 
 SETTINGS = [
@@ -120,6 +137,8 @@ SETTINGS = [
         # {'strategy': passive_strategy, 'repeat_cv': True, 'label': 'Passive with repeat CV'},
         # {'strategy': active_strategy, 'repeat_cv': True, 'label': 'Active with repeat CV'}
     ]
+
+
 def main(path_in, path_out):
     data = splitter.load(path_in)
     # assert data[0].shape[0] > 1000000
@@ -127,10 +146,9 @@ def main(path_in, path_out):
     X, _ = data
     X[:,1:] -= X[:,:-1]
 
-    curves = [get_curve(data, **params) for params in SETTINGS]
-
-    with open(path_out, 'w') as f:
-        json.dump(curves, f)
+    for params in SETTINGS:
+        curve = get_curve(data, **params)
+        json_append(path_out, curve)
 
 
 if __name__ == '__main__':

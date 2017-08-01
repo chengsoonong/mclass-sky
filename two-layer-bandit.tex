@@ -81,7 +81,7 @@
 \author[1]{Alasdair Tran}
 \author[2]{Cheng Soon Ong}
 \author[3]{Christian Wolf}
-\affil[1]{Australian National University}
+\affil[1]{Computational Media Lab, Australian National University}
 \affil[2]{Machine Learning Research Group, Data61, CSIRO, Australia}
 \affil[3]{Research School of Astronomy and Astrophysics, Australian National University}
 
@@ -123,14 +123,14 @@ Active learning considers the setting where the agent interacts with its
 environment to procure a training set. This contrasts with passive learning,
 where the agent passively receives i.i.d. samples from some underlying
 distribution. The environment is usually assumed to be infinite and the agent
-has to choose a location to query an oracle for a label. It is often assumed
+has to choose a location to query an oracle for a label. We often assume
 that there is no noise in the label, and hence there is no benefit of querying
 the same point again. In many practical applications, the environment is
-considered to be finite (but large). This is called the pool-based active
+considered to be finite (but large). This is called pool-based active
 learning.
 
 A bandit problem is a sequential allocation problem defined by a set of
-actions. The agent chooses an action at each time step, and the environment
+actions. The agent chooses an action at each time step and the environment
 returns a reward. The aim of the agent is to maximise reward. In basic
 settings, the set of actions is considered to be finite. There are three
 fundamental formalisations of the bandit problem, depending on the assumed
@@ -153,6 +153,8 @@ the observations are scalar real variables.
 
 Previous surveys~\cite{baram04, hsu15}.
 We are more comprehensive, and consider other types of combination.
+
+~\cite{konyushkova17}
 
 \section*{Problem Formulation}
 

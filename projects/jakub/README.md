@@ -18,8 +18,8 @@
 
  - `thesis/`: Start of the thesis, plus miscellaneous writing. Compile all .tex files with Xelatex.
 
- # Instructions
+# Instructions
 
- To generate a .h5 file from a .csv (or .csv.gz) file, use the splitter:
+To generate a .h5 file from a .csv (or .csv.gz) file, use the splitter:
 
- python splitter.py --to-hdf5 input.csv output.h5
+python splitter.py input.csv --to-hdf5 output.h5

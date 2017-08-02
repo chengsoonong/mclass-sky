@@ -1,3 +1,4 @@
+import astropy.table
 import numpy as np
 import pandas as pd
 
@@ -13,6 +14,14 @@ def load(path,
     if '.h5' in path or '.hdf' in path:
         # We have an HDF5 file
         data = pd.read_hdf(path)
+        return data, x_cols_l, y_col
+
+    elif '.fits' in path:
+        x_cols_l = ['umag', 'gmag', 'rmag', 'imag', 'zmag']
+        y_col = 'z'
+        dat = astropy.table.Table.read(path, format='fits')
+        data = dat.to_pandas()
+        data = data[x_cols_l + [y_col]]
         return data, x_cols_l, y_col
 
     else:
@@ -66,12 +75,22 @@ def save_as_hdf5(path, data):
 
 
 if __name__ == '__main__':
-    # Tiny test
+    # TODO: Use argparse if this gets any longer...
+
     import sys
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3 and sys.argv[2] == '--test':
+        # Tiny test
         data = load(sys.argv[1])
         data = split(data, 2, 1)
         print(data)
     elif len(sys.argv) == 4 and sys.argv[2] == '--to-hdf5':
         data, _, _ = load(sys.argv[1])
         save_as_hdf5(sys.argv[3], data)
+    elif len(sys.argv) == 3 and sys.argv[2] == '--time':
+        from time import time
+        start_time = time()
+        data = load(sys.argv[1])
+        total_time = time() - start_time
+        print('Took {}s'.format(total_time))
+    else:
+        print('No options specified.')

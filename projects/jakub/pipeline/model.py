@@ -1,17 +1,16 @@
-import itertools
-
 import numpy as np
 import sklearn.base
 import sklearn.kernel_approximation
 import sklearn.model_selection
 
+# Higher values improve accuracy by better
+# approximating the RBF kernel. However, the
+# algorithm is O(n^3) in this component.
+COMPONENTS = 100
 
-COMPONENTS = 100  # Higher values improve accuracy by better
-                  # approximating the RBF kernel. However, the
-                  # algorithm is O(n^3) in this component.
-
-RANDOM_STATE = 1209333128  # Initial random state. Can be whatever.
-                           # Explicitly set for reproducibility.
+# Initial random state. Can be whatever.
+# Explicitly set for reproducibility.
+RANDOM_STATE = 1209333128
 
 
 class AppxGPModel(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin):
@@ -76,7 +75,7 @@ class AppxGPModel(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin):
                              + self.PhiTPhi_alph @ woodbury
                                                  @ self.PhiTPhi_alph)
         self._weights = (self.PhiTy_alph
-                           - self.PhiTPhi_alph @ woodbury @ self.PhiTy_alph)
+                         - self.PhiTPhi_alph @ woodbury @ self.PhiTy_alph)
 
     def predict(self, X, return_std=False, return_cov=False):
         assert len(X.shape) == 2
@@ -120,9 +119,9 @@ class AppxGPModel(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin):
         for i in range(n):
             woodbury = np.linalg.inv(eye + self.PhiTPhi_alph)
             uncertainty = (eye
-                             - self.PhiTPhi_alph
-                             + self.PhiTPhi_alph @ woodbury
-                                                 @ self.PhiTPhi_alph)
+                           - self.PhiTPhi_alph
+                           + self.PhiTPhi_alph @ woodbury
+                           @ self.PhiTPhi_alph)
 
             key = (lambda j: Phi[j] @ uncertainty @ Phi[j])
             best = max(range(Phi.shape[0]), key=key)
@@ -162,7 +161,7 @@ class AppxGPModel(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin):
                              + self.PhiTPhi_alph @ woodbury
                                                  @ self.PhiTPhi_alph)
         self._weights = (self.PhiTy_alph
-                           - self.PhiTPhi_alph @ woodbury @ self.PhiTy_alph)
+                         - self.PhiTPhi_alph @ woodbury @ self.PhiTy_alph)
 
 
 class AppxGPModelWithCV(sklearn.base.BaseEstimator,
@@ -193,8 +192,8 @@ class AppxGPModelWithCV(sklearn.base.BaseEstimator,
         clf.fit(X, y)
         self.regressor = clf.best_estimator_
 
-    def predict(self, X):
-        return self.regressor.predict(X)
+    def predict(self, X, return_std=False, return_cov=False):
+        return self.regressor.predict(X, return_std, return_cov)
 
     def recommend(self, X, n=1):
         return self.regressor.recommend(X, n)

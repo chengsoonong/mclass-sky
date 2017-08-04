@@ -281,8 +281,7 @@ accuracy and the strategy ends up being no different from random sampling.
 
 We shall compare four algorithms that address this exploration-vs-exploitation
 problem. The oldest of these is Thompson sampling, \citep{thompson33},
-that solves the trade-off from a Bayesian
-perspective. We also
+that solves the trade-off from a Bayesian perspective. We also
 consider Optimally Confident UCB \citep{lattimore15} and KL-UCB \citep{cappe13},
 which were inspired by \citep{auer02}'s UCB algorithm. Finally we consider
 EXP3++ \citep{seldin14}. 
@@ -294,7 +293,14 @@ EXP3++ \citep{seldin14}.
 A drawback of the bandit methods is that at each iteration, we could only use
 information from one particular suggestion. Since most suggestions have
 requires little computation, we could in fact run all of them and somehow
-combine the rankings. This leads us to Social Choice Theory.
+combine the rankings. This leads us to Social Choice Theory. Originally developed
+by political scientists like Condorcet, the theory is concerned with how we
+aggregate preferences of a group of people to determine, for example, the winner
+of an election. It has the nice property that everyone (or every suggestion in our context)
+has a voice.
+
+Formally, we first use heuristic $r_i$ to assign a score to every candidate. From these
+score, we obtain a preference ordering $R_i$. Given any two candidates $x$ and $y$
 
 Pairwise majority rule.
 

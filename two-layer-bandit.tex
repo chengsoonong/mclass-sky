@@ -157,7 +157,7 @@ the observations are scalar real variables.
 There have been some attempts to combine active learning suggestions in the
 literature.~\cite{baram04} use the EXP4 multi-armed bandit algorithm to
 automate the selection process.~\cite{hsu15} use a slightly improved version
-EXP4.P, along with importance weighting to estimate the rewards using only the
+EXP4.P, along with importance weighting, to estimate the rewards using only the
 training set.
 
 This paper is more comprehensive. In addition to the bandit algorithms, we also
@@ -409,11 +409,11 @@ concerned with how we aggregate preferences of a group of people to determine,
 for example, the winner of an election. It has the nice property that everyone
 (or in our context, every active learning suggestion) has a voice.
 
-Formally, we first use heuristic $r_i$ to assign a score to every candidate.
-From these scores, we obtain a preference ordering $R_i$, where the higher a
-candidate is ranked corresponds to the one where the heuristic thinks it will
-give us more information upon labeling. If we have $s$ heuristics, we end up
-with a set of $s$ orderings called a profile, $\{ R_1, R_2, \ldots, R_s \}$.
+For each heuristic $r_i$, we assign a score to every candidate like before.
+From these scores, we obtain a preference ordering $R_i$, where higher-ranked
+candidate corresponds to the one where the heuristic thinks will give us more
+information upon labeling. If we have $s$ heuristics, we end up with a set of
+$s$ orderings, $\{ R_1, R_2, \ldots, R_s \}$, which we call a profile.
 
 The central question in Social Choice Theory is how we can come up with a
 preference aggregation rule. This is a function that maps the space of profiles
@@ -433,7 +433,7 @@ mean. An alternative approach is to use the geometric mean \citep{bedo14}, where
 instead of adding up the points, we multiple them.
 
 The third approach we consider is the Schulze method. To determine the winner,
-we first compute $d(i, j)$, the number of heuristics that prefer candidate $i$
+we first compute the number of heuristics that prefer candidate $i$
 to candidate $j$. We then define a path from candidate $i$ to $j$ of strength
 $p$, where the strength intuitively captures the minimum support for candidate
 $i$ along the path. The strength of the strong paths are then used to determine
@@ -446,6 +446,12 @@ of candidates.
 \section*{Empirical comparison}
 
 \subsection*{Description of datasets}
+
+We use 11 small datasets taken from the UCI Machine Learning Repository, along
+with one large dataset SDSS from the astronomical domain.
+Table~\ref{tab:datasets} shows the size and the number of classes in each
+dataset, along with the proportion of the samples belonging to the majority
+class and the maximum achievable accuracy rate.
 
 \begin{table}[h]
 	\caption {Overview of datasets} \label{tab:datasets}
@@ -488,8 +494,11 @@ pool size is 70\% of data up to a maximum of 10,000 examples. The test pool
 size is the remaining examples up to a maximum of 20,000. We use logistic
 regression with a Gaussian kernel approximation and an L2 loss.
 
-We shall use the mean posterior balanced accuracy (MPBA) as the reward. Refer
-to the appendix for the MPBA derivation.
+For the reward, we use the mean posterior balanced accuracy (MPBA) as the
+reward. Compared to a simple accuracy rate, This measure takes into account the
+class imbalance. Intuitively, we calculate the recall rate in each class and
+then take the average, giving each class an equal weight. Refer to the appendix
+for the MPBA derivation.
 
 Given that there are 12 datasets, each with 16 learning curves, we need a
 measure that can summarize in one number how well a particular suggestion or
@@ -506,13 +515,24 @@ benchmark passive curve.
 
 \section*{Discussion}
 
+Figure \ref{fig:strengths} shows the strengths of all policies that we
+consider, while Figure~\ref{fig:learning_curves} provides the learning curves
+of a selected few. With the exception of the wpbc dataset, most of the policies
+manage to beat passive learning. For the individual heuristics, the least
+confidence seems to perform very well while being very simple to calculate.
+This is consistent with have been observed in the literature. The best
+performing bandit algorithm is EXP3++, and if we want to use information form
+all heuristics, Borda count would be a good choice. On some datasets such as
+magic and pima, Borda count does better than EXP3++, although the effect is
+fairly small.
+
 In practice, we do not have a representative test set that can be used to
 compute the reward. Thus aggregation methods like Borda are are suitable than
-bandit algorithms such as Thompson sampling. In the absence of such a test set,
-\cite{hsu15} addressed this problem by using importance weighting to remove the
-bias in the accuracy on the training set. For this to work, however, we need to
-let every training example and active learning suggestion have a non-zero
-probability of being selected in every iteration.
+bandit algorithms such as EXP3++ and Thompson sampling. In the absence of such a
+test set, \cite{hsu15} addressed this problem by using importance weighting to
+remove the bias in the accuracy on the training set. For this to work, however,
+we need to let every training example and active learning suggestion have a
+non-zero probability of being selected in every iteration.
 
 
 
@@ -805,7 +825,5 @@ Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \m
 		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{g}}(ka) \\
 		&=& k \cdot f_{A_T \mid \bm{g}}(ka)
 	\end{IEEEeqnarray*}
-We shall use the posterior balanced accuracy rate throughout the experiments to
-report the overall performance of a classifier on a test set.
 
 \end{document}

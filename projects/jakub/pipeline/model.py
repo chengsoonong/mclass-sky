@@ -1,199 +1,151 @@
 import numpy as np
 import sklearn.base
-import sklearn.kernel_approximation
-import sklearn.model_selection
+import sklearn.linear_model
+import sklearn.metrics
 
-# Higher values improve accuracy by better
-# approximating the RBF kernel. However, the
-# algorithm is O(n^3) in this component.
-COMPONENTS = 100
-
-# Initial random state. Can be whatever.
-# Explicitly set for reproducibility.
-RANDOM_STATE = 1209333128
+from rbfappxgp import RBFAppxGPRegressor
 
 
-class AppxGPModel(sklearn.base.BaseEstimator, sklearn.base.RegressorMixin):
-    def __init__(self, **kwargs):
-        self._alpha = None
-        self._gamma = None
-        self.set_params(**kwargs)
-
-    def set_params(self, **kwargs):
-        if 'alpha' in kwargs:
-            self._alpha = kwargs['alpha']
-        if 'gamma' in kwargs:
-            self._gamma = kwargs['gamma']
-        return self
+class RBFAppxGPWithCVRegressor(sklearn.base.BaseEstimator,
+                               sklearn.base.RegressorMixin):
+    def __init__(self, n_components=100, random_state=None, folds=5):
+        self.rbf_gpr = RBFAppxGPRegressor()
+        self.set_params(n_components=n_components,
+                        random_state=random_state,
+                        folds=folds)
 
     def get_params(self, deep=True):
-        return {'alpha': self._alpha, 'gamma': self._gamma}
+        return dict(n_components=self.n_components,
+                    random_state=self.random_state,
+                    folds=self.folds)
 
-    def fit(self, X, y):
-        assert len(X.shape) == 2
-        assert len(y.shape) == 1
-        assert X.shape[0] == y.shape[0]
-        assert X.shape[1] > 0
+    def set_params(self, **kwargs):
+        if not kwargs.keys() <= {'n_components', 'random_state', 'folds'}:
+            raise ValueError()
+        if 'n_components' in kwargs:
+            self.rbf_gpr.set_params(n_components=kwargs['n_components'])
+            self.n_components = kwargs['n_components']
+        if 'random_state' in kwargs:
+            self.rbf_gpr.set_params(random_state=kwargs['random_state'])
+            self.random_state = kwargs['random_state']
+        if 'folds' in kwargs:
+            self.folds = kwargs['folds']
+        return self
 
-        self.d = X.shape[1]
+    def fit(self, X, y=None, fit_mean=True,
+                             fit_variance=False,
+                             X_preprocessed=False,
+                             reset=True):
+        if X_preprocessed and reset:
+            raise ValueError()
+        if reset and y is None:
+            raise ValueError()
+        if fit_mean and y is None:
+            raise ValueError()
 
-        self.kernel_appx = sklearn.kernel_approximation.RBFSampler(
-            n_components=COMPONENTS,
-            gamma=self._gamma,
-            random_state=RANDOM_STATE)
-        self.kernel_appx.fit(X)
+        if reset:
+            if self.random_state is not None:
+                np.random.seed(self.random_state + 1)
 
-        Phi = self.kernel_appx.transform(X)
+            self.fit_y_transform(y)
+            y = self._transform_y(y)
 
-        self.PhiTPhi_alph = Phi.T @ Phi / self._alpha
-        self.PhiTy_alph = Phi.T @ y / self._alpha
-        eye = np.eye(self.PhiTPhi_alph.shape[0])
+            self.X_mean = np.mean(X, axis=0)
+            self.X_std = np.std(X, axis=0)
 
-        woodbury = np.linalg.inv(eye + self.PhiTPhi_alph)
+            X = X - self.X_mean
+            X /= self.X_std
 
-        self._uncertainty = (eye
-                             - self.PhiTPhi_alph
-                             + self.PhiTPhi_alph @ woodbury
-                                                 @ self.PhiTPhi_alph)
-        self._weights = (self.PhiTy_alph
-                         - self.PhiTPhi_alph @ woodbury @ self.PhiTy_alph)
+            ard = sklearn.linear_model.ARDRegression(
+                n_iter=100,
+                threshold_lambda=float('inf'),
+                fit_intercept=False)
+            ard.fit(X, y)
 
-    def predict(self, X, return_std=False, return_cov=False):
-        assert len(X.shape) == 2
-        assert X.shape[1] == self.d
+            self.gammas = np.sqrt(ard.lambda_)
+            alpha = 1 / ard.alpha_
 
-        Phi = self.kernel_appx.transform(X)
-
-        y = Phi @ self._weights
-
-        if return_cov:
-            y_cov = Phi.T @ self._uncertainty @ Phi
-            return y, y_cov
-
-        elif return_std:
-            y_var = np.sum((Phi @ self._uncertainty) * Phi, axis=1)
-
-            y_std = np.sqrt(y_var)
-            return y, y_std
-
+            X /= self.gammas
+            self.rbf_gpr.set_params(alpha=alpha, gamma=1)
+            self.rbf_gpr.fit(X, y, fit_mean=fit_mean,
+                                   fit_variance=fit_variance,
+                                   reset=True)
         else:
-            return y
+            if y is not None:
+                y = self._transform_y(y)
+            X = self._transform_X(X, X_preprocessed=X_preprocessed)
+            self.rbf_gpr.fit(X, y,
+                             fit_mean=fit_mean,
+                             fit_variance=fit_variance,
+                             X_preprocessed=X_preprocessed,
+                             reset=False)
 
-    def recommend(self, X, n=1, batch_size=1):
-        assert len(X.shape) == 2
-        assert X.shape[0] >= n > 0
-        assert X.shape[1] == self.d
-        assert n >= batch_size
-        assert n % batch_size == 0
+    def predict(self, X, return_mean=True,
+                         return_std=False,
+                         return_cov=False,
+                         X_preprocessed=False):
+        X = self._transform_X(X, X_preprocessed=X_preprocessed)
+        prediction = self.rbf_gpr.predict(X, return_mean=return_mean,
+                                             return_std=return_std,
+                                             return_cov=return_cov,
+                                             X_preprocessed=X_preprocessed)
+        if return_mean:
+            if return_std or return_cov:
+                y, *rest = prediction
+                y = self._detransform_y(y)
+                return (y, *rest)
+            else:
+                y = prediction
+                y = self._detransform_y(y)
+                return y
+        else:
+            return prediction
 
-        Phi = self.kernel_appx.transform(X)
+    def _transform_X(self, X, X_preprocessed=False):
+        if X_preprocessed:
+            return X
+        else:
+            retval = X - self.X_mean
+            retval /= self.X_std
+            retval /= self.gammas
+            return retval
 
-        indices = np.array(range(X.shape[0]))
-        PhiTPhi_alph = self.PhiTPhi_alph
-        eye = np.eye(PhiTPhi_alph.shape[0])
-        retval = np.ndarray((n,), dtype=int)
+    def _transform_y(self, y):
+        y = y - self.y_mean
+        y /= self.y_std
+        return y
 
-        for i in range(n // batch_size):
-            woodbury = np.linalg.inv(eye + PhiTPhi_alph)
-            uncertainty = (eye
-                           - self.PhiTPhi_alph
-                           + self.PhiTPhi_alph @ woodbury
-                           @ self.PhiTPhi_alph)
+    def _detransform_y(self, y):
+        y = y * self.y_std
+        y += self.y_mean
+        return y
 
-            y_var = np.sum((Phi @ uncertainty) * Phi, axis=1)
-            best = np.argmax(y_var)
-            phi = Phi[best]
+    def preprocess_X(self, X):
+        return self.rbf_gpr.preprocess_X(self._transform_X(X))
 
-            PhiTPhi_alph += phi.T @ phi / self._alpha
-
-            retval[i] = indices[best]
-            indices = np.delete(indices, best, 0)
-            Phi = np.delete(Phi, best, 0)
-
+    def clone(self, clone_mean=True,
+                    clone_variance=True,
+                    deep_clone_transform=True):
+        retval = RBFAppxGPWithCVRegressor.__new__(RBFAppxGPWithCVRegressor)
+        retval.rbf_gpr = self.rbf_gpr.clone(
+            clone_mean=clone_mean,
+            clone_variance=clone_variance,
+            deep_clone_transform=deep_clone_transform)
+        self.folds = self.folds
+        self.random_state = self.random_state
         return retval
 
-    def add_fit(self, X, y):
-        assert len(X.shape) == 2
-        assert len(y.shape) == 1
-        assert X.shape[0] == y.shape[0]
-        assert X.shape[1] == self.d
+    def fit_X_transform(self, X):
+        self.rbf_gpr.fit_X_transform(X)
+        self.X_transform_fitted = True
 
-        Phi = self.kernel_appx.transform(X)
+    def fit_y_transform(self, y):
+        self.y_mean = np.mean(y)
+        self.y_std = np.std(y)
 
-        self.PhiTPhi_alph += Phi.T @ Phi / self._alpha
-        self.PhiTy_alph += Phi.T @ y / self._alpha
-        eye = np.eye(self.PhiTPhi_alph.shape[0])
-
-        woodbury = np.linalg.inv(eye + self.PhiTPhi_alph)
-
-        self._uncertainty = (eye
-                             - self.PhiTPhi_alph
-                             + self.PhiTPhi_alph @ woodbury
-                                                 @ self.PhiTPhi_alph)
-        self._weights = (self.PhiTy_alph
-                         - self.PhiTPhi_alph @ woodbury @ self.PhiTy_alph)
-
-
-class AppxGPModelWithCV(sklearn.base.BaseEstimator,
-                        sklearn.base.RegressorMixin):
-    def _find_normalization_constants(self, X, y):
-        self.X_mean = X.mean(axis=0)
-        self.X_std = 1#X.std(axis=0, ddof=1)
-        self.y_mean = 0#y.mean()
-        self.y_std = 1#y.std(ddof=1)
-
-    def _normalize_X(self, X):
-        return (X - self.X_mean) / self.X_std
-
-    def _normalize_y(self, y):
-        return (y - self.y_mean) / self.y_std
-
-    def _denormalize_y(self, y):
-        return y * self.y_std + self.y_mean
-
-    def __init__(self,
-                 ls_try_percentiles=(10, 25, 50, 75, 90),
-                 try_alphas=(1, .1, .01, .001, .0001, .00001, .000001)):
-        self._ls_try_percentiles = ls_try_percentiles
-        self._try_alphas = try_alphas
-
-    def fit(self, X, y):
-        self._find_normalization_constants(X, y)
-        X = self._normalize_X(X)
-        y = self._normalize_y(y)
-
-        np.random.seed(RANDOM_STATE + 1)
-        X_samples = np.random.choice(X.shape[0], (2, X.shape[0]))
-        distances = np.linalg.norm(X[X_samples[0]] - X[X_samples[1]], axis=1)
-
-        assert distances.shape == (X.shape[0],)
-
-        length_scales = [np.percentile(distances, p)
-                         for p in self._ls_try_percentiles]
-
-        params = {'alpha': self._try_alphas, 'gamma': length_scales}
-        clf = sklearn.model_selection.GridSearchCV(
-            AppxGPModel(),
-            params,
-            cv=sklearn.model_selection.KFold(n_splits=5,
-                                             shuffle=True,
-                                             random_state=RANDOM_STATE + 2))
-        clf.fit(X, y)
-        self.regressor = clf.best_estimator_
-
-    def predict(self, X, return_std=False, return_cov=False):
-        X = self._normalize_X(X)
-        y, *rest = self.regressor.predict(X,
-                                          return_std=return_std,
-                                          return_cov=return_cov)
-        y = self._denormalize_y(y)
-        return (y, *rest)
-
-    def recommend(self, X, n=1):
-        X = self._normalize_X(X)
-        return self.regressor.recommend(X, n)
-
-    def add_fit(self, X, y):
-        X = self._normalize_X(X)
-        y = self._normalize_y(y)
-        self.regressor.add_fit(X, y)
+    def score(self, X, y, sample_weight=None, X_preprocessed=False):
+        return sklearn.metrics.r2_score(
+            y,
+            self.predict(X, X_preprocessed=X_preprocessed),
+            sample_weight=sample_weight,
+            multioutput='variance_weighted')

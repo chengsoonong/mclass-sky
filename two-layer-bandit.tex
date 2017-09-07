@@ -16,6 +16,7 @@
 \usepackage{bm} % bold math symbols
 \usepackage{hyperref} % create hyperlinks
 \usepackage[labelfont=bf]{caption} % figure captions
+\usepackage{subcaption}
 \usepackage[boxed]{algorithm2e} % provide environment and layout to write pseudo-code
 \usepackage{IEEEtrantools} % more flexible formatting of equations
 \usepackage{mathtools} % use DeclarePairedDelimiterXPP
@@ -390,7 +391,7 @@ $\sigma^2$, the chosen heuristic would be
 
 \subsubsection*{EXP3++}
 
-Finally we consider \citep{seldin14}'s EXP3++ algorithm, which is shown to
+Finally we consider \cite{seldin14}'s EXP3++ algorithm, which is shown to
 perform well in both the stochastic (where each heuristic has an unknown reward
 distribution) and adversarial regime (where there is no restriction on how the
 sequence of rewards is generated).
@@ -410,10 +411,12 @@ for example, the winner of an election. It has the nice property that everyone
 (or in our context, every active learning suggestion) has a voice.
 
 For each heuristic $r_i$, we assign a score to every candidate like before.
-From these scores, we obtain a preference ordering $R_i$, where higher-ranked
-candidate corresponds to the one where the heuristic thinks will give us more
-information upon labeling. If we have $s$ heuristics, we end up with a set of
-$s$ orderings, $\{ R_1, R_2, \ldots, R_s \}$, which we call a profile.
+From these scores, we obtain a preference ordering $R_i$. This is a binary
+relation, where for any two candidates $x$ and $y$, $xR_iy$ and not $yR_ix$
+mean that $x$ is strictly better $y$. That is, the heuristic $r_i$ thinks $x$
+will give us more information upon labeling. If we have $s$ heuristics, we end
+up with a set of $s$ orderings, $\{ R_1, R_2, \ldots, R_s \}$, which we call a
+profile.
 
 The central question in Social Choice Theory is how we can come up with a
 preference aggregation rule. This is a function that maps the space of profiles
@@ -441,6 +444,40 @@ the winner. The Schulze method is computational expensive, as it requires us to
 examine every pair. Even with the most efficient implementation using a variant
 of the Floyd–Warshall algorithm, it still takes quadratic time to the number
 of candidates.
+
+\begin{table}[h]
+	\caption {Example of Social Choice Theory algorithms with four candidates
+	          and three heuristics} \label{tab:choice}
+	\centering
+	\begin{subtable}{.5\textwidth}
+		\centering
+		\begin{tabular}{lrrrr}
+			\toprule
+			{Heuristic}  &  Ranking \\
+			\midrule
+				$r_1$ & B A C D \\
+				$r_2$ & A C B D \\
+				$r_3$ & B D C A \\
+			\bottomrule
+		\end{tabular}
+		\caption{Individual Rankings}
+	\end{subtable}
+
+	\begin{subtable}{.5\textwidth}
+		\centering
+		\begin{tabular}{lrrrr}
+			\toprule
+			{Candidate}  &  Borda count & Geometric mean \\
+			\midrule
+				A & $3 + 4 + 1 = 8$ & $3 * 4 * 1 = 12$ \\
+				B & $4 + 2 + 4 = 10$ & $4 * 2 * 4 = 32$ \\
+				C & $2 + 3 + 2 = 7$ & $2 * 3 * 2 = 12$ \\
+				D & $1 + 1 + 3 = 5$ & $1 * 1 * 3 = 3$ \\
+			\bottomrule
+		\end{tabular}
+		\caption{Aggregated Ranking}
+	\end{subtable}
+\end{table}
 
 
 \section*{Empirical comparison}
@@ -489,13 +526,29 @@ class and the maximum achievable accuracy rate.
 \end{table}
 
 \subsection*{Experimental Setup}
-We use a 10-fold stratified shuffled split cross validation. The unlabelled
-pool size is 70\% of data up to a maximum of 10,000 examples. The test pool
-size is the remaining examples up to a maximum of 20,000. We use logistic
-regression with a Gaussian kernel approximation and an L2 loss.
+For each dataset, we build a classifier with the classes being the output. We
+use a 10-fold stratified shuffled split cross validation. The stratified
+strategy means that the proportion of the classes remain constant in each
+split. We standardise all features to have zero mean and unit variance.
+Although all examples has already been labelled, we simulate active learning by
+assuming that certain examples do not have any labels. In particular, the
+unlabelled pool size is 70\% of data up to a maximum of 10,000 examples. The
+test pool consists of the remaining examples up to a maximum of 20,000 --- we
+assume labels are available here. We use logistic regression with a Gaussian
+kernel approximation and an L2 loss. In the binary case, the loss function is
+\begin{IEEEeqnarray*}{lCl}
+    L &=& \dfrac{1}{2} w^T w + C \sum_{i = 1}^n \ln\Big(1 + \exp(-y_i(f(X_i)^T w))\Big)
+\end{IEEEeqnarray*}
+where the first term is the regularisation term to ensure that the weight
+vector is not too large, and $C$ is another regularisation hyperparameter which
+we set to 1000. To speed up training time, we approximate the feature map of
+the Gaussian kernel, transforming the raw features $X_i$ into a fixed
+100-dimensional feature vector $f(X_i)$. In the multiclass case, we use the
+One-vs-Rest strategy, where for every class, we build a binary classifier that
+determines whether a particular example is in that class or not.
 
 For the reward, we use the mean posterior balanced accuracy (MPBA) as the
-reward. Compared to a simple accuracy rate, This measure takes into account the
+reward. Compared to a simple accuracy rate, this measure takes into account the
 class imbalance. Intuitively, we calculate the recall rate in each class and
 then take the average, giving each class an equal weight. Refer to the appendix
 for the MPBA derivation.
@@ -510,8 +563,14 @@ strength of an active learner or policy, relative to passive learning, as
     	1 - \dfrac{\sum_{t=1}^{n}\big(\MPBA(\max) - \MPBA(h, t)\big)}
     	{\sum_{t=1}^{n}\big(\MPBA(\max) - \MPBA(\passive, t)\big)}
 \end{IEEEeqnarray*}
-Intuitively, this relates to the area between a target learning curve and the
-benchmark passive curve.
+where $\MPBA(\max)$ is the accuracy achieved from using all labelled data in
+the training set, and $\MPBA(h, t)$ is the accuracy achieved using the first
+ $t$ examples selected by heuristic $h$. The summation can then be thought of as
+the area between the best possible performance line and the learning curve of
+$h$. The better the heuristic is, the faster it would approach this maximum
+line, and thus the smaller the area. Finally, so that we can compare the
+performance across datasets, we normalise the measure with the area obtained
+from using just passive learning.
 
 \section*{Discussion}
 

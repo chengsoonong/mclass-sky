@@ -10,7 +10,7 @@
 \documentclass[fleqn,10pt,lineno]{wlpeerj} % for journal submissions
 % \documentclass[fleqn,10pt]{wlpeerj} % for preprint submissions
 
-\newcommand{\cheng}[1]{\textcolor{green}{\textbf{Cheng: }{\footnotesize #1}}}
+\newcommand{\cheng}[1]{\textcolor{orange}{\textbf{Cheng: }{\footnotesize #1}}}
 \newcommand{\alasdair}[1]{\textcolor{blue}{\textbf{Alasdair: }{\footnotesize #1}}}
 
 \usepackage{bm} % bold math symbols
@@ -153,19 +153,6 @@ called exact design; otherwise it is called approximate or continuous design.
 The environment is assumed to be infinite (e.g. $R^d$) and the observations are
 scalar real variables.
 
-\section*{Related Works}
-
-There have been some attempts to combine active learning suggestions in the
-literature.~\cite{baram04} use the EXP4 multi-armed bandit algorithm to
-automate the selection process.~\cite{hsu15} study an improved version
-EXP4.P, along with importance weighting to estimate the rewards using only the
-training set.
-
-In this paper, we try to be more comprehensive. In addition to the key bandit
-algorithms, which includes Thompson sampling, UCB, and EXP3++, we also consider
-social choice theory to make use of all information from the suggestions at
-every step.
-
 \section*{Problem Formulation}
 
 \subsection*{Active Learning Suggestions}
@@ -261,7 +248,7 @@ margin.~\cite{mccallum98} offer an alternative disagreement measure which
 involves picking the candidate with the largest expected Kullback-Leibler (KL)
 divergence from the average.
 
-\subsection*{Combining Suggestions with Bandit Theory}
+\subsection*{Related Work}
 
 Out of the five heuristics discussed, how do we know which one is the optimal,
 anyway? There have been some attempts in the literature to do a theoretical
@@ -272,6 +259,21 @@ our QBB heuristics) guarantees an exponential decrease in the prediction error
 with the training size, but only when there is no noise. Thus whether any of
 these heuristics is guaranteed to beat random sampling is still an open
 question.
+
+There have been some attempts to combine active learning suggestions in the
+literature.~\cite{baram04} use the EXP4 multi-armed bandit algorithm to
+automate the selection process.~\cite{hsu15} study an improved version
+EXP4.P, along with importance weighting to estimate the rewards using only the
+training set.
+
+In this paper, we try to be more comprehensive. In addition to the key bandit
+algorithms, which includes Thompson sampling, UCB, and EXP3++, we also consider
+social choice theory to make use of all information from the suggestions at
+every step.
+
+\cheng{some smoothing required}
+
+\subsection*{Combining Suggestions with Bandit Theory}
 
 To help us automatically choose the optimal heuristic, we now turn our
 attention to the multi-armed bandit problem in probability theory. The

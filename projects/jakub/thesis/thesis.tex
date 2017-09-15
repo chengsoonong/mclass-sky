@@ -185,6 +185,36 @@ We can solve this analytically. We first note that \begin{align*}
     \bw  = \left(\Phi^\top\Phi\right)^{-1}\Phi^\top\by
 \]
 
+\subsubsection{Feature differences}
+
+We show that create new features that are pairwise differences between existing features does not affect a linear model since the same predictor can be found using the original features.
+
+Consider a dataset with $n$ features. Let $\mathbf{x}$ be the $n$-dimensional feature vector.
+
+Let $\mathbf{D}$ be an $n \times n$ matrix such that \[
+    \mathbf{D}_{ij} \coloneqq \mathbf{x}_i - \mathbf{x}_j \text{.}
+\]
+
+Let $\bm{\alpha}$ be an $n$-dimensional weights vector for $\mathbf{x}$ and let $\mathcal{B}$ be an $n \times n$ weights matrix for $\mathbf{D}$. Let our predictor be\[
+    y = \bm{\alpha} \cdot \mathbf{x} + \langle \mathcal{B}, \mathbf{D} \rangle_F \text{,}\label{eq:pred1}\tag{$*$}
+\] where $\langle \mathcal{B}, \mathbf{D} \rangle_F$ is a Frobenius inner product.
+
+Let $\hat{\bm{\alpha}}$ be an $n$-dimensional vector such that \[
+    \hat{\bm{\alpha}}_i \coloneqq \bm{\alpha}_i + \sum_{j=1}^n \mathcal{B}_{ij} - \sum_{j=1}^n \mathcal{B}_{ji} \text{.}
+\] We show that a predictor defined as \[
+    y = \hat{\bm{\alpha}} \cdot \mathbf{x}
+\] is equivalent to \eqref{eq:pred1}.
+
+We have that\begin{align*}
+    \hat{\bm{\alpha}} \cdot \mathbf{x} &= \sum_{i=1}^n \mathbf{x}_i\left( \bm{\alpha}_i + \sum_{j=1}^n \mathcal{B}_{ij} - \sum_{j=1}^n \mathcal{B}_{ji} \right) \\
+    &= \sum_{i=1}^n \mathbf{x}_i\bm{\alpha}_i +  \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ij} - \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ji} \\
+    &= \sum_{i=1}^n \mathbf{x}_i\bm{\alpha}_i +  \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ij} - \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_j \mathcal{B}_{ij} \\
+    &= \bm{\alpha}\cdot\mathbf{x} +  \sum_{i=1}^n \sum_{j=1}^n \mathcal{B}_{ij} \left(\mathbf{x}_i - \mathbf{x}_j \right) \\
+    &= \bm{\alpha}\cdot\mathbf{x} + \langle \mathcal{B}, \mathbf{D} \rangle_F
+\end{align*} as desired.
+
+Note that this does not apply to non-linear models where a nonlinear transformation is applied to $\mathbf{D}$.
+
 \subsection{Regularisation}
 Often we wish to limit the complexity of $\hat f$ to prevent overfitting. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
     p(w_i) = \cN(w_i \mid 0, \mu)
@@ -234,6 +264,63 @@ We can find $\bw$ that minimises the loss. Taking the derivative and setting it 
 
 \subsection{Kernelised Linear Regression}
 
+Consider the problem of regression. We are given a function $f : \bbR^d \to \bbR$ for some $d \in \bbN$. We are also given $n$ points $\bx_1, \dots, \bx_n$ for which we know the values. In other words, we know $y_1, \dots, y_n$ where \[
+    y_i \coloneqq f(\bx_i)\text{ for }i = 1, \dots, n\text{.}
+\]
+
+Let $\phi : \bbR^d \to \bbR^r$ be the feature map. If we are performing linear regression, then we want to find $\bw \in \bbR^r$ such that \[
+    f(\bx) \approx \phi(\bx)^T \bw \text{.}
+\]
+
+Define \[
+    \Phi \coloneqq \begin{bmatrix}
+        \phi(\bx_1)^T \\
+        \vdots \\
+        \phi(\bx_n)^T \\
+    \end{bmatrix} \text{ and }\by \coloneqq \begin{bmatrix}
+        y_1 \\
+        \vdots \\
+        y_n
+    \end{bmatrix} \text{.}
+\]
+
+We wish to use the least-squares error with $\ell_2$ regularisation. We can define the error function to be $E : \bbR^r \to [0, \infty)$ such that \[
+    E(\bw) \coloneqq \frac{1}{2}\norm{\by - \Phi\bw}_2^2 + \frac{\lambda}{2} \norm{\bw}_2^2 \text{,}
+\] where $\lambda > 0$ is the regularisation constant.
+
+We know that $\bw \in \spn\{\phi(\bx_1), \dots, \phi(\bx_n)\}$. Hence, there exists $\bv \in \bbR^n$ such that \[
+    \bw = \Phi^T\bv \text{.}
+\]
+
+We can rewrite the error function as $E : \bbR^n \to [0, \infty)$ such that \[
+    E(\bv) = \frac{1}{2}\norm{\by - \Phi\Phi^T\bv}_2^2 + \frac{\lambda}{2} \norm{\Phi^T\bv}_2^2 \text{.}
+\] Letting $K \coloneqq \Phi\Phi^T$ be the kernel matrix,\[
+    E(\bv) = \frac{1}{2}\norm{\by - K\bv}_2^2 + \frac{\lambda}{2} \bv^T K \bv \text{.}
+\] Then $k(\bx, \bx') \coloneqq \phi(\bx) \cdot \phi(\bx')$ is our kernel function.
+
+Differentiating, we find \begin{align*}
+    E'(\bv) &= -K^T(\by - K\bv) + \frac{\lambda}{2} (K + K^T)\bv \\
+    &= K(K\bv - \by) + \lambda K\bv \text{,}
+\end{align*} since $K$ is symmetric. The minimum exists at $E'(\bv) = 0$. Simplifying, we find,\[
+    K(K + \lambda I)\bv = K\by \text{.}
+\] There may be multiple solutions. One solution is at \[
+    \bv = (K + \lambda I)^{-1}\by \text{.}
+\]
+
+For a given input $\bx$, the prediction is then \begin{align*}
+    f(\bx) &\approx \phi(\bx)^T \bw \\
+    &= \phi(\bx)^T \Phi \bv \\
+    &= \phi(\bx)^T \Phi (K + \lambda I)^{-1}\by \\
+    &= K_* (K + \lambda I)^{-1}\by \text{,}
+\end{align*} where we define \[
+    K_* \coloneqq \phi(\bx)^T \Phi \text{.}
+\]
+
+This is very similar to Gaussian Process regression, where the prediction is \[
+    f(\bx) = K_*\left(K + \sigma^2 I\right)^{-1}\by \text{.}
+\]
+
+Kernelised linear regression is then equivalent to Gaussian Process regression when $\lambda = \sigma^2$.
 
 
 

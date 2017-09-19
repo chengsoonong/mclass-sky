@@ -38,10 +38,12 @@
 \DeclareSIUnit{\parsec}{pc}
 
 % Define common symbols
+\newcommand\bv{\mathbf{v}}
 \newcommand\bw{\mathbf{w}}
 \newcommand\bx{\mathbf{x}}
 \newcommand\by{\mathbf{y}}
 \newcommand\bphi{\bm{\phi}}
+\newcommand\bvarphi{\bm{\varphi}}
 \newcommand\bbE{\mathbb{E}}
 \newcommand\bbN{\mathbb{N}}
 \newcommand\bbR{\mathbb{R}}
@@ -54,8 +56,11 @@
 \newcommand\cov{\mathrm{cov}}
 \newcommand\var{\mathrm{var}}
 
+\newcommand\norm[1]{\left\|#1\right\|}
+
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator{\spn}{span}
 
 \newcommand\jakub[1]{{\color{red}JAKUB: #1}}
 
@@ -148,7 +153,7 @@ Define also\[
     \Phi \coloneqq \begin{bmatrix}
         \bphi(\bx_1)^\top \\
         \vdots \\
-        \bphi(\bx_n)^\top
+        \bphi(\bx_m)^\top
     \end{bmatrix} \text{.}
 \]
 
@@ -213,7 +218,7 @@ We have that\begin{align*}
     &= \bm{\alpha}\cdot\mathbf{x} + \langle \mathcal{B}, \mathbf{D} \rangle_F
 \end{align*} as desired.
 
-Note that this does not apply to non-linear models where a nonlinear transformation is applied to $\mathbf{D}$.
+Note that this does not apply to non-linear models where a nonlinear transformation is applied to $\mathbf{D}$. It also does not necessarily hold when regularisation is applied to the weights.
 
 \subsection{Regularisation}
 Often we wish to limit the complexity of $\hat f$ to prevent overfitting. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
@@ -251,15 +256,45 @@ We can find $\bw$ that minimises the loss. Taking the derivative and setting it 
 
 \section{Kernels}
 
+A kernel is a function $k : \bbR^d \times \bbR^d \to \bbR$ such that \[
+    k(\bx, \bx') = \langle \bvarphi\left(\bx\right), \bvarphi\left(\bx'\right)\rangle \text{,}
+\] where $\bvarphi : \bbR^d \to H$ maps our feature space $\bbR^d$ to a real Hilbert space $H$. Intuitively then, we can think of a kernel as an inner product in a different space.
+
+Like other inner products, a kernel can be thought of as a similarity measure. For example, $k(\bx, \bx') = 0$, then $\bx$ and $\bx'$ are orthogonal in $H$, and thus not similar at all by our definition.
+
+Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly finite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
+
+\subsection{Examples of Kernels}
+
+\subsubsection{Gaussian Kernel}
+
+The Gaussian Kernel is defined by \[
+    k(\bx, \bx') \coloneqq \exp\left( - \frac{\norm{\bx - \bx'}^2}{2\sigma^2} \right) \text{,}
+\] where the hyperparamerer $\sigma$ is known as the \textit{length scale}.
+
+An alternative definition involves length scales $\sigma_1, \dots, \sigma_d$, permitting us to set the length independently for each axis. The definition is \[
+    k(\bx, \bx') \coloneqq \exp\left( - \frac{1}{2}\left(\bx - \bx'\right)^T\Sigma^{-1}\left(\bx - \bx'\right) \right) \text{,}
+\] where \[
+    \Sigma = \begin{bmatrix}
+        \sigma_1^2 & & \makebox(0,0){\text{\huge0}} \\
+        & \ddots & \\
+        \mbox{\huge 0} & & \sigma_d^2
+    \end{bmatrix} \text{.}
+\]
+
+\subsubsection{Rational-Quadratic Kernel}
+
+The Rational-Quadratic Kernel is defined by \[
+    k(\bx, \bx') \coloneqq \left(1 + \frac{1}{2\gamma}\norm{\bx - \bx'}^2\right)^{-\beta} \text{,}
+\] where $\gamma > 0$ is the \textit{length scale} and $\beta > 0$ is the \textit{shape parameter}. It can be thought of as an infinite sum of gaussian kernels.
+
+Setting $\gamma = \beta \gamma_0$ and letting limiting $\beta \to \infty$ yields a Gaussian kernel with length scale $\gamma_0$.
+
+\subsubsection{Matern Kernel}
+
 \subsection{Kernel Approximations}
 
 \subsubsection{Empirical Kernel Map}
-
-\subsection{Rational Quadratic Kernel}
-
-\subsection{Radial Basis Function Kernel}
-
-\subsection{Matern Kernel}
 
 
 \subsection{Kernelised Linear Regression}

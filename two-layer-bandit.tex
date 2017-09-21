@@ -248,7 +248,7 @@ margin.~\cite{mccallum98} offer an alternative disagreement measure which
 involves picking the candidate with the largest expected Kullback-Leibler (KL)
 divergence from the average.
 
-\subsection*{Related Work}
+\subsection*{Combining Suggestions with Bandit Theory}
 
 Out of the five heuristics discussed, how do we know which one is the optimal,
 anyway? There have been some attempts in the literature to do a theoretical
@@ -259,21 +259,6 @@ our QBB heuristics) guarantees an exponential decrease in the prediction error
 with the training size, but only when there is no noise. Thus whether any of
 these heuristics is guaranteed to beat random sampling is still an open
 question.
-
-There have been some attempts to combine active learning suggestions in the
-literature.~\cite{baram04} use the EXP4 multi-armed bandit algorithm to
-automate the selection process.~\cite{hsu15} study an improved version
-EXP4.P, along with importance weighting to estimate the rewards using only the
-training set.
-
-In this paper, we try to be more comprehensive. In addition to the key bandit
-algorithms, which includes Thompson sampling, UCB, and EXP3++, we also consider
-social choice theory to make use of all information from the suggestions at
-every step.
-
-\cheng{some smoothing required}
-
-\subsection*{Combining Suggestions with Bandit Theory}
 
 To help us automatically choose the optimal heuristic, we now turn our
 attention to the multi-armed bandit problem in probability theory. The
@@ -297,8 +282,12 @@ always exploiting, we could miss out on the optimal heuristic. On the other
 hand, if we explore too much, it might take a long time to reach the desired
 accuracy and the strategy ends up being no different from random sampling.
 
-We shall compare four algorithms that address this exploration-vs-exploitation
-problem.
+There have been some attempts to combine active learning suggestions in the
+literature.~\cite{baram04} use the EXP4 multi-armed bandit algorithm to
+automate the selection process.~\cite{hsu15} study an improved version
+EXP4.P, along with importance weighting to estimate the rewards using only the
+training set. In this paper, we shall compare four algorithms that address this
+exploration-vs-exploitation problem.
 
 \subsubsection*{Thompson Sampling}
 

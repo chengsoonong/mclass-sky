@@ -135,9 +135,9 @@ learning.
 
 A bandit problem is a sequential allocation problem defined by a set of
 actions. The agent chooses an action at each time step and the environment
-returns a reward. The aim of the agent is to maximize reward. In basic
-settings, the set of actions is considered to be finite. There are three
-fundamental formalization of the bandit problem, depending on the assumed
+returns a reward. The aim of the agent is to maximize the sum of the rewards.
+In basic settings, the set of actions is considered to be finite. There are
+three fundamental formalization of the bandit problem, depending on the assumed
 nature of the reward process: stochastic, adversarial and Markovian. In all
 three settings the reward is uncertain, and hence the agent may have to play a
 particular action repeatedly. The agent is compared to a static agent which has
@@ -174,10 +174,20 @@ feature vector $\bm{x}$ and the current hypothesis $h$. Coming up with a good
 rule is itself a difficult problem, but there have been many attempts to derive
 good heuristics. Five common ones are listed in Table~\ref{tab:heuristics}.
 They roughly fall into two categories: uncertainty sampling and version space
-reduction.
+reduction. There are also heuristics that require minimizing the variance
+or the classifier certainty of the model \citep{schein07}, but we do not
+consider them in this paper as they are computationally inefficient in
+practice.
 
 \begin{table}[h]
-	\caption {Summary of active learning heuristics used in our experiments}
+	\caption {Summary of active learning heuristics used in our experiments,
+			  where $p(y | \bm{x}; h)$ is the probability of that an object
+			  with feature vector $\bm{x}$ has label $y$ under hypothesis $h$,
+			  $\B$ is the set of $B$ hypotheses $\{h_1, h_2, ..., h_B\}$,
+			  $\Y$ is the set of possible labels, $\Ecal$ is a random subset of
+			  the unlabelled set $U$, $D_{\mathrm{KL}}(p\|q)$ is the
+			  Kullback-Leibler divergence of $p$ from $q$, and $p_\B$ is the
+			  average prediction distribution of $\B$.}
 	\label{tab:heuristics}
 	\centering
 	\begin{tabular}{lll}
@@ -186,7 +196,7 @@ reduction.
 		\midrule
         Least Confidence &
 			$\argmax_{x \in \Ecal}
-			\left\{ \max_{y \in \Y} p(y | \bm{x}; \B) \right\}$ \\
+			\left\{ \max_{y \in \Y} p(y | \bm{x}; h) \right\}$ \\
 		Highest Entropy &
 			$\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
             \log \big[ p(y | \bm{x}; h) \big] \right\}$
@@ -360,9 +370,12 @@ an optimistic guess) and pick the one with the highest bound. If our guess
 turns out to be wrong, the upper bound of the chosen heuristic will decrease,
 making it less likely to get selected in the next iteration.
 
-We shall consider two algorithms in the UCB family. They differ only in the way
-the upper bound is calculated. In Optimally Confident UCB, \cite{lattimore15}
-suggests that we pick the heuristic that maximizes the following upper bound:
+There are many different algorithms in the UCB family, e.g. UCB1-TUNED \& UCB2
+\citep{auer02finite}, V-UCB \citep{audibert09}, OC-UCB \cite{lattimore15}, and
+kl-UCB \citep{cappe13}. They differ only in the way the upper bound is
+calculated. In this paper, we only consider the last two. In Optimally
+Confident UCB (OC-UCB), \cite{lattimore15} suggests that we pick the heuristic
+that maximizes the following upper bound:
     \begin{IEEEeqnarray*}{lCl}
 		r_* = \argmax_{i} \overline{\rho_i} +
 			  \sqrt{\dfrac{\alpha}{T_i(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
@@ -383,10 +396,15 @@ $\sigma^2$, the chosen heuristic would be
 
 \subsubsection*{EXP3++}
 
-Finally we consider \cite{seldin14}'s EXP3++ algorithm, which is shown to
-perform well in both the stochastic (where each heuristic has an unknown reward
-distribution) and adversarial regime (where there is no restriction on how the
-sequence of rewards is generated).
+The EXP3 algorithm was first developed by \cite{auer2002nonstochastic} to solve
+the non-stochastic bandit problem where we make no statistical assumption about
+the reward distribution. This is also often known as the adversarial setting,
+where we have an adversary who generates an arbitrary sequence of rewards for
+each heuristic in advance. We shall test \cite{seldin14}'s EXP3++ algorithm
+(see Algorithm~\ref{alg:exp3pp}). This is a generalization of the original
+formulation that is shown to perform well in both the stochastic (where the
+reward of each heuristic follows an unknown reward distribution) and
+adversarial regime.
 
 
 \subsection*{Combining Suggestions with Social Choice Theory}
@@ -399,8 +417,9 @@ run all of them at the same time and then combine the rankings. This leads us
 to Social Choice Theory. Originally developed by political scientists like
 Nicolas de Condorcet and Jean-Charles de Borda, this field of study is
 concerned with how we aggregate preferences of a group of people to determine,
-for example, the winner of an election. It has the nice property that everyone
-(or in our context, every active learning suggestion) has a voice.
+for example, the winner of an election~\citep{list13}. It has the nice property
+that everyone (or in our context, every active learning suggestion) has a
+voice.
 
 For each heuristic $r_i$, we assign a score to every candidate like before.
 From these scores, we obtain a preference ordering $R_i$. This is a binary
@@ -440,13 +459,13 @@ the top and $j$ is at the bottom.
 Associated with each path is a strength $p$, which is the minimum of $d(i, j)$
 for all consecutive $i$ and $j$ along the path. Our task, then, is to find the
 path of the strongest strength from each candidate to every other. This problem
-has a similar flavour to the problem of finding the shortest path. In fact, we
-shall use a variant of the Floyd–Warshall algorithm to find the strongest path.
-This is the most efficient implementation that we know of, taking quadratic
-time in the number of candidates. Table \ref{tab:choice} shows how the three
-algorithms work with a small example.
+has a similar flavour to the problem of finding the shortest path. In fact, in
+the implementation we use a variant of the Floyd–Warshall algorithm to find the
+strongest path. This is the most efficient implementation that we know of,
+taking quadratic time in the number of candidates. Table \ref{tab:choice} shows
+how the three aggregation algorithms work with a small example.
 
-\begin{table}[h]
+\begin{table}[htbp]
 	\caption {An example of how Social Choice Theory algorithms rank four candidates
 	          by aggregating three heuristics} \label{tab:choice}
 	\centering
@@ -504,7 +523,7 @@ algorithms work with a small example.
 \subsection*{Description of datasets}
 
 We use 11 small datasets taken from the UCI Machine Learning Repository, along
-with one large dataset SDSS from the astronomical domain.
+with one large dataset SDSS from the astronomical domain \citep{alam15}.
 Table~\ref{tab:datasets} shows the size and the number of classes in each
 dataset, along with the proportion of the samples belonging to the majority
 class and the maximum achievable accuracy rate.
@@ -552,19 +571,20 @@ split. We standardise all features to have zero mean and unit variance.
 Although all examples has already been labelled, we simulate active learning by
 assuming that certain examples do not have any labels. In particular, the
 unlabelled pool size is 70\% of data up to a maximum of 10,000 examples. The
-test pool consists of the remaining examples up to a maximum of 20,000 --- we
+test pool consists of the remaining examples up to a maximum of 20,000---we
 assume labels are available here. We use logistic regression with a Gaussian
 kernel approximation and an L2 loss. In the binary case, the loss function is
 \begin{IEEEeqnarray*}{lCl}
     L &=& \dfrac{1}{2} w^T w + C \sum_{i = 1}^n \ln\Big(1 + \exp(-y_i(f(X_i)^T w))\Big)
 \end{IEEEeqnarray*}
-where the first term is the regularisation term to ensure that the weight
-vector is not too large, and $C$ is another regularisation hyperparameter which
-we set to 1000. To speed up training time, we approximate the feature map of
-the Gaussian kernel, transforming the raw features $X_i$ into a fixed
-100-dimensional feature vector $f(X_i)$. In the multiclass case, we use the
-One-vs-Rest strategy, where for every class, we build a binary classifier that
-determines whether a particular example is in that class or not.
+where the first term of the sum is the regularisation term to ensure that the
+weight vector is not too large, and $C$ is another regularisation
+hyperparameter which we set to 1000. To speed up training time, we approximate
+the feature map of the Gaussian kernel, transforming the raw features $X_i$
+into a fixed 100-dimensional feature vector $f(X_i)$. In the multiclass case,
+we use the One-vs-Rest strategy, where for every class, we build a binary
+classifier that determines whether a particular example is in that class or
+not.
 
 For the reward, we use the mean posterior balanced accuracy (MPBA) as the
 reward. Compared to a simple accuracy rate, this measure takes into account the
@@ -593,7 +613,7 @@ from using just passive learning.
 
 \section*{Discussion}
 
-Figure \ref{fig:strengths} shows the strengths of all policies that we
+Figure~\ref{fig:strengths} shows the strengths of all policies that we
 consider, while Figure~\ref{fig:learning_curves} provides the learning curves
 of a selected few. With the exception of the wpbc dataset, most of the policies
 manage to beat passive learning. For the individual heuristics, the least
@@ -606,13 +626,18 @@ fairly small.
 
 In practice, we do not have a representative test set that can be used to
 compute the reward. Thus aggregation methods like Borda are are suitable than
-bandit algorithms such as EXP3++ and Thompson sampling. In the absence of such a
-test set, \cite{hsu15} addressed this problem by using importance weighting to
-remove the bias in the accuracy on the training set. For this to work, however,
-we need to let every training example and active learning suggestion have a
-non-zero probability of being selected in every iteration.
+bandit algorithms such as EXP3++ and Thompson sampling. In the absence of such
+a test set, \cite{hsu15} addressed this problem by using importance weighting
+to remove the bias in the accuracy on the training set. For this to work,
+however, we need to ensure that every training example and active learning
+suggestion have a non-zero probability of being selected in every iteration.
 
-
+Finally, it is worth noting that active learning might degrade the classifier's
+performance in some cases. This can be seen with the wbcp dataset, where no
+policy manages to beat passive learning. This dataset does have the lowest
+maximum performance, where we achieve an MPBA of only 58\% (slightly above
+random guessing) when using the all examples in training. This indicates that
+we would be better off with passive learning with datasets that are very noisy.
 
 \begin{figure}[tbp]
 	\centering
@@ -636,7 +661,26 @@ non-zero probability of being selected in every iteration.
 
 \section*{Acknowledgments}
 
-SDSS
+Funding for SDSS-III has been provided by the Alfred P. Sloan Foundation, the
+Participating Institutions, the National Science Foundation, and the U.S.
+Department of Energy Office of Science. The SDSS-III web site is
+http://www.sdss3.org/.
+
+SDSS-III is managed by the Astrophysical Research Consortium for the
+Participating Institutions of the SDSS-III Collaboration including the
+University of Arizona, the Brazilian Participation Group, Brookhaven National
+Laboratory, Carnegie Mellon University, University of Florida, the French
+Participation Group, the German Participation Group, Harvard University, the
+Instituto de Astrofisica de Canarias, the Michigan State/Notre Dame/JINA
+Participation Group, Johns Hopkins University, Lawrence Berkeley National
+Laboratory, Max Planck Institute for Astrophysics, Max Planck Institute for
+Extraterrestrial Physics, New Mexico State University, New York University,
+Ohio State University, Pennsylvania State University, University of Portsmouth,
+Princeton University, the Spanish Participation Group, University of Tokyo,
+University of Utah, Vanderbilt University, University of Virginia, University
+of Washington, and Yale University.
+
+
 
 \bibliography{active}
 

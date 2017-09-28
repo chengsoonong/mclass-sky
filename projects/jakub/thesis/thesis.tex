@@ -1,4 +1,4 @@
-\documentclass[11pt]{report}
+\documentclass[11pt,twoside]{report}
 
 \usepackage{amsfonts}
 \usepackage{amsmath}
@@ -9,6 +9,10 @@
 \usepackage{fontspec}
 \usepackage{mathtools}
 \usepackage[separate-uncertainty=true]{siunitx}
+
+% This is for writing only, so it's easier to read.
+\usepackage[paperheight=9.12in,paperwidth=6.389in,tmargin=.4in,bmargin=.6in,inner=.2in,outer=.4in,heightrounded]{geometry}
+
 
 \allowdisplaybreaks
 
@@ -57,12 +61,13 @@
 \newcommand\var{\mathrm{var}}
 
 \newcommand\norm[1]{\left\|#1\right\|}
+\newcommand\floor[1]{\left\lfloor#1\right\rfloor}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator{\spn}{span}
 
-\newcommand\jakub[1]{{\color{red}JAKUB: #1}}
+\newcommand\jakub[1]{{\color{red}(JAKUB: #1)}}
 
 \title{Optimising Experiments for Photometric Redshift Prediction}
 \author{Jakub Nabaglo, u5558578}
@@ -266,6 +271,8 @@ Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^
 
 \subsection{Examples of Kernels}
 
+\jakub{TODO: make very helpful plots}
+
 \subsubsection{Gaussian Kernel}
 
 The Gaussian Kernel is defined by \[
@@ -291,10 +298,25 @@ The Rational-Quadratic Kernel is defined by \[
 Setting $\gamma = \beta \gamma_0$ and letting limiting $\beta \to \infty$ yields a Gaussian kernel with length scale $\gamma_0$.
 
 \subsubsection{Matern Kernel}
+\jakub{TODO: put correct accent in `Matern'}
+
+The Matern Kernel is defined by \[
+    k(\bx, \bx') \coloneqq \sigma^2\frac{2^{1-\nu}}{\Gamma(\nu)}\left(\frac{\sqrt{2\nu}}{\ell}\norm{\bx - \bx'}\right)^\nu K_\nu\left(\frac{\sqrt{2\nu}}{\ell}\norm{\bx - \bx'}\right)
+\]$K_nu$ is the modified Bessel function of the second kind, $\Gamma$ is the Gamma function, $\nu$ is positive parameter, and $\ell$ is the length scale. It is differentiable $\floor{\nu-1}$ times.
+
+\jakub{Something about the physical meaning would be nice}
 
 \subsection{Kernel Approximations}
 
+\jakub{TODO: WRITE}
+
+\subsubsection{RBF Sampling}
+
+\jakub{TODO: WRITE}
+
 \subsubsection{Empirical Kernel Map}
+
+\jakub{TODO: WRITE}
 
 
 \subsection{Kernelised Linear Regression}
@@ -417,13 +439,76 @@ One can observe from \cref{eq:pred} that the prediction is a linear combination 
 
 \subsection{Equivalence to Kernelised Linear Regression}
 
+Observe that \cref{eq:pred} the equation for kernelised linear regression with regularisation. Thus, Gaussian Process regression and kernelised regular regression always return the same expected value, although kernelised linear regression is unable to estimate the variance of that prediction.
+
 \section{Approximating Gaussian Processes}
+
+Gaussian Process regression relies on our calculation of $K_*(K+\sigma_n^2)^{-1}K_*^T$ \jakub{Are the transposes the wrong way around?}, which has a time complexity of $O(n^3)$. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
 
 \subsection{My Favourite Approximation}
 
 \jakub{wtf is it called}
 
+We can approximate this matrix product with a complexity that is linear in $n$.
+
+Let $\Phi : n \times f$ for $f \ll n$ be our kernel approximation for the training set. Then $K = \Phi \Phi^T$. Let $\phi : f \times 1$ be the kernel approximation for the value we wish to predict for. Then $K_* = \Phi \phi$. Hence,\begin{align*}
+    K_*^T(K+\sigma_n^2)^{-1}K_* &= \Phi^T \phi^T \left(\Phi \Phi^T + \sigma_n^2I\right)^{-1} \phi\Phi \\
+    &= \Phi^T \phi^T \left( \sigma_n^{-2}I - \sigma_n^{-2}\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\right) \phi\Phi \\
+    &=  \sigma_n^{-2}\Phi^T \phi^T\phi\Phi - \sigma_n^{-2}\Phi^T \phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\phi\Phi
+\end{align*}
+
+\jakub{TODO: check dimensions}
+
+Then \[
+    \hat f(\bx) = \sigma_n^{-2}\Phi^T \phi^T\by - \sigma_n^{-2}\Phi^T \phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\by
+\] and \[
+    \var \hat f(\bx) = \phi^T\phi - \sigma_n^{-2}\Phi^T \phi^T\phi\Phi - \sigma_n^{-2}\Phi^T \phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\phi\Phi\text.
+\]
+
+\jakub{seriously, the dimensions don't seem to match}
+
+Numerical instabilities present difficulties for small $sigma_n^2$.
+
 \subsection{Linear Regression and KDE}
 
+The mean of Gaussian Process Regression can also be approximated by linear regression. Letting $\Phi$ be the kernel approximation on the training set, we find that the regression weights are\[
+    \bw = \left(\Phi^\top\Phi + \sigma_n^2 I\right) \Phi^\top\by\text,
+\] where $\sigma_n^2$ becomes the regularisation constant. This can be computed in $O(nf)$ time by solving the linear equation instead of directly performing the matrix inversion.
+
+It remains to find an approximation to the variance predicted by Gaussian Process regression. Kernel density estimation can be used to approximate this. Let $D$ be the density estimator. Then we expect $\left(D(\bx)\right)^1$ and $\var f(\bx)$ to have a monotonic relationship.
+
+The actual relationship could probably be found by regression on the estimated densities and the estimated variances of an artificially generated dataset.
+
+This method is less prone to numerical instabilities than my favourite approximation. However it was not used in this work, as a more direct approximation was available.
+
+\section{Automatic Relevance Determination}
+
+\jakub{TODO: WRITE}
+
+\chapter{Active Learning on Regression}
+
+\jakub{define active learning}
+
+\jakub{motivate}
+
+\section{Recommenders}
+
+\jakub{TODO: WRITE}
+
+\subsection{Uncertainty}
+
+\jakub{TODO: WRITE}
+
+\subsection{Density}
+
+\jakub{TODO: WRITE}
+
+\subsection{Boltzmann sampling}
+
+\jakub{TODO: WRITE}
+
+\subsection{Mixing recommenders}
+
+\jakub{TODO: WRITE}
 
 \end{document}

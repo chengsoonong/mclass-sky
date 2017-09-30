@@ -51,12 +51,19 @@
 \newcommand\bbE{\mathbb{E}}
 \newcommand\bbN{\mathbb{N}}
 \newcommand\bbR{\mathbb{R}}
+
+\newcommand\cA{\mathcal{A}}
+\newcommand\cB{\mathcal{B}}
+\newcommand\cC{\mathcal{C}}
 \newcommand\cD{\mathcal{D}}
+\newcommand\cE{\mathcal{E}}
+\newcommand\cF{\mathcal{F}}
 \newcommand\cG{\mathcal{G}}
 \newcommand\cN{\mathcal{N}}
 \newcommand\cP{\mathcal{P}}
 \newcommand\cS{\mathcal{S}}
 \newcommand\cX{\mathcal{X}}
+
 \newcommand\cov{\mathrm{cov}}
 \newcommand\var{\mathrm{var}}
 
@@ -481,11 +488,31 @@ The actual relationship could probably be found by regression on the estimated d
 
 This method is less prone to numerical instabilities than my favourite approximation. However it was not used in this work, as a more direct approximation was available.
 
-\section{Automatic Relevance Determination}
+\section{Finding Hyperparameters}
 
-\jakub{TODO: WRITE}
+\subsection{Grid Search}
 
-\chapter{Active Learning on Regression}
+Grid Search is one technique that permits us to find hyperparameters. We must first define a set of candidate hyperparameter configurations $H$.
+
+\subsection{Bayesian Optimisation}
+Our Gaussian Process Regression has six hyperparameters: a length scale for each of the five features and a regularisation constant. The high dimensionality of the hyperparameter space makes it difficult to find the optimal parameters using grid search. Bayesian optimisation may be used instead to speed up this process.
+
+\jakub{derive bayesian optimisation}
+
+\subsection{Automatic Relevance Determination}
+Automatic Relevance Determination is another technique that may be used to find the hyperparameters for our Gaussian Process Regression.
+
+Consider the problem of linear regression. We have a five-dimensional feature space $\cX$. The features have \jakub{noise vairances?} variances $\lambda_1, \dots, \lambda_5$, respectively. We place a prior on our regression weights.
+
+Our prior variance for each weight is proportional to the variance of the weight. We also assume that the weights are uncorrelated. Hence, our sum-of-squares loss function becomes \jakub{how?}\[
+    \frac12\norm{X\bw - \by}^2 + \alpha \bw^T \Lambda \bw \text.
+\]
+
+\jakub{now talk about that weird convergence bullshit for the regularisation constant}
+
+\jakub{we don't care about pruning right? because we're not pruning...}
+
+\chapter{Active Learning}
 
 \jakub{define active learning}
 
@@ -493,22 +520,65 @@ This method is less prone to numerical instabilities than my favourite approxima
 
 \section{Recommenders}
 
-\jakub{TODO: WRITE}
+In active learning, a recommender is a function that scores the utility of each additional point to the regression problem. It can be thought of in two equivalent ways:\begin{itemize}
+    \item It assigns a utility score to each candidate point
+    \item It returns the top $n$ points from the candidate set
+\end{itemize}
 
 \subsection{Uncertainty}
 
-\jakub{TODO: WRITE}
+Let $\var \hat f$ be the variance returned by Gaussian PRocess Regression. The uncertainty recommender is defined as \[
+    \argmax_{c \in \cC} \var\hat f(c) \text.
+\]
+
+Intuitively, it returns the points that we are the most uncertain about. If we are uncertain about a point, then we have less information about that particular area of the feature space. Hence the points that we are uncertain about would be good additions to the training set.
+
+This intuition fails at the start of our training. This is because we end up focusing on points that we are very unsure about, which tend to be on the long tail of the distribution. Since, in our case, the distribution is five-dimensional, this is a very poor strategy, as we spread out our efforts and neglect the core of the distribution.
+
+\jakub{learning curve}
 
 \subsection{Density}
 
-\jakub{TODO: WRITE}
+Let $\cD : \cX \to \bbR^+$ be a density function for the dataset. This can be derived from the training set by fitting a gaussian mixture model or by Kernel Density Estimation. The recommended points are \[
+    \argmax_{c \in \cC} \cD(c) \text.
+\]
+
+\jakub{learning curve on pure density}
+
+As seen above, this recommendation strategy yields good results at the start of the learning curve, when we have trained on very few datapoints. However, late on the curve flattens out and no longer produces very good results, being overtaken by uncertainty recommendation.
 
 \subsection{Boltzmann sampling}
 
-\jakub{TODO: WRITE}
+Boltzmann sampling permits us to obtain a variety of training points from one recommender.
+
+\jakub{derive}
+
+\jakub{this really needs more formal vocabulary}
+
+It prevents `clumping' of points, and hence redundant information. It is also useful when recommending in batches. Since scores are continuous, two recommended data points are correlated, producing redundant information; boltzmann sampling helps reduce this.
+
+\jakub{learning curves of boltzmann on uncertainty and density with different temperatures}
 
 \subsection{Mixing recommenders}
 
-\jakub{TODO: WRITE}
+From the plots above, we see that different recommenders excel at different stages of the training. Density recommendation is best when we are starting off, and uncertainty recommendation helps us tackle the long tail of the distribution in the later stages. The need to combine the benefits of both strategies becomes clear.
+
+There are two ways of combining recommenders, depending on their definition.
+
+If we think of a recommender as a function that assigns a score to a candidate, and we are given two recommenders $A : \cC \to \bbR$ and $B : \cC \to \bbR$, then we can derive a third recommender $C : \cC \to \bbR$ as \[
+    C(c) \coloneqq kA(c) + lB(c)
+\] for come $k, l \in \bbR$.
+
+This is not always the most helpful strategy. The distribution of scores returned by $A$ and $B$ could be totally different, in which case it doesn't make sense to scale each by a constant and sum them. They need to be on the same order and on the same scale.
+
+Instead, another way of deriving a mixed recommender is to think about probabilities. When selecting $n$ elements from $C$, we want to select elements from $A$ with probability $p$ and elements from $B$ with probability $1-p$. Hence, we can combine $pn$ elements from $A$ and $(1-p)n$ elements from $B$ to form the $n$ elements from $C$.
+
+A constant $p$ (or equivalently constant $k$ and $l$) with combine both the advantages and disadvantages of each strategy, yielding a mediocre recommender. We know, however, that uncertainty recommendation and density recommendation excel at different stages of training. It makes sense to prioritise density recommendation at the start, and uncertainty recommendation towards the end.
+
+This is reminiscent of the problem of exploration vs exploitation. Uncertainty scores are mostly noise until we have enough data in our training set.
+
+\jakub{figure out optimal function for p/kl}
+
+\jakub{helpful plot}
 
 \end{document}

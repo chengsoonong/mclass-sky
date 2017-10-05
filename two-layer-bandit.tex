@@ -153,9 +153,7 @@ called exact design; otherwise it is called approximate or continuous design.
 The environment is assumed to be infinite (e.g. $R^d$) and the observations are
 scalar real variables.
 
-\section*{Problem Formulation}
-
-\subsection*{Active Learning Suggestions}
+\section*{Active Learning Suggestions}
 
 Consider a standard classification setting, where we try to come up with a
 hypothesis $h$ that maps the feature space $\X \subset \mathbb{R}^d$ to a
@@ -258,25 +256,55 @@ margin.~\cite{mccallum98} offer an alternative disagreement measure which
 involves picking the candidate with the largest expected Kullback-Leibler (KL)
 divergence from the average.
 
-\subsection*{Combining Suggestions with Bandit Theory}
+\section*{Combining Suggestions with Expert Advice}
 
-Out of the five heuristics discussed, how do we know which one is the optimal,
-anyway? There have been some attempts in the literature to do a theoretical
-analysis of them. Proofs are however scarce, and when there is one available,
-they normally only work under very simple assumptions. For example,
+Out of the five heuristics discussed, how do we know which one is the most
+optimal one? There have been some attempts in the literature to do a
+theoretical analysis. Proofs are however scarce, and when there is one
+available, they normally only work under very simple assumptions. For example,
 \cite{freund97} show that the query by committee algorithm (a slight variant of
 our QBB heuristics) guarantees an exponential decrease in the prediction error
 with the training size, but only when there is no noise. Thus whether any of
 these heuristics is guaranteed to beat random sampling is still an open
 question.
 
-To help us automatically choose the optimal heuristic, we now turn our
-attention to the multi-armed bandit problem in probability theory. The
-colorful name originates from the situation where a gambler stands in front of
-a slot machine with $s$ levers. When pulled, each lever gives out a random
-reward according to some unknown distribution. The goal of the game is to come
-up with a strategy that can maximize the gambler's lifetime rewards while
-minimizing the number of pulls.
+This leads us to a more general problem of whether we can learn the optimality
+by just looking at the predictions given by the heuristics. Let us frame this
+as the problem of prediction with expert advice. Consider the heuristics as a
+collection of experts $\R = \{r_1, r_2, ..., r_R\}$. How each expert comes up
+with the prediction does not matter to us. At every step $t$, however, we have
+the ability to ask each expert $r_i$ for a prediction $o_{i,t} \in (0, 1)^{U}$,
+where $o_{i,t}$ is a vector of normalized scores on the index set $\{1, 2, ..,
+U\}$ (which indexes $\Unlabelled$, the set of unlabelled objects). Our task now
+is to use this information, along with the history $H$, to choose the best
+index. In the standard setting, the environment would reveal the correct index
+after we have made our choice, but this is not available in our case. Instead,
+we only get a reward $\rho_t \in (0, 1)$ that indicates how good the choice is.
+The history would then be the set of all the past rewards and the associated
+expert, i.e. $H = \{(r_{i_t}, \rho_t)\}$. Formally, we would like to learn the
+prediction function
+\begin{IEEEeqnarray*}{lCl}
+	f : (0,1)^{U \times R} \times H^T \rightarrow U
+\end{IEEEeqnarray*}
+where $T$ is the maximum time horizon. For example, one naive approach is
+to ignore the history and always go with the advice of the first expert $r_1$:
+\begin{IEEEeqnarray*}{lCl}
+	f(o_{1,t}, o_{2,t}, ..., o_{R, t}) &=& \argmax o_{1,t}
+\end{IEEEeqnarray*}
+
+A more sophisticated approach involves picking a different expert at each
+time step, depending on their past performance. This is the basis of the bandit
+algorithms. Alternatively, we can take some weighted sum of all the experts,
+which leads us to social choice theory.
+
+\subsection*{Combining Suggestions with Bandit Theory}
+
+First let us turn our attention to the multi-armed bandit problem in
+probability theory. The colorful name originates from the situation where a
+gambler stands in front of a slot machine with $s$ levers. When pulled, each
+lever gives out a random reward according to some unknown distribution. The
+goal of the game is to come up with a strategy that can maximize the gambler's
+lifetime rewards while minimizing the number of pulls.
 
 Each heuristic has a different ability to identify the candidate whose
 labelling information is most valuable. An appropriate reward is then the
@@ -406,7 +434,6 @@ formulation that is shown to perform well in both the stochastic (where the
 reward of each heuristic follows an unknown reward distribution) and
 adversarial regime.
 
-
 \subsection*{Combining Suggestions with Social Choice Theory}
 
 A drawback of the bandit methods is that at each iteration, we could only use
@@ -431,9 +458,12 @@ profile.
 
 The central question in Social Choice Theory is how we can come up with a
 preference aggregation rule. This is a function that maps the space of profiles
-to a combined ranking $R$. The bandit algorithms, then, can be thought as a
-special case where the map only considers one particular ordering in the
-profile.
+to a combined ranking $R$, which can be treated as the best expert. The main
+difference between this approach and the bandit algorithms is that we do not
+consider the reward history when combining the rankings, i.e. each heuristic is
+assumed to always have an equal weight. A possible extension, which is not
+considered in this paper, is to use the past performance to re-weight the
+heuristics before aggregating at each step.
 
 We shall examine three aggregation rules. In the most simple approach, Borda
 count, we assign an integer point to each candidate. The lowest-ranked

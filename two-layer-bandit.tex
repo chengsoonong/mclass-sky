@@ -88,7 +88,7 @@
           University}
 
 \keywords{machine learning, astronomy, active learning, bandit, rank
-          aggregation}
+          aggregation, expert advice}
 
 \begin{abstract}
 Recent advances in sensors and scientific instruments have led to an increasing
@@ -155,13 +155,14 @@ scalar real variables.
 
 \section*{Active Learning Suggestions}
 
-Consider a standard classification setting, where we try to come up with a
-hypothesis $h$ that maps the feature space $\X \subset \mathbb{R}^d$ to a
-finite label space $\Y$. In pool-based active learning, we require that some
-objects have already been labelled. In practice, this normally means that we
-label a small random sample at the beginning. These become the labelled set
-$\Labelled \subset \X \times \Y$, and the rest form the unabeled set
-$\Unlabelled \subset \X$.
+In this paper, we study the problem of multi-class classification and how use
+build a good training set with active learning. Consider a standard
+classification setting, where we try to come up with a hypothesis $h$ that maps
+the feature space $\X \subset \mathbb{R}^d$ to a finite label space $\Y$. In
+pool-based active learning, we require that some objects have already been
+labelled. In practice, this normally means that we label a small random sample
+at the beginning. These become the labelled set $\Labelled \subset \X \times
+\Y$, and the rest form the unabeled set $\Unlabelled \subset \X$.
 
 Now consider the problem of choosing the next example in $\Unlabelled$ for
 querying. Labelling can be a very expensive task, perhaps because it requires
@@ -176,6 +177,47 @@ reduction. There are also heuristics that require minimizing the variance
 or the classifier certainty of the model \citep{schein07}, but we do not
 consider them in this paper as they are computationally inefficient in
 practice.
+
+\subsubsection*{Uncertainty Sampling}
+
+\cite{lewis94} introduce the idea of uncertainty sampling, where we select the
+example whose class membership the classifier is least certain about. These
+tend to be points that are near the decision boundary of the classifier.
+Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
+confidence heuristic, where we pick the candidate whose most likely label the
+classifier is most uncertain about. A second option is to calculate the entropy
+\citep{shannon48}, which measures the amount of information needed to encode a
+distribution. Intuitively, the closer class probabilities of an object are to
+random guessing, the higher its entropy will be. This gives us the heuristic of
+picking the candidate with the highest entropy of the distribution over the
+classes. Finally we can pick the candidate with the smallest margin, which is
+defined as the difference between the two highest class probabilities
+\citep{scheffer01} Since the sum of all probabilities must be 1, the smaller
+the margin is, the more uncertain we are about the object's class membership.
+
+\subsubsection*{Version Space Reduction}
+
+Instead of focussing on the uncertainty of individual predictions, we could
+instead try to constrain the size of the version space, thus allowing the
+search for the optimal hypothesis to be more precise. The version space is
+defined as the set of all possible hypotheses that are consistent with the
+current training set. To quantify the size of this space, we can train a
+committee of classifiers, $\B = \{h_1, h_2, ..., h_B\}$, and measure the
+disagreement among the members about an object's class membership. Each
+committee member needs to have a hypothesis that is as different from the
+others as possible but that is still in the version space \citep{melville04}.
+In order to have this diversity, we give each member only a subset of the
+training examples. Since there might not be enough training data, we need to
+use bootstrapping and select samples with replacement. Hence this method is
+often called Query by Bagging (QBB).
+
+One way to measure the level of disagreement is to calculate the margin using
+the class probabilities estimated by the committee \citep{melville04}. This
+looks similar to one of the uncertainty sampling heuristics, except now we
+first average out the probabilities of the members before minimizing the
+margin.~\cite{mccallum98} offer an alternative disagreement measure which
+involves picking the candidate with the largest expected Kullback-Leibler (KL)
+divergence from the average.
 
 \begin{table}[h]
 	\caption {Summary of active learning heuristics used in our experiments,
@@ -215,57 +257,16 @@ practice.
 	\end{tabular}
 \end{table}
 
-\subsubsection*{Uncertainty Sampling}
-
-\cite{lewis94} introduce the idea of uncertainty sampling, where we select the
-example whose class membership the classifier is least certain about. These
-tend to be points that are near the decision boundary of the classifier.
-Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
-confidence heuristic, where we pick the candidate whose most likely label the
-classifier is most uncertain about. A second option is to calculate the entropy
-\citep{shannon48}, which measures the amount of information needed to encode a
-distribution. Intuitively, the closer class probabilities of an object are to
-random guessing, the higher its entropy will be. This gives us the heuristic of
-picking the candidate with the highest entropy. Finally we can pick the
-candidate with the smallest margin, which is defined as the difference
-between the two highest class probabilities \citep{scheffer01} Since the sum of
-all probabilities must be 1, the smaller the margin is, the more uncertain we
-are about the object's class membership.
-
-\subsubsection*{Version Space Reduction}
-
-Instead of focussing on the uncertainty of individual predictions, we could
-instead try to constrain the size of the version space, thus allowing the
-search for the optimal hypothesis to be more precise. The version space is
-defined as the set of all possible hypotheses that are consistent with the
-current training set. To quantify the size of this space, we can train a
-committee of classifiers, $\B = \{h_1, h_2, ..., h_B\}$, and measure the
-disagreement among the members about an object's class membership. Each
-committee member needs to have a hypothesis that is as different from the
-others as possible but that is still in the version space \citep{melville04}.
-In order to have this diversity, we give each member only a subset of the
-training examples. Since there might not be enough training data, we need to
-use bootstrapping and select samples with replacement. Hence this method is
-often called Query by Bagging (QBB).
-
-One way to measure the level of disagreement is to calculate the margin using
-the class probabilities estimated by the committee \citep{melville04}. This
-looks similar to one of the uncertainty sampling heuristics, except now we
-first average out the probabilities of the members before minimizing the
-margin.~\cite{mccallum98} offer an alternative disagreement measure which
-involves picking the candidate with the largest expected Kullback-Leibler (KL)
-divergence from the average.
-
 \section*{Combining Suggestions with Expert Advice}
 
 Out of the five heuristics discussed, how do we know which one is the most
 optimal one? There have been some attempts in the literature to do a
 theoretical analysis. Proofs are however scarce, and when there is one
-available, they normally only work under very simple assumptions. For example,
+available, they normally only work under restricted assumptions. For example,
 \cite{freund97} show that the query by committee algorithm (a slight variant of
-our QBB heuristics) guarantees an exponential decrease in the prediction error
-with the training size, but only when there is no noise. Thus whether any of
-these heuristics is guaranteed to beat random sampling is still an open
+our two QBB heuristics) guarantees an exponential decrease in the prediction
+error with the training size, but only when there is no noise. Thus whether any
+of these heuristics is guaranteed to beat random sampling is still an open
 question.
 
 This leads us to a more general problem of whether we can learn the optimality
@@ -474,17 +475,17 @@ is declared the winner and is to be labeled next.
 
 We can think of Borda count, then, as ranking the candidate according to the
 arithmetic mean. An alternative approach is to use the geometric mean
-\citep{bedo14}, where instead of adding up the points, we multiple them.
+\citep{bedo14}, where instead of adding up the points, we multiply them.
 
-The third approach we consider is the Schulze method. This method is more
-computationally intensive since it requires examining all pairs of candidates.
-In particular, we first compute the number of heuristics that prefer
-candidate $i$ to candidate $j$. Let us call this $d(i, j)$. We then define a
-path from candidate $i$ to $j$ as a sequence of candidates that starts with $i$
-and ends with $j$, where, as we move along the path, the number of heuristics
-that prefer the current candidate over the next candidate must be strictly decreasing.
-Intuitively, the path is the rank of a subset of candidates, where $i$ is at
-the top and $j$ is at the bottom.
+The third approach we consider is the Schulze method~\citep{schulze11}. This
+method is more computationally intensive since it requires examining all pairs
+of candidates. In particular, we first compute the number of heuristics that
+prefer candidate $i$ to candidate $j$. Let us call this $d(i, j)$. We then
+define a path from candidate $i$ to $j$ as a sequence of candidates that starts
+with $i$ and ends with $j$, where, as we move along the path, the number of
+heuristics that prefer the current candidate over the next candidate must be
+strictly decreasing. Intuitively, the path is the rank of a subset of
+candidates, where $i$ is at the top and $j$ is at the bottom.
 
 Associated with each path is a strength $p$, which is the minimum of $d(i, j)$
 for all consecutive $i$ and $j$ along the path. Our task, then, is to find the
@@ -492,7 +493,7 @@ path of the strongest strength from each candidate to every other. This problem
 has a similar flavour to the problem of finding the shortest path. In fact, in
 the implementation we use a variant of the Floyd–Warshall algorithm to find the
 strongest path. This is the most efficient implementation that we know of,
-taking quadratic time in the number of candidates. Table \ref{tab:choice} shows
+taking quadratic time in the number of candidates. Table~\ref{tab:choice} shows
 how the three aggregation algorithms work with a small example.
 
 \begin{table}[htbp]
@@ -602,19 +603,21 @@ Although all examples has already been labelled, we simulate active learning by
 assuming that certain examples do not have any labels. In particular, the
 unlabelled pool size is 70\% of data up to a maximum of 10,000 examples. The
 test pool consists of the remaining examples up to a maximum of 20,000---we
-assume labels are available here. We use logistic regression with a Gaussian
-kernel approximation and an L2 loss. In the binary case, the loss function is
+assume labels are available here. We initialize the classifier by labelling 50
+random samples and using them as the the initial training set. We use logistic
+regression with a Gaussian kernel approximation and an L2 loss. In the binary
+case, the loss function is
 \begin{IEEEeqnarray*}{lCl}
     L &=& \dfrac{1}{2} w^T w + C \sum_{i = 1}^n \ln\Big(1 + \exp(-y_i(f(X_i)^T w))\Big)
 \end{IEEEeqnarray*}
 where the first term of the sum is the regularisation term to ensure that the
 weight vector is not too large, and $C$ is another regularisation
 hyperparameter which we set to 1000. To speed up training time, we approximate
-the feature map of the Gaussian kernel, transforming the raw features $X_i$
-into a fixed 100-dimensional feature vector $f(X_i)$. In the multiclass case,
-we use the One-vs-Rest strategy, where for every class, we build a binary
-classifier that determines whether a particular example is in that class or
-not.
+the feature map of the Gaussian kernel using Random Kitchen Sinks
+\citep{rahimi08}, transforming the raw features $X_i$ into a fixed
+100-dimensional feature vector $f(X_i)$. In the multiclass case, we use the
+One-vs-Rest strategy, where for every class, we build a binary classifier that
+determines whether a particular example is in that class or not.
 
 For the reward, we use the mean posterior balanced accuracy (MPBA) as the
 reward. Compared to a simple accuracy rate, this measure takes into account the
@@ -663,7 +666,7 @@ however, we need to ensure that every training example and active learning
 suggestion have a non-zero probability of being selected in every iteration.
 
 Finally, it is worth noting that active learning might degrade the classifier's
-performance in some cases. This can be seen with the wbcp dataset, where no
+performance in some cases. This can be seen with the wpbc dataset, where no
 policy manages to beat passive learning. This dataset does have the lowest
 maximum performance, where we achieve an MPBA of only 58\% (slightly above
 random guessing) when using the all examples in training. This indicates that
@@ -684,7 +687,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	\caption[Selected learning curves]{Selected learning curves. As it would
 	get too cluttered to plot 16 learning curves, we only show the MPBA curves
 	for the least confidence heuristic, the EXP3++ bandit policy, and the Borda
-	aggregation policy.}
+	aggregation policy. The learning curves are averaged over 10 shuffles.}
 	\label{fig:learning_curves}
 \end{figure}
 
@@ -854,7 +857,8 @@ of Washington, and Yale University.
     \Fn{\Update($\delta$)}{
 		$t \leftarrow t + 1$ \;
 		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
-		$L_* \leftarrow \dfrac{L_* + (1 - \delta)}{(1 - \sum_j \epsilon_j)) \rho_* + \epsilon_*} $
+		$L_* \leftarrow \dfrac{L_* + (1 - \delta)}{(1 - \sum_j \epsilon_j))
+		  	 \rho_* + \epsilon_*} $
     }
 	\caption{EXP3++}
     \label{alg:exp3pp}
@@ -919,7 +923,8 @@ distribution:
 	\end{IEEEeqnarray*}
 The probability mass function of $(g_i \mid A_i = a)$ is thus
     \begin{IEEEeqnarray}{lCl}
-        p_{g_i \mid A_i}(g_i) &=& \binom{n_i}{g_i} a^{g_i} (1 - a)^{n_i - g_i} \label{eqn:likelihood} \\
+		p_{g_i \mid A_i}(g_i) &=& \binom{n_i}{g_i} a^{g_i} (1 - a)^{n_i - g_i}
+						  							\label{eqn:likelihood} \\
                               &\propto& a^{g_i} (1 - a)^{n_i - g_i} \notag
     \end{IEEEeqnarray}
 In the Bayesian \index{Bayesian} setting,~\eqref{eqn:prior} is the prior and
@@ -974,7 +979,8 @@ expression for this, let us first rewrite the cumulative distribution function
 Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{g})$:
 	\begin{IEEEeqnarray*}{lCl}
 		f_{A \mid \bm{g}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{g}}(ka) \\
-		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka} F_{A_T \mid \bm{g}}(ka) \\
+		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka}
+			F_{A_T \mid \bm{g}}(ka) \\
 		&=& k \cdot f_{A_T \mid \bm{g}}(ka)
 	\end{IEEEeqnarray*}
 

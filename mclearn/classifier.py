@@ -117,7 +117,7 @@ def train_classifier(data, feature_names, class_name, train_size, test_size, out
 
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(classifier, f, protocol=4) 
+            pickle.dump(classifier, f, protocol=4)
 
     results = []
     if 'classifier' in returns:
@@ -139,13 +139,13 @@ def print_classification_result(X_train, X_test, y_train, y_test, report=True,
         ----------
         X_train : array
             The feature vectors (stored as columns) in the training set.
-            
+
         X_test : array
             The feature vectors (stored as columns) in the test set.
-            
+
         y_train : array
             The target vector in the training set.
-            
+
         y_test : array
             The target vector in the test set.
 
@@ -245,7 +245,7 @@ def learning_curve(classifier, X, y, cv, sample_sizes,
 
         learning_curves.append(lc)
         if verbose: print(i, end=' ')
-    
+
     # pickle learning curve
     if pickle_path:
         with open(pickle_path, 'wb') as f:
@@ -338,8 +338,8 @@ def learning_curve_old(data, feature_cols, target_col, classifier, train_sizes, 
     # pickle learning curve
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(lc_accuracy_test, f, protocol=4) 
-    
+            pickle.dump(lc_accuracy_test, f, protocol=4)
+
     return lc_accuracy_test
 
 
@@ -482,7 +482,7 @@ def grid_search_svm_rbf(X, y, train_size=300, test_size=300, fig_path=None,
     # pickle scores
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(scores, f, protocol=4) 
+            pickle.dump(scores, f, protocol=4)
 
 
 
@@ -532,7 +532,7 @@ def grid_search_svm_sigmoid(X, y, train_size=300, test_size=300, fig_path=None, 
     # pickle scores
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(scores, f, protocol=4) 
+            pickle.dump(scores, f, protocol=4)
 
 
 
@@ -633,7 +633,7 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path=None, pic
     scores = scores_1 + scores_2 + scores_3
     scores = reshape_grid_socres(scores, 12, len(C_range))
 
-    
+
 
     if fig_path:
         ylabels = ['Degree 1, OVR, Squared Hinge, L1-norm',
@@ -658,7 +658,7 @@ def grid_search_svm_poly(X, y, train_size=300, test_size=300, fig_path=None, pic
     # pickle scores
     if pickle_path:
         with open(pickle_path, 'wb') as f:
-            pickle.dump(scores, f, protocol=4) 
+            pickle.dump(scores, f, protocol=4)
 
 
 
@@ -797,10 +797,10 @@ def predict_unlabelled_objects(file_path, table, classifier,
         # apply reddening correction and compute key colours
         optimise_sdss_features(chunk, scaler_path)
         chunk['prediction'] = classifier.predict(chunk[feature_cols])
-        
+
         chunk['ra'] = np.remainder(np.round(chunk['ra'] * 10) + 3600, 3600)
         chunk['dec'] = np.remainder(np.round(chunk['dec'] * 10) + 3600, 3600)
-        
+
         for index, row in chunk.iterrows():
             if row['prediction'] == 'Galaxy':
                 galaxy_map[row['ra']][row['dec']] += 1
@@ -810,7 +810,7 @@ def predict_unlabelled_objects(file_path, table, classifier,
                 star_map[row['ra']][row['dec']] += 1
             else:
                 print('Invalid prediction.')
-        
+
         current_line = i * chunksize
         if verbose and current_line % 1000000 == 0:
             print(current_line // 1000000, end=' ')
@@ -827,7 +827,7 @@ def predict_unlabelled_objects(file_path, table, classifier,
 def map_unlabelled_objects(galaxy_map, quasar_map, star_map, fig_paths):
     """
     """
-    
+
     # print out results
     whole_map = galaxy_map + star_map + quasar_map
     total_galaxies = np.sum(galaxy_map)

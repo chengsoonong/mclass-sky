@@ -10,52 +10,52 @@ from numpy.random import RandomState
 
 def normalise_z(features):
     """ Normalise each feature to have zero mean and unit variance.
-        
+
         Parameters
         ----------
         features : array, shape = [n_samples, n_features]
             Each row is a sample point and each column is a feature.
-        
+
         Returns
         -------
         features_normalised : array, shape = [n_samples, n_features]
     """
-       
+
     mu = np.mean(features, axis=0)
     sigma = np.std(features, axis=0)
     return (features - mu) / sigma
-    
+
 
 def normalise_unit_var(features):
     """ Normalise each feature to have unit variance.
-        
+
         Parameters
         ----------
         features : array, shape = [n_samples, n_features]
             Each row is a sample point and each column is a feature.
-        
+
         Returns
         -------
         features_normalised : array, shape = [n_samples, n_features]
     """
-    
+
     sigma = np.std(features, axis=0)
     return features / sigma
-    
-    
+
+
 def normalise_01(features):
     """ Normalise each feature to unit interval.
-        
+
         Parameters
         ----------
         features : array, shape = [n_samples, n_features]
             Each row is a sample point and each column is a feature.
-        
+
         Returns
         -------
         features_normalised : array, shape = [n_samples, n_features]
     """
-    
+
     minimum = np.min(features, axis=0)
     maximum = np.max(features, axis=0)
     return (features - minimum) / (maximum - minimum)
@@ -76,7 +76,7 @@ def _get_train_test_size(train_size, test_size, n_samples):
 
     if test_size is None:
         test_size = n_samples - train_size
-    
+
     if train_size is None:
         train_size = n_samples - test_size
 
@@ -91,12 +91,12 @@ def balanced_train_test_split(X, y, test_size=None, train_size=None, bootstrap=F
         For a dataset with an unequal numer of samples in each class, one useful procedure
         is to split the data into a training and a test set in such a way that the classes
         are balanced.
-        
+
         Parameters
         ----------
         X : array, shape = [n_samples, n_features]
             Feature matrix.
-        
+
         y : array, shape = [n_features]
             Target vector.
 
@@ -105,37 +105,37 @@ def balanced_train_test_split(X, y, test_size=None, train_size=None, bootstrap=F
             to include in the test split. If int, represents the absolute number of test samples.
             If None, the value is automatically set to the complement of the train size.
             If train size is also None, test size is set to 0.3.
-        
+
         train_size : float or int (default=1-test_size)
             If float, should be between 0.0 and 1.0 and represent the proportion of the dataset
             to include in the train split. If int, represents the absolute number of train samples.
             If None, the value is automatically set to the complement of the test size.
-            
+
         random_state : int, optional (default=None)
             Pseudo-random number generator state used for random sampling.
-        
+
         Returns
         -------
         X_train : array
             The feature vectors (stored as columns) in the training set.
-            
+
         X_test : array
             The feature vectors (stored as columns) in the test set.
-            
+
         y_train : array
             The target vector in the training set.
-            
+
         y_test : array
             The target vector in the test set.
     """
-    
+
     # initialise the random number generator
     rng = RandomState(random_state)
 
     # make sure X and y are numpy arrays
     X = np.asarray(X)
     y = np.asarray(y)
-    
+
     # get information about the class distribution
     classes, y_indices = np.unique(y, return_inverse=True)
     n_classes = len(classes)
@@ -148,32 +148,32 @@ def balanced_train_test_split(X, y, test_size=None, train_size=None, bootstrap=F
     n_train = np.round(train_size / n_classes).astype(int)
     n_test = np.round(test_size / n_classes).astype(int)
     n_total = n_train + n_test
-    
+
     # make sure we have enough samples to create a balanced split
     min_count = min(cls_count)
     if min_count < (n_train + n_test) and not bootstrap:
         raise ValueError('The smallest class contains {} examples, which is not '
                          'enough to create a balanced split. Choose a smaller size '
                          'or enable bootstraping.'.format(min_count))
-    
+
     # selected indices are stored here
     train = []
     test = []
-    
+
     # get the desired sample from each class
     for i, cls in enumerate(classes):
         if bootstrap:
             shuffled = rng.choice(cls_count[i], n_total, replace=True)
         else:
             shuffled = rng.permutation(cls_count[i])
-        
+
         cls_i = np.where(y == cls)[0][shuffled]
         train.extend(cls_i[:n_train])
         test.extend(cls_i[n_train:n_total])
-        
+
     train = list(rng.permutation(train))
     test = list(rng.permutation(test))
-    
+
     return X[train], X[test], y[train], y[test]
 
 
@@ -204,13 +204,13 @@ def csv_to_hdf(csv_path, no_files=1, hdf_path='store.h5', data_cols=None, expect
         table_name : str
             The name of the HDF5 table.
     """
-    
+
     if os.path.isfile(hdf_path):
         print('HDF5 Table already exists. No changes were made.')
         return
 
     store = pd.HDFStore(hdf_path, complevel=9, complib='zlib', fletcher32=True)
-    
+
     for i in np.arange(no_files):
         csv_file = csv_path.format(i)
 
@@ -218,12 +218,11 @@ def csv_to_hdf(csv_path, no_files=1, hdf_path='store.h5', data_cols=None, expect
             data = pd.io.api.read_csv(csv_file)
         else:
             data = pd.io.api.read_csv(csv_file, header=None, names=data_cols)
-            
+
         store.append(table_name, data, index=False, expectedrows=expectedrows,
                      min_itemsize=min_itemsize)
 
         del data
         gc.collect()
-        
-    store.close()
 
+    store.close()

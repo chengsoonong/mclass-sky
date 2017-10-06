@@ -119,7 +119,7 @@ def fetch_data(url, dest, header=None, overwrite=True, process=True,
             The downloaded data.
     """
 
-    download_data(url, dest, header, overwrite)    
+    download_data(url, dest, header, overwrite)
 
     data = pd.read_csv(dest, sep=sep, na_values=['?'])
     if process:

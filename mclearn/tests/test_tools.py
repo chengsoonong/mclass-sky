@@ -13,4 +13,3 @@ class TestTools:
 
     def test_results_exist(self):
         assert results_exist(self.file_paths)
-

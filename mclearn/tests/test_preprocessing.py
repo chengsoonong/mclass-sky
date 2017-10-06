@@ -51,7 +51,7 @@ class TestBalancedSplit:
         y = self.sdss.target
         X_train, X_test, y_train, y_test = balanced_train_test_split(
             X, y, train_size=72, test_size=45, random_state=13)
-        
+
         # check that the training set is balanced
         classes, y_indices = np.unique(y_train, return_inverse=True)
         n_classes = len(classes)
@@ -82,4 +82,3 @@ class TestHDF:
     def teardown_class(cls):
         if os.path.isfile(cls.hdf_path):
             os.remove(cls.hdf_path)
-

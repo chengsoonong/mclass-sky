@@ -38,9 +38,3 @@ class TestPhotometry:
         ugriz_url = 'http://www.sdss.org/dr7/instruments/imager/filters/%s.dat'
         spectra_dir = 'mclearn/tests/data/spectra/'
         filter_dir = 'mclearn/tests/data/filters/'
-    
-
-
-
-
-

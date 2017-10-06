@@ -8,7 +8,7 @@ import numpy as np
 from time import time
 from joblib import Parallel, delayed
 from numpy.random import RandomState
-from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import BaggingClassifier
 from sklearn.externals import joblib

@@ -13,8 +13,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
-from sklearn.cross_validation import StratifiedShuffleSplit
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle

@@ -7,6 +7,7 @@ doc/generated
 dist
 build
 __pycache__
+.vscode
 
 # Cython files
 *.so

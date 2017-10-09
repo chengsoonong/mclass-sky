@@ -156,7 +156,7 @@ class ActiveExperiment:
         similarity = rbf_kernel(self.X[train_index], gamma=self.gamma)
         mpba, accuracy, f1 = [], [], []
         training_size = min(1000, len(pool))
-        initial_n = 50
+        initial_n = 10
         horizon = training_size - initial_n
 
         # initialise classifier
@@ -169,7 +169,7 @@ class ActiveExperiment:
         policy = self._get_policy(self.policy_name, pool, labels, classifier,
                                   committee, seed, similarity, horizon)
 
-        # select 50 initial random examples for labelling
+        # select 10 initial random examples for labelling
         sample_idx = sample_from_every_class(oracle, initial_n, seed)
         policy.add(sample_idx, oracle[sample_idx])
         y_pred = classifier.predict(X_test)

@@ -79,7 +79,7 @@ def sample_from_every_class(y, size, seed=None):
 
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
-    def __init__(self, X, y, dataset, policy_name, scale=True, n_iter=10, passive=True):
+    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=20, passive=True):
         seed = RandomState(1234)
         self.X = np.asarray(X, dtype=np.float64)
         self.y = np.asarray(y)
@@ -98,8 +98,9 @@ class ActiveExperiment:
         n_samples = self.X.shape[0]
         train_size = min(10000, int(0.7 * n_samples))
         test_size = min(20000, n_samples - train_size)
-        self.kfold = StratifiedShuffleSplit(self.y, n_iter=n_iter, test_size=test_size,
-                                            train_size=train_size, random_state=seed)
+        splitter = StratifiedShuffleSplit(
+            n_splits=n_splits, test_size=test_size, random_state=seed)
+        self.kfold = list(splitter.split(self.X, self.y))
 
     def run_policies(self):
         start_time = time()

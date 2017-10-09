@@ -155,7 +155,7 @@ class ActiveExperiment:
         n_classes = len(np.unique(y_test))
         similarity = rbf_kernel(self.X[train_index], gamma=self.gamma)
         mpba, accuracy, f1 = [], [], []
-        training_size = min(1000, len(pool))
+        training_size = min(10000, len(pool))
         initial_n = 10
         horizon = training_size - initial_n
 

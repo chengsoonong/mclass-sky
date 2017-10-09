@@ -40,6 +40,43 @@ def load_results(dataset, policy, measure=None, mean=False):
         return None
 
 
+def sample_from_every_class(y, size, seed=None):
+    """ Get a random sample, ensuring every class is represented.
+
+        This helper function is useful when the sample size is small and
+        we want to make sure that at least one sample from each class
+        is included. This is required, for example, in logistic regression,
+        where the classifier cannot handle classes where it has never seen
+        any training examples.
+
+        Params
+        ------
+        y : 1-dimensional numpy array
+            The label/output array.
+        size : int
+            The desired number of samples.
+        seed : RandomState object or None
+            Provide a seed for reproducibility.
+
+        Returns
+        -------
+        samples : numpy array of shape [size]
+            The random samples.
+    """
+    if seed is None:
+        seed = RandomState(1234)
+
+    # Keep track of the classes which have not been sampled yet
+    labels = np.unique(y)
+    samples = []
+    while len(samples) < size:
+        idx = seed.choice(np.arange(len(y)))
+        if len(labels) == 0 or y[idx] in labels:
+            samples.append(idx)
+            labels = np.delete(labels, np.argwhere(labels == y[idx]))
+    return samples
+
+
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
     def __init__(self, X, y, dataset, policy_name, scale=True, n_iter=10, passive=True):
@@ -133,7 +170,7 @@ class ActiveExperiment:
                                   committee, seed, similarity, horizon)
 
         # select 50 initial random examples for labelling
-        sample_idx = seed.choice(np.arange(len(pool)), initial_n, replace=False)
+        sample_idx = sample_from_every_class(oracle, initial_n, seed)
         policy.add(sample_idx, oracle[sample_idx])
         y_pred = classifier.predict(X_test)
         mpba.append(mpba_score(y_test, y_pred))

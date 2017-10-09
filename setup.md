@@ -45,7 +45,7 @@ and download a new private/public key file.
 After we have `ssh` into the instance,
 
 ```sh
-ssh -i [path/to/key.pem] ubuntu@[DNS]  
+ssh -i <path/to/key.pem> ubuntu@<DNS>
 ```
 
 start by updating the system
@@ -59,20 +59,19 @@ sudo apt-get install -y git
 and install Anaconda Python:
 
 ```sh
-wget https://3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3.ssl.cf1.rackcdn.com/Anaconda3-2.5.0-Linux-x86_64.sh
-bash Anaconda3-2.5.0-Linux-x86_64.sh
+wget https://repo.continuum.io/archive/Anaconda3-5.0.0.1-Linux-x86_64.sh
+bash Anaconda3-5.0.0.1-Linux-x86_64.sh
 source ~/.bashrc
-conda update -y conda
-conda update -y anaconda
-conda install -y seaborn
-rm Anaconda3-2.5.0-Linux-x86_64.sh
+conda update -y conda anaconda
+conda install -y joblib
+rm Anaconda3-5.0.0.1-Linux-x86_64.sh
 ```
 
 To install the bleeding-edge version of `mclearn` for development:
 
 ```sh
-git clone https://github.com/alasdairtran/mclearn/
-cd mclearn; python setup.py develop
+git clone https://github.com/chengsoonong/mclass-sky.git
+cd mclass-sky; python setup.py develop
 ```
 
 Create a Jupyter notebook configuration file:
@@ -142,3 +141,10 @@ To mount it
 ```
 sudo mount /dev/xvdf ~/projects
 ```
+
+To transfer, for example the `data` folder, from local disk to EC2
+
+```
+scp -r -i <path/to/key.pem> data/. ubuntu@<DNS>:projects/mclass-sky/projects/peerjcs16/data/
+```
+

@@ -53,7 +53,7 @@ start by updating the system
 ```sh
 sudo apt-get update
 sudo apt-get dist-upgrade -y
-sudo apt-get install -y git
+sudo apt-get install -y git fio gcc
 ```
 
 and install Anaconda Python:
@@ -148,3 +148,8 @@ To transfer, for example the `data` folder, from local disk to EC2
 scp -r -i <path/to/key.pem> data/. ubuntu@<DNS>:projects/mclass-sky/projects/peerjcs16/data/
 ```
 
+To initialise a volume, say `/dev/xvda`, that is restored from a snapshot (for faster reads):
+
+```sh
+sudo fio --filename=/dev/xvda --rw=randread --bs=128k --iodepth=32 --ioengine=libaio --direct=1 --name=volume-initialize
+```

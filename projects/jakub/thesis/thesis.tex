@@ -7,12 +7,22 @@
 \usepackage{cleveref}
 \usepackage{color}
 \usepackage{fontspec}
+\usepackage{mathpazo}
 \usepackage{mathtools}
+\usepackage{minted}
+\usepackage{wrapfig}
 \usepackage[separate-uncertainty=true]{siunitx}
+
+\usepackage[intoc, english]{nomencl}
+\makenomenclature
+
+\setmonofont[Mapping=tex-text]{Menlo}
+\usemintedstyle{}
 
 % This is for writing only, so it's easier to read.
 \usepackage[paperheight=9.12in,paperwidth=6.389in,tmargin=.4in,bmargin=.6in,inner=.2in,outer=.4in,heightrounded]{geometry}
 
+\renewcommand*{\thefootnote}{[\arabic{footnote}]}
 
 \allowdisplaybreaks
 
@@ -29,7 +39,7 @@
 \ifx\foo\nullfont
   \font\foo = "\myfallback"\space at 10pt
   \ifx\foo\nullfont
-    \errorstopmode
+    \errorstopmodep
     \errmessage{no suitable font found}
   \else
     \let\myfont=\myfallback
@@ -37,6 +47,12 @@
 \fi
 \interactionmode=\count255
 \setmainfont[Ligatures=TeX]{\myfont}
+
+% This will add the units
+%----------------------------------------------
+\newcommand{\nomunit}[1]{%
+\renewcommand{\nomentryend}{\hspace*{\fill}#1}}
+%----------------------------------------------
 
 
 \DeclareSIUnit{\parsec}{pc}
@@ -74,18 +90,37 @@
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator{\spn}{span}
 
-\newcommand\jakub[1]{{\color{red}(JAKUB: #1)}}
+\newcommand\jakub[1]{{\color{red}(j: #1)}}
 
 \title{Optimising Experiments for Photometric Redshift Prediction}
 \author{Jakub Nabaglo, u5558578}
 \date{October 2017}
+\usepackage{layouts}
 
 \begin{document}
 \maketitle
 
 \tableofcontents
 
+\nomenclature{$\cX$}{Predictor input set}
+\nomenclature{$\bbR$}{Set of real numbers}
+\nomenclature{$f$}{Original function}
+\nomenclature{$\hat f$}{Predictor}
+\nomenclature{$n$}{Punctuation Symbol}
+\nomenclature{$m$}{Punctuation Symbol}
+\nomenclature{$d$}{Punctuation Symbol}
+\nomenclature{$c$}{Speed of light in a vacuum\nomunit{\SI{299792458}{\meter\per\second}}}
+\nomenclature{$z$}{Redshift}
+\nomenclature{$z_\mathrm{spec}$}{Redshift}
+\nomenclature{$z_\mathrm{pred}$}{Redshift}
+
+\printnomenclature
+
+
 \chapter{Introduction}
+
+\prntlen{\textwidth}
+
 A redshift is the change in the wavelength of a photon emitted by an object that is moving away from the observer. When applied to the visible spectrum, a redshift makes an object appear more red.
 
 Redshifts are important in astronomy, as they are used for a variety of tasks. The most important of these tasks is finding distances to objects.
@@ -102,31 +137,65 @@ This method of selection of new training samples has advantages of greater cost 
 
 Optimal design requires us to be able to assess the uncertainties in the prediction for each point in the input space. This provides a useful heuristic for choosing the next sample to label.
 
-
-\chapter{Photometric redshifts}
-
 \section{Redshift}
-Redshift is a property of all signals we observe from astronomical objects. It is often not easy to measure, but finding it permits us to learn important facts about the object being observed.
+  Redshift is a property of all signals we observe from astronomical objects. It is often not easy to measure, but finding it permits us to learn important facts about the object being observed.
 
-The electromagnetic waves that we observe from distant objects are subject to the Doppler effect. This is the phenomenon by which waves produced by an object that is moving away from the observer appear to have a longer wavelength. Consider an ambulance driving away from you: the tone of the siren appears lower than if the ambulance was stationary. In a similar way, a galaxy moving away from us appears redder, giving rise to the term `redshift'. The converse effect, affecting objects moving towards the observer, is termed `blueshift'.
+  \jakub{Caused not just by doppler effect. Also expansion of the universe.}
 
-The redshift of an object is then directly correlated to its velocity perpendicular to the line of sight from the observer. For a redshift $z$, the line-of-sight velocity is\[
-    v \approx cz \text{,}
-\] where $c$ is the speed of light constant.
+  The electromagnetic waves that we observe from distant objects are subject to the Doppler effect. This is the phenomenon by which waves produced by an object that is moving away from the observer appear to have a longer wavelength. Consider an ambulance driving away from you: the tone of the siren appears lower than if the ambulance was stationary. In a similar way, a galaxy moving away from us appears redder, giving rise to the term `redshift'. The converse effect, affecting objects moving towards the observer, is termed `blueshift'.
 
-This permits us to approximate the distance from the observed object. Due to the expansion of space, distant objects are moving away from us at a velocity proportional to their distance. For a velocity $v$, that distance is \[
-    D \approx \frac{v}{H_0} \text{,}
-\] where $H_0$ is the Hubble parameter, equalling approximately $\SI{70}{\kilo\meter\per\second\per\mega\parsec}$. For faraway objects then, the redshift is hence proportional to distance.
+  The redshift of an object is then directly correlated to its velocity perpendicular to the line of sight from the observer. For a redshift $z$, the line-of-sight velocity is\[
+      v \approx cz \text{,}
+  \] where $c$ is the speed of light constant.
 
-Since the speed of light is finite, electromagnetic waves coming from distant objects represent the past. Hence, observing distant objects permits us to study the history of the universe. For example, the universe is denser at larger distances, as a remnant of the earlier stages of the big bang. Similarly, large distances contain more quasars and more brighter objects. The ability to compute distance from the redshift is important in studying the past of the universe as the distance is a proxy for the age of the object we observe.
+  This permits us to approximate the distance from the observed object. Due to the expansion of space, distant objects are moving away from us at a velocity proportional to their distance. For a velocity $v$, that distance is \[
+      D \approx \frac{v}{H_0} \text{,}
+  \] where $H_0$ is the Hubble parameter, equalling approximately $\SI{70}{\kilo\meter\per\second\per\mega\parsec}$. For faraway objects then, the redshift is hence proportional to distance.
 
-The mass of an object is correlated to its luminosity\footnote{the total amount of light emitted}. The luminosity can be approximated from the brightness using the object's distance. Hence, computing the distance of an object from the redshift permits us to approximate its size.
+  Since the speed of light is finite, electromagnetic waves coming from distant objects represent the past. Hence, observing distant objects permits us to study the history of the universe. For example, the universe is denser at larger distances, as a remnant of the earlier stages of the big bang. Similarly, large distances contain more quasars and more brighter objects. The ability to compute distance from the redshift is important in studying the past of the universe as the distance is a proxy for the age of the object we observe.
 
-However, for some objects, we can approximate the size more directly. For closer objects, we can measure their apparent radius as the angle they span on the sky. Using trigonometry, we can then compute the actual radius of such an object from its apparent radius and redshift-derived distance.
+  The mass of an object is correlated to its luminosity\footnote{the total amount of light emitted}. The luminosity can be approximated from the brightness using the object's distance. Hence, computing the distance of an object from the redshift permits us to approximate its size.
 
-For closer galaxies, we are able to observe the movements of stars inside the galaxy. When a star orbits the centre of a galaxy, the internal motion can cancel or amplify the star's line-of-sight velocity. Measuring the stars' velocities from redshift hence permits us to to study galaxy dynamics.
+  However, for some objects, we can approximate the size more directly. For closer objects, we can measure their apparent radius as the angle they span on the sky. Using trigonometry, we can then compute the actual radius of such an object from its apparent radius and redshift-derived distance.
+
+  For closer galaxies, we are able to observe the movements of stars inside the galaxy. When a star orbits the centre of a galaxy, the internal motion can cancel or amplify the star's line-of-sight velocity. Measuring the stars' velocities from redshift hence permits us to to study galaxy dynamics.
+
+\chapter{Photometry}
+
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{zpec_hist.pdf}
+    \caption{Histogram of objects in SDSS and 2dFLenS by spectroscopic redshift.}
+    \label{fig:spec_hist}
+  \end{figure}
+
+  \jakub{define photometry}
+
+  \section{Colours}
+
+  \jakub{write about the 5 magnitudes used}
+
+  \jakub{plot the filters}
+
+  \jakub{why these 5 filters?}
+
+  \jakub{getting canonical colours from the five filters}
+
+  \section{Datasets}
+  \jakub{TODO: WRITE}
+
+  \subsection{SDSS}
+  The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}.
+
+  \jakub{TODO: WRITE}
+
+  \subsection{2dfLenS}
+  The spectroscopic redshift distribution of objects in 2dfLenS is presented in \cref{fig:spec_hist}.
 
 \chapter{Regression on Photometric Redshifts}
+
+\jakub{define X}
+
 Let $f$ be an unobserved function mapping $\cX$ to $\bbR$, where $\cX \subseteq \bbR^d$ for some $d \in \bbN$. Regression is the task of reconstructing such $f$ from finitely many samples. As a complication, these samples may be noisy.
 
 More formally, we are given a set of $n$ samples\[
@@ -151,7 +220,21 @@ In our case we will always assume that \[
 
 \section{Linear Regression}
 
-Linear regression is the simplest regression model.
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{linreg_plain.pdf}
+    \caption{Error of linear regression with linear features. Lower is better; error of $0$ means perfect fit. Note that since this regression is purely linear, a bias term is not used.}
+    \label{fig:linreg_plain}
+  \end{wrapfigure}
+
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{linreg_polynomial.pdf}
+    \caption{Error of linear regression with polynomial features. Note that degree 1 polynomial features are equivalent to linear regression with a bias term.}
+    \label{fig:linreg_polynomial}
+  \end{wrapfigure}
+
+Linear regression is the simplest regression model. \jakub{is it?}
 
 Choose $m \in \bbN$. Choose $\phi_1, \dots, \phi_m$, each mapping $\cX$ to $\bbR$.
 
@@ -233,6 +316,14 @@ We have that\begin{align*}
 Note that this does not apply to non-linear models where a nonlinear transformation is applied to $\mathbf{D}$. It also does not necessarily hold when regularisation is applied to the weights.
 
 \subsection{Regularisation}
+
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{linreg_kernelised_regularised.pdf}
+    \caption{Error of regularised kernelised linear regression. The regularisation constant $\lambda$ is $0.001$.}
+    \label{fig:linreg_kernelised_regularised}
+  \end{wrapfigure}
+
 Often we wish to limit the complexity of $\hat f$ to prevent overfitting. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
     p(w_i) = \cN(w_i \mid 0, \mu)
 \] for some variance $\mu > 0$.
@@ -274,7 +365,7 @@ A kernel is a function $k : \bbR^d \times \bbR^d \to \bbR$ such that \[
 
 Like other inner products, a kernel can be thought of as a similarity measure. For example, $k(\bx, \bx') = 0$, then $\bx$ and $\bx'$ are orthogonal in $H$, and thus not similar at all by our definition.
 
-Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly finite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
+Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly infinite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
 
 \subsection{Examples of Kernels}
 
@@ -282,9 +373,16 @@ Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^
 
 \subsubsection{Gaussian Kernel}
 
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{gaussian_kernel_plot.pdf}
+    \caption{$K(0, x)$, where $K$ is the Gaussian kernel.}
+    \label{fig:gaussian_kernel}
+  \end{wrapfigure}
+
 The Gaussian Kernel is defined by \[
     k(\bx, \bx') \coloneqq \exp\left( - \frac{\norm{\bx - \bx'}^2}{2\sigma^2} \right) \text{,}
-\] where the hyperparamerer $\sigma$ is known as the \textit{length scale}.
+\] where the hyperparamerer $\sigma$ is known as the \textit{length scale}. This is visualised in \cref{fig:gaussian_kernel}.
 
 An alternative definition involves length scales $\sigma_1, \dots, \sigma_d$, permitting us to set the length independently for each axis. The definition is \[
     k(\bx, \bx') \coloneqq \exp\left( - \frac{1}{2}\left(\bx - \bx'\right)^T\Sigma^{-1}\left(\bx - \bx'\right) \right) \text{,}
@@ -298,28 +396,60 @@ An alternative definition involves length scales $\sigma_1, \dots, \sigma_d$, pe
 
 \subsubsection{Rational-Quadratic Kernel}
 
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{rational_quadratic_kernel_plot.pdf}
+    \caption{$K(0, x)$, where $K$ is the Rational-Quadratic kernel.}
+    \label{fig:rational_quadratic_kernel}
+  \end{wrapfigure}
+
 The Rational-Quadratic Kernel is defined by \[
     k(\bx, \bx') \coloneqq \left(1 + \frac{1}{2\gamma}\norm{\bx - \bx'}^2\right)^{-\beta} \text{,}
 \] where $\gamma > 0$ is the \textit{length scale} and $\beta > 0$ is the \textit{shape parameter}. It can be thought of as an infinite sum of gaussian kernels.
 
+The Rational-Quadratick Kernel is visualised in \cref{fig:rational_quadratic_kernel}.
+
 Setting $\gamma = \beta \gamma_0$ and letting limiting $\beta \to \infty$ yields a Gaussian kernel with length scale $\gamma_0$.
 
-\subsubsection{Matern Kernel}
-\jakub{TODO: put correct accent in `Matern'}
+\subsubsection{Mat\'ern Kernel}
 
-The Matern Kernel is defined by \[
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{matern_kernel_plot.pdf}
+    \caption{$K(0, x)$, where $K$ is the Mat\'ern kernel.}
+    \label{fig:matern_kernel}
+  \end{wrapfigure}
+
+The Mat\'ern Kernel is defined by \[
     k(\bx, \bx') \coloneqq \sigma^2\frac{2^{1-\nu}}{\Gamma(\nu)}\left(\frac{\sqrt{2\nu}}{\ell}\norm{\bx - \bx'}\right)^\nu K_\nu\left(\frac{\sqrt{2\nu}}{\ell}\norm{\bx - \bx'}\right)
-\]$K_nu$ is the modified Bessel function of the second kind, $\Gamma$ is the Gamma function, $\nu$ is positive parameter, and $\ell$ is the length scale. It is differentiable $\floor{\nu-1}$ times.
+\]$K_\nu$ is the modified Bessel function of the second kind, $\Gamma$ is the Gamma function, $\nu$ is positive parameter, and $\ell$ is the length scale. It is differentiable $\floor{\nu-1}$ times.
+
+See \cref{fig:matern_kernel} for a visualisation.
 
 \jakub{Something about the physical meaning would be nice}
 
+\subsubsection{Exponential Kernel}
+
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{exponential_kernel_plot.pdf}
+    \caption{$K(0, x)$, where $K$ is the Exponential kernel.}
+    \label{fig:exponential_kernel}
+  \end{wrapfigure}
+
+\jakub{TOOD: write}
+
+The exponential kernel is visualised in \cref{fig:exponential_kernel}.
+
 \subsection{Kernel Approximations}
 
-\jakub{TODO: WRITE}
+For large dataset, computing $K$ becomes expensive as has a space complexity of $O(n^2)$.
 
 \subsubsection{RBF Sampling}
 
-\jakub{TODO: WRITE}
+RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier transform. \jakub{I literally don't know if this is correct}
+
+\jakub{prove}
 
 \subsubsection{Empirical Kernel Map}
 
@@ -327,6 +457,13 @@ The Matern Kernel is defined by \[
 
 
 \subsection{Kernelised Linear Regression}
+
+  \begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \includegraphics[width=0.4\textwidth]{linreg_kernelised.pdf}
+    \caption{Error of kernelised linear regression. The $\sigma$ is the median distance between training $\bx$ values.}
+    \label{fig:linreg_kernelised}
+  \end{wrapfigure}
 
 Consider the problem of regression. We are given a function $f : \bbR^d \to \bbR$ for some $d \in \bbN$. We are also given $n$ points $\bx_1, \dots, \bx_n$ for which we know the values. In other words, we know $y_1, \dots, y_n$ where \[
     y_i \coloneqq f(\bx_i)\text{ for }i = 1, \dots, n\text{.}
@@ -450,7 +587,7 @@ Observe that \cref{eq:pred} the equation for kernelised linear regression with r
 
 \section{Approximating Gaussian Processes}
 
-Gaussian Process regression relies on our calculation of $K_*(K+\sigma_n^2)^{-1}K_*^T$ \jakub{Are the transposes the wrong way around?}, which has a time complexity of $O(n^3)$. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
+Gaussian Process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$, which has a high time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jakub{reference}}. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
 
 \subsection{My Favourite Approximation}
 
@@ -458,23 +595,19 @@ Gaussian Process regression relies on our calculation of $K_*(K+\sigma_n^2)^{-1}
 
 We can approximate this matrix product with a complexity that is linear in $n$.
 
-Let $\Phi : n \times f$ for $f \ll n$ be our kernel approximation for the training set. Then $K = \Phi \Phi^T$. Let $\phi : f \times 1$ be the kernel approximation for the value we wish to predict for. Then $K_* = \Phi \phi$. Hence,\begin{align*}
-    K_*^T(K+\sigma_n^2)^{-1}K_* &= \Phi^T \phi^T \left(\Phi \Phi^T + \sigma_n^2I\right)^{-1} \phi\Phi \\
-    &= \Phi^T \phi^T \left( \sigma_n^{-2}I - \sigma_n^{-2}\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\right) \phi\Phi \\
-    &=  \sigma_n^{-2}\Phi^T \phi^T\phi\Phi - \sigma_n^{-2}\Phi^T \phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\phi\Phi
+Let $\Phi \in \bbR^{n \times f}$ for $f \ll n$ be our kernel approximation for the training set. Then $K \approx \Phi \Phi^T$. Let $\phi \in \bbR^{f}$ be the kernel approximation for the value we wish to predict for. Then $K_* \approx \Phi \phi$. Hence,\begin{align*}
+    K_*^T(K+\sigma_n^2)^{-1}K_* &\approx \phi^T\Phi^T  \left(\Phi \Phi^T + \sigma_n^2I\right)^{-1} \Phi\phi \\
+    &= \phi^T\Phi^T  \left( \sigma_n^{-2}I - \sigma_n^{-2}\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\right) \Phi\phi \\
+    &=  \sigma_n^{-2}\phi^T\Phi^T\Phi\phi - \sigma_n^{-2}\phi^T\Phi^T \Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\phi\Phi^T\Phi
 \end{align*}
 
-\jakub{TODO: check dimensions}
-
 Then \[
-    \hat f(\bx) = \sigma_n^{-2}\Phi^T \phi^T\by - \sigma_n^{-2}\Phi^T \phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\by
+    \hat f(\bx) = \sigma_n^{-2} \phi^T\Phi^T\by - \sigma_n^{-2} \phi^T\Phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\by
 \] and \[
     \var \hat f(\bx) = \phi^T\phi - \sigma_n^{-2}\Phi^T \phi^T\phi\Phi - \sigma_n^{-2}\Phi^T \phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\phi\Phi\text.
 \]
 
-\jakub{seriously, the dimensions don't seem to match}
-
-Numerical instabilities present difficulties for small $sigma_n^2$.
+Numerical instabilities present difficulties for small $\sigma_n^2$ as the matrix $(\Phi\Phi^T + \sigma_n^2I)$ becomes closer to being singular.
 
 \subsection{Linear Regression and KDE}
 
@@ -490,12 +623,37 @@ This method is less prone to numerical instabilities than my favourite approxima
 
 \section{Finding Hyperparameters}
 
-\subsection{Grid Search}
+  \subsection{Grid Search}
 
-Grid Search is one technique that permits us to find hyperparameters. We must first define a set of candidate hyperparameter configurations $H$.
+  Grid Search is one technique that permits us to find hyperparameters. We must first define a finite set of candidate hyperparameter configurations $H$.
 
-\subsection{Bayesian Optimisation}
-Our Gaussian Process Regression has six hyperparameters: a length scale for each of the five features and a regularisation constant. The high dimensionality of the hyperparameter space makes it difficult to find the optimal parameters using grid search. Bayesian optimisation may be used instead to speed up this process.
+  The algorithm is as follows:
+  \begin{minted}[
+    gobble=4,
+    linenos,
+    fontsize=\small,
+    frame=lines,
+    python3=true
+  ]{python}
+    def cross_validate(H, train_X, train_y, validation_X, validation_y)
+        best_parameters = None
+        best_score = float('-inf')
+
+        for h in H:
+            regressor.set_params(**h)
+            regressor.train(train_X, train_y)
+            score = regressor.score(validation_X, validation_y)
+
+            if score > best_score:
+                best_parameters = h
+
+        return best_parameters
+  \end{minted}
+
+  The technique is called grid search since $H$ is often a cartesian product of the options for each hyperparameter.
+
+  \subsection{Bayesian Optimisation}
+  Our Gaussian Process Regression has six hyperparameters: a length scale for each of the five features and a regularisation constant. The high dimensionality of the hyperparameter space makes it difficult to find the optimal parameters using grid search. Bayesian optimisation may be used instead to speed up this process.
 
 \jakub{derive bayesian optimisation}
 
@@ -580,5 +738,8 @@ This is reminiscent of the problem of exploration vs exploitation. Uncertainty s
 \jakub{figure out optimal function for p/kl}
 
 \jakub{helpful plot}
+
+\bibliography{references}{}
+\bibliographystyle{plain}
 
 \end{document}

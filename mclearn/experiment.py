@@ -71,7 +71,7 @@ def sample_from_every_class(y, size, seed=None):
     samples = []
     while len(samples) < size:
         idx = seed.choice(np.arange(len(y)))
-        if len(labels) == 0 or y[idx] in labels:
+        if (len(labels) == 0 and idx not in samples) or y[idx] in labels:
             samples.append(idx)
             labels = np.delete(labels, np.argwhere(labels == y[idx]))
     return samples
@@ -79,7 +79,7 @@ def sample_from_every_class(y, size, seed=None):
 
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
-    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=20, passive=True):
+    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=20, passive=True, n_jobs=-1):
         seed = RandomState(1234)
         self.X = np.asarray(X, dtype=np.float64)
         self.y = np.asarray(y)
@@ -87,6 +87,7 @@ class ActiveExperiment:
         self.policy_name = policy_name
         self.dataset = dataset
         self.passive = passive
+        self.n_jobs = n_jobs
 
         # estimate the kernel using the 90th percentile heuristic
         random_idx = seed.choice(X.shape[0], 1000)
@@ -99,12 +100,12 @@ class ActiveExperiment:
         train_size = min(10000, int(0.7 * n_samples))
         test_size = min(20000, n_samples - train_size)
         splitter = StratifiedShuffleSplit(
-            n_splits=n_splits, test_size=test_size, random_state=seed)
+            n_splits=n_splits, train_size=train_size, test_size=test_size, random_state=seed)
         self.kfold = list(splitter.split(self.X, self.y))
 
     def run_policies(self):
         start_time = time()
-        outputs = Parallel(n_jobs=-1)(delayed(self._run_fold)(train_index, test_index)
+        outputs = Parallel(n_jobs=self.n_jobs)(delayed(self._run_fold)(train_index, test_index)
                                       for train_index, test_index in self.kfold)
         end_time = time()
 
@@ -156,7 +157,7 @@ class ActiveExperiment:
         n_classes = len(np.unique(y_test))
         similarity = rbf_kernel(self.X[train_index], gamma=self.gamma)
         mpba, accuracy, f1 = [], [], []
-        training_size = min(10000, len(pool))
+        training_size = min(1000, len(pool))
         initial_n = 10
         horizon = training_size - initial_n
 

@@ -94,18 +94,17 @@
 Recent advances in sensors and scientific instruments have led to an increasing
 use of machine learning techniques for managing the data deluge. Supervised
 learning has become a widely used paradigm in many big data applications.
-However,  labeled examples are required during the training phase of supervised
-machine learning algorithms, and the labeling has become a  significant
-bottleneck. This paper explores the use of machine learning algorithms for
-identifying informative examples for labeling, the so-called active learning
-setting. We  empirically compare several active learning heuristics on
-benchmark UCI datasets, and focus on its  application to photometric
-classification of the Sloan Digital Sky Survey. By considering each  active
-learning heuristic as an expert recommendation of which example to label, we
-propose to  combine them using bandit and rank aggregation algorithms. Our
-results show that combining  active learning suggestions improves over each
-individual heuristic (including passive  learning), and provides a promising
-practical approach.
+However, labeled examples are required during the training phase of these
+supervised machine learning algorithms, and the labeling process has become a
+significant bottleneck. This paper explores the use of active learning
+algorithms to identify informative examples for labeling, We empirically
+compare several active learning heuristics on benchmark UCI datasets and a
+large dataset from the astronomical domain. By considering each active learning
+heuristic as an expert that gives recommendation on which example to label
+next, we propose to combine them using bandit and rank aggregation algorithms.
+Our results show that combining active learning suggestions improves over each
+individual heuristic (including passive learning) and the computation is
+fast enough for practical use.
 
 \end{abstract}
 
@@ -155,28 +154,47 @@ scalar real variables.
 
 \section*{Active Learning Suggestions}
 
-In this paper, we study the problem of multi-class classification and how use
-build a good training set with active learning. Consider a standard
-classification setting, where we try to come up with a hypothesis $h$ that maps
-the feature space $\X \subset \mathbb{R}^d$ to a finite label space $\Y$. In
-pool-based active learning, we require that some objects have already been
-labelled. In practice, this normally means that we label a small random sample
-at the beginning. These become the labelled set $\Labelled \subset \X \times
-\Y$, and the rest form the unabeled set $\Unlabelled \subset \X$.
+In this paper, we study the problem of multi-class classification and how to
+combine active learning suggestions to build a good training set. Consider the
+classification setting where we would like to learn a classifier $h$ that maps
+the feature space $\X \subset \mathbb{R}^d$ to a probability distribution over
+a finite label space $\Y$:
+\begin{IEEEeqnarray*}{lCl}
+	h : \X \rightarrow p(\Y)
+\end{IEEEeqnarray*}
+Here $p(\Y)$ maps the labels to the probabilities that indicate how likely that
+the object belongs to a particular class. In pool-based active learning, where
+we select an object from a pool of unlabelled examples at each time step, we
+also require that some objects have already been labelled. In practice, this
+normally means that we label a small random sample at the beginning. These
+become the labelled set $\Labelled \subset \X \times \Y$, and the rest form the
+unlabeled set $\Unlabelled \subset \X$.
 
 Now consider the problem of choosing the next example in $\Unlabelled$ for
 querying. Labelling can be a very expensive task, perhaps because it requires
 actual human experts to manually examine each object. Thus we want to be smart
-in choosing the next example. This motivates us to come up with a rule
-$r(\bm{x}; h)$ that gives each unlabelled example a score based only on their
-feature vector $\bm{x}$ and the current hypothesis $h$. Coming up with a good
-rule is itself a difficult problem, but there have been many attempts to derive
-good heuristics. Five common ones are listed in Table~\ref{tab:heuristics}.
-They roughly fall into two categories: uncertainty sampling and version space
-reduction. There are also heuristics that require minimizing the variance
-or the classifier certainty of the model \citep{schein07}, but we do not
-consider them in this paper as they are computationally inefficient in
-practice.
+in choosing the next example. This motivates us to come up with a suggestion
+$m(\bm{x}; h)$ that gives each unlabelled example a score based only on their
+feature vector $\bm{x}$ and the current classifier $h$. In particular, we need
+the probability estimates from the classifier over the unlabelled examples:
+\begin{IEEEeqnarray*}{lCl}
+	m : p(\Y)^{|U|} \rightarrow \mathbb{R}^{|U|}
+\end{IEEEeqnarray*}
+where $d$
+Coupled with each suggestion is an objective function $r$ that picks the most
+most informative example based on the scores for labeling:
+\begin{IEEEeqnarray*}{lCl}
+	r : \mathbb{R}^{|U|} \rightarrow J_U
+\end{IEEEeqnarray*}
+where $J_U$ is the index set over the unlabelled examples.
+
+Coming up with a good suggestion is itself a difficult problem, but there have
+been many attempts to derive good heuristics. Five common ones are listed in
+Table~\ref{tab:heuristics}. They roughly fall into two categories: uncertainty
+sampling and version space reduction. There are also heuristics that require
+minimizing the variance or the classifier certainty of the model
+\citep{schein07}, but we do not consider them in this paper as they are
+computationally inefficient in practice.
 
 \subsubsection*{Uncertainty Sampling}
 
@@ -222,7 +240,7 @@ divergence from the average.
 \begin{table}[h]
 	\caption {Summary of active learning heuristics used in our experiments,
 			  where $p(y | \bm{x}; h)$ is the probability of that an object
-			  with feature vector $\bm{x}$ has label $y$ under hypothesis $h$,
+			  with feature vector $\bm{x}$ has label $y$ under classifer $h$,
 			  $\B$ is the set of $B$ hypotheses $\{h_1, h_2, ..., h_B\}$,
 			  $\Y$ is the set of possible labels, $\Ecal$ is a random subset of
 			  the unlabelled set $U$, $D_{\mathrm{KL}}(p\|q)$ is the
@@ -274,29 +292,18 @@ by just looking at the predictions given by the heuristics. Let us frame this
 as the problem of prediction with expert advice. Consider the heuristics as a
 collection of experts $\R = \{r_1, r_2, ..., r_R\}$. How each expert comes up
 with the prediction does not matter to us. At every step $t$, however, we have
-the ability to ask each expert $r_i$ for a prediction $o_{i,t} \in (0, 1)^{U}$,
-where $o_{i,t}$ is a vector of normalized scores on the index set $\{1, 2, ..,
-U\}$ (which indexes $\Unlabelled$, the set of unlabelled objects). Our task now
-is to use this information, along with the history $H$, to choose the best
-index. In the standard setting, the environment would reveal the correct index
-after we have made our choice, but this is not available in our case. Instead,
-we only get a reward $\rho_t \in (0, 1)$ that indicates how good the choice is.
-The history would then be the set of all the past rewards and the associated
-expert, i.e. $H = \{(r_{i_t}, \rho_t)\}$. Formally, we would like to learn the
-prediction function
-\begin{IEEEeqnarray*}{lCl}
-	f : (0,1)^{U \times R} \times H^T \rightarrow U
-\end{IEEEeqnarray*}
-where $T$ is the maximum time horizon. For example, one naive approach is
-to ignore the history and always go with the advice of the first expert $r_1$:
-\begin{IEEEeqnarray*}{lCl}
-	f(o_{1,t}, o_{2,t}, ..., o_{R, t}) &=& \argmax o_{1,t}
-\end{IEEEeqnarray*}
+the ability to ask each expert $r_i$ for a prediction, either of the next most
+informative candidate in the unlabeled pool, or a rank on all the unlabeled
+examples. Our task now is to use this information, along with the history of
+rewards in the case of bandits, to choose the best candidate. In the standard
+setting, the environment would reveal the correct answer after we have made our
+choice, but this is not available in our case. Instead, we only have an option
+of receiving a reward that indicates how good the choice is.
 
-A more sophisticated approach involves picking a different expert at each
-time step, depending on their past performance. This is the basis of the bandit
-algorithms. Alternatively, we can take some weighted sum of all the experts,
-which leads us to social choice theory.
+Let us consider two approaches of taking in expert advice. We can either
+consider the option of only one expert at each time step (in bandit
+algorithms), or we can aggregate the option of all the experts (in social
+choice theory).
 
 \subsection*{Combining Suggestions with Bandit Theory}
 
@@ -307,8 +314,20 @@ lever gives out a random reward according to some unknown distribution. The
 goal of the game is to come up with a strategy that can maximize the gambler's
 lifetime rewards while minimizing the number of pulls.
 
-Each heuristic has a different ability to identify the candidate whose
-labelling information is most valuable. An appropriate reward is then the
+In the context of active learning, each suggestion is a lever with a different
+ability to identify the candidate whose labelling information is most valuable.
+Bandit algorithms do not need to know the internal workings of the suggestions,
+but only the reward received from using a particular suggestion. Based on
+the history of all the rewards, the bandit algorithm can decide on which
+suggestion to pick next. Formally, we have
+\begin{IEEEeqnarray*}{lCl}
+	b : [0, 1]^{|\R| \times T} \rightarrow J_\R
+\end{IEEEeqnarray*}
+where $b$ is the bandit algorithm, $[0, 1]$ is a normalized reward between
+0 and 1, and $J_\R$ is the index set over the set of suggestions $\R$, and $T$
+is the time horizon.
+
+What would be an appropriate reward in this setting? One option is then the
 incremental increase in the accuracy rate of a test set after the candidate is
 added to the training set. We assume that the heuristic rewards are independent
 of each other. This is reasonable since the theories with which we use to
@@ -449,22 +468,28 @@ for example, the winner of an election~\citep{list13}. It has the nice property
 that everyone (or in our context, every active learning suggestion) has a
 voice.
 
-For each heuristic $r_i$, we assign a score to every candidate like before.
-From these scores, we obtain a preference ordering $R_i$. This is a binary
-relation, where for any two candidates $x$ and $y$, $xR_iy$ and not $yR_ix$
-mean that $x$ is strictly better $y$. That is, the heuristic $r_i$ thinks $x$
-will give us more information upon labeling. If we have $s$ heuristics, we end
-up with a set of $s$ orderings, $\{ R_1, R_2, \ldots, R_s \}$, which we call a
-profile.
+For each suggestion $r_i$, we assign a score to every candidate like before. We
+are not interested in the actual raw scores, but only in the relative ranking
+$k(r_i)$ which converts the scores into a preference ordering, where the most
+informative candidate is given a rank of 1:
+	\begin{IEEEeqnarray*}{lCl}
+		k : \mathbb{R}^{|U|} \rightarrow \sigma(J_U)
+	\end{IEEEeqnarray*}
+where $\sigma(J_U)$ is a permutation over the index set of $U$.
 
-The central question in Social Choice Theory is how we can come up with a
-preference aggregation rule. This is a function that maps the space of profiles
-to a combined ranking $R$, which can be treated as the best expert. The main
-difference between this approach and the bandit algorithms is that we do not
-consider the reward history when combining the rankings, i.e. each heuristic is
-assumed to always have an equal weight. A possible extension, which is not
-considered in this paper, is to use the past performance to re-weight the
-heuristics before aggregating at each step.
+An aggregation function $c$ will
+then combine all the rankings into a combined ranking:
+    \begin{IEEEeqnarray*}{lCl}
+		c : \sigma(J_U)^{|\R|} \rightarrow \sigma(J_U)
+    \end{IEEEeqnarray*}
+From this, we can pick the highest-ranked candidate to label.
+
+The central question in Social Choice Theory is how we can come up with a good
+preference aggregation rule. The main difference between this approach and the
+bandit algorithms is that we do not consider the reward history when combining
+the rankings, i.e.\ each heuristic is assumed to always have an equal weight. A
+possible extension, which is not considered in this paper, is to use the past
+performance to re-weight the heuristics before aggregating at each step.
 
 We shall examine three aggregation rules. In the most simple approach, Borda
 count, we assign an integer point to each candidate. The lowest-ranked
@@ -619,7 +644,7 @@ For the reward, we use the mean posterior balanced accuracy (MPBA) as the
 reward. Compared to a simple accuracy rate, this measure takes into account the
 class imbalance. Intuitively, we calculate the recall rate in each class and
 then take the average, giving each class an equal weight. Refer to the appendix
-for the MPBA derivation.
+for the MPBA derivation
 
 Given that there are 12 datasets, each with 16 learning curves, we need a
 measure that can summarize in one number how well a particular suggestion or
@@ -724,7 +749,7 @@ of Washington, and Yale University.
 	\KwIn{
     	unlabelled set $\Unlabelled$,
         labelled training set $\Labelled_T$,
-        hypothesis $h$,
+        classifer $h$,
         desired training size $n$,
         query size $E$,
         set of active learning suggestions $\R$,
@@ -752,7 +777,7 @@ of Washington, and Yale University.
 	\KwIn{
     	unlabelled set $\Unlabelled$,
         labelled training set $\Labelled_T$,
-        hypothesis $h$,
+        classifer $h$,
         desired training size $n$,
         query size $E$,
         set of active learning suggestions $\R$,

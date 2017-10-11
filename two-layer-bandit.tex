@@ -594,7 +594,9 @@ class and the maximum achievable accuracy rate.
         \href{https://archive.ics.uci.edu/ml/datasets/Glass+Identification}{glass}
         	& $214$ & $6$ & $10$ & $33\%$ & $65\%$ \\
 		\href{https://archive.ics.uci.edu/ml/datasets/Ionosphere}{ionosphere}
-        	& $351$ & $2$ & $34$ & $64\%$ & $89\%$ \\
+			& $351$ & $2$ & $34$ & $64\%$ & $89\%$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Iris}{iris}
+        	& $150$ & $3$ & $4$ & $33\%$ & $90\%$ \\
         \href{https://archive.ics.uci.edu/ml/datasets/MAGIC+Gamma+Telescope}{magic}
         	& $19~020$ & $2$ & $11$ & $65\%$ & $84\%$ \\
         \href{https://archive.ics.uci.edu/ml/datasets/MiniBooNE+particle+identification}{miniboone}
@@ -608,7 +610,9 @@ class and the maximum achievable accuracy rate.
 		\href{https://archive.ics.uci.edu/ml/datasets/Connectionist+Bench+(Sonar,+Mines+vs.+Rocks)}{sonar}
         	& $208$ & $2$ & $60$ & $53\%$ & $78\%$ \\
         \href{https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)}{vehicle}
-        	& $846$ & $4$ & $18$ & $26\%$ & $81\%$ \\
+			& $846$ & $4$ & $18$ & $26\%$ & $81\%$ \\
+		\href{https://archive.ics.uci.edu/ml/datasets/Wine}{wine}
+        	& $178$ & $3$ & $13$ & $40\%$ & $94\%$ \\
 		\href{https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Prognostic)}{wpbc}
         	& $194$ & $2$ & $34$ & $76\%$ & $58\%$ \\
 		\bottomrule
@@ -652,18 +656,19 @@ policy does. Building on~\cite{baram04}'s deficiency measure, we define the
 strength of an active learner or policy, relative to passive learning, as
 
 \begin{IEEEeqnarray*}{lCl}
-    \text{Strength}(h) &=&
-    	1 - \dfrac{\sum_{t=1}^{n}\big(\MPBA(\max) - \MPBA(h, t)\big)}
-    	{\sum_{t=1}^{n}\big(\MPBA(\max) - \MPBA(\passive, t)\big)}
+    \text{Strength}(h; m) &=&
+    	1 - \dfrac{\sum_{t=1}^{n}\big(m(\max) - m(h, t)\big)}
+    	{\sum_{t=1}^{n}\big(m(\max) - m(\passive, t)\big)}
 \end{IEEEeqnarray*}
-where $\MPBA(\max)$ is the accuracy achieved from using all labelled data in
-the training set, and $\MPBA(h, t)$ is the accuracy achieved using the first
- $t$ examples selected by heuristic $h$. The summation can then be thought of as
-the area between the best possible performance line and the learning curve of
-$h$. The better the heuristic is, the faster it would approach this maximum
-line, and thus the smaller the area. Finally, so that we can compare the
-performance across datasets, we normalise the measure with the area obtained
-from using just passive learning.
+where $m$ is a chosen metric (e.g. accuracy rate, F1-score, MPBA), $m(\max)$ is
+the best possible performance achieved from using all labelled data in the
+training set, and $m(h, t)$ is the performance achieved using the first $t$
+examples selected by heuristic $h$. The summation can then be thought of as the
+area between the best possible performance line and the learning curve of $h$.
+The better the heuristic is, the faster it would approach this maximum line,
+and thus the smaller the area. Finally, so that we can compare the performance
+across datasets, we normalise the measure with the area obtained from using
+just passive learning.
 
 \section*{Discussion}
 
@@ -695,24 +700,123 @@ we would be better off with passive learning with datasets that are very noisy.
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=\textwidth]{figures/strengths}
-	\caption[Policy strength]{Boxplots of strength of policies and heuristics
-	relative to passive learning. The more positive the strength is, the better
-	the heuristic/policy. Blue boxes represent individual heuristics; red boxes
-	represent bandit alogrithms, and green boxes are for rank aggragation
-	algorithms. Each plot is over 10 trials.}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/strengths-accuracy-small}
+        \caption{Small datasets}
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/strengths-accuracy-large}
+        \caption{Large datasets}
+    \end{subfigure}
+	\caption[Policy strength]{Boxplots of accuracy strength of policies and
+	heuristics relative to passive learning. The more positive the strength is,
+	the better the heuristic/policy. Blue boxes represent individual
+	heuristics; red boxes represent bandit alogrithms, and green boxes are for
+	rank aggragation algorithms. Each plot is over 10 trials.}
+	\label{fig:strengths}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/strengths-f1-small}
+        \caption{Small datasets}
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/strengths-f1-large}
+        \caption{Large datasets}
+    \end{subfigure}
+	\caption[Policy strength]{Boxplots of F1 strength of policies and
+	heuristics relative to passive learning. The more positive the strength is,
+	the better the heuristic/policy. Blue boxes represent individual
+	heuristics; red boxes represent bandit alogrithms, and green boxes are for
+	rank aggragation algorithms. Each plot is over 10 trials.}
+	\label{fig:strengths}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/strengths-mpba-small}
+        \caption{Small datasets}
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/strengths-mpba-large}
+        \caption{Large datasets}
+    \end{subfigure}
+	\caption[Policy strength]{Boxplots of MPBA strength of policies and
+	heuristics relative to passive learning. The more positive the strength is,
+	the better the heuristic/policy. Blue boxes represent individual
+	heuristics; red boxes represent bandit alogrithms, and green boxes are for
+	rank aggragation algorithms. Each plot is over 10 trials.}
 	\label{fig:strengths}
 \end{figure}
 
 
 \begin{figure}[tbp]
 	\centering
-	\includegraphics[width=\textwidth]{figures/learning_curves}
-	\caption[Selected learning curves]{Selected learning curves. As it would
-	get too cluttered to plot 16 learning curves, we only show the MPBA curves
-	for the least confidence heuristic, the EXP3++ bandit policy, and the Borda
-	aggregation policy. The learning curves are averaged over 10 shuffles.}
-	\label{fig:learning_curves}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/learning_curves-accuracy-small}
+        \caption{Small datasets}
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/learning_curves-accuracy-large}
+        \caption{Large datasets}
+    \end{subfigure}
+	\caption[Selected learning curves]{Selected accuracy rate learning curves.
+	As it would get too cluttered to plot 16 learning curves, we only show the
+	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
+	and the Borda aggregation policy. The learning curves are averaged over 10
+	shuffles.}
+	\label{fig:strengths}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/learning_curves-f1-small}
+        \caption{Small datasets}
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/learning_curves-f1-large}
+        \caption{Large datasets}
+    \end{subfigure}
+	\caption[Selected learning curves]{Selected F1-score learning curves.
+	As it would get too cluttered to plot 16 learning curves, we only show the
+	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
+	and the Borda aggregation policy. The learning curves are averaged over 10
+	shuffles.}
+	\label{fig:strengths}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/learning_curves-mpba-small}
+        \caption{Small datasets}
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/learning_curves-mpba-large}
+        \caption{Large datasets}
+    \end{subfigure}
+	\caption[Selected learning curves]{Selected MPBA learning curves.
+	As it would get too cluttered to plot 16 learning curves, we only show the
+	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
+	and the Borda aggregation policy. The learning curves are averaged over 10
+	shuffles.}
+	\label{fig:strengths}
 \end{figure}
 
 

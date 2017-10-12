@@ -658,6 +658,20 @@ This method is less prone to numerical instabilities than my favourite approxima
 \jakub{derive bayesian optimisation}
 
 \subsection{Automatic Relevance Determination}
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{passive_delta.pdf}
+    \caption{Passive learning curve: Mean $\delta$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen at random. The shaded interval represents the two-sigma confidence interval.}
+    \label{fig:passive_delta}
+  \end{figure}
+
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{passive_r2.pdf}
+    caption{Passive learning curve: $R^2$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen at random. The shaded interval represents the two-sigma confidence interval.}
+    \label{fig:passive_r2}
+  \end{figure}
+
 Automatic Relevance Determination is another technique that may be used to find the hyperparameters for our Gaussian Process Regression.
 
 Consider the problem of linear regression. We have a five-dimensional feature space $\cX$. The features have \jakub{noise vairances?} variances $\lambda_1, \dots, \lambda_5$, respectively. We place a prior on our regression weights.
@@ -676,6 +690,10 @@ Our prior variance for each weight is proportional to the variance of the weight
 
 \jakub{motivate}
 
+\section{Measuring performance}
+
+\jakub{write}
+
 \section{Recommenders}
 
 In active learning, a recommender is a function that scores the utility of each additional point to the regression problem. It can be thought of in two equivalent ways:\begin{itemize}
@@ -684,6 +702,12 @@ In active learning, a recommender is a function that scores the utility of each 
 \end{itemize}
 
 \subsection{Uncertainty}
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{uncertainty_r2.pdf}
+    \caption{Learning curve: $R^2$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using uncertainty recommendation with a batch size of $100$. The shaded interval represents the two-sigma confidence interval.}
+    \label{fig:uncertainty_r2}
+  \end{figure}
 
 Let $\var \hat f$ be the variance returned by Gaussian PRocess Regression. The uncertainty recommender is defined as \[
     \argmax_{c \in \cC} \var\hat f(c) \text.

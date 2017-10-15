@@ -85,12 +85,13 @@
 
 \newcommand\norm[1]{\left\|#1\right\|}
 \newcommand\floor[1]{\left\lfloor#1\right\rfloor}
+\newcommand\abs[1]{\left|#1\right|}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator{\spn}{span}
 
-\newcommand\jakub[1]{{\color{red}(j: #1)}}
+\newcommand\jn[1]{{\color{red}(jn: #1)}}
 
 \title{Optimising Experiments for Photometric Redshift Prediction}
 \author{Jakub Nabaglo, u5558578}
@@ -104,15 +105,16 @@
 
 \nomenclature{$\cX$}{Predictor input set}
 \nomenclature{$\bbR$}{Set of real numbers}
+\nomenclature{$\bbR_{\geq0}$}{Set of non-negative real numbers}
 \nomenclature{$f$}{Original function}
 \nomenclature{$\hat f$}{Predictor}
-\nomenclature{$n$}{Punctuation Symbol}
-\nomenclature{$m$}{Punctuation Symbol}
-\nomenclature{$d$}{Punctuation Symbol}
+\nomenclature{$n$}{\jn{fill}}
+\nomenclature{$m$}{\jn{fill}}
+\nomenclature{$d$}{\jn{fill}}
 \nomenclature{$c$}{Speed of light in a vacuum\nomunit{\SI{299792458}{\meter\per\second}}}
 \nomenclature{$z$}{Redshift}
-\nomenclature{$z_\mathrm{spec}$}{Redshift}
-\nomenclature{$z_\mathrm{pred}$}{Redshift}
+\nomenclature{$z_\mathrm{spec}$}{Spectroscopic redshift}
+\nomenclature{$z_\mathrm{pred}$}{Photometric redshift}
 
 \printnomenclature
 
@@ -140,7 +142,7 @@ Optimal design requires us to be able to assess the uncertainties in the predict
 \section{Redshift}
   Redshift is a property of all signals we observe from astronomical objects. It is often not easy to measure, but finding it permits us to learn important facts about the object being observed.
 
-  \jakub{Caused not just by doppler effect. Also expansion of the universe.}
+  \jn{Caused not just by doppler effect. Also expansion of the universe.}
 
   The electromagnetic waves that we observe from distant objects are subject to the Doppler effect. This is the phenomenon by which waves produced by an object that is moving away from the observer appear to have a longer wavelength. Consider an ambulance driving away from you: the tone of the siren appears lower than if the ambulance was stationary. In a similar way, a galaxy moving away from us appears redder, giving rise to the term `redshift'. The converse effect, affecting objects moving towards the observer, is termed `blueshift'.
 
@@ -169,54 +171,82 @@ Optimal design requires us to be able to assess the uncertainties in the predict
     \label{fig:spec_hist}
   \end{figure}
 
-  \jakub{define photometry}
+  \jn{define photometry}
 
   \section{Colours}
 
-  \jakub{write about the 5 magnitudes used}
+  \jn{write about the 5 magnitudes used}
 
-  \jakub{plot the filters}
+  \jn{plot the filters}
 
-  \jakub{why these 5 filters?}
+  \jn{why these 5 filters?}
 
-  \jakub{getting canonical colours from the five filters}
+  \jn{getting canonical colours from the five filters}
 
   \section{Datasets}
-  \jakub{TODO: WRITE}
+  \jn{TODO: WRITE}
 
   \subsection{SDSS}
   The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}.
 
-  \jakub{TODO: WRITE}
+  \jn{TODO: WRITE}
 
   \subsection{2dfLenS}
   The spectroscopic redshift distribution of objects in 2dfLenS is presented in \cref{fig:spec_hist}.
 
 \chapter{Regression on Photometric Redshifts}
 
-\jakub{define X}
+Regression is the task of reconstructing a function $f$ using a finite number of examples of its inputs and outputs.
 
-Let $f$ be an unobserved function mapping $\cX$ to $\bbR$, where $\cX \subseteq \bbR^d$ for some $d \in \bbN$. Regression is the task of reconstructing such $f$ from finitely many samples. As a complication, these samples may be noisy.
+Let $\cX \subset \bbR^d$ be the bounded space of inputs of $f$. Then $f$ maps $\cX$ to $\bbR$.
 
-More formally, we are given a set of $n$ samples\[
-    \cD = \{(\bx_1, y_1), \dots (\bx_n, y_n)\} \text{.}
-\] For each $i = 1, \dots, n$, \[
-    y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP \text{,}
-\] where $\cP$ is some probability distribution of the error.
+We are given a set of $n$ noisy samples\[
+  \cD = \left\{\left(\bx_1, y_1\right), \dots, \left(\bx_n, y_n\right)\right\} \text{,}
+\] where for each $i = 1, \dots, n$, \[
+  y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP\text{,}
+\] where $\cP : \bbR \to \bbR_{\geq0}$ is the probability distribution of the noise.
 
-We wish to find a function $\hat f : \bbR^d \to \bbR$ that maximises the likelihood \[
-    p\left(\by \;\middle|\; \hat f, X\right) \text{,}
-\] where we define\[
-    \by \coloneqq \begin{bmatrix} y_1 \\ \vdots \\ y_n \end{bmatrix}
-    \text{ and }
-    X \coloneqq \begin{bmatrix} \bx_1^\intercal \\ \vdots \\ \bx_n^\intercal \end{bmatrix}
+We want to find a function $\hat f$ that reconstructs $f$ using the limited information that we have about it. The likelihood of each possible explanation $\hat f_c : \bbR^d \to \bbR$ being correct is \[
+    p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
+\] We wish to find the $\hat f_c$ that maximises it:\[
+    \hat f \coloneqq \argmax_{\hat f_c} p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
 \]
 
-The formalisation of this likelihood is dependent on our assumptions. For example, it will depend on whether we know $\cP$, we assume it, or it is given to us.
+The formalisation of this likelihood is dependent on our assumptions. For example, it will depend on our assumptions about $\cP$ and about $f$. The space we search over will depend on our assumptions about the form that $\hat f$ is in.
 
-In our case we will always assume that \[
+In our specific case we will always assume that \[
     \cP = \cN(0, \sigma^2)
-\] for some variance $\sigma^2$.
+\] for some variance $\sigma^2$ that we leave as a hyperparameter: a parameter that depends on the distribution of our data.
+
+We want to apply this technique to the problem of finding the redshift of an object from its photometric measurements, as a cheaper means of finding objects' redshifts than spectroscopy. Given a set of example objects' photometric measurements and spectoscopic redshifts, we wish to predict the spectroscopic redshifts for any new object whose photometric colours have been measured. Hence, $\cX \subset \bbR^5$ is the space of photometric measurements.
+
+Assume that $f : \cX \to \bbR$ is the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshifts. This permits us to simply treat any inconsistency as a source of noise.
+
+Some models are capable of not only predicting $f$ but also returning a measure of its confidence in its prediction. Gaussian Process regression, for example, yields $\hat f$, but also produces $\var \hat f : \cX \to \bbR_{\geq0}$. Then for all $\bx \in \cX$, $\cN(\hat f(\bx), \var \hat f(\bx))$ forms a probability distribution for the predictions, with a mean of $\hat f(\bx)$ and a variance of $\var \hat f(\bx)$. The lower the variance, the more confident we are in our prediction.
+
+This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
+
+\section{Assessing performance}
+
+\jn{$R^2$}
+
+\jn{mean $\delta$}
+
+\jn{mean redshift bias}
+
+\jn{half-width $\sigma_{683}$ of redshift deviation $\delta z/(1+z)$}
+
+\jn{fraction of outliers with $\abs{\delta z /(1+z)} > 0.1$}
+
+\section{Existing methods}
+
+\jn{Write about Chris's KDE}
+
+\jn{Neural networks}
+
+\jn{Boosted decision trees}
+
+\jn{`Bayesian template method BPZ'}
 
 \section{Linear Regression}
 
@@ -234,7 +264,7 @@ In our case we will always assume that \[
     \label{fig:linreg_polynomial}
   \end{wrapfigure}
 
-Linear regression is the simplest regression model. \jakub{is it?}
+Linear regression is the simplest regression model. \jn{is it?}
 
 Choose $m \in \bbN$. Choose $\phi_1, \dots, \phi_m$, each mapping $\cX$ to $\bbR$.
 
@@ -369,7 +399,7 @@ Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^
 
 \subsection{Examples of Kernels}
 
-\jakub{TODO: make very helpful plots}
+\jn{TODO: make very helpful plots}
 
 \subsubsection{Gaussian Kernel}
 
@@ -426,7 +456,7 @@ The Mat\'ern Kernel is defined by \[
 
 See \cref{fig:matern_kernel} for a visualisation.
 
-\jakub{Something about the physical meaning would be nice}
+\jn{Something about the physical meaning would be nice}
 
 \subsubsection{Exponential Kernel}
 
@@ -437,7 +467,7 @@ See \cref{fig:matern_kernel} for a visualisation.
     \label{fig:exponential_kernel}
   \end{wrapfigure}
 
-\jakub{TOOD: write}
+\jn{TOOD: write}
 
 The exponential kernel is visualised in \cref{fig:exponential_kernel}.
 
@@ -447,13 +477,13 @@ For large dataset, computing $K$ becomes expensive as has a space complexity of 
 
 \subsubsection{RBF Sampling}
 
-RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier transform. \jakub{I literally don't know if this is correct}
+RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier transform. \jn{I literally don't know if this is correct}
 
-\jakub{prove}
+\jn{prove}
 
 \subsubsection{Empirical Kernel Map}
 
-\jakub{TODO: WRITE}
+\jn{TODO: WRITE}
 
 
 \subsection{Kernelised Linear Regression}
@@ -587,11 +617,11 @@ Observe that \cref{eq:pred} the equation for kernelised linear regression with r
 
 \section{Approximating Gaussian Processes}
 
-Gaussian Process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$, which has a high time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jakub{reference}}. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
+Gaussian Process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$, which has a high time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jn{reference}}. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
 
 \subsection{My Favourite Approximation}
 
-\jakub{wtf is it called}
+\jn{wtf is it called}
 
 We can approximate this matrix product with a complexity that is linear in $n$.
 
@@ -655,7 +685,7 @@ This method is less prone to numerical instabilities than my favourite approxima
   \subsection{Bayesian Optimisation}
   Our Gaussian Process Regression has six hyperparameters: a length scale for each of the five features and a regularisation constant. The high dimensionality of the hyperparameter space makes it difficult to find the optimal parameters using grid search. Bayesian optimisation may be used instead to speed up this process.
 
-\jakub{derive bayesian optimisation}
+\jn{derive bayesian optimisation}
 
 \subsection{Automatic Relevance Determination}
   \begin{figure}
@@ -674,25 +704,25 @@ This method is less prone to numerical instabilities than my favourite approxima
 
 Automatic Relevance Determination is another technique that may be used to find the hyperparameters for our Gaussian Process Regression.
 
-Consider the problem of linear regression. We have a five-dimensional feature space $\cX$. The features have \jakub{noise vairances?} variances $\lambda_1, \dots, \lambda_5$, respectively. We place a prior on our regression weights.
+Consider the problem of linear regression. We have a five-dimensional feature space $\cX$. The features have \jn{noise vairances?} variances $\lambda_1, \dots, \lambda_5$, respectively. We place a prior on our regression weights.
 
-Our prior variance for each weight is proportional to the variance of the weight. We also assume that the weights are uncorrelated. Hence, our sum-of-squares loss function becomes \jakub{how?}\[
+Our prior variance for each weight is proportional to the variance of the weight. We also assume that the weights are uncorrelated. Hence, our sum-of-squares loss function becomes \jn{how?}\[
     \frac12\norm{X\bw - \by}^2 + \alpha \bw^T \Lambda \bw \text.
 \]
 
-\jakub{now talk about that weird convergence bullshit for the regularisation constant}
+\jn{now talk about that weird convergence bullshit for the regularisation constant}
 
-\jakub{we don't care about pruning right? because we're not pruning...}
+\jn{we don't care about pruning right? because we're not pruning...}
 
 \chapter{Active Learning}
 
-\jakub{define active learning}
+\jn{define active learning}
 
-\jakub{motivate}
+\jn{motivate}
 
 \section{Measuring performance}
 
-\jakub{write}
+\jn{write}
 
 \section{Recommenders}
 
@@ -717,7 +747,7 @@ Intuitively, it returns the points that we are the most uncertain about. If we a
 
 This intuition fails at the start of our training. This is because we end up focusing on points that we are very unsure about, which tend to be on the long tail of the distribution. Since, in our case, the distribution is five-dimensional, this is a very poor strategy, as we spread out our efforts and neglect the core of the distribution.
 
-\jakub{learning curve}
+\jn{learning curve}
 
 \subsection{Density}
 
@@ -725,7 +755,7 @@ Let $\cD : \cX \to \bbR^+$ be a density function for the dataset. This can be de
     \argmax_{c \in \cC} \cD(c) \text.
 \]
 
-\jakub{learning curve on pure density}
+\jn{learning curve on pure density}
 
 As seen above, this recommendation strategy yields good results at the start of the learning curve, when we have trained on very few datapoints. However, late on the curve flattens out and no longer produces very good results, being overtaken by uncertainty recommendation.
 
@@ -733,13 +763,13 @@ As seen above, this recommendation strategy yields good results at the start of 
 
 Boltzmann sampling permits us to obtain a variety of training points from one recommender.
 
-\jakub{derive}
+\jn{derive}
 
-\jakub{this really needs more formal vocabulary}
+\jn{this really needs more formal vocabulary}
 
 It prevents `clumping' of points, and hence redundant information. It is also useful when recommending in batches. Since scores are continuous, two recommended data points are correlated, producing redundant information; boltzmann sampling helps reduce this.
 
-\jakub{learning curves of boltzmann on uncertainty and density with different temperatures}
+\jn{learning curves of boltzmann on uncertainty and density with different temperatures}
 
 \subsection{Mixing recommenders}
 
@@ -759,9 +789,9 @@ A constant $p$ (or equivalently constant $k$ and $l$) with combine both the adva
 
 This is reminiscent of the problem of exploration vs exploitation. Uncertainty scores are mostly noise until we have enough data in our training set.
 
-\jakub{figure out optimal function for p/kl}
+\jn{figure out optimal function for p/kl}
 
-\jakub{helpful plot}
+\jn{helpful plot}
 
 \bibliography{references}{}
 \bibliographystyle{plain}

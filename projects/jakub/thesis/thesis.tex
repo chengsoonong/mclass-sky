@@ -121,8 +121,6 @@
 
 \chapter{Introduction}
 
-\prntlen{\textwidth}
-
 A redshift is the change in the wavelength of a photon emitted by an object that is moving away from the observer. When applied to the visible spectrum, a redshift makes an object appear more red.
 
 Redshifts are important in astronomy, as they are used for a variety of tasks. The most important of these tasks is finding distances to objects.
@@ -196,29 +194,23 @@ Optimal design requires us to be able to assess the uncertainties in the predict
 
 \chapter{Regression on Photometric Redshifts}
 
-Regression is the task of reconstructing a function $f$ using a finite number of examples of its inputs and outputs.
+Let $\cX \subset \bbR^d$ be bounded. Let $f$ map $\cX$ to $\bbR$. Regression is the task of reconstructing such an $f$ from finitely many examples of its inputs and outputs.
 
-Let $\cX \subset \bbR^d$ be the bounded space of inputs of $f$. Then $f$ maps $\cX$ to $\bbR$.
-
-We are given a set of $n$ noisy samples\[
-  \cD = \left\{\left(\bx_1, y_1\right), \dots, \left(\bx_n, y_n\right)\right\} \text{,}
-\] where for each $i = 1, \dots, n$, \[
-  y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP\text{,}
-\] where $\cP : \bbR \to \bbR_{\geq0}$ is the probability distribution of the noise.
-
-We want to find a function $\hat f$ that reconstructs $f$ using the limited information that we have about it. The likelihood of each possible explanation $\hat f_c : \bbR^d \to \bbR$ being correct is \[
-    p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
-\] We wish to find the $\hat f_c$ that maximises it:\[
-    \hat f \coloneqq \argmax_{\hat f_c} p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
+We are given a set \[
+  \cD = \left\{\left(\bx_1, y_1\right), \dots, \left(\bx_n, y_n\right)\right\}
+\] of $n$ samples of $f$, where $y_1, \dots, y_n$ are the \textit{labels}. Let $\cP$ be the probability distribution of the label noise. Then for all $i$, \[
+  y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP \text{.}
 \]
 
-The formalisation of this likelihood is dependent on our assumptions. For example, it will depend on our assumptions about $\cP$ and about $f$. The space we search over will depend on our assumptions about the form that $\hat f$ is in.
+Let $\hat\cF$ be our space of possible approximations; its exact membership depends on our model. We want to find $\hat f \in \hat\cF$ that is the best approximation of $f$. Each candidate approximation $\hat f_c \in \hat\cF$ can be assigned a likelihood that quantifies how good an approximation it is:\[
+    p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
+\] We define $\hat f$ to be the function that maximises this likelihood:\[
+    \hat f \coloneqq \argmax_{\hat f_c \in \cF} p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
+\] The definition of this likelihood is dependent on our assumptions, such as on our assumed noise distribution $\cP$ and on any assumptions we have about $f$.
 
-In our specific case we will always assume that \[
-    \cP = \cN(0, \sigma^2)
-\] for some variance $\sigma^2$ that we leave as a hyperparameter: a parameter that depends on the distribution of our data.
+In our specific case we will always assume that the noise is distributed according to a Gaussian with a mean of $0$ and a variance $\sigma^2$ that we leave as a hyperparameter\footnote{A hyperparameter is a parameter that depends on the distribution of our data.}.
 
-We want to apply this technique to the problem of finding the redshift of an object from its photometric measurements, as a cheaper means of finding objects' redshifts than spectroscopy. Given a set of example objects' photometric measurements and spectoscopic redshifts, we wish to predict the spectroscopic redshifts for any new object whose photometric colours have been measured. Hence, $\cX \subset \bbR^5$ is the space of photometric measurements.
+We apply regression to find objects' redshifts from their photometric measurements, as a cheaper alternative to spectroscopy. We are given a set of example objects' photometric measurements and spectoscopic redshifts, and we wish to predict the redshift of any new object whose photometric colours have been measured. Hence, in our case $\cX \subset \bbR^5$ is the space of photometric measurements.
 
 Assume that $f : \cX \to \bbR$ is the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshifts. This permits us to simply treat any inconsistency as a source of noise.
 
@@ -228,7 +220,39 @@ This measure of confidence becomes crucial when we seek to improve our predictio
 
 \section{Assessing performance}
 
-\jn{$R^2$}
+In order to assess the accuracy of our model, we must have a way of quantifying it. To do so, we need to withhold a portion of our data into a training set $\cD'$ of $n'$ elements such that \[
+  \cD' = \{(\bx'_1, y'_1), \dots, (\bx'_{n'}, y'_{n'})\}
+\] and $\cD$ is disjoint from $\cD'$.
+
+For each testing sample $(\bx'_i, y'_i)$, define the prediction as\[
+  \hat y'_i \coloneqq \hat f(\bx'_i)
+\]
+and define the $\delta$ error as \[
+  \delta_i \coloneqq y'_i - \hat y'_i\text.
+\]
+
+For a perfect predictor then,\[
+  \hat y'_i = y'_i \text{ for all }i=1, \dots, n'\text{,}
+\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce due to unpredictable noise in the labels. This necessitates the scoring of predictors with one or more quantitative metrics.
+
+\subsection{Fraction of Variance Unexplained}
+The fraction of variance unexplained measures the fraction of the variance of the labels $y_1, \dots, y_n$ explained by the predictor. For a predictor that explains the entire variance, $\mathrm{FVU}=0$, and for a predictor that explains none of the variance $\mathrm{FVU}=1$ It is defined as \[
+  \mathrm{FVU} \coloneqq \frac{\mathrm{VAR_{err}}}{\mathrm{VAR_{tot}}} \text{,}
+\] where $\mathrm{VAR_{err}} \coloneqq \frac{1}{N'}\sum_{i=1}^{N'}\delta_i^2$ is the mean squared $\delta$ error (equalling the variance of the $\delta$ error when its mean is zero), and $\mathrm{VAR_{tot}} \coloneqq \var\{y'_1, \dots, y'_{N'}\}$ is the variance\footnote{For a finite set $S = \{s_1, \dots, s_{\abs{S}}\} \subset \bbR$ of $\abs{S}$ elements, we define the variance as $\var S \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}(s_i - \overline{s})^2$, where $\overline{s} \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}s_i$ is the mean of $S$.} of the labels of the testing set. Note that $\mathrm{VAR_{err}}$ varies with the predictor, whereas $\mathrm{VAR_{tot}}$ is constant for each testing set.
+
+Intuitively, a perfect predictor explains the entire variance of the labels, so we expect it to yield $\mathrm{FVU} = 0$. Indeed, a perfect predictor has $\delta_1 = \dots = \delta_{N'} = 0$, so $\mathrm{VAR_{err}} = 0$, implying that $\mathrm{FVU} = 0$.
+
+For a predictor that always returns the mean of the training set, $\mathrm{VAR_{err}} = \mathrm{VAR_{tot}}$ by definition \jn{is it enough to say `by definition'?}, so $\mathrm{FVU} = 1$, as expected since a predictor that always returns the mean explains none of the variance. A predictor with $\mathrm{FVU} > 1$ then performs worse by our metric than a predictor that always returns the mean.
+
+\subsection{Mean scaled $\delta$ error}
+
+The mean scaled $\delta$ error is defined as\[
+  \textrm{mean scaled $\delta$} \coloneqq \frac{1}{N'}\sum_{i=1}^{N'} \frac{\abs{\delta_i}}{1 + y'_i} \text.
+\]
+
+Unline the fraction of variance unexplained error, it takes depends on a sum of absolute errors, as opposed to the sum of squared errors. This is an important distinction, as the sum of squared errors is more likely to be overly influenced by outliers that it is reasonable to incorrectly predict.
+
+The scaling serves to account for differing orders of magnitude in the labels: an error of $1$ on an label of $2$ is much less significant than an error of $1$ on a label of $0.2$. \jn{blah blah relate this to redshift}
 
 \jn{mean $\delta$}
 
@@ -398,9 +422,6 @@ Like other inner products, a kernel can be thought of as a similarity measure. F
 Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly infinite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
 
 \subsection{Examples of Kernels}
-
-\jn{TODO: make very helpful plots}
-
 \subsubsection{Gaussian Kernel}
 
   \begin{wrapfigure}{R}{0.4\textwidth}

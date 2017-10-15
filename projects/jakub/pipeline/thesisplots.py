@@ -105,6 +105,7 @@ def load_cache(name):
         return pickle.load(f)
 
 
+# TODO: rerun
 def plot_linreg_plain():
     try:
         means, stds = load_cache('linreg_plain')
@@ -128,7 +129,7 @@ def plot_linreg_plain():
                 scores.append(score)
 
             means.append(np.mean(scores))
-            stds.append(np.std(scores))
+            stds.append(np.std(scores, ddof=1))
 
         save_cache('linreg_plain', means, stds)
 
@@ -141,6 +142,7 @@ def plot_linreg_plain():
     plt.savefig('../thesis/linreg_plain.pdf')
 
 
+# TODO: rerun
 def plot_linreg_polynomial():
     degrees = [None, 1, 2, 3]
 
@@ -170,7 +172,7 @@ def plot_linreg_polynomial():
                 scores.append(score)
 
             means[dataset_name, degree] = np.mean(scores)
-            stds[dataset_name, degree] = np.std(scores)
+            stds[dataset_name, degree] = np.std(scores, ddof=1)
 
         save_cache('linreg_polynomial', means, stds)
 
@@ -189,6 +191,7 @@ def plot_linreg_polynomial():
     plt.savefig('../thesis/linreg_polynomial.pdf')
 
 
+# TODO: rerun
 def plot_linreg_kernelised():
     kernels = [('Baseline', None),
                ('Gaussian', sklearn.gaussian_process.kernels.RBF()),
@@ -207,6 +210,7 @@ def plot_linreg_kernelised():
         stds = {}
 
         for data_n, data in datasets:
+            print('Starting dataset', data_n)
             X, y = data
             X = X[:50000]
             X_ = X.copy()
@@ -220,6 +224,7 @@ def plot_linreg_kernelised():
 
 
             for kernel_n, kernel in kernels:
+                print('    Starting kernel', kernel_n)
                 if kernel is None:
                     poly = sklearn.preprocessing.PolynomialFeatures(degree=3)
                     X_ = poly.fit_transform(X)
@@ -229,6 +234,7 @@ def plot_linreg_kernelised():
                                                    shuffle=True, random_state=1)
                 scores = []
                 for test_indices, train_indices in kf.split(y[:50000]):
+                    print('        Starting new fold')
                     if kernel is None:
                         reg = sklearn.linear_model.LinearRegression(fit_intercept=False)
                     else:
@@ -237,18 +243,18 @@ def plot_linreg_kernelised():
                     y_pred = reg.predict(X_[test_indices])
                     score = chris_error.sum_normalised_delta(y[test_indices], y_pred)
                     scores.append(score)
-                    break
 
                 means[data_n, kernel_n] = np.mean(scores)
-                stds[data_n, kernel_n] = np.std(scores)
+                stds[data_n, kernel_n] = np.std(scores, ddof=1)
 
         save_cache('linreg_kernelised', means, stds)
 
     for data_n, _ in datasets:
-        plt.errorbar(np.arange(len(kernels)),
-                     [means[data_n, k] for k, _ in kernels],
-                     [stds[data_n, k] for k, _ in kernels],
-                     fmt='o', lw=1)
+        artists = plt.errorbar(np.arange(len(kernels)),
+                               [means[data_n, k] for k, _ in kernels],
+                               [stds[data_n, k] for k, _ in kernels],
+                               fmt='o', lw=1, linestyle='dashed')
+        artists.get_children()[1].set_alpha(0.5)
 
     labels = {
         'Baseline': 'Baseline',
@@ -267,6 +273,7 @@ def plot_linreg_kernelised():
     plt.savefig('../thesis/linreg_kernelised.pdf')
 
 
+# TODO: rerun
 def plot_linreg_kernelised_regularised():
     kernels = [('Baseline', None),
                ('Gaussian', sklearn.gaussian_process.kernels.RBF()),
@@ -286,6 +293,7 @@ def plot_linreg_kernelised_regularised():
         stds = {}
 
         for data_n, data in datasets:
+            print('Starting dataset', data_n)
             X, y = data
             X = X[:50000]
             X_ = X.copy()
@@ -299,6 +307,7 @@ def plot_linreg_kernelised_regularised():
 
 
             for kernel_n, kernel in kernels:
+                print('    Starting kernel', kernel_n)
                 if kernel is None:
                     poly = sklearn.preprocessing.PolynomialFeatures(degree=3)
                     X_ = poly.fit_transform(X)
@@ -308,6 +317,7 @@ def plot_linreg_kernelised_regularised():
                                                    shuffle=True, random_state=1)
                 scores = []
                 for test_indices, train_indices in kf.split(y[:50000]):
+                    print('        Starting new fold')
                     if kernel is None:
                         reg = sklearn.linear_model.LinearRegression(fit_intercept=False)
                     else:
@@ -316,10 +326,9 @@ def plot_linreg_kernelised_regularised():
                     y_pred = reg.predict(X_[test_indices])
                     score = chris_error.sum_normalised_delta(y[test_indices], y_pred)
                     scores.append(score)
-                    break
 
                 means[data_n, kernel_n] = np.mean(scores)
-                stds[data_n, kernel_n] = np.std(scores)
+                stds[data_n, kernel_n] = np.std(scores, ddof=1)
 
         save_cache('linreg_kernelised_regularised', means, stds)
 
@@ -346,6 +355,7 @@ def plot_linreg_kernelised_regularised():
     plt.savefig('../thesis/linreg_kernelised_regularised.pdf')
 
 
+# TODO: rerun
 def plot_linreg_kernel_appx():
     features_counts = [10, 100, 1000, 10000, None]
 
@@ -399,10 +409,9 @@ def plot_linreg_kernel_appx():
                     y_pred = reg.predict(X_[test_indices])
                     score = chris_error.sum_normalised_delta(y[test_indices], y_pred)
                     scores.append(score)
-                    break
 
                 means[data_n, f] = np.mean(scores)
-                stds[data_n, f] = np.std(scores)
+                stds[data_n, f] = np.std(scores, ddof=1)
 
         save_cache('linreg_kernel_appx', means, stds)
 
@@ -426,8 +435,7 @@ def plot_linreg_kernel_appx():
     plt.ylabel(r'Mean $\delta$ error')
     plt.legend(['SDSS', '2dFLenS'], bbox_to_anchor=(0.5, 1), loc='lower center', labelspacing=0)
     plt.ylim(ymin=0, ymax=.06)
-    # plt.savefig('../thesis/linreg_kernel_appx.pdf')
-    plt.show()
+    plt.savefig('../thesis/linreg_kernel_appx.pdf')
 
 
 if __name__ == '__main__':

@@ -85,12 +85,13 @@
 
 \newcommand\norm[1]{\left\|#1\right\|}
 \newcommand\floor[1]{\left\lfloor#1\right\rfloor}
+\newcommand\abs[1]{\left|#1\right|}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator{\spn}{span}
 
-\newcommand\jakub[1]{{\color{red}(j: #1)}}
+\newcommand\jn[1]{{\color{red}(jn: #1)}}
 
 \title{Optimising Experiments for Photometric Redshift Prediction}
 \author{Jakub Nabaglo, u5558578}
@@ -104,22 +105,21 @@
 
 \nomenclature{$\cX$}{Predictor input set}
 \nomenclature{$\bbR$}{Set of real numbers}
+\nomenclature{$\bbR_{\geq0}$}{Set of non-negative real numbers}
 \nomenclature{$f$}{Original function}
 \nomenclature{$\hat f$}{Predictor}
-\nomenclature{$n$}{Punctuation Symbol}
-\nomenclature{$m$}{Punctuation Symbol}
-\nomenclature{$d$}{Punctuation Symbol}
+\nomenclature{$n$}{\jn{fill}}
+\nomenclature{$m$}{\jn{fill}}
+\nomenclature{$d$}{\jn{fill}}
 \nomenclature{$c$}{Speed of light in a vacuum\nomunit{\SI{299792458}{\meter\per\second}}}
 \nomenclature{$z$}{Redshift}
-\nomenclature{$z_\mathrm{spec}$}{Redshift}
-\nomenclature{$z_\mathrm{pred}$}{Redshift}
+\nomenclature{$z_\mathrm{spec}$}{Spectroscopic redshift}
+\nomenclature{$z_\mathrm{pred}$}{Photometric redshift}
 
 \printnomenclature
 
 
 \chapter{Introduction}
-
-\prntlen{\textwidth}
 
 A redshift is the change in the wavelength of a photon emitted by an object that is moving away from the observer. When applied to the visible spectrum, a redshift makes an object appear more red.
 
@@ -140,7 +140,7 @@ Optimal design requires us to be able to assess the uncertainties in the predict
 \section{Redshift}
   Redshift is a property of all signals we observe from astronomical objects. It is often not easy to measure, but finding it permits us to learn important facts about the object being observed.
 
-  \jakub{Caused not just by doppler effect. Also expansion of the universe.}
+  \jn{Caused not just by doppler effect. Also expansion of the universe.}
 
   The electromagnetic waves that we observe from distant objects are subject to the Doppler effect. This is the phenomenon by which waves produced by an object that is moving away from the observer appear to have a longer wavelength. Consider an ambulance driving away from you: the tone of the siren appears lower than if the ambulance was stationary. In a similar way, a galaxy moving away from us appears redder, giving rise to the term `redshift'. The converse effect, affecting objects moving towards the observer, is termed `blueshift'.
 
@@ -169,54 +169,133 @@ Optimal design requires us to be able to assess the uncertainties in the predict
     \label{fig:spec_hist}
   \end{figure}
 
-  \jakub{define photometry}
+  \jn{define photometry}
 
   \section{Colours}
 
-  \jakub{write about the 5 magnitudes used}
+  \jn{write about the 5 magnitudes used}
 
-  \jakub{plot the filters}
+  \jn{plot the filters}
 
-  \jakub{why these 5 filters?}
+  \jn{why these 5 filters?}
 
-  \jakub{getting canonical colours from the five filters}
+  \jn{getting canonical colours from the five filters}
 
   \section{Datasets}
-  \jakub{TODO: WRITE}
+  \jn{TODO: WRITE}
 
   \subsection{SDSS}
   The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}.
 
-  \jakub{TODO: WRITE}
+  \jn{TODO: WRITE}
 
   \subsection{2dfLenS}
   The spectroscopic redshift distribution of objects in 2dfLenS is presented in \cref{fig:spec_hist}.
 
 \chapter{Regression on Photometric Redshifts}
 
-\jakub{define X}
+Let $\cX \subset \bbR^d$ be bounded. Let $f$ map $\cX$ to $\bbR$. Regression is the task of reconstructing such an $f$ from finitely many examples of its inputs and outputs.
 
-Let $f$ be an unobserved function mapping $\cX$ to $\bbR$, where $\cX \subseteq \bbR^d$ for some $d \in \bbN$. Regression is the task of reconstructing such $f$ from finitely many samples. As a complication, these samples may be noisy.
-
-More formally, we are given a set of $n$ samples\[
-    \cD = \{(\bx_1, y_1), \dots (\bx_n, y_n)\} \text{.}
-\] For each $i = 1, \dots, n$, \[
-    y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP \text{,}
-\] where $\cP$ is some probability distribution of the error.
-
-We wish to find a function $\hat f : \bbR^d \to \bbR$ that maximises the likelihood \[
-    p\left(\by \;\middle|\; \hat f, X\right) \text{,}
-\] where we define\[
-    \by \coloneqq \begin{bmatrix} y_1 \\ \vdots \\ y_n \end{bmatrix}
-    \text{ and }
-    X \coloneqq \begin{bmatrix} \bx_1^\intercal \\ \vdots \\ \bx_n^\intercal \end{bmatrix}
+We are given a set \[
+  \cD = \left\{\left(\bx_1, y_1\right), \dots, \left(\bx_n, y_n\right)\right\}
+\] of $n$ samples of $f$, where $y_1, \dots, y_n$ are the \textit{labels}. Let $\cP$ be the probability distribution of the label noise. Then for all $i$, \[
+  y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP \text{.}
 \]
 
-The formalisation of this likelihood is dependent on our assumptions. For example, it will depend on whether we know $\cP$, we assume it, or it is given to us.
+Let $\hat\cF$ be our space of possible approximations; its exact membership depends on our model. We want to find $\hat f \in \hat\cF$ that is the best approximation of $f$. Each candidate approximation $\hat f_c \in \hat\cF$ can be assigned a likelihood that quantifies how good an approximation it is:\[
+    p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
+\] We define $\hat f$ to be the function that maximises this likelihood:\[
+    \hat f \coloneqq \argmax_{\hat f_c \in \cF} p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
+\] The definition of this likelihood is dependent on our assumptions, such as on our assumed noise distribution $\cP$ and on any assumptions we have about $f$.
 
-In our case we will always assume that \[
-    \cP = \cN(0, \sigma^2)
-\] for some variance $\sigma^2$.
+In our specific case we will always assume that the noise is distributed according to a Gaussian with a mean of $0$ and a variance $\sigma^2$ that we leave as a hyperparameter\footnote{A hyperparameter is a parameter that depends on the distribution of our data.}.
+
+We apply regression to find objects' redshifts from their photometric measurements, as a cheaper alternative to spectroscopy. We are given a set of example objects' photometric measurements and spectoscopic redshifts, and we wish to predict the redshift of any new object whose photometric colours have been measured. Hence, in our case $\cX \subset \bbR^5$ is the space of photometric measurements.
+
+Let $f : \cX \to \bbR$ be the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshift. This lets us treat any inconsistency as any other source of noise.
+
+Some models are capable of not only predicting $f$ but also returning a measure of its confidence in its prediction. Gaussian Process regression is an example of such a model. This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
+
+\section{Assessing performance}
+
+To assess the performance of our model, we must have a way of quantifying its accuracy. We withhold a portion of our data into a testing set $\cD'$ of $n'$ elements such that \[
+  \cD' = \{(\bx'_1, y'_1), \dots, (\bx'_{n'}, y'_{n'})\}
+\] and $\cD$ is disjoint from $\cD'$.
+
+For each testing sample $(\bx'_i, y'_i)$, define the prediction as\[
+  \hat y'_i \coloneqq \hat f(\bx'_i)
+\] and define the $\delta$ error as \[
+  \delta_i \coloneqq y'_i - \hat y'_i\text.
+\] For redshifts, define $dz$ as \[
+  dz_i \coloneqq \frac{\delta_i}{1 + y'_i} \text.
+\]
+
+For a perfect predictor then,\[
+  \hat y'_i = y'_i \text{ for all }i=1, \dots, n'\text{,}
+\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce. This is due to noise in the labels, and also because of our inherent ability to reconstruct an arbitrary function from a finite number of samples.
+
+Hence, we must assign a numerical score to each predictor, so we can compare their performance. The fraction of variance unexplained is a commonly used score. Others, more specific to photometric redshifts, are the mean $dz$ error, the $dz$ deviation, and the fraction of $dz$ outliers. Photometric redshifts suffer from a high number of outliers, which do not have as much an influence on these redshift-specific scores.
+
+\subsection{Fraction of Variance Unexplained}
+The fraction of variance unexplained (FVU) measures the fraction of the variance of the labels $y'_1, \dots, y'_{n'}$ not explained by the predictor. For a predictor that explains the entire variance, $\mathrm{FVU}=0$, and for a predictor that explains none of the variance $\mathrm{FVU}=1$.
+
+Let $\mathrm{VAR_{err}} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'}\delta_i^2$ be the mean squared $\delta$ error. If the mean $\delta$ error is zero, this equals the variance\footnote{For a finite set $S = \{s_1, \dots, s_{\abs{S}}\} \subset \bbR$ of $\abs{S}$ elements, we define the variance as $\var S \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}(s_i - \overline{s})^2$, where $\overline{s} \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}s_i$ is the mean of $S$.} of the $\delta$ errors. Let $\mathrm{VAR_{tot}} \coloneqq \var\{y'_1, \dots, y'_{n'}\}$ be the variance of the labels of the testing set. Note that $\mathrm{VAR_{err}}$ varies with the predictor, whereas $\mathrm{VAR_{tot}}$ is constant for each testing set. We define \[
+  \mathrm{FVU} \coloneqq \frac{\mathrm{VAR_{err}}}{\mathrm{VAR_{tot}}} \text{.}
+\]  Values of $\mathrm{FVU}$ closer to $0$ are better.
+
+Intuitively, a perfect predictor explains the entire variance of the labels, so we expect it to yield $\mathrm{FVU} = 0$. Indeed, a perfect predictor has $\delta_1 = \dots = \delta_{n'} = 0$, so $\mathrm{VAR_{err}} = 0$, implying that $\mathrm{FVU} = 0$.
+
+For a predictor that always returns the mean of the testing set, $\mathrm{VAR_{err}} = \mathrm{VAR_{tot}}$ by definition, so $\mathrm{FVU} = 1$, as expected since a predictor that always returns the mean explains none of the variance. A predictor with $\mathrm{FVU} > 1$ then performs worse by our metric than a predictor that always returns the mean.
+
+\subsection{Mean $dz$ error}
+
+The mean $dz$ error is specific to photometric redshifts. It is defined as \[
+  \textrm{mean $dz$ error} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'} \abs{dz_i} \text.
+\] Values closer to $0$ are better.
+
+The $dz$ error scales the $\delta$ error to account for the magnitude of the label, since an error of $0.5$ on a label of $0.1$ is relatively more significant than an error of $0.5$ on a label of $1$. It does so by dividing the error by $1 + y'_i$, noting that the minimum possible redshift is $-1$.
+
+Unlike the fraction of variance unexplained error, the mean $dz$ error depends on a sum of absolute errors, as opposed to the sum of squared errors. This is an important distinction, as the sum of squared errors is more likely to be overly influenced by outliers.
+
+\subsection{$dz$ bias}
+
+The $dz$ bias is also specific to photometric redshifts. It quantifies whether the predictor is more likely to over- or underestimate the redshift. It is defined as\[
+  \textrm{$dz$ bias} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'} dz_i \text.
+\] Note that unlike the FVU and the mean $dz$ error, the $dz$ bias is permitted to be negative. In addition, a $dz$ bias of zero, whilst desirable, does not indicate a perfect predictor.
+
+\subsection{$dz$ deviation}
+
+The $dz$ deviation is defined as the half-width of redshift deviation $dz$ containing $68.3\%$ of all objects. More formally, the $dz$ deviation is the smallest $\sigma \in \bbR_{\geq0}$ such that\[
+  \abs{\left\{ dz_i \in [-\sigma, \sigma]\right\}} \geq 0.683n'\text{,}
+\] where $\abs{\cdot}$ is the set cardinality.
+
+This score has the advantage of completely discarding outliers beyond percentile $68.3$, vastly reducing their influence.
+
+\subsection{Fraction of $dz$ outliers}
+
+The fraction of $dz$ outliers is defined as the fraction of objects with $\abs{dz} > 0.1$. It quantifies the fraction of objects whose redshifts fail to be explained by the model.
+
+\section{Existing methods}
+
+\jn{write intro to section}
+
+\jn{cite Chris' paper heavily}
+
+\subsection{Kernel density estimation}
+
+\jn{Write about Chris's KDE}
+
+\subsection{Neural networks}
+
+\jn{write}
+
+\subsection{Boosted decision trees}
+
+\jn{Boosted decision trees}
+
+\subsection{Template methods}
+
+\jn{write}
 
 \section{Linear Regression}
 
@@ -234,7 +313,7 @@ In our case we will always assume that \[
     \label{fig:linreg_polynomial}
   \end{wrapfigure}
 
-Linear regression is the simplest regression model. \jakub{is it?}
+Linear regression is the simplest regression model. \jn{is it?}
 
 Choose $m \in \bbN$. Choose $\phi_1, \dots, \phi_m$, each mapping $\cX$ to $\bbR$.
 
@@ -368,9 +447,6 @@ Like other inner products, a kernel can be thought of as a similarity measure. F
 Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly infinite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
 
 \subsection{Examples of Kernels}
-
-\jakub{TODO: make very helpful plots}
-
 \subsubsection{Gaussian Kernel}
 
   \begin{wrapfigure}{R}{0.4\textwidth}
@@ -426,7 +502,7 @@ The Mat\'ern Kernel is defined by \[
 
 See \cref{fig:matern_kernel} for a visualisation.
 
-\jakub{Something about the physical meaning would be nice}
+\jn{Something about the physical meaning would be nice}
 
 \subsubsection{Exponential Kernel}
 
@@ -437,7 +513,7 @@ See \cref{fig:matern_kernel} for a visualisation.
     \label{fig:exponential_kernel}
   \end{wrapfigure}
 
-\jakub{TOOD: write}
+\jn{TOOD: write}
 
 The exponential kernel is visualised in \cref{fig:exponential_kernel}.
 
@@ -447,13 +523,13 @@ For large dataset, computing $K$ becomes expensive as has a space complexity of 
 
 \subsubsection{RBF Sampling}
 
-RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier transform. \jakub{I literally don't know if this is correct}
+RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier transform. \jn{I literally don't know if this is correct}
 
-\jakub{prove}
+\jn{prove}
 
 \subsubsection{Empirical Kernel Map}
 
-\jakub{TODO: WRITE}
+\jn{TODO: WRITE}
 
 
 \subsection{Kernelised Linear Regression}
@@ -587,11 +663,11 @@ Observe that \cref{eq:pred} the equation for kernelised linear regression with r
 
 \section{Approximating Gaussian Processes}
 
-Gaussian Process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$, which has a high time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jakub{reference}}. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
+Gaussian Process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$, which has a high time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jn{reference}}. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
 
 \subsection{My Favourite Approximation}
 
-\jakub{wtf is it called}
+\jn{wtf is it called}
 
 We can approximate this matrix product with a complexity that is linear in $n$.
 
@@ -655,7 +731,7 @@ This method is less prone to numerical instabilities than my favourite approxima
   \subsection{Bayesian Optimisation}
   Our Gaussian Process Regression has six hyperparameters: a length scale for each of the five features and a regularisation constant. The high dimensionality of the hyperparameter space makes it difficult to find the optimal parameters using grid search. Bayesian optimisation may be used instead to speed up this process.
 
-\jakub{derive bayesian optimisation}
+\jn{derive bayesian optimisation}
 
 \subsection{Automatic Relevance Determination}
   \begin{figure}
@@ -674,25 +750,25 @@ This method is less prone to numerical instabilities than my favourite approxima
 
 Automatic Relevance Determination is another technique that may be used to find the hyperparameters for our Gaussian Process Regression.
 
-Consider the problem of linear regression. We have a five-dimensional feature space $\cX$. The features have \jakub{noise vairances?} variances $\lambda_1, \dots, \lambda_5$, respectively. We place a prior on our regression weights.
+Consider the problem of linear regression. We have a five-dimensional feature space $\cX$. The features have \jn{noise vairances?} variances $\lambda_1, \dots, \lambda_5$, respectively. We place a prior on our regression weights.
 
-Our prior variance for each weight is proportional to the variance of the weight. We also assume that the weights are uncorrelated. Hence, our sum-of-squares loss function becomes \jakub{how?}\[
+Our prior variance for each weight is proportional to the variance of the weight. We also assume that the weights are uncorrelated. Hence, our sum-of-squares loss function becomes \jn{how?}\[
     \frac12\norm{X\bw - \by}^2 + \alpha \bw^T \Lambda \bw \text.
 \]
 
-\jakub{now talk about that weird convergence bullshit for the regularisation constant}
+\jn{now talk about that weird convergence bullshit for the regularisation constant}
 
-\jakub{we don't care about pruning right? because we're not pruning...}
+\jn{we don't care about pruning right? because we're not pruning...}
 
 \chapter{Active Learning}
 
-\jakub{define active learning}
+\jn{define active learning}
 
-\jakub{motivate}
+\jn{motivate}
 
 \section{Measuring performance}
 
-\jakub{write}
+\jn{write}
 
 \section{Recommenders}
 
@@ -717,7 +793,7 @@ Intuitively, it returns the points that we are the most uncertain about. If we a
 
 This intuition fails at the start of our training. This is because we end up focusing on points that we are very unsure about, which tend to be on the long tail of the distribution. Since, in our case, the distribution is five-dimensional, this is a very poor strategy, as we spread out our efforts and neglect the core of the distribution.
 
-\jakub{learning curve}
+\jn{learning curve}
 
 \subsection{Density}
 
@@ -725,7 +801,7 @@ Let $\cD : \cX \to \bbR^+$ be a density function for the dataset. This can be de
     \argmax_{c \in \cC} \cD(c) \text.
 \]
 
-\jakub{learning curve on pure density}
+\jn{learning curve on pure density}
 
 As seen above, this recommendation strategy yields good results at the start of the learning curve, when we have trained on very few datapoints. However, late on the curve flattens out and no longer produces very good results, being overtaken by uncertainty recommendation.
 
@@ -733,13 +809,13 @@ As seen above, this recommendation strategy yields good results at the start of 
 
 Boltzmann sampling permits us to obtain a variety of training points from one recommender.
 
-\jakub{derive}
+\jn{derive}
 
-\jakub{this really needs more formal vocabulary}
+\jn{this really needs more formal vocabulary}
 
 It prevents `clumping' of points, and hence redundant information. It is also useful when recommending in batches. Since scores are continuous, two recommended data points are correlated, producing redundant information; boltzmann sampling helps reduce this.
 
-\jakub{learning curves of boltzmann on uncertainty and density with different temperatures}
+\jn{learning curves of boltzmann on uncertainty and density with different temperatures}
 
 \subsection{Mixing recommenders}
 
@@ -759,9 +835,9 @@ A constant $p$ (or equivalently constant $k$ and $l$) with combine both the adva
 
 This is reminiscent of the problem of exploration vs exploitation. Uncertainty scores are mostly noise until we have enough data in our training set.
 
-\jakub{figure out optimal function for p/kl}
+\jn{figure out optimal function for p/kl}
 
-\jakub{helpful plot}
+\jn{helpful plot}
 
 \bibliography{references}{}
 \bibliographystyle{plain}

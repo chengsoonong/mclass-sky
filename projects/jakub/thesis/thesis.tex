@@ -212,65 +212,90 @@ In our specific case we will always assume that the noise is distributed accordi
 
 We apply regression to find objects' redshifts from their photometric measurements, as a cheaper alternative to spectroscopy. We are given a set of example objects' photometric measurements and spectoscopic redshifts, and we wish to predict the redshift of any new object whose photometric colours have been measured. Hence, in our case $\cX \subset \bbR^5$ is the space of photometric measurements.
 
-Assume that $f : \cX \to \bbR$ is the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshifts. This permits us to simply treat any inconsistency as a source of noise.
+Let $f : \cX \to \bbR$ be the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshift. This lets us treat any inconsistency as any other source of noise.
 
-Some models are capable of not only predicting $f$ but also returning a measure of its confidence in its prediction. Gaussian Process regression, for example, yields $\hat f$, but also produces $\var \hat f : \cX \to \bbR_{\geq0}$. Then for all $\bx \in \cX$, $\cN(\hat f(\bx), \var \hat f(\bx))$ forms a probability distribution for the predictions, with a mean of $\hat f(\bx)$ and a variance of $\var \hat f(\bx)$. The lower the variance, the more confident we are in our prediction.
-
-This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
+Some models are capable of not only predicting $f$ but also returning a measure of its confidence in its prediction. Gaussian Process regression is an example of such a model. This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
 
 \section{Assessing performance}
 
-In order to assess the accuracy of our model, we must have a way of quantifying it. To do so, we need to withhold a portion of our data into a training set $\cD'$ of $n'$ elements such that \[
+To assess the performance of our model, we must have a way of quantifying its accuracy. We withhold a portion of our data into a testing set $\cD'$ of $n'$ elements such that \[
   \cD' = \{(\bx'_1, y'_1), \dots, (\bx'_{n'}, y'_{n'})\}
 \] and $\cD$ is disjoint from $\cD'$.
 
 For each testing sample $(\bx'_i, y'_i)$, define the prediction as\[
   \hat y'_i \coloneqq \hat f(\bx'_i)
-\]
-and define the $\delta$ error as \[
+\] and define the $\delta$ error as \[
   \delta_i \coloneqq y'_i - \hat y'_i\text.
+\] For redshifts, define $dz$ as \[
+  dz_i \coloneqq \frac{\delta_i}{1 + y'_i} \text.
 \]
 
 For a perfect predictor then,\[
   \hat y'_i = y'_i \text{ for all }i=1, \dots, n'\text{,}
-\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce due to unpredictable noise in the labels. This necessitates the scoring of predictors with one or more quantitative metrics.
+\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce. This is due to noise in the labels, and also because of our inherent ability to reconstruct an arbitrary function from a finite number of samples.
+
+Hence, we must assign a numerical score to each predictor, so we can compare their performance. The fraction of variance unexplained is a commonly used score. Others, more specific to photometric redshifts, are the mean $dz$ error, the $dz$ deviation, and the fraction of $dz$ outliers. Photometric redshifts suffer from a high number of outliers, which do not have as much an influence on these redshift-specific scores.
 
 \subsection{Fraction of Variance Unexplained}
-The fraction of variance unexplained measures the fraction of the variance of the labels $y_1, \dots, y_n$ explained by the predictor. For a predictor that explains the entire variance, $\mathrm{FVU}=0$, and for a predictor that explains none of the variance $\mathrm{FVU}=1$ It is defined as \[
-  \mathrm{FVU} \coloneqq \frac{\mathrm{VAR_{err}}}{\mathrm{VAR_{tot}}} \text{,}
-\] where $\mathrm{VAR_{err}} \coloneqq \frac{1}{N'}\sum_{i=1}^{N'}\delta_i^2$ is the mean squared $\delta$ error (equalling the variance of the $\delta$ error when its mean is zero), and $\mathrm{VAR_{tot}} \coloneqq \var\{y'_1, \dots, y'_{N'}\}$ is the variance\footnote{For a finite set $S = \{s_1, \dots, s_{\abs{S}}\} \subset \bbR$ of $\abs{S}$ elements, we define the variance as $\var S \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}(s_i - \overline{s})^2$, where $\overline{s} \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}s_i$ is the mean of $S$.} of the labels of the testing set. Note that $\mathrm{VAR_{err}}$ varies with the predictor, whereas $\mathrm{VAR_{tot}}$ is constant for each testing set.
+The fraction of variance unexplained (FVU) measures the fraction of the variance of the labels $y'_1, \dots, y'_{n'}$ not explained by the predictor. For a predictor that explains the entire variance, $\mathrm{FVU}=0$, and for a predictor that explains none of the variance $\mathrm{FVU}=1$.
 
-Intuitively, a perfect predictor explains the entire variance of the labels, so we expect it to yield $\mathrm{FVU} = 0$. Indeed, a perfect predictor has $\delta_1 = \dots = \delta_{N'} = 0$, so $\mathrm{VAR_{err}} = 0$, implying that $\mathrm{FVU} = 0$.
+Let $\mathrm{VAR_{err}} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'}\delta_i^2$ be the mean squared $\delta$ error. If the mean $\delta$ error is zero, this equals the variance\footnote{For a finite set $S = \{s_1, \dots, s_{\abs{S}}\} \subset \bbR$ of $\abs{S}$ elements, we define the variance as $\var S \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}(s_i - \overline{s})^2$, where $\overline{s} \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}s_i$ is the mean of $S$.} of the $\delta$ errors. Let $\mathrm{VAR_{tot}} \coloneqq \var\{y'_1, \dots, y'_{n'}\}$ be the variance of the labels of the testing set. Note that $\mathrm{VAR_{err}}$ varies with the predictor, whereas $\mathrm{VAR_{tot}}$ is constant for each testing set. We define \[
+  \mathrm{FVU} \coloneqq \frac{\mathrm{VAR_{err}}}{\mathrm{VAR_{tot}}} \text{.}
+\]  Values of $\mathrm{FVU}$ closer to $0$ are better.
 
-For a predictor that always returns the mean of the training set, $\mathrm{VAR_{err}} = \mathrm{VAR_{tot}}$ by definition \jn{is it enough to say `by definition'?}, so $\mathrm{FVU} = 1$, as expected since a predictor that always returns the mean explains none of the variance. A predictor with $\mathrm{FVU} > 1$ then performs worse by our metric than a predictor that always returns the mean.
+Intuitively, a perfect predictor explains the entire variance of the labels, so we expect it to yield $\mathrm{FVU} = 0$. Indeed, a perfect predictor has $\delta_1 = \dots = \delta_{n'} = 0$, so $\mathrm{VAR_{err}} = 0$, implying that $\mathrm{FVU} = 0$.
 
-\subsection{Mean scaled $\delta$ error}
+For a predictor that always returns the mean of the testing set, $\mathrm{VAR_{err}} = \mathrm{VAR_{tot}}$ by definition, so $\mathrm{FVU} = 1$, as expected since a predictor that always returns the mean explains none of the variance. A predictor with $\mathrm{FVU} > 1$ then performs worse by our metric than a predictor that always returns the mean.
 
-The mean scaled $\delta$ error is defined as\[
-  \textrm{mean scaled $\delta$} \coloneqq \frac{1}{N'}\sum_{i=1}^{N'} \frac{\abs{\delta_i}}{1 + y'_i} \text.
-\]
+\subsection{Mean $dz$ error}
 
-Unline the fraction of variance unexplained error, it takes depends on a sum of absolute errors, as opposed to the sum of squared errors. This is an important distinction, as the sum of squared errors is more likely to be overly influenced by outliers that it is reasonable to incorrectly predict.
+The mean $dz$ error is specific to photometric redshifts. It is defined as \[
+  \textrm{mean $dz$ error} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'} \abs{dz_i} \text.
+\] Values closer to $0$ are better.
 
-The scaling serves to account for differing orders of magnitude in the labels: an error of $1$ on an label of $2$ is much less significant than an error of $1$ on a label of $0.2$. \jn{blah blah relate this to redshift}
+The $dz$ error scales the $\delta$ error to account for the magnitude of the label, since an error of $0.5$ on a label of $0.1$ is relatively more significant than an error of $0.5$ on a label of $1$. It does so by dividing the error by $1 + y'_i$, noting that the minimum possible redshift is $-1$.
 
-\jn{mean $\delta$}
+Unlike the fraction of variance unexplained error, the mean $dz$ error depends on a sum of absolute errors, as opposed to the sum of squared errors. This is an important distinction, as the sum of squared errors is more likely to be overly influenced by outliers.
 
-\jn{mean redshift bias}
+\subsection{$dz$ bias}
 
-\jn{half-width $\sigma_{683}$ of redshift deviation $\delta z/(1+z)$}
+The $dz$ bias is also specific to photometric redshifts. It quantifies whether the predictor is more likely to over- or underestimate the redshift. It is defined as\[
+  \textrm{$dz$ bias} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'} dz_i \text.
+\] Note that unlike the FVU and the mean $dz$ error, the $dz$ bias is permitted to be negative. In addition, a $dz$ bias of zero, whilst desirable, does not indicate a perfect predictor.
 
-\jn{fraction of outliers with $\abs{\delta z /(1+z)} > 0.1$}
+\subsection{$dz$ deviation}
+
+The $dz$ deviation is defined as the half-width of redshift deviation $dz$ containing $68.3\%$ of all objects. More formally, the $dz$ deviation is the smallest $\sigma \in \bbR_{\geq0}$ such that\[
+  \abs{\left\{ dz_i \in [-\sigma, \sigma]\right\}} \geq 0.683n'\text{,}
+\] where $\abs{\cdot}$ is the set cardinality.
+
+This score has the advantage of completely discarding outliers beyond percentile $68.3$, vastly reducing their influence.
+
+\subsection{Fraction of $dz$ outliers}
+
+The fraction of $dz$ outliers is defined as the fraction of objects with $\abs{dz} > 0.1$. It quantifies the fraction of objects whose redshifts fail to be explained by the model.
 
 \section{Existing methods}
 
+\jn{write intro to section}
+
+\jn{cite Chris' paper heavily}
+
+\subsection{Kernel density estimation}
+
 \jn{Write about Chris's KDE}
 
-\jn{Neural networks}
+\subsection{Neural networks}
+
+\jn{write}
+
+\subsection{Boosted decision trees}
 
 \jn{Boosted decision trees}
 
-\jn{`Bayesian template method BPZ'}
+\subsection{Template methods}
+
+\jn{write}
 
 \section{Linear Regression}
 

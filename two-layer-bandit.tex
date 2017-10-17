@@ -87,24 +87,25 @@
 \affil[3]{Research School of Astronomy and Astrophysics, Australian National
           University}
 
-\keywords{machine learning, astronomy, active learning, bandit, rank
-          aggregation, expert advice}
+\keywords{machine learning, active learning, bandit, rank aggregation,
+          expert advice, astronomy}
 
 \begin{abstract}
-Recent advances in sensors and scientific instruments have led to an increasing
-use of machine learning techniques for managing the data deluge. Supervised
-learning has become a widely used paradigm in many big data applications.
-However, labeled examples are required during the training phase of these
-supervised machine learning algorithms, and the labeling process has become a
-significant bottleneck. This paper explores the use of active learning
-algorithms to identify informative examples for labeling, We empirically
-compare several active learning heuristics on benchmark UCI datasets and a
-large dataset from the astronomical domain. By considering each active learning
-heuristic as an expert that gives recommendation on which example to label
-next, we propose to combine them using bandit and rank aggregation algorithms.
-Our results show that combining active learning suggestions improves over each
-individual heuristic (including passive learning) and the computation is
-fast enough for practical use.
+
+We propose a novel approach of combining active learning suggestions to
+identify informative training examples in classification tasks. In supervised
+learning, the construction of the training set has become a significant
+bottleneck as this requires human experts to manually annotate examples. Many
+heuristics such as uncertainty sampling and version space reduction have been
+proposed to help us pick which instance from an unlabelled pool to annotate
+next. This however leads to a new problem---which heuristic should we use under
+which setting? We demonstrate that bandit and social choice theories provide a
+framework that can be used to combine and make use of all of the heuristics in
+the training stage. Using benchmark UCI data and a large dataset from the
+astronomical domain, we find that combining active learning suggestions
+improves over each individual heuristic (including passive learning) and the
+computation is fast enough for practical use.
+
 
 \end{abstract}
 
@@ -114,45 +115,48 @@ fast enough for practical use.
 \maketitle
 \thispagestyle{empty}
 
-\section*{Introduction}
+\section{Introduction}
 
-There are three ideas which are often used to elicit human responses---active
-learning, bandits, and experimental designs. Although similar in spirit, these
-ideas have different foundations which lead to different formulations. Related
-to this but with literature from a different field is social choice theory,
-which looks at how individual preferences are aggregated.
+Recent advances in sensors and scientific instruments have led to an increasing
+use of machine learning techniques for managing the data deluge. Supervised
+learning has become a widely used paradigm in many big data applications.
+However, labeled examples are required during the training phase of these
+algorithms, and the labeling process has become a significant bottleneck.
 
-Active learning considers the setting where an agent interacts with its
-environment to procure a training set. This contrasts with passive learning,
-where the agent passively receives i.i.d.\, samples from some underlying
-distribution. The environment is usually assumed to be infinite and the agent
-has to choose a location to query an oracle for a label. We often assume
-that there is no noise in the label, and hence there is no benefit of querying
-the same point again. In many practical applications, the environment is
-considered to be finite (but large). This is called pool-based active
-learning.
+The most common approach to produce a training set is passive learning, where
+we randomly select an instance from a large pool of unlabeled data to label,
+and we continue doing this until the training set reaches a certain size or
+until the classifier can make sufficiently good predictions. Depending on how
+the underlying data is distributed, this process can be quite inefficient. To
+see why, consider two objects with very similar features. If we have already
+labeled one of them, there would be little benefit in also labeling the other
+object, especially if we assume that there is no noise in the label. Instead it
+is often more informative to pick examples near the decision boundary of the
+classifier, where the class membership is still uncertain.
 
-A bandit problem is a sequential allocation problem defined by a set of
-actions. The agent chooses an action at each time step and the environment
-returns a reward. The aim of the agent is to maximize the sum of the rewards.
-In basic settings, the set of actions is considered to be finite. There are
-three fundamental formalization of the bandit problem, depending on the assumed
-nature of the reward process: stochastic, adversarial and Markovian. In all
-three settings the reward is uncertain, and hence the agent may have to play a
-particular action repeatedly. The agent is compared to a static agent which has
-played the best action. This difference in reward is called regret.
+This leads to the development of many active learning algorithms that try to
+reduce the labeling bottleneck without sacrificing the classifier's
+performance. This is done by actively choosing the most informative examples to
+be labeled based on some predicted class probabilities.
+Section~\ref{sec:heuristics} describes two family of algorithms in
+detail---uncertainty sampling and version space reduction.
 
-In contrast to active learning, experimental design considers the problem of
-regression, i.e.\, where the label $y\in R$ is a real number. The problem here
-is to choose a set of trials (say of size $N$) to gather enough information
-about the object of interest. The goal is to maximize the information obtained
-about the parameters of the model (of the object). It is often assumed that the
-observations at the $N$ trials are independent. When $N$ is finite, this is
-called exact design; otherwise it is called approximate or continuous design.
-The environment is assumed to be infinite (e.g. $R^d$) and the observations are
-scalar real variables.
+Our novel contribution is the empirical study of how we can combine suggestions
+from all of the heuristics. By considering each active learning heuristic as an
+expert that gives recommendation on which example to label next, we propose to
+combine them using bandit and rank aggregation algorithms. The use of bandit
+algorithms have been studied before~\citep{baram04, hsu15}, but as far as we
+know, this is the first time that social choice theory is used to rank and
+aggregate the suggestions. The problem of prediction with expert advice and its
+application to active learning is described in Section~\ref{sec:expert}. To
+compare the algorithms, we run them on 11 benchmark datasets from UCI and a
+large dataset from the Sloan Sky Digital Sky Survey (SDSS).
 
-\section*{Active Learning Suggestions}
+The key empirical finding is that combining suggestions, even with a very simple
+aggregation rule like Borda count, leads to better performance, especially
+in large datasets with unbalanced classes.
+
+\section{Active Learning Heuristics}~\label{sec:heuristics}
 
 In this paper, we study the problem of multi-class classification and how to
 combine active learning suggestions to build a good training set. Consider the
@@ -196,7 +200,7 @@ minimizing the variance or the classifier certainty of the model
 \citep{schein07}, but we do not consider them in this paper as they are
 computationally inefficient in practice.
 
-\subsubsection*{Uncertainty Sampling}
+\subsection{Uncertainty Sampling}
 
 \cite{lewis94} introduce the idea of uncertainty sampling, where we select the
 example whose class membership the classifier is least certain about. These
@@ -213,7 +217,7 @@ defined as the difference between the two highest class probabilities
 \citep{scheffer01} Since the sum of all probabilities must be 1, the smaller
 the margin is, the more uncertain we are about the object's class membership.
 
-\subsubsection*{Version Space Reduction}
+\subsection{Version Space Reduction}
 
 Instead of focussing on the uncertainty of individual predictions, we could
 instead try to constrain the size of the version space, thus allowing the
@@ -275,7 +279,7 @@ divergence from the average.
 	\end{tabular}
 \end{table}
 
-\section*{Combining Suggestions with Expert Advice}
+\section{Combining Suggestions with Expert Advice}~\label{sec:expert}
 
 Out of the five heuristics discussed, how do we know which one is the most
 optimal one? There have been some attempts in the literature to do a
@@ -305,7 +309,7 @@ consider the option of only one expert at each time step (in bandit
 algorithms), or we can aggregate the option of all the experts (in social
 choice theory).
 
-\subsection*{Combining Suggestions with Bandit Theory}
+\subsection{Combining Suggestions with Bandit Theory}
 
 First let us turn our attention to the multi-armed bandit problem in
 probability theory. The colorful name originates from the situation where a
@@ -347,7 +351,7 @@ EXP4.P, along with importance weighting to estimate the rewards using only the
 training set. In this paper, we shall compare four algorithms that address this
 exploration-vs-exploitation problem.
 
-\subsubsection*{Thompson Sampling}
+\subsubsection{Thompson Sampling}
 
 The oldest of these is Thompson sampling \citep{thompson33} which solves the
 trade-off from a Bayesian perspective.
@@ -409,7 +413,7 @@ where
         {\sigma'_*}^2 &=& \frac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}
 	\end{IEEEeqnarray*}
 
-\subsubsection*{Upper Confidence Bounds}
+\subsubsection{Upper Confidence Bounds}
 
 Next we consider the Upper Confidence Bound (UCB) algorithms which use the
 principle of ``optimism in the face of uncertainty''. In choosing which
@@ -442,7 +446,7 @@ $\sigma^2$, the chosen heuristic would be
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
     \end{IEEEeqnarray*}
 
-\subsubsection*{EXP3++}
+\subsubsection{EXP3++}
 
 The EXP3 algorithm was first developed by \cite{auer2002nonstochastic} to solve
 the non-stochastic bandit problem where we make no statistical assumption about
@@ -454,7 +458,7 @@ formulation that is shown to perform well in both the stochastic (where the
 reward of each heuristic follows an unknown reward distribution) and
 adversarial regime.
 
-\subsection*{Combining Suggestions with Social Choice Theory}
+\subsection{Combining Suggestions with Social Choice Theory}
 
 A drawback of the bandit methods is that at each iteration, we could only use
 information from one particular suggestion. In addition, we also need to keep
@@ -574,9 +578,9 @@ how the three aggregation algorithms work with a small example.
 \end{table}
 
 
-\section*{Empirical comparison}
+\section{Experiments}
 
-\subsection*{Description of datasets}
+\subsection{Description of datasets}
 
 We use 9 datasets taken from the UCI Machine Learning Repository, along
 with one large dataset SDSS from the astronomical domain \citep{alam15}.
@@ -619,7 +623,7 @@ class and the maximum achievable accuracy rate.
 	\end{tabular}
 \end{table}
 
-\subsection*{Experimental Setup}
+\subsection{Experimental Setup}
 For each dataset, we build a classifier with the classes being the output. We
 use a 10-fold stratified shuffled split cross validation. The stratified
 strategy means that the proportion of the classes remain constant in each
@@ -670,7 +674,7 @@ and thus the smaller the area. Finally, so that we can compare the performance
 across datasets, we normalise the measure with the area obtained from using
 just passive learning.
 
-\section*{Discussion}
+\section{Discussion}
 
 Figure~\ref{fig:strengths} shows the strengths of all policies that we
 consider, while Figure~\ref{fig:learning_curves} provides the learning curves
@@ -820,7 +824,7 @@ we would be better off with passive learning with datasets that are very noisy.
 \end{figure}
 
 
-\section*{Acknowledgments}
+\section{Acknowledgments}
 
 Funding for SDSS-III has been provided by the Alfred P. Sloan Foundation, the
 Participating Institutions, the National Science Foundation, and the U.S.

@@ -27,7 +27,7 @@
 	pdftitle	 = {Combining Active Learning Suggestions},
 }
 
-\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n} % reset caligraphy font
+\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n} % reset calligraphy font
 
 % some convenient symbols
 \DeclareMathOperator{\Beta}{Beta}
@@ -126,9 +126,9 @@ algorithms, and the labeling process has become a significant bottleneck.
 The most common approach to produce a training set is passive learning, where
 we randomly select an instance from a large pool of unlabeled data to label,
 and we continue doing this until the training set reaches a certain size or
-until the classifier can make sufficiently good predictions. Depending on how
-the underlying data is distributed, this process can be quite inefficient. To
-see why, consider two objects with very similar features. If we have already
+until the classifier makes sufficiently good predictions. Depending on how the
+underlying data is distributed, this process can be quite inefficient. To see
+why, consider two objects with very similar features. If we have already
 labeled one of them, there would be little benefit in also labeling the other
 object, especially if we assume that there is no noise in the label. Instead it
 is often more informative to pick examples near the decision boundary of the
@@ -150,7 +150,8 @@ know, this is the first time that social choice theory is used to rank and
 aggregate the suggestions. The problem of prediction with expert advice and its
 application to active learning is described in Section~\ref{sec:expert}. To
 compare the algorithms, we run them on 11 benchmark datasets from UCI and a
-large dataset from the Sloan Sky Digital Sky Survey (SDSS).
+large dataset from the Sloan Sky Digital Sky Survey (SDSS). The experiment
+setup and discussion
 
 The key empirical finding is that combining suggestions, even with a very simple
 aggregation rule like Borda count, leads to better performance, especially
@@ -177,28 +178,31 @@ unlabeled set $\Unlabelled \subset \X$.
 Now consider the problem of choosing the next example in $\Unlabelled$ for
 querying. Labelling can be a very expensive task, perhaps because it requires
 actual human experts to manually examine each object. Thus we want to be smart
-in choosing the next example. This motivates us to come up with a suggestion
+in choosing the next example. This motivates us to come up with a rule
 $m(\bm{x}; h)$ that gives each unlabelled example a score based only on their
-feature vector $\bm{x}$ and the current classifier $h$. In particular, we need
-the probability estimates from the classifier over the unlabelled examples:
+feature vector $\bm{x}$ and the current classifier $h$. In particular, we use
+the probability estimates from the classifier over the unlabelled examples to
+calculate the scores:
 \begin{IEEEeqnarray*}{lCl}
-	m : p(\Y)^{|U|} \rightarrow \mathbb{R}^{|U|}
+	m : p(\Y)^{U} \rightarrow \mathbb{R}^{U}
 \end{IEEEeqnarray*}
-where $d$
-Coupled with each suggestion is an objective function $r$ that picks the most
-most informative example based on the scores for labeling:
+where $U$ is the size of the unlabelled set $\Unlabelled$. Coupled with each
+rule is an objective function $r$ that picks the most most informative example
+based on the scores for labeling:
 \begin{IEEEeqnarray*}{lCl}
-	r : \mathbb{R}^{|U|} \rightarrow J_U
+	r : \mathbb{R}^{U} \rightarrow J_\Unlabelled
 \end{IEEEeqnarray*}
-where $J_U$ is the index set over the unlabelled examples.
+where $J_\Unlabelled$ is the index set over the unlabelled instances. This can
+be as simple as an argmax or argmin function, depending on how the scores are
+interpreted.
 
-Coming up with a good suggestion is itself a difficult problem, but there have
-been many attempts to derive good heuristics. Five common ones are listed in
-Table~\ref{tab:heuristics}. They roughly fall into two categories: uncertainty
-sampling and version space reduction. There are also heuristics that require
-minimizing the variance or the classifier certainty of the model
-\citep{schein07}, but we do not consider them in this paper as they are
-computationally inefficient in practice.
+Coming up with an optimal rule is itself a difficult problem, but there have
+been many attempts to derive good heuristics. Five common ones, which we shall
+use in the experiments, are listed in Table~\ref{tab:heuristics}. They roughly
+fall into two categories: uncertainty sampling and version space reduction.
+There are also heuristics that require minimizing the variance or the
+classifier certainty of the model \citep{schein07}, but we do not consider them
+in this paper as they are computationally inefficient in practice.
 
 \subsection{Uncertainty Sampling}
 
@@ -209,9 +213,9 @@ Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
 confidence heuristic, where we pick the candidate whose most likely label the
 classifier is most uncertain about. A second option is to calculate the entropy
 \citep{shannon48}, which measures the amount of information needed to encode a
-distribution. Intuitively, the closer class probabilities of an object are to
-random guessing, the higher its entropy will be. This gives us the heuristic of
-picking the candidate with the highest entropy of the distribution over the
+distribution. Intuitively, the closer the class probabilities of an object are
+to random guessing, the higher its entropy will be. This gives us the heuristic
+of picking the candidate with the highest entropy of the distribution over the
 classes. Finally we can pick the candidate with the smallest margin, which is
 defined as the difference between the two highest class probabilities
 \citep{scheffer01} Since the sum of all probabilities must be 1, the smaller
@@ -244,10 +248,10 @@ divergence from the average.
 \begin{table}[h]
 	\caption {Summary of active learning heuristics used in our experiments,
 			  where $p(y | \bm{x}; h)$ is the probability of that an object
-			  with feature vector $\bm{x}$ has label $y$ under classifer $h$,
-			  $\B$ is the set of $B$ hypotheses $\{h_1, h_2, ..., h_B\}$,
-			  $\Y$ is the set of possible labels, $\Ecal$ is a random subset of
-			  the unlabelled set $U$, $D_{\mathrm{KL}}(p\|q)$ is the
+			  with feature vector $\bm{x}$ has label $y$ under classifier $h$,
+			  $\B$ is the set of $B$ hypotheses $\{h_1, h_2, ..., h_B\}$, $\Y$
+			  is the set of possible labels, $\Unlabelled$ is the set of
+			  unlabeled instances, $D_{\mathrm{KL}}(p\|q)$ is the
 			  Kullback-Leibler divergence of $p$ from $q$, and $p_\B$ is the
 			  average prediction distribution of $\B$.}
 	\label{tab:heuristics}
@@ -257,22 +261,22 @@ divergence from the average.
 		{Heuristic}  &  Objective  \\
 		\midrule
         Least Confidence &
-			$\argmax_{x \in \Ecal}
+			$\argmax_{x \in \Unlabelled}
 			\left\{ \max_{y \in \Y} p(y | \bm{x}; h) \right\}$ \\
 		Highest Entropy &
-			$\argmax_{x \in \Ecal} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
+			$\argmax_{x \in \Unlabelled} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
             \log \big[ p(y | \bm{x}; h) \big] \right\}$
 			\\[2ex]
 		Smallest Margin &
-			$\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
+			$\argmin_{x \in \Unlabelled} \left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}$
 			\\[2ex]
 		Smallest QBB Margin &
-			$\argmin_{x \in \Ecal} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
+			$\argmin_{x \in \Unlabelled} \left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}$
 			\\[2ex]
 		Largest QBB KL &
-			$\argmax_{x \in \Ecal} \left\{ \dfrac{1}{B}
+			$\argmax_{x \in \Unlabelled} \left\{ \dfrac{1}{B}
                \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
 			\\
 		\bottomrule
@@ -328,7 +332,7 @@ suggestion to pick next. Formally, we have
 	b : [0, 1]^{|\R| \times T} \rightarrow J_\R
 \end{IEEEeqnarray*}
 where $b$ is the bandit algorithm, $[0, 1]$ is a normalized reward between
-0 and 1, and $J_\R$ is the index set over the set of suggestions $\R$, and $T$
+0 and 1, and $J_\R$ is the index set over the set of heuristics $\R$, and $T$
 is the time horizon.
 
 What would be an appropriate reward in this setting? One option is then the
@@ -350,6 +354,34 @@ automate the selection process.~\cite{hsu15} study an improved version
 EXP4.P, along with importance weighting to estimate the rewards using only the
 training set. In this paper, we shall compare four algorithms that address this
 exploration-vs-exploitation problem.
+
+\begin{algorithm}[htbp]
+	\KwIn{
+    	unlabelled set $\Unlabelled$,
+        labelled training set $\Labelled_T$,
+        classifier $h$,
+        desired training size $n$,
+        query size $E$,
+        set of active learning suggestions $\R$,
+        and bandit algorithm $B$ with two functions \Select\,and \Update.
+        }
+    \BlankLine
+	\While{$|\Labelled_T| < n$}{
+    	Select a suggestion $r_* \in \R$ according to \Select. \;
+        $\Ecal$ $\leftarrow$ random sample of size $E$ from
+            $\Unlabelled$ \;
+        $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*
+            (\bm{x})$ \;
+        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
+        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
+        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
+        $h(\bm{x}) \leftarrow$ retrain the classifier \;
+        $\delta$ $\leftarrow$ incremental increase in the accuracy \;
+        Update the parameters of $B$ with \Update$(\delta)$. \;
+    }
+    \caption{Pool-based active learning with bandit theory}
+    \label{alg:bandit}
+\end{algorithm}
 
 \subsubsection{Thompson Sampling}
 
@@ -472,19 +504,17 @@ for example, the winner of an election~\citep{list13}. It has the nice property
 that everyone (or in our context, every active learning suggestion) has a
 voice.
 
-For each suggestion $r_i$, we assign a score to every candidate like before. We
+For each heuristic $r_i$, we assign a score to every candidate like before. We
 are not interested in the actual raw scores, but only in the relative ranking
-$k(r_i)$ which converts the scores into a preference ordering, where the most
-informative candidate is given a rank of 1:
+$k(r_i)$ which converts the scores into a preference ordering:
 	\begin{IEEEeqnarray*}{lCl}
-		k : \mathbb{R}^{|U|} \rightarrow \sigma(J_U)
+		k : \mathbb{R}^{U} \rightarrow \sigma(J_\Unlabelled)
 	\end{IEEEeqnarray*}
-where $\sigma(J_U)$ is a permutation over the index set of $U$.
-
-An aggregation function $c$ will
+where $\sigma(J_\Unlabelled)$ is a permutation over the index set of
+$\Unlabelled$. An aggregation function $c$ will
 then combine all the rankings into a combined ranking:
     \begin{IEEEeqnarray*}{lCl}
-		c : \sigma(J_U)^{|\R|} \rightarrow \sigma(J_U)
+		c : \sigma(J_\Unlabelled)^{|\R|} \rightarrow \sigma(J_\Unlabelled)
     \end{IEEEeqnarray*}
 From this, we can pick the highest-ranked candidate to label.
 
@@ -494,6 +524,34 @@ bandit algorithms is that we do not consider the reward history when combining
 the rankings, i.e.\ each heuristic is assumed to always have an equal weight. A
 possible extension, which is not considered in this paper, is to use the past
 performance to re-weight the heuristics before aggregating at each step.
+
+\begin{algorithm}[htbp]
+	\KwIn{
+    	unlabelled set $\Unlabelled$,
+        labelled training set $\Labelled_T$,
+        classifer $h$,
+        desired training size $n$,
+        query size $E$,
+        set of active learning suggestions $\R$,
+        and rank aggregator $G$.
+        }
+    \BlankLine
+	\While{$|\Labelled_T| < n$}{
+        $\Ecal$ $\leftarrow$ random sample of size $E$ from
+            $\Unlabelled$ \;
+        \For{$r \in \R$}{
+        	Rank all the candidates in $\Ecal$. \;
+        }
+        Aggregate all the rankings into one ranking using $G$. \;
+        $\bm{x}_* \leftarrow$ The highest ranked candidate in the aggregation. \;
+        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
+        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
+        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
+        $h(\bm{x}) \leftarrow$ retrain the classifier \;
+    }
+    \caption{Pool-based active learning with social choice theory}
+    \label{alg:choice}
+\end{algorithm}
 
 We shall examine three aggregation rules. In the most simple approach, Borda
 count, we assign an integer point to each candidate. The lowest-ranked
@@ -582,13 +640,13 @@ how the three aggregation algorithms work with a small example.
 
 \subsection{Description of datasets}
 
-We use 9 datasets taken from the UCI Machine Learning Repository, along
+We use 11 datasets taken from the UCI Machine Learning Repository, along
 with one large dataset SDSS from the astronomical domain \citep{alam15}.
 Table~\ref{tab:datasets} shows the size and the number of classes in each
 dataset, along with the proportion of the samples belonging to the majority
 class and the maximum achievable accuracy rate.
 
-\begin{table}[h]
+\begin{table}[htbp]
 	\caption {Overview of datasets} \label{tab:datasets}
 	\centering
 	\begin{tabular}{lrrrrr}
@@ -632,7 +690,7 @@ Although all examples has already been labelled, we simulate active learning by
 assuming that certain examples do not have any labels. In particular, the
 unlabelled pool size is 70\% of data up to a maximum of 10,000 examples. The
 test pool consists of the remaining examples up to a maximum of 20,000---we
-assume labels are available here. We initialize the classifier by labelling 50
+assume labels are available here. We initialize the classifier by labelling 10
 random samples and using them as the the initial training set. We use logistic
 regression with a Gaussian kernel approximation and an L2 loss. In the binary
 case, the loss function is
@@ -651,14 +709,13 @@ determines whether a particular example is in that class or not.
 For the reward, we use the mean posterior balanced accuracy (MPBA) as the
 reward. Compared to a simple accuracy rate, this measure takes into account the
 class imbalance. Intuitively, we calculate the recall rate in each class and
-then take the average, giving each class an equal weight. Refer to the appendix
-for the MPBA derivation
+then take the average, giving each class an equal weight. Refer to Appendix B
+for the derivation of the MPBA.
 
 Given that there are 12 datasets, each with 16 learning curves, we need a
-measure that can summarize in one number how well a particular suggestion or
+measure that can summarize in one number how well a particular heuristic or
 policy does. Building on~\cite{baram04}'s deficiency measure, we define the
 strength of an active learner or policy, relative to passive learning, as
-
 \begin{IEEEeqnarray*}{lCl}
     \text{Strength}(h; m) &=&
     	1 - \dfrac{\sum_{t=1}^{n}\big(m(\max) - m(h, t)\big)}
@@ -676,16 +733,17 @@ just passive learning.
 
 \section{Discussion}
 
-Figure~\ref{fig:strengths} shows the strengths of all policies that we
-consider, while Figure~\ref{fig:learning_curves} provides the learning curves
-of a selected few. With the exception of the wpbc dataset, most of the policies
-manage to beat passive learning. For the individual heuristics, the least
-confidence seems to perform very well while being very simple to calculate.
-This is consistent with have been observed in the literature. The best
-performing bandit algorithm is EXP3++, and if we want to use information form
-all heuristics, Borda count would be a good choice. On some datasets such as
-magic and pima, Borda count does better than EXP3++, although the effect is
-fairly small.
+Figures~\ref{fig:strengths-accuracy} to~\ref{fig:strengths-mpba} show the
+strengths of all policies that we consider, while
+Figures~\ref{fig:learning_curves-accuracy} to~\ref{fig:learning_curves-mpba}
+provides the learning curves of a selected few. With the exception of the wpbc
+dataset, most of the policies manage to beat passive learning. For the
+individual heuristics, the least confidence seems to perform very well while
+being very simple to calculate. This is consistent with have been observed in
+the literature. The best performing bandit algorithm is EXP3++, and if we want
+to use information form all heuristics, Borda count would be a good choice. On
+some datasets such as magic and pima, Borda count does better than EXP3++,
+although the effect is fairly small.
 
 In practice, we do not have a representative test set that can be used to
 compute the reward. Thus aggregation methods like Borda are are suitable than
@@ -719,7 +777,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	the better the heuristic/policy. Blue boxes represent individual
 	heuristics; red boxes represent bandit alogrithms, and green boxes are for
 	rank aggragation algorithms. Each plot is over 10 trials.}
-	\label{fig:strengths}
+	\label{fig:strengths-accuracy}
 \end{figure}
 
 \begin{figure}[tbp]
@@ -739,7 +797,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	the better the heuristic/policy. Blue boxes represent individual
 	heuristics; red boxes represent bandit alogrithms, and green boxes are for
 	rank aggragation algorithms. Each plot is over 10 trials.}
-	\label{fig:strengths}
+	\label{fig:strengths-f1}
 \end{figure}
 
 \begin{figure}[tbp]
@@ -759,7 +817,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	the better the heuristic/policy. Blue boxes represent individual
 	heuristics; red boxes represent bandit alogrithms, and green boxes are for
 	rank aggragation algorithms. Each plot is over 10 trials.}
-	\label{fig:strengths}
+	\label{fig:strengths-mpba}
 \end{figure}
 
 
@@ -780,7 +838,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
 	and the Borda aggregation policy. The learning curves are averaged over 10
 	shuffles.}
-	\label{fig:strengths}
+	\label{fig:learning_curves-accuracy}
 \end{figure}
 
 \begin{figure}[tbp]
@@ -800,7 +858,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
 	and the Borda aggregation policy. The learning curves are averaged over 10
 	shuffles.}
-	\label{fig:strengths}
+	\label{fig:learning_curves-f1}
 \end{figure}
 
 \begin{figure}[tbp]
@@ -820,7 +878,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
 	and the Borda aggregation policy. The learning curves are averaged over 10
 	shuffles.}
-	\label{fig:strengths}
+	\label{fig:learning_curves-mpba}
 \end{figure}
 
 
@@ -852,62 +910,6 @@ of Washington, and Yale University.
 \pagebreak
 
 \section*{Appendix A: Algorithms}
-
-\begin{algorithm}[htbp]
-	\KwIn{
-    	unlabelled set $\Unlabelled$,
-        labelled training set $\Labelled_T$,
-        classifer $h$,
-        desired training size $n$,
-        query size $E$,
-        set of active learning suggestions $\R$,
-        and bandit algorithm $B$ with two functions \Select\,and \Update.
-        }
-    \BlankLine
-	\While{$|\Labelled_T| < n$}{
-    	Select a suggestion $r_* \in \R$ according to \Select. \;
-        $\Ecal$ $\leftarrow$ random sample of size $E$ from
-            $\Unlabelled$ \;
-        $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*
-            (\bm{x})$ \;
-        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
-        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
-        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
-        $h(\bm{x}) \leftarrow$ retrain the classifier \;
-        $\delta$ $\leftarrow$ incremental increase in the accuracy \;
-        Update the parameters of $B$ with \Update$(\delta)$. \;
-    }
-    \caption{Pool-based active learning with bandit theory}
-    \label{alg:bandit}
-\end{algorithm}
-
-\begin{algorithm}[htbp]
-	\KwIn{
-    	unlabelled set $\Unlabelled$,
-        labelled training set $\Labelled_T$,
-        classifer $h$,
-        desired training size $n$,
-        query size $E$,
-        set of active learning suggestions $\R$,
-        and rank aggregator $G$.
-        }
-    \BlankLine
-	\While{$|\Labelled_T| < n$}{
-        $\Ecal$ $\leftarrow$ random sample of size $E$ from
-            $\Unlabelled$ \;
-        \For{$r \in \R$}{
-        	Rank all the candidates in $\Ecal$. \;
-        }
-        Aggregate all the rankings into one ranking using $G$. \;
-        $\bm{x}_* \leftarrow$ The highest ranked candidate in the aggregation. \;
-        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
-        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
-        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
-        $h(\bm{x}) \leftarrow$ retrain the classifier \;
-    }
-    \caption{Pool-based active learning with social choice theory}
-    \label{alg:bandit}
-\end{algorithm}
 
 \SetKwFunction{SelectFn}{Select}%
 \begin{algorithm}[htbp]
@@ -989,7 +991,7 @@ of Washington, and Yale University.
     \Fn{\Update($\delta$)}{
 		$t \leftarrow t + 1$ \;
 		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
-		$L_* \leftarrow \dfrac{L_* + (1 - \delta)}{(1 - \sum_j \epsilon_j))
+		$L_* \leftarrow \dfrac{L_* + (1 - \delta)}{(1 - \sum_j \epsilon_j)
 		  	 \rho_* + \epsilon_*} $
     }
 	\caption{EXP3++}

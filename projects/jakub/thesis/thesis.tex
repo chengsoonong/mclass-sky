@@ -7,6 +7,7 @@
 \usepackage{bm}
 \usepackage{cleveref}
 \usepackage{color}
+\usepackage{float}
 \usepackage{fontspec}
 \usepackage{mathpazo}
 \usepackage{mathtools}
@@ -61,9 +62,33 @@
 % Define common symbols
 \newcommand\bphi{\bm{\phi}}
 \newcommand\bvarphi{\bm{\varphi}}
+
+\newcommand\bbA{\mathbb{A}}
+\newcommand\bbB{\mathbb{B}}
+\newcommand\bbC{\mathbb{C}}
+\newcommand\bbD{\mathbb{D}}
 \newcommand\bbE{\mathbb{E}}
+\newcommand\bbF{\mathbb{F}}
+\newcommand\bbG{\mathbb{G}}
+\newcommand\bbH{\mathbb{H}}
+\newcommand\bbI{\mathbb{I}}
+\newcommand\bbJ{\mathbb{J}}
+\newcommand\bbK{\mathbb{K}}
+\newcommand\bbL{\mathbb{L}}
+\newcommand\bbM{\mathbb{M}}
 \newcommand\bbN{\mathbb{N}}
+\newcommand\bbO{\mathbb{O}}
+\newcommand\bbP{\mathbb{P}}
+\newcommand\bbQ{\mathbb{Q}}
 \newcommand\bbR{\mathbb{R}}
+\newcommand\bbS{\mathbb{S}}
+\newcommand\bbT{\mathbb{T}}
+\newcommand\bbU{\mathbb{U}}
+\newcommand\bbV{\mathbb{V}}
+\newcommand\bbW{\mathbb{W}}
+\newcommand\bbX{\mathbb{X}}
+\newcommand\bbY{\mathbb{Y}}
+\newcommand\bbZ{\mathbb{Z}}
 
 \newcommand\bA{\mathbf{A}}
 \newcommand\bB{\mathbf{B}}
@@ -195,7 +220,7 @@
 
 \tableofcontents
 
-\nomenclature{$\cX$}{Predictor input set}
+\nomenclature{$\cX$}{Predictor input space}
 \nomenclature{$\bbR$}{Set of real numbers}
 \nomenclature{$\bbR_{\geq0}$}{Set of non-negative real numbers}
 \nomenclature{$f$}{Original function}
@@ -205,9 +230,14 @@
 \nomenclature{$d$}{\jn{fill}}
 \nomenclature{$c$}{Speed of light in a vacuum\nomunit{\SI{299792458}{\meter\per\second}}}
 \nomenclature{$z$}{Redshift}
-\nomenclature{$cP$}{Powerset}
+\nomenclature{$\cP$}{Powerset}
+\nomenclature{$\cY$}{Predictor output space}
 \nomenclature{$z_\mathrm{spec}$}{Spectroscopic redshift}
 \nomenclature{$z_\mathrm{pred}$}{Photometric redshift}
+\nomenclature{$\fF$}{Space of predictors}
+\nomenclature{$\fD$}{Space of training sets}
+\nomenclature{$\cE$}{Space of error functions}
+
 
 \printnomenclature
 
@@ -854,21 +884,74 @@ This method is less prone to numerical instabilities than my favourite approxima
 
 \chapter{Active Learning}
 
-\jn{define active learning}
+In regression on photometric redshifts, it is expensive to obtain new labels for training samples: a telescope can only measure the spectrum of one galaxy at a time. However, photometric data is cheap, so we have a large pool of unlabelled objects. We wish to spend our telescope time labelling the objects that are the most likely to improve the accuracy of our model. Active learning is a technique that permits this.
 
-\jn{motivate}
+In active learning, we selectively find labels to samples based on their potential for improving our model. Given an existing model and a pool of unlabelled samples, a \textit{recommender} chooses samples based on its policy. It is only after a sample is recommended that we query its label and add it to our model's training set. An procedure is presented in \cref{alg:active-learning}.
+
+An recommendation strategy is effective if its choices yield a more accurate model than a randomly selected training set. Active learning then reduces, compared to the naïve approach, the number of labelled samples needed to achieve a predictor of a desired accuracy.
+
+\begin{algorithm}[t]
+    \KwData{
+      \\\quad A recommender $\pi$,
+      \\\quad A function $F : \cP(\cX \times \cY) \to \cF$ generating a predictor from training samples,
+      \\\quad A training sample pool $P \subseteq \cX$,
+      \\\quad A labeller $\tilde f : P \to \cY$,
+      \\\quad Step size $t \in \bbZ_{>0}$,
+      \\\quad An error function $e \in \mathcal{E}$,
+      \\\quad A desired maximum error $\mathrm{err}_\mathrm{max}$.
+    }
+    \KwResult{A predictor $\hat f : \cX \to \cY$ with $e(\hat f) \leq e_\mathrm{\max}$ or error}
+
+    \If{$\abs{P} < t$}{
+      \Return error
+    }
+
+    $\cD_{\cX} \gets t$ samples drawn randomly from $P$ without replacement
+
+    $P \gets P \setminus \cD_{\cX}$ \hfill (remove chosen samples from pool)
+
+    $\cD \gets \left\{\left(\bx, \tilde f(\bx)\right) \;\middle|\; \bx \in \cD_{\cX} \right\}$ \hfill (label chosen samples)
+
+    $\hat f \gets F(\cD)$ \hfill (train model)
+
+    $\mathrm{err} \gets e(\hat f)$ \hfill (compute error)
+
+    \While{$\mathrm{err} > \mathrm{err}_\mathrm{max}$}{
+      \If{$\abs{P} < t$}{
+        \Return error
+      }
+
+      $\cD_{\cX} \gets \pi(P, t)$ \hfill (get recommendations)
+
+      $P \gets P \setminus \cD_{\cX}$ \hfill (remove chosen samples from pool)
+
+      $\cD \gets \cD \cup \left\{\left(\bx, \tilde f(\bx)\right) \;\middle|\; \bx \in \cD_{\cX} \right\}$ \hfill (label chosen samples)
+
+      $\hat f \gets F(\cD)$ \hfill (train model on all samples)
+
+      $\mathrm{err} \gets e(\hat f)$ \hfill (compute error)
+    }
+
+    \Return $\hat f$
+
+    \caption{The active learning procedure.}
+    \label{alg:active-learning}
+\end{algorithm}
 
 \section{Recommenders}
 
-In active learning, a recommender is a function that prioritises some unlabelled training samples over others. \jn{rewrite?} It can be thought of in two equivalent ways.
+In active learning, a \textit{recommender} is a function\footnotemark that predicts what samples are the most useful to label. It can be thought of in two equivalent ways.
+\footnotetext{To be precise, a recommender is not always a function as it is permitted to be nondeterministic.}
 
-A recommender can be thought of as a function $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$. Then $\pi(P, r)$ returns $r$ of its most preferred samples from the sample pool $P$.
+A recommender can be thought of as a function $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$, where $\pi(P, r)$ returns the $r$ most preferred samples from the sample pool $P$.
 
-A recommender can also be a function $\varpi : \cX \to \bbR$. Then $\varpi(\bx)$ returns the preference score it assigns to $\bx$, with a higher score being more preferred.
+A recommender can also be a function $\varpi : \cX \to \bbR$. Then $\varpi(\bx)$ returns the preference score it assigns to $\bx$, with higher scores being preferred.
 
-Given a recommender $\varpi : \cX \to \bbR$ returning a score, we can define a recommender $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$ returning a set of samples. To obtain $\pi(P, r)$ by choose the top $r$ samples from $P$ as scored by $\varpi$.
+Given a recommender $\varpi$ returning a score, we can define a recommender $\pi$ returning a set of samples. One way to obtain $\pi(P, r)$ is by choosing the top $r$ samples from $P$ as scored by $\varpi$.
 
-Similarly, given a recommender $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$, we can define a recommender $\varpi : \cX \to \bbR$ returning a score. \jn{TODO: finish}
+Similarly, given a recommender $\pi$ returing a set of samples, we can define a recommender $\varpi$ returning a score. Assuming a fixed pool $P \in \cP(\cX)$, for all $\bx\in\cX$, define\[
+  \varpi(\bx) \coloneqq -\min \{ i = 1, \dots, \abs{P} \mid \bx \in \pi(\cX, i)\} \text.
+\] Then the score $\varpi$ assigns to $\bx$ is the negation of its preference index in $\pi$.
 
 
 
@@ -881,7 +964,7 @@ For a recommender $\pi$ and a model $F : \cP(\cX \times \cY) \to \cF$, we genera
 
 We can qualitatively describe the performance of a recommender by examining the learning curve it generates. In general, the better the accuracy of $F$ trained on points given by $\pi$, the better $\pi$ is.
 
-An example of a learning curve can be seen in figure \jn{BLAH}. In that figure, the uncertainty recommender clearly outperforms the passive (random) recommender.
+An example of a learning curve can be seen in \cref{fig:uncertainty_dz1}. In that figure, the uncertainty recommender clearly outperforms the passive (random) recommender.
 
 \begin{algorithm}[H]
     \KwData{
@@ -915,84 +998,83 @@ An example of a learning curve can be seen in figure \jn{BLAH}. In that figure, 
 
 \subsection{Deficiency}
 
-\jn{todo: define $\fF$ as the set of possible models}
-
-\jn{todo: define $\fD$ as the set of possible training sets}
-
-\jn{todo: define $\cE$ as the set of possible error functions}
-
-\jn{todo: define $\cT$ as the set of possible counts}
+\begin{wrapfigure}{R}{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.5\textwidth]{deficiency_example.pdf}
+    \caption{A passive learning curve for 2dFLenS. Its deficiency is the area of the shaded region, in this case 135.7.}
+    \label{fig:deficiency_example}
+  \end{wrapfigure}
 
 The deficiency $d$ is a function $d : \fD \times \fF \times \cE \times \cT \times \Pi \to \bbR$. Intuitively, $d(P, F, e, T, \pi)$ measures the room for improvement that a recommender $\pi \in \Pi$ has on a model $F \in \fF$, a training set pool $P \in \fD$, at times $T \in \cT$, according to an error function $e \in \cE$. In general, the lower the deficiency, the better $\pi$ performs on our predictor and dataset.
 
-\jn{todo: consider defining as $d$ as $\cL \times \cT \to \bbR$, where $\cL$ is the set of possible learning curves}
+To define $d(P, F, e, T, \pi)$, let $\ell : T \to \bbR_{\geq0}$ be the learning curve with a predictor $F$, a recommender $\pi$, a candidate pool $P$, and an error function $e$ and $F$ at times $T = \{t_1, \dots, t_r\}$ ordered in ascending order. Generally, $\ell$ reach its minimum at $t_r$. This is because, in general, models perform better with more training samples; hence, training on all available samples is likely to yield the best possible model. We use $\ell(t_r)$ as a baseline for a `perfect' recommender.\footnote{We use the word `perfect' rather loosely, as it is impossble to define a truly perfect recommender. In most cases, even the best possible recommender will not reach a deficiency of $0$ as no proper subset of $P$ will yield comparable performance to the entirety of $P$.}
 
-To define $d(P, F, e, T, \pi)$, let $\ell : T \to \bbR_{\geq0}$ be the learning curve with a predictor $F$, a recommender $\pi$, a candidate pool $P$, and an error function $e$ and $F$ at times $T = \{t_1, \dots, t_r\}$ ordered in ascending order. Generally, $\ell$ reach its minimum at $t_r$. This is because, in general, models perform better with more training samples; hence, training on all available samples is likely to yield the best possible model. We use $\ell(t_r)$ as a baseline for a `perfect' recommender.
+Then we define $d$ to be the signed area between $\ell$ and the line $y = \ell(t_r)$, as shown in \cref{fig:deficiency_example}. Since $\ell$ is sampled at discrete intervals, we compute it by applying the trapezoidal rule: \[
+  d(\pi; P, F, e, T) = \sum_{i=1}^{r-1} \frac{t_{i+1} - t_i}{2}\Big(\big[\ell(t_i) - \ell(t_r)\big] + \big[\ell(t_i) - \ell(t_r)\big]\Big) \text.
+\]
 
-\jn{todo: write about impossibility of perfect recommender}
+Observe that the deficiency is permitted to be negative. This may occur if $F$ trained on a subset of $P$ with size $t_i < t_r$ performs better than $F$ trained on the entirety of $P$. Then $\ell(t_i) - \ell(t_r)$ is negative, so the integral is permitted to be negative. This occurs very rarely as most models benefit from larger training sets.
 
-\jn{a recommender may or may not be perfect depending on testing set}
-
-\jn{even a perfect recommender will not reach deficiency $0$}
-
-Then we define $d$ to be the signed area between $\ell$ and the line $y = \ell(t_r)$. \jn{justify use of trapezoidal as opposed to just integrating} We compute it by applying the trapezoidal rule: \begin{align*}
-  d(\pi; P, F, e, T) &= \sum_{i=1}^{r-1} (t_{i+1} - t_i)\left(\frac12\ell(t_i) + \frac12\ell(t_{i+1}) - \ell(t_r)\right) \text.
-  \\&\text{\jn{make more readable. justify the subtraction of $\ell(t_r)$}}
-\end{align*}
-
-Observe that the deficiency is permitted to be negative. This may occur if $F$ trained on the entirety of $P$ performs worse than $F$ trained on a subset of $P$ with size $t_i$ chosen by $\pi$. Then $\ell(t_i) - \ell(t_r)$ is negative, so we cannot place a lower bound on the integral. \jn{reword. this is shite}
-
-\jn{make plot to visualise}
-
-\jn{TODO: change all $T$ sets to $\bt$ vectors}
-
-For a fixed, $P$, $F$, $e$, and $\bt$, we may compute the deficiencies of recommenders $\pi$ and $\pi'$ to compare them. Let $\ell$ and $\ell'$ be the learning curves of $\pi$ and $\pi'$ respectively. Then $\ell(t_r) = \ell'(t_r)$, since each trains $F$ on the entire pool $P$ at time $t_r$.\footnote{Whilst this is true mathematically, in reality $\ell(t_r)$ and $\ell'(t_r)$ are approximately but not exactly equal due to numerical inaccuracies. To permit the deficiencies to be compared directly, we find the average of the individual baselines and use it to compute the deficiencies.} Then $d(\pi;\dots)$ and $d(\pi';\dots)$ measure the area between $\ell$ and $\ell'$ respectively and a common baseline. \jn{this doesn't make sense. edit plz} Hence, it is possible to directly compare the deficiencies to rank the recommenders.
-
-
+For a fixed, $P$, $F$, $e$, and $T$, we may compute the deficiencies of recommenders $\pi$ and $\pi'$ to compare them. Let $\ell$ and $\ell'$ be the learning curves of $\pi$ and $\pi'$ respectively. Then $\ell(t_r) = \ell'(t_r)$, since $F$ is always trained on the entire pool $P$ at $t_r$.\footnote{Whilst this is true mathematically, in reality $\ell(t_r)$ and $\ell'(t_r)$ are approximately but not exactly equal due to numerical inaccuracies. To permit the deficiencies to be compared directly, we find the average of the individual baselines and use it to compute the deficiencies.} Then $d(\pi)$ is the area between $\ell$ and a baseline, and $d(\pi')$ is the area between $\ell$ and the same baseline. Since the baseline is the identcal, it is possible to directly compare the deficiencies to rank the recommenders.
 
 \section{Possible recommenders}
 
 \subsection{Passive}
 
-\jn{TODO: consider calling it a `random' recommender and relating to passive learning}
-
-The passive recommender is the baseline upon which we wish to improve. It yields random samples from the candidate pool. This makes it equivalent to adding extra training points without utilising any active learning techniques. The passive learning curves we use as a baseline are shown in figures \jn{BLAH}, \jn{BLAH}, and \jn{BLAH}. We use these to assess the performance of our active learning techniques.
+The passive recommender is the baseline upon which we wish to improve. It yields random samples from the candidate pool. This makes it equivalent to adding extra training points without utilising any active learning techniques. The passive learning curves we use as a baseline are shown in \cref{fig:passive_dz}, \cref{fig:passive_fvu}, and \cref{fig:passive_sdss}. We use these to assess the performance of our active learning techniques.
 
 \subsection{Uncertainty}
   \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth]{uncertainty_r2.pdf}
-    \caption{Learning curve: $R^2$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using uncertainty recommendation with a batch size of $100$. The shaded interval represents the two-sigma confidence interval.}
-    \label{fig:uncertainty_r2}
+    \includegraphics[width=0.9\textwidth]{uncertainty_dz1.pdf}
+    \caption{Learning curve: mean $dz$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using uncertainty recommendation with a step size of $100$. The shaded interval represents the one-sigma confidence interval.}
+    \label{fig:uncertainty_dz1}
   \end{figure}
 
-Let $\var \hat f$ be the variance returned by Gaussian PRocess Regression. The uncertainty recommender is defined as \[
-    \argmax_{c \in \cC} \var\hat f(c) \text.
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{uncertainty_fvu1.pdf}
+    \caption{Learning curve: FVU error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using uncertainty recommendation with a step size of $100$. The shaded interval represents the one-sigma confidence interval.}
+    \label{fig:uncertainty_fvu1}
+  \end{figure}
+
+Let $\var\hat f : \cX \to \bbR_{\geq0}$ be the variance returned by Gaussian process regression. The uncertainty recommender is defined as a function $\varphi : \cX \to \bbR$ such that \[
+    \varphi(\bx) = \var\hat f(\bx) \text.
 \]
 
 Intuitively, it returns the points that we are the most uncertain about. If we are uncertain about a point, then we have less information about that particular area of the feature space. Hence the points that we are uncertain about would be good additions to the training set.
 
-This intuition fails at the start of our training. This is because we end up focusing on points that we are very unsure about, which tend to be on the long tail of the distribution. Since, in our case, the distribution is five-dimensional, this is a very poor strategy, as we spread out our efforts and neglect the core of the distribution.
-
-\jn{learning curve}
+Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref{fig:uncertainty_dz1}. Learning curves for the FVU error are shown in \cref{fig:uncertainty_fvu1}. We see that whereas uncertainty recommendation performs well in the later stages of training, it works rather poorly at the start. This is because we end up focusing on points that we are very unsure about, which tend to be on the long tail of the distribution. Since, in our case, the distribution is five-dimensional, this is a very poor strategy, as we spread out our efforts and neglect the core of the distribution.
 
 \subsection{Density}
 
-Let $\cD : \cX \to \bbR^+$ be a density function for the dataset. This can be derived from the training set by fitting a gaussian mixture model or by Kernel Density Estimation. The recommended points are \[
-    \argmax_{c \in \cC} \cD(c) \text.
-\]
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{density_dz1.pdf}
+    \caption{Learning curve: mean $dz$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using density recommendation with a step size of $100$. The density is approximated as a Gaussian. The shaded interval represents the one-sigma confidence interval.}
+    \label{fig:density_dz1}
+  \end{figure}
 
-\jn{learning curve on pure density}
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{density_fvu1.pdf}
+    \caption{Learning curve: FVU error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using density recommendation with a step size of $100$. The density is approximated as a Gaussian. The shaded interval represents the one-sigma confidence interval.}
+    \label{fig:density_fvu1}
+  \end{figure}{}
 
-As seen above, this recommendation strategy yields good results at the start of the learning curve, when we have trained on very few datapoints. However, late on the curve flattens out and no longer produces very good results, being overtaken by uncertainty recommendation.
+  Let $D : \cX \to \bbR^+$ be a density function for the dataset. The density estimator is a function $\varpi : \cX \to \bb^R$ such that \[
+    \varpi(\bx) \coloneqq D(x) \text.
+  \]
+
+  If we do not know the true distribution of the dataset, we can estimate it. Gaussian mixture models and kernel density estimation are two possible approaches. We use a simple Gaussian with the mean and covariance of our dataset.
+
+  We plot the learning curves for SDSS and 2dFLenS under density recommendation and mean $dz$ error in \cref{fig:density_dz1}. Similar curves for the FVU error are shown in \cref{fig:density_fvu1}. We note that this recommendation strategy yields good results at the start of the learning curve, when we have trained on very few sampels. However, later on the curve flattens out and no longer produces very good results, being overtaken by uncertainty recommendation.
 
 \subsection{Boltzmann sampling}
 
 Consider a physical system that occupies one of $M$ possible states. Let $T > 0$ be the temperature of the system. For each $i=1, \dots, M$, the state $s_i$ has potential energy $\varepsilon_i$. If $\varepsilon_i < \varepsilon_{i'}$, then we must input energy equalling $\varepsilon_{i'} - \varepsilon_i$ to move from the state $s_i$ to $s_{i'}$. As an example, consider a hydrogen atom consisting of a nucleus and an electron. The electron occupies one of two shells around the nucleus: the inner shell or the outer shell. Energy is required to move this electron the inner shell to the outer shell; hence, the state of lying in the outer shell is of higher energy.
 
-\jn{lily: `A system seeks to minimise its energy, resulting in a non-uniform probability of states. Higher-energy states are rarely sampled, but introducing kinetic energy in the form of higher temperatures can increase their likelihood. The probability of a state then depends on its energy and the temperature T of the system, formalised in the Boltzmann distribution:'}
-
-The probability of the system existing in a particular state is not uniform. \jn{unclear, reword} A system seeks to minimise its energy, so the lower-energy states are more likely. However, higher-energy states are not impossible, particularly in high temperatures: a sufficiently hot gas will become ionised, entering a higher-energy state. The probability of a state $s_i$ then depends on its energy $\varepsilon_i$ and on the temperature $T$ of the system. It follows the \textit{Boltzmann distribution}:\[
+A system seeks to minimise its energy, resulting in a non-uniform probability of states. Higher-energy states are improbable but not impossible, particularly in high temperatures: a sufficiently hot gas will become ionised, entering a higher-energy state. The probability of a state $s_i$ then depends on its energy $\varepsilon_i$ and on the temperature $T$ of the system. It follows the \textit{Boltzmann distribution}:\[
   p(s_i) = Z\exp\left(\frac{-\varepsilon_i}{k_\mathrm{B}T}\right) \text,
 \] where $k_\mathrm{B}$ is the Boltzmann constant, and $Z \coloneqq 1/\sum^{M}_{i=1}\frac{-\varepsilon_i}{k_\mathrm{B}T}$ ensures that the probabilities sum to $1$.
 
@@ -1000,9 +1082,9 @@ We can apply these physical principles to active learning to obtain a wider vari
 
 Let $\varpi : \cX \to \bbR$ be a recommender that assigns a score to the candidate samples. Let $P = \{\bx_1, \dots, \bx_N\}$ be the pool of candidates; think of each as a state. Then the energy of $\bx_i$ is $\varepsilon_i = -\varpi(\bx_i)$ since we prefer higher scores. A Boltzmann sampler with temperature $T$ then recommends a sample $\bx_i$ with probability \[
   p(\bx_i) \propto \exp\left(\frac{-\varepsilon_i}{T}\right) \text{\footnotemark}.
-\]\footnotetext{Observe that this formula omits the Boltzmann constant for simplicity.} Observe that samples with higher scores are still preferred. The strength of that preference is inversely proportional to $T$.
+\]\footnotetext{Observe that this formula omits $k_\mathrm{B}$, changing the scale of $T$.} Observe that samples with higher scores are still preferred. The strength of that preference is inversely proportional to $T$.
 
-\jn{learning curves of boltzmann on uncertainty and density with different temperatures}
+\jn{PP learning curves of boltzmann on uncertainty and density with different temperatures}
 
 \subsection{Mixing recommenders}
 
@@ -1022,9 +1104,9 @@ A constant $p$ (or equivalently constant $k$ and $l$) with combine both the adva
 
 This is reminiscent of the problem of exploration vs exploitation. Uncertainty scores are mostly noise until we have enough data in our training set.
 
-\jn{figure out optimal function for p/kl}
+\jn{PP figure out optimal function for p/kl}
 
-\jn{helpful plot}
+\jn{PP helpful plot}
 
 \bibliography{references}{}
 \bibliographystyle{plain}

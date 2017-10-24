@@ -273,7 +273,7 @@ class ActiveBandit(MultipleSuggestions):
         return best_candidates
 
     def receive_reward(self, reward):
-        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
+        """ Receive a reward from the environment and updates the policy's prior beliefs.
 
             Parameters
             ----------
@@ -309,7 +309,7 @@ class ActiveBandit(MultipleSuggestions):
 
 
 class ThompsonSampling(ActiveBandit):
-    """ Thompon Sampling with normally distributed rewards.
+    """ Thompson Sampling with normally distributed rewards.
 
         This class cannot be used directly but instead serves as the base class for
         all bandit policies that takes as input multiple active learning rules.
@@ -382,7 +382,7 @@ class ThompsonSampling(ActiveBandit):
         return self._select_from_arm()
 
     def receive_reward(self, reward):
-        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
+        """ Receive a reward from the environment and updates the policy's prior beliefs.
 
             Parameters
             ----------
@@ -707,7 +707,7 @@ class ActiveAggregator(MultipleSuggestions):
             The type of aggregator function used to combine the ranks from the arms.
             The arithmetic mean (Borda count) and the geometric mean are the
             most efficient algorithms. The Schluze method is recommended only when the
-            candidate set is small, since the algorithm uses pariwise counting and runs
+            candidate set is small, since the algorithm uses pairwise counting and runs
             in ``O(n^3)`` where ``n`` is the number of candidates.
 
         random_state : int or RandomState object, optional (default=None)

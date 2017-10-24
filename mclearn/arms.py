@@ -36,7 +36,7 @@ class Arm(ABC):
         This class cannot be used directly but instead serves as the base class for
         all active learning suggestions. Each suggestion implements the `select`
         method, which return the indices of the objects in the pool for labelling,
-        based on a particular heursitic.
+        based on a particular heuristic.
 
         Parameters
         ----------
@@ -134,7 +134,7 @@ class WeightedArm(Arm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
-        similarity : numpy array of shape [n_samples, n_samples], optinal (default=None)
+        similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
@@ -170,7 +170,7 @@ class MarginArm(WeightedArm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
-        similarity : numpy array of shape [n_samples, n_samples], optinal (default=None)
+        similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
@@ -219,7 +219,7 @@ class ConfidenceArm(WeightedArm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
-        similarity : numpy array of shape [n_samples, n_samples], optinal (default=None)
+        similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
@@ -263,7 +263,7 @@ class EntropyArm(WeightedArm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
-        similarity : numpy array of shape [n_samples, n_samples], optinal (default=None)
+        similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
@@ -318,7 +318,7 @@ class CommitteeArm(WeightedArm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
-        similarity : numpy array of shape [n_samples, n_samples], optinal (default=None)
+        similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
@@ -353,7 +353,7 @@ class QBBMarginArm(CommitteeArm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
-        similarity : numpy array of shape [n_samples, n_samples], optinal (default=None)
+        similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
@@ -454,7 +454,7 @@ class QBBKLArm(CommitteeArm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
 
-        similarity : numpy array of shape [n_samples, n_samples], optinal (default=None)
+        similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """

@@ -1,4 +1,4 @@
-\documentclass[11pt,twoside]{report}
+\documentclass[11pt,twoside,openright]{report}
 
 \usepackage[algoruled]{algorithm2e}
 \usepackage{amsfonts}
@@ -21,8 +21,9 @@
 \setmonofont[Mapping=tex-text]{Menlo}
 \usemintedstyle{}
 
+\usepackage[a4paper, margin=1in]{geometry}
 % This is for writing only, so it's easier to read.
-\usepackage[paperheight=9.12in,paperwidth=6.389in,tmargin=.4in,bmargin=.6in,inner=.2in,outer=.4in,heightrounded]{geometry}
+% \usepackage[paperheight=10.69in,paperwidth=6.87in,tmargin=.4in,bmargin=.6in,inner=.2in,outer=.4in,heightrounded]{geometry}
 
 \renewcommand*{\thefootnote}{[\arabic{footnote}]}
 
@@ -197,6 +198,12 @@
 \newcommand\fY{\mathfrak{Y}}
 \newcommand\fZ{\mathfrak{Z}}
 
+\usepackage{afterpage}
+
+\newcommand\blankpage{%
+    \null
+    \thispagestyle{empty}%
+    \newpage}
 
 \newcommand\norm[1]{\left\|#1\right\|}
 \newcommand\floor[1]{\left\lfloor#1\right\rfloor}
@@ -210,14 +217,75 @@
 
 \newcommand\jn[1]{{\color{red}(jn: #1)}}
 
-\title{Optimising Experiments for Photometric Redshift Prediction}
-\author{Jakub Nabaglo, u5558578}
+\title{Active Learning with Gaussian Processes\\for Photometric Redshift Prediction}
+\author{Jakub Leszek Nabaglo}
 \date{October 2017}
 \usepackage{layouts}
 
-\begin{document}
-\maketitle
+\pagenumbering{gobble}
 
+\begin{document}
+\begin{titlepage}
+  \enlargethispage{2cm}
+  \begin{center}
+    \makeatletter
+    \hspace{0pt} \\[3cm]
+    \huge\@title \\[.4cm]
+
+    \LARGE\@author \\[8.5cm]
+    \makeatother
+    \Large A thesis submitted in partial fulfillment of the degree of \\
+    \LARGE Bachelor of Philosophy (Honours) -- Science\\[3cm]
+
+    \LARGE Australian National University \\[1cm]
+    October 2017
+  \end{center}
+\end{titlepage}
+
+\vspace*{5cm}
+\begin{center}
+  Except where otherwise indicated, this thesis is my own original
+  work.
+\end{center}
+
+\vspace*{2cm}
+
+\hspace{8cm}\makeatletter\@author\makeatother\par
+\hspace{8cm}26 October 2017
+
+\vspace*{12cm}
+
+\begin{center}
+  \copyright\ 2017 Jakub Nabaglo
+\end{center}
+\noindent
+
+\begin{abstract}
+  It is expensive to obtain the spectrum needed to accurately calculate the redshift of an astronomical object. We often estimate an object's redshift using cheaper photometric measurements. Spectra are required to generate labels in this regression problem. Large training sets are hence costly, limiting their accuracy and range. Unlabelled samples are abundant. \jn{The sentences don't really follow from each other.}
+
+  We develop a regressor based on Gaussian processes, and apply active learning to select samples for labelling based on their potential for improving the model's accuracy. This permits us to improve redshift predictions at a reduced cost.
+
+  \jn{Mention some concrete results}
+\end{abstract}
+
+\cleardoublepage
+
+\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+English is not powerful enough to express my gratitude to Cheng Soon Ong. His encouragement propelled me through this year, his questions inspired much contemplation, and the depth of his knowledge never ceased to amaze. I could not have wished for a better supervisor.
+
+On many occasions I encroached on the time of Christian Wolf, whose enthusiasm for astronomy is truly contagious. I always left his office with relevant insight and domain knowledge, the kind of which we often overlook in data science.
+
+I must thank my parents, Ilona and Leszek; my siblings, Agata and Andrew; and my girlfriend Lily. They supported me through many years of study, and through the peaks and valleys of life.
+
+Finally, I am indebted to Matthew Alger, for his advice, careful proofreading, and assistance taming truculent software.
+\end{abstract}
+
+\thispagestyle{empty}
+
+\pagenumbering{arabic}
+
+\addtocounter{page}{5}
 \tableofcontents
 
 \nomenclature{$\cX$}{Predictor input space}
@@ -317,7 +385,7 @@ Optimal design requires us to be able to assess the uncertainties in the predict
 
 \chapter{Regression on Photometric Redshifts}
 
-Let $\cX \subset \bbR^d$ be bounded. Let $f$ map $\cX$ to $\bbR$. Regression is the task of reconstructing such an $f$ from finitely many examples of its inputs and outputs.
+Let $\cX \subset \bbR^d$ and $\cY \subset \bbR$ both be bounded. Let $f$ map $\cX$ to $\cY$. Regression is the task of reconstructing such an $f$ from finitely many examples of its inputs and outputs.
 
 We are given a set \[
   \cD = \left\{\left(\bx_1, y_1\right), \dots, \left(\bx_n, y_n\right)\right\}
@@ -329,19 +397,19 @@ Let $\hat\cF$ be our space of possible approximations; its exact membership depe
     p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
 \] We define $\hat f$ to be the function that maximises this likelihood:\[
     \hat f \coloneqq \argmax_{\hat f_c \in \cF} p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
-\] The definition of this likelihood is dependent on our assumptions, such as on our assumed noise distribution $\cP$ and on any assumptions we have about $f$.
+\] The definition of this likelihood depends on our assumptions, such as on our assumed noise distribution $\cP$ and on any assumptions we have about $f$.
 
-In our specific case we will always assume that the noise is distributed according to a Gaussian with a mean of $0$ and a variance $\sigma^2$ that we leave as a hyperparameter\footnote{A hyperparameter is a parameter that depends on the distribution of our data.}.
+In our specific case we always assume that the noise is distributed according to a Gaussian with a $0$ mean and a with variance $\sigma^2$ that we leave as a hyperparameter\footnote{A hyperparameter is a parameter that depends on the distribution of our data.}.
 
 We apply regression to find objects' redshifts from their photometric measurements, as a cheaper alternative to spectroscopy. We are given a set of example objects' photometric measurements and spectoscopic redshifts, and we wish to predict the redshift of any new object whose photometric colours have been measured. Hence, in our case $\cX \subset \bbR^5$ is the space of photometric measurements.
 
-Let $f : \cX \to \bbR$ be the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshift. This lets us treat any inconsistency as any other source of noise.
+Let $f : \cX \to \cY$ be the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshift. This lets us treat any inconsistency as any other source of noise.
 
-Some models are capable of not only predicting $f$ but also returning a measure of its confidence in its prediction. Gaussian Process regression is an example of such a model. This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
+Some models are capable of not only predicting $f$ but also returning a measure of their confidence in their own prediction. Gaussian process regression is an example of such a model. This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
 
 \section{Assessing performance}
 
-To assess the performance of our model, we must have a way of quantifying its accuracy. We withhold a portion of our data into a testing set $\cD'$ of $n'$ elements such that \[
+To assess the performance of a model, we must have a way of quantifying its accuracy. We withhold a portion of our data into a testing set $\cD'$ of $n'$ elements such that \[
   \cD' = \{(\bx'_1, y'_1), \dots, (\bx'_{n'}, y'_{n'})\}
 \] and $\cD$ is disjoint from $\cD'$.
 
@@ -355,9 +423,9 @@ For each testing sample $(\bx'_i, y'_i)$, define the prediction as\[
 
 For a perfect predictor then,\[
   \hat y'_i = y'_i \text{ for all }i=1, \dots, n'\text{,}
-\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce. This is due to noise in the labels, and also because of our inherent ability to reconstruct an arbitrary function from a finite number of samples.
+\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce. This is due to noise in the labels, and also because of our fundamental ability to reconstruct an arbitrary function from a finite number of samples.
 
-Hence, we must assign a numerical score to each predictor, so we can compare their performance. The fraction of variance unexplained is a commonly used score. Others, more specific to photometric redshifts, are the mean $dz$ error, the $dz$ deviation, and the fraction of $dz$ outliers. Photometric redshifts suffer from a high number of outliers, which do not have as much an influence on these redshift-specific scores.
+Hence, we must assign a numerical score to each predictor, so we can compare their performance. The fraction of variance unexplained is a commonly used score. Others, more specific to photometric redshifts, are the mean $dz$ error, the $dz$ deviation, and the fraction of $dz$ outliers. Photometric redshifts suffer from a high number of outliers; their influence is reduced with these redshift-specific scores.
 
 \subsection{Fraction of Variance Unexplained}
 The fraction of variance unexplained (FVU) measures the fraction of the variance of the labels $y'_1, \dots, y'_{n'}$ not explained by the predictor. For a predictor that explains the entire variance $\mathrm{FVU}=0$, and for a predictor that explains none of the variance $\mathrm{FVU}=1$.
@@ -519,7 +587,7 @@ A kernel is a function $k : \bbR^d \times \bbR^d \to \bbR$ such that \[
     k(\bx, \bx') = \langle \bvarphi\left(\bx\right), \bvarphi\left(\bx'\right)\rangle \text{,}
 \] where $\bvarphi : \bbR^d \to H$ maps our feature space $\bbR^d$ to a real Hilbert space $H$. Intuitively then, we can think of a kernel as an inner product in a different space.
 
-Like other inner products, a kernel can be thought of as a similarity measure. For example, $k(\bx, \bx') = 0$, then $\bx$ and $\bx'$ are orthogonal in $H$, and thus not similar at all by our definition.
+Like other inner products, a kernel can be thought of as a similarity measure. For example, $k(\bx, \bx') = 0$, then $\bx$ and $\bx'$ are orthogonal in $H$, and thus not similar at all by our metric.
 
 Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly infinite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
 
@@ -588,7 +656,7 @@ Setting $\gamma = \beta \gamma_0$ and letting limiting $\beta \to \infty$ yields
 
 For some $\bx$ and $\bx'$, define $d \coloneqq \norm{\bx - \bx'}$. The Mat\'ern Kernel is defined by \[
     k(\bx, \bx') \coloneqq \frac{2^{1-\nu}}{\Gamma(\nu)}\left(\frac{\sqrt{2\nu}d}{\sigma}\right)^\nu K_\nu\left(\frac{\sqrt{2\nu}d}{\sigma}\right)
-\]$K_\nu$ is the modified Bessel function of the second kind, $\Gamma$ is the Gamma function, $\nu$ is positive parameter, and $\ell$ is the length scale. It is differentiable $\floor{\nu-1}$ times. See \cref{fig:matern_kernel} for a visualisation.
+\]$K_\nu$ is the modified Bessel function of the second kind\footnote{The definition and properties of $K_{\nu}$ are beyond our scope.}, $\Gamma$ is the Gamma function, $\nu$ is positive parameter, and $\ell$ is the length scale. It is differentiable $\floor{\nu-1}$ times. See \cref{fig:matern_kernel} for a visualisation.
 
 For some values of $\nu$ it can be simplified. When $\nu = 1/2$,
  \[
@@ -600,7 +668,7 @@ For some values of $\nu$ it can be simplified. When $\nu = 1/2$,
  \] Observe that for $\nu=1/2$, it simplifies to the exponential kernel. The other two simplifications are an exponential kernel multiplied by a polynomial in $d/\sigma$.
 \subsection{Kernel Approximations}
 
-For large dataset, computing $K$ becomes expensive as has a space complexity of $O(n^2)$.
+For large dataset, computing $K$ becomes expensive it as has a space complexity of $O(n^2)$.
 
 \subsubsection{RBF Sampling}
 
@@ -621,10 +689,6 @@ RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier trans
     \caption{Error of kernelised linear regression. The $\sigma$ is the median distance between training $\bx$ values.}
     \label{fig:linreg_kernelised}
   \end{wrapfigure}
-
-Consider the problem of regression. We are given a function $f : \bbR^d \to \bbR$ for some $d \in \bbN$. We are also given $n$ points $\bx_1, \dots, \bx_n$ for which we know the values. In other words, we know $y_1, \dots, y_n$ where \[
-    y_i \coloneqq f(\bx_i)\text{ for }i = 1, \dots, n\text{.}
-\]
 
 Let $\phi : \bbR^d \to \bbR^r$ be the feature map. If we are performing linear regression, then we want to find $\bw \in \bbR^r$ such that \[
     f(\bx) \approx \phi(\bx)^T \bw \text{.}
@@ -657,7 +721,7 @@ We can rewrite the error function as $E : \bbR^n \to [0, \infty)$ such that \[
 \] Then $k(\bx, \bx') \coloneqq \phi(\bx) \cdot \phi(\bx')$ is our kernel function.
 
 Differentiating, we find \begin{align*}
-    E'(\bv) &= -K^T(\by - K\bv) + \frac{\lambda}{2} (K + K^T)\bv \\
+    \frac{dE(\bv)}{d\bv} &= -K^T(\by - K\bv) + \frac{\lambda}{2} (K + K^T)\bv \\
     &= K(K\bv - \by) + \lambda K\bv \text{,}
 \end{align*} since $K$ is symmetric. The minimum exists at $E'(\bv) = 0$. Simplifying, we find,\[
     K(K + \lambda I)\bv = K\by \text{.}
@@ -674,12 +738,6 @@ For a given input $\bx$, the prediction is then \begin{align*}
     K_* \coloneqq \phi(\bx)^T \Phi \text{.}
 \]
 
-This is very similar to Gaussian Process regression, where the prediction is \[
-    f(\bx) = K_*\left(K + \sigma^2 I\right)^{-1}\by \text{.}
-\]
-
-Kernelised linear regression is then equivalent to Gaussian Process regression when $\lambda = \sigma^2$.
-
 \section{Regularisation}
 
   \begin{wrapfigure}{R}{0.4\textwidth}
@@ -689,24 +747,24 @@ Kernelised linear regression is then equivalent to Gaussian Process regression w
     \label{fig:linreg_kernelised_regularised}
   \end{wrapfigure}
 
-Often we wish to limit the complexity of $\hat f$ to prevent overfitting. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
+Often we wish to limit the complexity of $\hat f$ to prevent overfitting \jn{Is that the underlying reason? Would it be easier to argue that we have a prior that simpler functions are more likely?}. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
     p(w_i) = \cN(w_i \mid 0, \mu)
 \] for some variance $\mu > 0$.
 
 We can then change the likelihood in \cref{eq:linearlikelihood} to account for this: \begin{align*}
-    p(\by \mid \hat f, X) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \prod_{i = 1}^{m}\cN(w_i \mid 0, \mu) \\
+    p\left(\hat f \;\middle|\; \cD\right) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \prod_{i = 1}^{m}\cN(w_i \mid 0, \mu) \\
     &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \prod_{i = 1}^{m}\frac{1}{\sqrt{2\pi\mu}} \exp\left(-\frac{w_i^2}{2\mu}\right) \text{.}
 \end{align*}
 
 Computing the negative log likelihood,\[
-    -\log p(\by \mid \hat f, X) = \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{m}{2}\log\left(2\pi\mu\right) + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2 \text{.}
+    -\log p\left(\hat f \;\middle|\; \cD\right) = \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{m}{2}\log\left(2\pi\mu\right) + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2 \text{.}
 \]
 
 Eliminating the constant terms, we find that \begin{align*}
-    \argmin_{\bw} - \log p\left(\by \;\middle|\; \hat f, X\right) &= \argmin_{\bw} \left(\frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2\right) \\
+    \argmin_{\bw} \left[- \log p\left(\hat f \;\middle|\; \cD\right)\right] &= \argmin_{\bw} \left(\frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2\right) \\
     &= \argmin_{\bw} \frac{1}{\sigma^2}\left(\frac12\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{\lambda}{2}\sum_{i=1}^{m}w_i^2\right) \text{,}
 \end{align*} where we defined $\lambda \coloneqq \sigma^2 / \mu > 0$. Eliminating the positive multiplicative constant,\begin{align*}
-    \argmin_{\bw} - \log p\left(\by \;\middle|\; \hat f, X\right) &= \argmin_{\bw} \left(\frac12\sum
+    \argmin_{\bw} \left[- \log p\left(\hat f \;\middle|\; \cD \right)\right] &= \argmin_{\bw} \left(\frac12\sum
     _{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{\lambda}{2}\sum_{i=1}^{m}w_i^2\right) \\
     &= \argmin_{\bw} \left(\frac12\left(\hat \by - \by\right)^\top\left(\hat \by - \by\right) + \frac{\lambda}{2}\bw^\top\bw\right) \\
     &= \argmin_{\bw} \left(\frac12\left(\Phi \bw - \by\right)^\top\left(\Phi \bw - \by\right) + \frac{\lambda}{2}\bw^\top\bw\right) \text.
@@ -843,15 +901,13 @@ One can observe from \cref{eq:pred} that the prediction is a linear combination 
 
 \subsection{Equivalence to Kernelised Linear Regression}
 
-Observe that \cref{eq:pred} the equation for kernelised linear regression with regularisation. Thus, Gaussian Process regression and kernelised regular regression always return the same expected value, although kernelised linear regression is unable to estimate the variance of that prediction.
+Observe that \cref{eq:pred} is the equation for kernelised linear regression with regularisation, where $\lambda=\sigma_n^2$. Thus, Gaussian Process regression and kernelised regular regression always return the same expected value, although kernelised linear regression is unable to estimate the variance of that prediction.
 
 \section{Approximating Gaussian Processes}
 
 Gaussian Process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$, which has a high time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jn{reference}}. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
 
-\subsection{My Favourite Approximation}
-
-\jn{wtf is it called}
+\subsection{Low-rank Approximation}
 
 We can approximate this matrix product with a complexity that is linear in $n$.
 
@@ -886,14 +942,14 @@ This method is less prone to numerical instabilities than my favourite approxima
 
 In regression on photometric redshifts, it is expensive to obtain new labels for training samples: a telescope can only measure the spectrum of one galaxy at a time. However, photometric data is cheap, so we have a large pool of unlabelled objects. We wish to spend our telescope time labelling the objects that are the most likely to improve the accuracy of our model. Active learning is a technique that permits this.
 
-In active learning, we selectively find labels to samples based on their potential for improving our model. Given an existing model and a pool of unlabelled samples, a \textit{recommender} chooses samples based on its policy. It is only after a sample is recommended that we query its label and add it to our model's training set. An procedure is presented in \cref{alg:active-learning}.
+In active learning, we selectively find labels to samples based on their potential for improving our model. Given an existing model and a pool of unlabelled samples, a \textit{recommender} chooses samples based on its policy. It is only after a sample is recommended that we query its label and add it to our model's training set. A procedure is presented in \cref{alg:active-learning}.
 
-An recommendation strategy is effective if its choices yield a more accurate model than a randomly selected training set. Active learning then reduces, compared to the naïve approach, the number of labelled samples needed to achieve a predictor of a desired accuracy.
+A recommendation strategy is effective if its choices yield a more accurate model than a randomly selected training set. Active learning then reduces, compared to the naïve approach, the number of labelled samples needed to achieve a predictor of a desired accuracy, saving resources.
 
 \begin{algorithm}[t]
     \KwData{
-      \\\quad A recommender $\pi$,
-      \\\quad A function $F : \cP(\cX \times \cY) \to \cF$ generating a predictor from training samples,
+      \\\quad A recommender $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$,
+      \\\quad A function $\hat F : \cP(\cX \times \cY) \to \cF$ generating a predictor from training samples,
       \\\quad A training sample pool $P \subseteq \cX$,
       \\\quad A labeller $\tilde f : P \to \cY$,
       \\\quad Step size $t \in \bbZ_{>0}$,
@@ -902,9 +958,7 @@ An recommendation strategy is effective if its choices yield a more accurate mod
     }
     \KwResult{A predictor $\hat f : \cX \to \cY$ with $e(\hat f) \leq e_\mathrm{\max}$ or error}
 
-    \If{$\abs{P} < t$}{
-      \Return error
-    }
+    \lIf*{$\abs{P} < t$}{\Return error}
 
     $\cD_{\cX} \gets t$ samples drawn randomly from $P$ without replacement
 
@@ -914,12 +968,10 @@ An recommendation strategy is effective if its choices yield a more accurate mod
 
     $\hat f \gets F(\cD)$ \hfill (train model)
 
-    $\mathrm{err} \gets e(\hat f)$ \hfill (compute error)
+    $\mathrm{err} \gets e\left(\hat f\right)$ \hfill (compute error)
 
     \While{$\mathrm{err} > \mathrm{err}_\mathrm{max}$}{
-      \If{$\abs{P} < t$}{
-        \Return error
-      }
+      \lIf*{$\abs{P} < t$}{\Return error}
 
       $\cD_{\cX} \gets \pi(P, t)$ \hfill (get recommendations)
 
@@ -929,7 +981,7 @@ An recommendation strategy is effective if its choices yield a more accurate mod
 
       $\hat f \gets F(\cD)$ \hfill (train model on all samples)
 
-      $\mathrm{err} \gets e(\hat f)$ \hfill (compute error)
+      $\mathrm{err} \gets e\left(\hat f\right)$ \hfill (compute error)
     }
 
     \Return $\hat f$
@@ -938,14 +990,15 @@ An recommendation strategy is effective if its choices yield a more accurate mod
     \label{alg:active-learning}
 \end{algorithm}
 
+\section{Benefits}
+
+\jn{TODO: Write this section, time permitting. Back up with statistics. If out of time, delete it.}
+
 \section{Recommenders}
 
-In active learning, a \textit{recommender} is a function\footnotemark that predicts what samples are the most useful to label. It can be thought of in two equivalent ways.
-\footnotetext{To be precise, a recommender is not always a function as it is permitted to be nondeterministic.}
+In active learning, a \textit{recommender} is a function\footnote{To be precise, a recommender is not always a function as it is permitted to be nondeterministic.} that predicts \jn{estimates?} what samples are the most useful to label. It can be thought of in two equivalent ways.
 
-A recommender can be thought of as a function $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$, where $\pi(P, r)$ returns the $r$ most preferred samples from the sample pool $P$.
-
-A recommender can also be a function $\varpi : \cX \to \bbR$. Then $\varpi(\bx)$ returns the preference score it assigns to $\bx$, with higher scores being preferred.
+A recommender can be thought of as a function $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$, where $\pi(P, r)$ returns the $r$ most preferred samples from the sample pool $P$. A recommender can also be a function $\varpi : \cX \to \bbR$. Then $\varpi(\bx)$ returns the preference score it assigns to $\bx$, with higher scores being preferred. Define $\Pi$ to be the space of all recommenders.
 
 Given a recommender $\varpi$ returning a score, we can define a recommender $\pi$ returning a set of samples. One way to obtain $\pi(P, r)$ is by choosing the top $r$ samples from $P$ as scored by $\varpi$.
 
@@ -954,44 +1007,56 @@ Similarly, given a recommender $\pi$ returing a set of samples, we can define a 
 \] Then the score $\varpi$ assigns to $\bx$ is the negation of its preference index in $\pi$.
 
 
+\section{Relation to Bayesian optimisation with Gaussian processes}
+
+\jn{TODO: Write this section, time permitting. Else, delete it.}
+
 
 \section{Measuring performance}
 
 \subsection{Learning curves}
 A learning curve tracks the performance of a model with a given recommender. Let $T = \{t_1, \dots, t_r\} \subset \bbN$ with $t_1 < \dots < t_r$ be the counts of training points that we try. Then the learning curve is a function $\ell : T \to \bbR_{\geq0}$, whose output is an error.
 
-For a recommender $\pi$ and a model $F : \cP(\cX \times \cY) \to \cF$, we generate the learning curve $\ell$ with \cref{alg:generate-learning-curve}. Intuitively, we begin by training $F$ with $t_1$ random samples and measuring its performance. We then repeatedly add points recommended by $\pi$, train the model, and measure its performance. This gives us $F$'s performance as a function of the cardinality of the training.
+For a recommender $\pi$ and a model $F : \cP(\cX \times \cY) \to \hat\cF$, we generate the learning curve $\ell$ with \cref{alg:generate-learning-curve}. Intuitively, we begin by training $F$ with $t_1$ random samples and measuring its performance. We then repeatedly add points recommended by $\pi$, train the model, and measure its performance. This gives us $F$'s performance as a function of the cardinality of the training.
 
 We can qualitatively describe the performance of a recommender by examining the learning curve it generates. In general, the better the accuracy of $F$ trained on points given by $\pi$, the better $\pi$ is.
 
 An example of a learning curve can be seen in \cref{fig:uncertainty_dz1}. In that figure, the uncertainty recommender clearly outperforms the passive (random) recommender.
 
-\begin{algorithm}[H]
+\begin{algorithm}[t]
     \KwData{
-      \\\quad A recommender $\pi$,
-      \\\quad A function $F : \cP(\cX \times \cY) \to \cF$ generating a predictor from training samples,
-      \\\quad A function $e : \cF \to \bbR_{\geq0}$ yielding the error of a predictor,
+      \\\quad A recommender $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$,
+      \\\quad A function $F : \cP(\cX \times \cY) \to \hat\cF$ generating a predictor from training samples,
+      \\\quad A function $e : \hat\cF \to \bbR_{\geq0}$ yielding the error of a predictor,
       \\\quad A training sample pool $P \subseteq \cX$,
       \\\quad Labels for samples in $P$,
       \\\quad Training example counts to try $T = \{t_1, \dots, t_r\} \subset \bbN$ with $t_1 < \dots < t_r$.
     }
     \KwResult{A learning curve $\ell : T \to \bbR_{\geq0}$.}
 
-    $\textrm{labelled} \leftarrow t_1$ training samples from $P$ with labels $y$, random without replacement
+    $\cD_\cX \gets t_1$ samples drawn randomly from $P$ without replcement
 
-    $\hat f \leftarrow F(\textrm{labelled})$
+    $P \gets P \setminus \cD_\cX$ \hfill (remove chosen samples from pool)
 
-    $\ell(t_1) \leftarrow e(\hat f)$
+    $\cD \gets \left\{ \left(\bx, \tilde f(\bx)\right) \;\middle|\; \bx \in \cD_\cX \right\}$ \hfill (label chosen samples)
+
+    $\hat f \gets F(\cD)$ \hfill (train model)
+
+    $\ell(t_1) \gets e\left(\hat f\right)$ \hfill (compute error)
 
     \For{$i \in 2, \dots, r$}{
-      $\textrm{chosen} \leftarrow t_i - t_{i-1}$ training samples from $P \setminus \textrm{labelled}$ chosen by $\pi(\hat f)$
+      $\cD_\cX \gets \pi(P, t_i)$ \hfill (get recommendations)
 
-      $\textrm{labelled} \leftarrow \textrm{labelled} \cup \textrm{chosen}$ with labels
+      $P \gets P \setminus \cD_\cX$ \hfill (remove chosen samples from pool)
 
-      $\hat f \leftarrow F(\textrm{labelled})$
+      $\cD \gets \cD \cup \left\{\left(\bx, \tilde f(\bx)\right)\;\middle|\;\bx \in \cD_\cX\right\}$ \hfill (label chosen samples)
 
-      $\ell(t_i) \leftarrow e(\hat f)$
+      $\hat f \gets F(\cD)$ \hfill (train model)
+
+      $\ell(t_i) \gets e\left(\hat f\right)$ \hfill (compute error)
     }
+
+    \Return $\ell$
     \caption{Generating a learning curve.}
     \label{alg:generate-learning-curve}
 \end{algorithm}
@@ -1018,6 +1083,10 @@ Observe that the deficiency is permitted to be negative. This may occur if $F$ t
 For a fixed, $P$, $F$, $e$, and $T$, we may compute the deficiencies of recommenders $\pi$ and $\pi'$ to compare them. Let $\ell$ and $\ell'$ be the learning curves of $\pi$ and $\pi'$ respectively. Then $\ell(t_r) = \ell'(t_r)$, since $F$ is always trained on the entire pool $P$ at $t_r$.\footnote{Whilst this is true mathematically, in reality $\ell(t_r)$ and $\ell'(t_r)$ are approximately but not exactly equal due to numerical inaccuracies. To permit the deficiencies to be compared directly, we find the average of the individual baselines and use it to compute the deficiencies.} Then $d(\pi)$ is the area between $\ell$ and a baseline, and $d(\pi')$ is the area between $\ell$ and the same baseline. Since the baseline is the identcal, it is possible to directly compare the deficiencies to rank the recommenders.
 
 \section{Possible recommenders}
+
+\subsection{Recommenders for classification}
+
+\jn{TODO: Time permitting, provide background on recommenders available for active learning on classification. Else, delete this subsection.}
 
 \subsection{Passive}
 
@@ -1051,14 +1120,14 @@ Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref
   \begin{figure}
     \centering
     \includegraphics[width=0.9\textwidth]{density_dz1.pdf}
-    \caption{Learning curve: mean $dz$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using density recommendation with a step size of $100$. The density is approximated as a Gaussian. The shaded interval represents the one-sigma confidence interval.}
+    \caption{Learning curve: mean $dz$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using density recommendation with a logarithmic step size. Each curve begins with two data points chosen by its own recommender. ARD is used to find hyperparameters at $t=2$, $14$, and $100$. The density is approximated as a Gaussian. The shaded interval represents the one-sigma confidence interval.}
     \label{fig:density_dz1}
   \end{figure}
 
   \begin{figure}
     \centering
     \includegraphics[width=0.9\textwidth]{density_fvu1.pdf}
-    \caption{Learning curve: FVU error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using density recommendation with a step size of $100$. The density is approximated as a Gaussian. The shaded interval represents the one-sigma confidence interval.}
+    \caption{Learning curve: FVU error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (Passive) or using density recommendation with a logarithmic step size. Each curve begins with two data points chosen by its own recommender. ARD is used to find hyperparameters at $t=2$, $14$, and $100$. The density is approximated as a Gaussian. The shaded interval represents the one-sigma confidence interval.}
     \label{fig:density_fvu1}
   \end{figure}{}
 
@@ -1072,11 +1141,25 @@ Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref
 
 \subsection{Boltzmann sampling}
 
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{boltz_uncertainty_dz1.pdf}
+    \caption{Learning curve: mean $dz$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (passive) or using uncertainty recommendation with a step size of $100$. Boltzmann sampling is applied to some curves, either with a constant temperature or a temperature logrithmically interpolated between two values.}
+    \label{fig:boltz_uncertainty_dz1}
+  \end{figure}
+
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{boltz_density_dz1.pdf}
+    \caption{Learning curve: mean $dz$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen either at random (passive) or using density recommendation with a step size of $100$. Boltzmann sampling is applied to some curves, either with a constant temperature or a temperature logrithmically interpolated between two values.}
+    \label{fig:boltz_density_dz1}
+  \end{figure}
+
 Consider a physical system that occupies one of $M$ possible states. Let $T > 0$ be the temperature of the system. For each $i=1, \dots, M$, the state $s_i$ has potential energy $\varepsilon_i$. If $\varepsilon_i < \varepsilon_{i'}$, then we must input energy equalling $\varepsilon_{i'} - \varepsilon_i$ to move from the state $s_i$ to $s_{i'}$. As an example, consider a hydrogen atom consisting of a nucleus and an electron. The electron occupies one of two shells around the nucleus: the inner shell or the outer shell. Energy is required to move this electron the inner shell to the outer shell; hence, the state of lying in the outer shell is of higher energy.
 
 A system seeks to minimise its energy, resulting in a non-uniform probability of states. Higher-energy states are improbable but not impossible, particularly in high temperatures: a sufficiently hot gas will become ionised, entering a higher-energy state. The probability of a state $s_i$ then depends on its energy $\varepsilon_i$ and on the temperature $T$ of the system. It follows the \textit{Boltzmann distribution}:\[
   p(s_i) = Z\exp\left(\frac{-\varepsilon_i}{k_\mathrm{B}T}\right) \text,
-\] where $k_\mathrm{B}$ is the Boltzmann constant, and $Z \coloneqq 1/\sum^{M}_{i=1}\frac{-\varepsilon_i}{k_\mathrm{B}T}$ ensures that the probabilities sum to $1$.
+\] where $k_\mathrm{B}$ is the Boltzmann constant, and $Z \coloneqq 1/\sum^{M}_{i=1}\exp(-\varepsilon_i/k_\mathrm{B}T)$ ensures that the probabilities sum to $1$.
 
 We can apply these physical principles to active learning to obtain a wider variety of recommendations. Since many scoring functions are continuous, any two recommended samples are likely to be correlated, yielding redundant information. Boltzmann sampling helps reduce this effect.
 
@@ -1084,7 +1167,13 @@ Let $\varpi : \cX \to \bbR$ be a recommender that assigns a score to the candida
   p(\bx_i) \propto \exp\left(\frac{-\varepsilon_i}{T}\right) \text{\footnotemark}.
 \]\footnotetext{Observe that this formula omits $k_\mathrm{B}$, changing the scale of $T$.} Observe that samples with higher scores are still preferred. The strength of that preference is inversely proportional to $T$.
 
-\jn{PP learning curves of boltzmann on uncertainty and density with different temperatures}
+We may change the value of $T$ as we progress through our learning to balance exploration and exploitation. Random samples (high $T$) are often desirable at the start of our learning; towards the end, we can place more weight on $\varphi$ (low $T$). Conversely, if a recommender outperforms random samples at the start of our learning curve, we may wish to place more weight on its scores before transitioning to random samples.
+
+A learning curve showing Boltzmann sampling applied to uncertainty recommendation is shown in \cref{fig:boltz_uncertainty_dz1}. We see that for SDSS, $T$ interpolated from $1$ to $.01$ outperforms passive learning for most of the curve. It also outperforms uncertainty recommendation without Boltzmann. For 2dFLenS, $T=.1$ clearly outperforms both passive larning and pure uncertainty recommendation.
+
+An analogous learning curve for density recommendation is shown in \cref{fig:boltz_density_dz1}. For SDSS, we find that $T$ interpolated from $10$ to $100$ outperforms passive learning. For 2dFLenS, although Boltzmann sampling outperforms pure density recommendation, it does not outperform passive learning.
+
+\jn{table of deficiencies}
 
 \subsection{Mixing recommenders}
 
@@ -1104,9 +1193,9 @@ A constant $p$ (or equivalently constant $k$ and $l$) with combine both the adva
 
 This is reminiscent of the problem of exploration vs exploitation. Uncertainty scores are mostly noise until we have enough data in our training set.
 
-\jn{PP figure out optimal function for p/kl}
+\jn{figure out optimal function for p/kl}
 
-\jn{PP helpful plot}
+\jn{helpful plot}
 
 \bibliography{references}{}
 \bibliographystyle{plain}

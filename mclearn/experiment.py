@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler
 
 from mclearn.arms import RandomArm, MarginArm, ConfidenceArm, EntropyArm, QBBMarginArm, QBBKLArm
 from mclearn.performance import mpba_score, micro_f1_score
-from mclearn.policies import SingleSuggestion, ThompsonSampling, OCUCB, KLUCB, EXP3PP, ActiveAggregator
+from mclearn.policies import BaselineCombiner, SingleSuggestion, ThompsonSampling, OCUCB, KLUCB, EXP3PP, ActiveAggregator
 
 
 def save_results(dataset, policy, results):
@@ -246,6 +246,9 @@ class ActiveExperiment:
 
         elif request == 'thompson':
             policy = ThompsonSampling(pool, labels, classifier, arms, seed)
+
+        elif request == 'baseline':
+            policy = BaselineCombiner(pool, labels, classifier, arms, seed)
 
         elif request == 'ocucb':
             policy = OCUCB(pool, labels, classifier, arms, seed, horizon=horizon)

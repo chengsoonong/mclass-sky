@@ -261,8 +261,11 @@ class ActiveBandit(MultipleSuggestions):
                          n_candidates, n_best_candidates)
         self.time_step = 0
         self.T = np.zeros(self.n_arms)
+        self.mu = np.zeros(self.n_arms)
+        self.sum_mu = np.zeros(self.n_arms)
         self.reward_history = []
         self.T_history = [self.T.copy()]
+        self.mu_history = [self.mu.copy()]
 
     def _select_from_arm(self):
         """ Use a particular arm to select candidates from the pool. """
@@ -306,6 +309,54 @@ class ActiveBandit(MultipleSuggestions):
         history['T'] = np.array(self.T_history)
         history['reward'] = np.array(self.reward_history)
         return history
+
+
+class BaselineCombiner(ActiveBandit):
+    """ Baseline bandit combiner.
+
+        At each step, we randomly select an arm, ignoring the rewards.
+
+        Parameters
+        ----------
+        pool : numpy array of shape [n_samples, n_features]
+            The feature matrix of all the examples (labelled and unlabelled).
+
+        labels : numpy masked array of shape [n_samples].
+            The missing entries of y corresponds to the unlabelled examples.
+
+        classifier : Classifier object
+            The classifier should have the same interface as scikit-learn classifier.
+            In particular, it needs to have the fit and predict methods.
+
+        arms : array of Arm objects
+            Each arm is a particular active learning rule. The arm needs to implement
+            the ``select`` method that returns an array of indices of objects from the
+            pool for labelling.
+
+        random_state : int or RandomState object, optional (default=None)
+            Provide a random seed if the results need to be reproducible.
+
+        n_candidates : int, optional (default=None)
+            The number of candidates in the unlabelled pool to be chosen for evaluation
+            at each iteration. For very large datasets, it might be useful to limit
+            the the number of candidates to a small number (like 300) since some
+            policies can take a long time to run. If not set, the whole unlabelled
+            pool will be used.
+
+        n_best_candidates : int, optional (default=1)
+            The number of candidates returned at each iteration for labelling. Batch-mode
+            active learning is where this parameter is greater than 1.
+    """
+    def select(self):
+        """ Select an arm at random.
+
+            Returns
+            -------
+            best_candidates : array of ints
+                An array of indices of objects in the pool.
+        """
+        self.selected_arm = self.seed.choice(self.n_arms)
+        return self._select_from_arm()
 
 
 class ThompsonSampling(ActiveBandit):

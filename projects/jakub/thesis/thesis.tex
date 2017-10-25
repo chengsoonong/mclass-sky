@@ -786,15 +786,13 @@ For some values of $\nu$ it can be simplified. When $\nu = 1/2$,
   k(\bx, \bx') = \left(1 + \frac{\sqrt{5}d}{\sigma} + \frac{5d^2}{3\sigma^2}\right)\exp\left(-\frac{\sqrt{5}d}{\sigma}\right) \text.
  \] For $\nu=1/2$, this kernel the exponential kernel. The other two expressions are an exponential kernel multiplied by a polynomial in $d/\sigma$.
 
-\subsection{Kernel Approximations}
+\subsection{Kernel approximations}
 
-For large dataset, computing $K$ becomes expensive it as has a space complexity of $O(n^2)$.
+For large dataset, computing $K$ becomes expensive it as has a space complexity of $O(n^2)$. It is often desirable to approximate $\varphi$, the transformation to the kernel's Hilbert space. For such an approximation $\bphi$ and its corresponding $\Phi$, $K \approx \Phi\Phi^\top$. Using $\bphi$ as our feature function permits us to take advantage of many of the benefits of kernels without the corresponding large matrices.
 
 \subsubsection{RBF sampling}
 
-RBF Sampling approximates the Gaussian kernel by sampling from its Fourier transform. \jn{I literally don't know if this is correct}
-
-\jn{prove}
+RBF Sampling approximates the Gaussian (RBF) kernel by randomly sampling from its Fourier transform. We use the implementation from scikit-learn \citep{Sklearn}, which is a variant of random kitchen sinks \citep{KitchenSinks}. It has the advantage of not requiring more hyperparameters than the kernel function itself. Despite its random nature, \citep{KitchenSinks} derives a probabilistic lower bound on its accuracy.
 
 \subsubsection{Empirical kernel map}
 

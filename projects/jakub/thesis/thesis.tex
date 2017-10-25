@@ -1,11 +1,13 @@
 \documentclass[11pt,twoside,openright]{report}
 
+\usepackage[linktoc=all,hidelinks,pagebackref=true]{hyperref}
+\usepackage{cleveref}
+
 \usepackage[algoruled]{algorithm2e}
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{bm}
-\usepackage{cleveref}
 \usepackage{color}
 \usepackage{float}
 \usepackage{fontspec}
@@ -20,6 +22,7 @@
 \usepackage{emptypage}
 
 \usepackage[nottoc]{tocbibind}
+
 
 \usepackage[intoc, english]{nomencl}
 \makenomenclature
@@ -595,25 +598,33 @@ The fraction of $dz$ outliers is defined as the fraction of objects with $\abs{d
 
 \section{Existing methods}
 
-\jn{write intro to section}
-
-\jn{cite Chris' paper heavily}
+A number of methods are currently used for prediction of photometric redshifts. These can be split between empirical methods and template methods. Empirical methods are the sort that we are used to in machine learning: there exists a training set and we fit to it. Template methods rely on our modelling of an object's spectrum, and are much less accurate. Empirical methods can be further split into generative models that provide more flexibility and hence better accuracy, and discriminative models that are much faster.
 
 \subsection{Kernel density estimation}
 
-\jn{Write about Chris's KDE}
+The kernel density estimation (KDE) used in photometric redshifts is a generative model that uses a six-dimensional Euclidean space, with five dimensions for our features and one dimension for our labels. For each sample in our training set, we insert a Gaussian aligned with the axes. The Gaussian has a mean equalling the features and label of the data. The standard deviation in each axis corresponds to the uncertainty of the corresponding measurement. The sum of these Gaussian yields a probability distribution over our six-dimensional space.
+
+For a new sample, we construct a five-dimensional Gaussian with a mean equal to our features. Its standard deviation in each axis corresponds to the uncertainty of our measurements. Convolving it along the label axis, we find a probability distribution for the redshifts. We use it to compute our mean and uncertainty. \citep{Chris}
+
+KDE achieves an excellent fraction of $dz$ outliers error of $0.0296$ at the cost of a slow running speed.
 
 \subsection{Neural networks}
 
-\jn{write}
+A feed-forward neural network can be thought of as a nested series of linear regressors whose outputs are transformed using a non-linear \emph{activation function}. \citep{Bishop} They work very well on datasets with abundant training examples, achieving a fraction of $dz$ outliers error of $0.0354$ on 2dFLenS, which is inferior to KDE. \citep{Chris} Neural networks' discriminative nature makes them faster than KDE.
+
+Despite their good accuracy, neural networks are problematic for photometric redshifts as their architecture makes it difficult to obtain confidence intervals on their predictions. Probabilistic neural networks \citep{PNNs} can be used to output a probability density function.
 
 \subsection{Boosted decision trees}
 
-\jn{Boosted decision trees}
+A decision tree is a classifier that works by recursively splitting our feature space parallel to the axes based on individual features. To use it, we must first split our label space into a series of discrete classes. Boosting re-weights previously misclassified objects, and trains a new tree. \citep{BoostedDecisionTrees} A boosted decision tree is an ensemble of these trees, where each member's vote is weighted according to their misclassification rate.
+
+Boosted decision trees achieve an fraction of $dz$ outliers error of $0.0315$ on 2dFLenS. \citep{PNNs} This is superior to neural networks, but inferior to KDE. They are, however, much faster than KDE.
 
 \subsection{Template methods}
 
-\jn{write}
+Template methods are unlike the empirical methods introduced so far. They do not rely on fitting to a training set. Instead, they model objects' spectral energy distributions--the map from the wavelength to its flux density--using templates generated from observations and simulations. After accounting for redshift and correcting for intergalactic extinction, the distributions are compared to objects' colours to determine the redshift that fits best. \citep{Templates}
+
+Template methods suffer from high biases and large errors on the 2dFLenS dataset, as shown in \citep{Chris}, where they achieve a fraction of $dz$ outliers error of $0.0566$. They are significantly outperformed by empirical methods.
 
 \section{Linear regression}
   \begin{wrapfigure}{R}{0.4\textwidth}
@@ -804,7 +815,7 @@ Let $\bphi^n : \cD \to \bbR^n$ such that \[
   \Phi^n_i \coloneqq \bphi_n(\bx_i) \text.
 \] Then $\Phi^n(\Phi^n)^\top = K^2$.
 
-Let $\tilde K^{-1/2} \in \bbR^{n' \times n}$ be a low-rank approximation of $K^{-1/2}$.\footnote{We want $(\tilde K^{-1/2})^T\tilde K^{-1/2} \approx K$} Define $\bphi : \cX \to \bbR^{n'}$ as \[
+Let $\tilde K^{-1/2} \in \bbR^{n' \times n}$ be a low-rank approximation of $K^{-1/2}$.\footnote{We want $(\tilde K^{-1/2})^T\tilde K^{-1/2} \approx K$.} Define $\bphi : \cX \to \bbR^{n'}$ as \[
     \bphi \coloneqq \tilde K^{-1/2} \bphi^n(\bx)
 \] with a corresponding $\Phi$. Then \begin{align*}
     \Phi\Phi^T &= \Phi^n\left(\tilde K^{-\frac12}\right)^\top \tilde K^{-\frac12}\left(\Phi^n\right)^\top \\
@@ -883,6 +894,14 @@ We can find $\bw$ that minimises the loss. Taking the derivative and setting it 
 \] Solving,\[
     \bw = \left(\Phi^\top\Phi + \lambda I\right)^{-1}\Phi^\top\by \text.
 \]
+
+\subsection{Regularisation for kernelised regression}
+
+\jn{write}
+
+\section{Label transformation}
+
+\jn{write}
 
 \section{Finding hyperparameters}
 
@@ -1225,6 +1244,9 @@ Intuitively, it returns the points that we are the most uncertain about. If we a
 
 Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref{fig:uncertainty_dz1}. Learning curves for the FVU error are shown in \cref{fig:uncertainty_fvu1}. We see that whereas uncertainty recommendation performs well in the later stages of training, it works rather poorly at the start. This is because we end up focusing on points that we are very unsure about, which tend to be on the long tail of the distribution. Since, in our case, the distribution is five-dimensional, this is a very poor strategy, as we spread out our efforts and neglect the core of the distribution.
 
+\subsection{that other recommender from that paper}
+\jn{write this up}
+
 \subsection{Density}
 
   \begin{figure}
@@ -1335,7 +1357,7 @@ A learning curve showing Boltzmann sampling applied to uncertainty recommendatio
 
 An analogous learning curve for density recommendation is shown in \cref{fig:boltz_density_dz1}. For SDSS, we find that $T$ interpolated from $10$ to $100$ outperforms passive learning. For 2dFLenS, although Boltzmann sampling outperforms pure density recommendation, it does not outperform passive learning.
 
-\Cref{table:boltzmann_deficiencies} lists the deficiencies of these curves.
+\cref{table:boltzmann_deficiencies} lists the deficiencies of these curves.
 
 \subsection{Mixing recommenders}
 

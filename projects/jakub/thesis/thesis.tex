@@ -15,7 +15,7 @@
 \usepackage{wrapfig}
 \usepackage{subcaption}
 \usepackage[numbers]{natbib}
-\usepackage[separate-uncertainty=true]{siunitx}
+\usepackage{siunitx}
 
 \usepackage{emptypage}
 
@@ -305,18 +305,114 @@ Finally, I am indebted to Matthew Alger, for his advice, careful proofreading, a
 \nomenclature{$\bbR_{\geq0}$}{Set of non-negative real numbers}
 \nomenclature{$f$}{Original function}
 \nomenclature{$\hat f$}{Predictor}
-\nomenclature{$n$}{\jn{fill}}
-\nomenclature{$m$}{\jn{fill}}
-\nomenclature{$d$}{\jn{fill}}
+\nomenclature{$\hat f_c$}{Candidate predictor}
+\nomenclature{$p$}{Probability}
+\nomenclature{$\cN$}{Normal distribution}
+\nomenclature{$n$}{Number of training samples}
+\nomenclature{$n'$}{Number of testing samples}
+\nomenclature{$h$}{Distribution of the label noise}
+\nomenclature{$i$}{Indexing variable}
+\nomenclature{$j$}{Indexing variable}
+\nomenclature{$y_i$}{The label of the $i$\textsuperscript{th} training point}
+\nomenclature{$y'_i$}{The label of the $i$\textsuperscript{th} testing point}
+\nomenclature{$\bx_i$}{The input for the $i$\textsuperscript{th} training point}
+\nomenclature{$\bx$}{The input to predict for}
+\nomenclature{$\bx'_i$}{The input for the $i$\textsuperscript{th} testing point}
+\nomenclature{$\hat y'_i$}{The prediction for the $i$\textsuperscript{th} testing point}
 \nomenclature{$c$}{Speed of light in a vacuum\nomunit{\SI{299792458}{\meter\per\second}}}
 \nomenclature{$z$}{Redshift}
 \nomenclature{$\cP$}{Powerset}
 \nomenclature{$\cY$}{Predictor output space}
 \nomenclature{$z_\mathrm{spec}$}{Spectroscopic redshift}
-\nomenclature{$z_\mathrm{pred}$}{Photometric redshift}
-\nomenclature{$\fF$}{Space of predictors}
-\nomenclature{$\fD$}{Space of training sets}
+\nomenclature{$z_\mathrm{phot}$}{Photometric redshift}
+\nomenclature{$\fF$}{Space of models}
+\nomenclature{$F$}{Model}
+\nomenclature{$\cF$}{Space of original functions}
+\nomenclature{$\hat\cF$}{Space of original predictors}
+\nomenclature{$\fD$}{Space of training and testing sets}
+\nomenclature{$\cD$}{Training set}
+\nomenclature{$\cD'$}{Testing set}
 \nomenclature{$\cE$}{Space of error functions}
+\nomenclature{$v$}{A velocity}
+
+\nomenclature{$d$}{Dimensionality of our data}
+\nomenclature{$d'$}{Dimensionality of our features}
+\nomenclature{$\bphi$}{Feature function}
+\nomenclature{$\Phi$}{Feature matrix}
+
+\nomenclature{$\cD'$}{Testing set}
+
+\nomenclature{$u$}{The photometric $u$ band}
+\nomenclature{$g$}{The photometric $g$ band}
+\nomenclature{$r$}{The photometric $r$ band}
+\nomenclature{$i$}{The photometric $i$ band}
+\nomenclature{$z$}{The photometric $z$ band}
+
+\nomenclature{$D$}{A distance}
+\nomenclature{$m_A$}{Apparent magnitude of an object $A$}
+\nomenclature{$m_a$}{Apparent magnitude in the band $a$}
+\nomenclature{$I_A$}{Intensity of an object $A$}
+\nomenclature{$I_a$}{Intensity in the band $a$}
+\nomenclature{$H_0$}{Hubble parameter\nomunit{$71.9^{+2.4}_{-3.0}$ \SI{}{\kilo\meter\per\second\per\mega\parsec}}}
+
+\nomenclature{$\tau$}{The ratio of a circle's circumference to its radius}
+\nomenclature{$k_\mathrm{B}$}{The Boltzmann constant\nomunit{\SI{1.38064852(79)e-23}{\joule\per\kelvin}}}
+
+\nomenclature{$\mathrm{FVU}$}{See \cref{sec:fvu}}
+\nomenclature{$\delta_i$}{See \cref{sec:regression_performance}}
+\nomenclature{$dz_i$}{See \cref{sec:regression_performance}}
+\nomenclature{mean $dz$ error}{See \cref{sec:mean_dz_error}}
+\nomenclature{$dz$ bias}{See \cref{sec:dz_bias}}
+\nomenclature{$dz$ deviation}{See \cref{sec:dz_deviation}}
+\nomenclature{fraction of $dz$ outliers}{See \cref{sec:fraction_dz_outliers}}
+
+\nomenclature{$\sigma$}{Deviation}
+\nomenclature{$\sigma_n^2$}{Noise variance}
+\nomenclature{$\mu$}{Mean}
+\nomenclature{$E$}{Loss function}
+\nomenclature{$\bw$}{Weights vector}
+\nomenclature{$\bv$}{Kernelised weights vector}
+\nomenclature{$X$}{Training input matrix}
+\nomenclature{$\by$}{Training label vector}
+\nomenclature{$H$}{Hilbert space}
+\nomenclature{$\langle\cdot,\cdot\rangle_\mathrm{F}$}{Frobenius inner product}
+
+\nomenclature{$k$}{Kernel}
+\nomenclature{$K$}{Kernel covariance matrix of $X$ with itself}
+\nomenclature{$K_*$}{Kernel covariance matrix of $X$ with $\bx$}
+\nomenclature{$K_{**}$}{Kernel covariance matrix of $\bx$ with itself}
+\nomenclature{$\Sigma$}{Covariance matrix}
+\nomenclature{$\Gamma$}{The gamma function}
+\nomenclature{$K_\nu$}{The modified Bessel function of the second kind}
+
+
+\nomenclature{$\var$}{Variance}
+\nomenclature{$\bbE$}{Expectation}
+\nomenclature{$\cG\cP$}{Gaussian process}
+\nomenclature{$\lambda$}{Regularisation constant}
+
+\nomenclature{$\pi$}{A recommender returning a set of recommendations}
+\nomenclature{$\varpi$}{A recommender returning a score}
+\nomenclature{$\Pi$}{Space of recommenders}
+\nomenclature{$P$}{Pool of unlabelled data}
+\nomenclature{$e$}{An error function}
+\nomenclature{$\cE$}{Space of error functions}
+
+\nomenclature{$t$}{Step size}
+\nomenclature{$\bt$}{Set of training example counts}
+\nomenclature{$\bbZ_{>0}$}{Positive integers}
+\nomenclature{$\bbN$}{Natural numbers (non-negative integers)}
+\nomenclature{$\ell$}{Learning curve}
+\nomenclature{$\cT$}{Space of training example count sets}
+\nomenclature{$r$}{Size of the set of training example counts}
+
+\nomenclature{$s_i$}{The $i$\textsuperscript{th} state of a physical system}
+\nomenclature{$\varepsilon_i$}{The energy of $i$\textsuperscript{th} state of a physical system}
+
+
+
+
+
 
 
 \printnomenclature
@@ -440,6 +536,7 @@ In our specific case we always assume that the noise is distributed according to
 Some models are capable of not only predicting $f$ but also returning a measure of their confidence in their own prediction. Gaussian process regression (GPR) is an example of such a model. This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
 
 \section{Assessing performance}
+\label{sec:regression_performance}
 
 To assess the performance of a model, we must have a way of quantifying its accuracy. We withhold a portion of our data into a \emph{testing set} $\cD' \in \fD$ that is disjoint from $\cD$. Let $n' \coloneqq \abs{\cD'}$ and index the elements\[
   \cD' = \{(\bx'_1, y'_1), \dots, (\bx'_{n'}, y'_{n'})\}
@@ -460,6 +557,7 @@ For a perfect predictor,\[
 There exist many scores that permit us to compare predictors. The fraction of variance unexplained is a commonly used score. Others, more specific to photometric redshifts, are the mean $dz$ error, the $dz$ deviation, and the fraction of $dz$ outliers. Photometric redshifts suffer from a high number of outliers; their influence is reduced with these redshift-specific scores.
 
 \subsection{Fraction of variance unexplained}
+\label{sec:fvu}
 The fraction of variance unexplained (FVU) measures the fraction of the variance of the labels $y'_1, \dots, y'_{n'}$ not explained by the predictor.
 
 To define it, let $\mathrm{VAR_{err}} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'}\delta_i^2$ be the mean squared $\delta$ error. If the mean $\delta$ error is zero, this equals the variance\footnote{For a finite set $S = \{s_1, \dots, s_{\abs{S}}\} \subset \bbR$ of $\abs{S}$ elements, we define the variance as $\var S \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}(s_i - \overline{s})^2$, where $\overline{s} \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}s_i$ is the mean of $S$.} of the $\delta$ errors. Let $\mathrm{VAR_{tot}} \coloneqq \var\{y'_1, \dots, y'_{n'}\}$ be the variance of the labels of the testing set. Note that $\mathrm{VAR_{err}}$ varies with the predictor, whereas $\mathrm{VAR_{tot}}$ is constant for each testing set. We define \[
@@ -469,6 +567,7 @@ To define it, let $\mathrm{VAR_{err}} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'}\delt
 Values of $\mathrm{FVU}$ closer to $0$ are better. Intuitively, a perfect predictor explains the entire variance of the labels, so we expect it to yield $\mathrm{FVU} = 0$. Indeed, a perfect predictor has $\delta_1 = \dots = \delta_{n'} = 0$, so $\mathrm{VAR_{err}} = 0$. For a predictor that always returns the mean of the testing set, $\mathrm{VAR_{err}} = \mathrm{VAR_{tot}}$ by definition, so $\mathrm{FVU} = 1$, as expected since a predictor that always returns the mean explains none of the variance. A predictor with $\mathrm{FVU} > 1$ then performs worse by our metric than a predictor that always returns the mean.
 
 \subsection{Mean $dz$ error}
+\label{sec:mean_dz_error}
 The mean $dz$ error is specific to photometric redshifts. It is defined as the mean of all absolute $dz$ errors:\[
   \textrm{mean $dz$ error} \coloneqq \avg\{\abs{dz_1}, \dots, \abs{dz_{n'}}\} \text.
 \] Values closer to $0$ are better.
@@ -476,16 +575,19 @@ The mean $dz$ error is specific to photometric redshifts. It is defined as the m
 Unlike the fraction of variance unexplained error, which computes the sum of squared errors, the mean $dz$ error depends on a sum of absolute errors (it is a weighted $\ell_1$ loss). This is an important distinction, as the sum of squared errors is more likely to be overly influenced by outliers.
 
 \subsection{$dz$ bias}
+\label{sec:dz_bias}
 
 The $dz$ bias is also specific to photometric redshifts. It quantifies whether the predictor is more likely to over- or underestimate the redshift. It is defined as to be the mean of all signed $dz$ errors:\[
   \textrm{$dz$ bias} \coloneqq \avg\{ dz_1, \dots, dz_{n'} \} \text.
 \] Unlike the FVU and the mean $dz$ error, the $dz$ bias is permitted to be negative. In addition, a $dz$ bias of zero, whilst desirable, does not indicate a perfect predictor.
 
 \subsection{$dz$ deviation}
+\label{sec:dz_deviation}
 
 The $dz$ deviation is defined as the half-width of the deviation of $dz$ containing $68.3\%$ of all objects. More formally, the $dz$ deviation is the smallest $\sigma \in \bbR_{\geq0}$ such that $68.3\%$ of $dz_i$ errors are within $[-\sigma, \sigma]$. It has the advantage of completely discarding outliers beyond percentile $68.3$, vastly reducing their influence.
 
 \subsection{Fraction of $dz$ outliers}
+\label{sec:fraction_dz_outliers}
 
 The fraction of $dz$ outliers is defined as the fraction of objects with $\abs{dz} > 0.1$. It quantifies the fraction of objects whose redshifts fail to be explained by the model.
 
@@ -529,13 +631,13 @@ We assume that $p(\hat f \mid \cD)$ depends only on how well $\hat f$ approximat
 
 By our assumption of Gaussian likelihoods, \begin{align}
     p\left(\hat f \;\middle|\; \cD\right) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \\
-    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \text. \nonumber
+    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{\tau\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \text. \nonumber
 \end{align} We wish to find $\bw$ that maximises this likelihood. This is equivalent to minimising the negative log likelihood:\begin{align*}
     -\log p\left(\hat f \;\middle|\; \cD\right)
-    &= - \sum_{i = 1}^{n} \log\left[\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right)\right] \\
-    &= - \sum_{i = 1}^{n} \left(-\frac{1}{2}\log\left(2\pi\sigma^2\right) -\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \\
-    &=  \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i = 1}^{n}\left(\hat y_i - y_i\right)^2 \text{.}
-\end{align*} Since $\frac{n}{2}\log(2\pi\sigma^2)$ and $1/\sigma^2$ are constant, minimising the negative log likelihood is equivalent to minimising $\frac{1}{2\sigma^2}\sum_{i = 1}^{n}(\hat y_i - y_i)^2$. We call this our \emph{loss} function and write \[
+    &= - \sum_{i = 1}^{n} \log\left[\frac{1}{\sqrt{\tau\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right)\right] \\
+    &= - \sum_{i = 1}^{n} \left(-\frac{1}{2}\log\left(\tau\sigma^2\right) -\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \\
+    &=  \frac{n}{2}\log\left(\tau\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i = 1}^{n}\left(\hat y_i - y_i\right)^2 \text{.}
+\end{align*} Since $\frac{n}{2}\log(\tau\sigma^2)$ and $1/\sigma^2$ are constant, minimising the negative log likelihood is equivalent to minimising $\frac{1}{2\sigma^2}\sum_{i = 1}^{n}(\hat y_i - y_i)^2$. We call this our \emph{loss} function and write \[
   E(\bw) \coloneqq \frac{1}{2\sigma^2}\sum_{i = 1}^{n}\left(\hat y_i - y_i\right)^2 \text.
 \] This is called the \emph{sum of squares} loss. Note that we can compute it without knowing $\sigma^2$.
 
@@ -557,12 +659,12 @@ We can solve this analytically. We rewrite \[
 
 We show that creating new features that are pairwise differences between existing features does not affect a linear model since the same predictor will be found using the original features. This means that, for a purely linear model, our feature space of photometric colours is equivalent to that of photometric magnitudes.
 
-Let $\bx \in \cX$ and let $D \in \bbR^{d \times d}$ be the matrix of pairwise differences:\[
-    D_{ij} \coloneqq x_i - x_j \text{.}
+Let $\bx \in \cX$ and let $G \in \bbR^{d \times d}$ be the matrix of pairwise differences:\[
+    G_{ij} \coloneqq x_i - x_j \text{.}
 \]
 
-Let $\balpha \in \bbR^d$ be a weights vector for $\bx$ and let $\cB \in \bbR^{d\times d}$ be a weights matrix for $D$. Define our predictor as\[
-    \hat f(\bx) = \balpha \cdot \bx + \langle \cB, D \rangle_\mathrm{F} \text{,}\label{eq:pred1}\tag{$*$}
+Let $\balpha \in \bbR^d$ be a weights vector for $\bx$ and let $\cB \in \bbR^{d\times d}$ be a weights matrix for $G$. Define our predictor as\[
+    \hat f(\bx) = \balpha \cdot \bx + \langle \cB, G \rangle_\mathrm{F} \text{,}\label{eq:pred1}\tag{$*$}
 \] where $\langle \cdot, \cdot \rangle_\mathrm{F}$ is the Frobenius inner product.
 
 Let $\tilde\balpha \in \bbR^d$ be defined by \[
@@ -576,10 +678,10 @@ We have that\begin{align*}
     &= \sum_{i=1}^n \bx_i\balpha_i +  \sum_{i=1}^n \sum_{j=1}^n \bx_i \cB_{ij} - \sum_{i=1}^n \sum_{j=1}^n \bx_i \cB_{ji} \\
     &= \sum_{i=1}^n \bx_i\balpha_i +  \sum_{i=1}^n \sum_{j=1}^n \bx_i \cB_{ij} - \sum_{i=1}^n \sum_{j=1}^n \bx_j \cB_{ij} \\
     &= \balpha\cdot\bx +  \sum_{i=1}^n \sum_{j=1}^n \cB_{ij} \left(\bx_i - \bx_j \right) \\
-    &= \balpha\cdot\bx + \langle \cB, D \rangle_\mathrm{F}
+    &= \balpha\cdot\bx + \langle \cB, G \rangle_\mathrm{F}
 \end{align*} as desired.
 
-Note that this does not apply to models where a nonlinear transformation is applied to $D$. It also does not necessarily hold when regularisation is applied to the weights.
+Note that this does not apply to models where a nonlinear transformation is applied to $G$. It also does not necessarily hold when regularisation is applied to the weights.
 
 \subsection{Nonlinear features}
 
@@ -594,6 +696,12 @@ A kernel is a function $k : \bbR^d \times \bbR^d \to \bbR$ such that \[
 Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly infinite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
 
 Like other inner products, a kernel can be thought of as a similarity measure. For example, $k(\bx, \bx') = 0$, then $\bx$ and $\bx'$ are orthogonal in $H$, and thus not similar at all by our metric.
+
+For notational convenience, define $K \in \bbR^{n\times n}$ such that \[
+  K_{ij} \coloneqq k(\bx_i, \bx_j) \text{.}
+\] For a given $\bx$ to predict, define $K_* \in \bbR^n$ as \[
+  K_{*i} \coloneqq k(\bx, \bx_i)\text{,}
+\] and define $K_{**} \coloneqq k(\bx, \bx)$.
 
 \subsection{Examples of kernels}
 \begin{figure}
@@ -700,7 +808,7 @@ To extend our range of possible feature maps, we rewrite linear regression to us
 
 Recall that the loss function $E : \bbR^{d'} \to \bbR_{\geq0}$ that we wish to minimise is \[
     E(\bw) = \frac{1}{2}\norm{\by - \Phi\bw}_2^2 \text.
-\] We know that $\bw \in \spn\{\phi_1, \dots, \phi_n\}$. Hence, there exists $\bv \in \bbR^n$ such that \[
+\] We know that $\bw \in \spn\{\bphi_1, \dots, \bphi_n\}$. Hence, there exists $\bv \in \bbR^n$ such that \[
     \bw = \Phi^\top\bv \text{.}
 \] We can rewrite the error function as $E : \bbR^{d'} \to \bbR_{\geq0}$ such that \[
     E(\bv) = \frac{1}{2}\norm{\by - \Phi\Phi^\top\bv}_2^2 \text{.}
@@ -736,9 +844,9 @@ We often wish to ensure that $\hat f$ relatively simple to prevent overfitting. 
 
 We can then change the likelihood in \cref{eq:linearlikelihood} to account for this: \begin{align*}
     p\left(\hat f \;\middle|\; \cD\right) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \prod_{i = 1}^{m}\cN(w_i \mid 0, \omega^2) \\
-    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \prod_{i = 1}^{m}\frac{1}{\sqrt{2\pi\omega^2}} \exp\left(-\frac{w_i^2}{2\omega^2}\right) \text{.}
+    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{\tau\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \prod_{i = 1}^{m}\frac{1}{\sqrt{\tau\omega^2}} \exp\left(-\frac{w_i^2}{2\omega^2}\right) \text{.}
 \end{align*} Computing the negative log likelihood,\[
-    -\log p\left(\hat f \;\middle|\; \cD\right) = \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{m}{2}\log\left(2\pi\omega^2\right) + \frac{1}{2\omega^2}\sum_{i=1}^{m}w_i^2 \text{.}
+    -\log p\left(\hat f \;\middle|\; \cD\right) = \frac{n}{2}\log\left(\tau\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{m}{2}\log\left(\tau\omega^2\right) + \frac{1}{2\omega^2}\sum_{i=1}^{m}w_i^2 \text{.}
 \] Eliminating the constant terms and defining $\lambda \coloneqq \sigma^2 / \omega^2$, we find that \begin{align*}
     \argmin_{\bw} \left[- \log p\left(\hat f \;\middle|\; \cD\right)\right] &= \argmin_{\bw} \left(\frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{1}{2\omega^2}\sum_{i=1}^{m}w_i^2\right) \\
      &= \argmin_{\bw} \left(\frac12\sum
@@ -1118,6 +1226,8 @@ Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref
   We plot the learning curves for SDSS and 2dFLenS under density recommendation and mean $dz$ error in \cref{fig:density_dz1}. Similar curves for the FVU error are shown in \cref{fig:density_fvu1}. We note that this recommendation strategy yields good results at the start of the learning curve, when we have trained on very few sampels. However, later on the curve flattens out and no longer produces very good results, being overtaken by uncertainty recommendation.
 
 \subsection{Boltzmann sampling}
+
+  \jn{cite Acton}
 
   \begin{figure}
     \centering

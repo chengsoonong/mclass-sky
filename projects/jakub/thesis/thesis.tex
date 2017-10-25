@@ -372,28 +372,41 @@ Optimal design requires us to be able to assess the uncertainties in the predict
     \label{fig:spec_hist}
   \end{figure}
 
-  \jn{define photometry}
+  Photometry is a technique in astronomy, where we measure the amount of light that reaches a telescope from an object. The wavelength information is ignored, although filters may be used to discard some light, giving us limited wavelength information. \jn{cite something}
+
+  Photometry is analogous to digital photography. Our cameras use three filters (red, green, and blue) to separate colour information. They then measure he amount of light reaching the sensor. After processing, they yield three colour values per pixel. \jn{cite something?}
+
+  Spectroscopy is a related technique that not only measures the amount of received, but also measures its wavelength. This yields a full spectrum of the object, instead of a few colours. It is used to accurately compute the redshift of an object: the spectra of distant objects are compared to those of nearby objects, and the offset between them is the redshift. \jn{cite}
+
+  However, spectroscopy is expensive since a telescope can only measure the spectrum of a few objects at a time. \jn{cite} This would make it extremely time-consuming to survey the huge number of galaxies in the universe. More distant objects are particularly neglected since light conforms to the inverse square law, so it takes four times longer to measure the spectrum of an object that is twice as far away.
 
   \section{Colours}
 
-  \jn{write about the 5 magnitudes used}
+  The amount of light we receive from an object $A$ is its \emph{intensity} $I_A$. Its units are power per area, but we usually measure it in a logarithmic scale called the \emph{apparent magnitude}. The apparent magnitude $m_A$ of an object $A$ is measured relative to the apparent magnitude of Vega, defined to be $0$. An $100$-fold increase in the intensity of an object results in a magnitude that is lower by $5$: for objects $A$ and $B$,\[
+    m_A - m_B = -5 \log_{100} \left( \frac{I_A}{I_B} \right) \text.
+  \] Counterintuitively, brigter objects have a lower magnitude. The sun has an apparent magnitude of $-27$ and is the brightest object in the sky. \jn{cite}
 
-  \jn{plot the filters}
+  We use filters to separate light coming from different sections of the visible light spectrum. In our datasets, these are $u$, $g$, $r$, $i$, and $z$, in increasing order of wavelength. The $u$ band is ultraviolet, $g$ and $r$ are visible, and $i$ and $z$ are infrared. These five filters have a large spread, providing information about objects' emissions in a wide part of the spectrum.
 
-  \jn{why these 5 filters?}
+  \jn{a pic of the filters would be nice}
 
-  \jn{getting canonical colours from the five filters}
+  We use pairwise differences of magnitudes in these bands as the \emph{colours} in photometric redshifts. The colours are $m_u - m_g$, $m_u - m_r$, $m_r - m_i$, and $m_i - m_z$. \jn{cite where they are used} \jn{talk about them being independent of distance} In addition to the four colours, we use $m_r$ as a proxy for the apparent magnitude of the object,
 
   \section{Datasets}
   \jn{TODO: WRITE}
 
-  \subsection{SDSS}
+  \subsection{Sloan digital sky survey}
+  The Sloan digital sky survey (SDSS) \jn{blah} \citep{SDSS}.
+
   The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}.
 
   \jn{TODO: WRITE}
 
-  \subsection{2dfLenS}
-  The spectroscopic redshift distribution of objects in 2dfLenS is presented in \cref{fig:spec_hist}.
+  \subsection{2dFLenS}
+
+  The 2-degree Field Lensing Survey is \jn{blah} \citep{Chris}.
+
+  The spectroscopic redshift distribution of objects in 2dFLenS is presented in \cref{fig:spec_hist}.
 
 \chapter{Regression on photometric redshifts}
 

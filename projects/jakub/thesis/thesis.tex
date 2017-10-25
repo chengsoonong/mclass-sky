@@ -13,19 +13,25 @@
 \usepackage{mathtools}
 \usepackage{minted}
 \usepackage{wrapfig}
-\usepackage[separate-uncertainty=true]{siunitx}
+\usepackage{subcaption}
+\usepackage[numbers]{natbib}
+\usepackage{siunitx}
+
+\usepackage{emptypage}
+
+\usepackage[nottoc]{tocbibind}
 
 \usepackage[intoc, english]{nomencl}
 \makenomenclature
 
-\setmonofont[Mapping=tex-text]{Menlo}
+\setmonofont[Mapping=tex-text, Scale=0.85]{Menlo}
 \usemintedstyle{}
 
-\usepackage[a4paper, margin=1in]{geometry}
+% \usepackage[a4paper, margin=1in]{geometry}
 % This is for writing only, so it's easier to read.
-% \usepackage[paperheight=10.69in,paperwidth=6.87in,tmargin=.4in,bmargin=.6in,inner=.2in,outer=.4in,heightrounded]{geometry}
+\usepackage[paperheight=10.69in,paperwidth=6.87in,tmargin=.4in,bmargin=.6in,inner=.2in,outer=.4in,heightrounded]{geometry}
 
-\renewcommand*{\thefootnote}{[\arabic{footnote}]}
+\renewcommand*{\thefootnote}{(\arabic{footnote})}
 
 \allowdisplaybreaks
 
@@ -61,6 +67,7 @@
 \DeclareSIUnit{\parsec}{pc}
 
 % Define common symbols
+\newcommand\balpha{\bm{\alpha}}
 \newcommand\bphi{\bm{\phi}}
 \newcommand\bvarphi{\bm{\varphi}}
 
@@ -200,6 +207,8 @@
 
 \usepackage{afterpage}
 
+\renewcommand{\bibname}{References}
+
 \newcommand\blankpage{%
     \null
     \thispagestyle{empty}%
@@ -214,6 +223,7 @@
 \DeclareMathOperator{\spn}{span}
 \DeclareMathOperator{\var}{var}
 \DeclareMathOperator{\cov}{cov}
+\DeclareMathOperator{\avg}{avg}
 
 \newcommand\jn[1]{{\color{red}(jn: #1)}}
 
@@ -255,6 +265,8 @@
 
 \vspace*{12cm}
 
+This research made use of Astropy \cite{Astropy} and scikit-learn \cite{Sklearn}.
+
 \begin{center}
   \copyright\ 2017 Jakub Nabaglo
 \end{center}
@@ -293,18 +305,114 @@ Finally, I am indebted to Matthew Alger, for his advice, careful proofreading, a
 \nomenclature{$\bbR_{\geq0}$}{Set of non-negative real numbers}
 \nomenclature{$f$}{Original function}
 \nomenclature{$\hat f$}{Predictor}
-\nomenclature{$n$}{\jn{fill}}
-\nomenclature{$m$}{\jn{fill}}
-\nomenclature{$d$}{\jn{fill}}
+\nomenclature{$\hat f_c$}{Candidate predictor}
+\nomenclature{$p$}{Probability}
+\nomenclature{$\cN$}{Normal distribution}
+\nomenclature{$n$}{Number of training samples}
+\nomenclature{$n'$}{Number of testing samples}
+\nomenclature{$h$}{Distribution of the label noise}
+\nomenclature{$i$}{Indexing variable}
+\nomenclature{$j$}{Indexing variable}
+\nomenclature{$y_i$}{The label of the $i$\textsuperscript{th} training point}
+\nomenclature{$y'_i$}{The label of the $i$\textsuperscript{th} testing point}
+\nomenclature{$\bx_i$}{The input for the $i$\textsuperscript{th} training point}
+\nomenclature{$\bx$}{The input to predict for}
+\nomenclature{$\bx'_i$}{The input for the $i$\textsuperscript{th} testing point}
+\nomenclature{$\hat y'_i$}{The prediction for the $i$\textsuperscript{th} testing point}
 \nomenclature{$c$}{Speed of light in a vacuum\nomunit{\SI{299792458}{\meter\per\second}}}
 \nomenclature{$z$}{Redshift}
 \nomenclature{$\cP$}{Powerset}
 \nomenclature{$\cY$}{Predictor output space}
 \nomenclature{$z_\mathrm{spec}$}{Spectroscopic redshift}
-\nomenclature{$z_\mathrm{pred}$}{Photometric redshift}
-\nomenclature{$\fF$}{Space of predictors}
-\nomenclature{$\fD$}{Space of training sets}
+\nomenclature{$z_\mathrm{phot}$}{Photometric redshift}
+\nomenclature{$\fF$}{Space of models}
+\nomenclature{$F$}{Model}
+\nomenclature{$\cF$}{Space of original functions}
+\nomenclature{$\hat\cF$}{Space of original predictors}
+\nomenclature{$\fD$}{Space of training and testing sets}
+\nomenclature{$\cD$}{Training set}
+\nomenclature{$\cD'$}{Testing set}
 \nomenclature{$\cE$}{Space of error functions}
+\nomenclature{$v$}{A velocity}
+
+\nomenclature{$d$}{Dimensionality of our data}
+\nomenclature{$d'$}{Dimensionality of our features}
+\nomenclature{$\bphi$}{Feature function}
+\nomenclature{$\Phi$}{Feature matrix}
+
+\nomenclature{$\cD'$}{Testing set}
+
+\nomenclature{$u$}{The photometric $u$ band}
+\nomenclature{$g$}{The photometric $g$ band}
+\nomenclature{$r$}{The photometric $r$ band}
+\nomenclature{$i$}{The photometric $i$ band}
+\nomenclature{$z$}{The photometric $z$ band}
+
+\nomenclature{$D$}{A distance}
+\nomenclature{$m_A$}{Apparent magnitude of an object $A$}
+\nomenclature{$m_a$}{Apparent magnitude in the band $a$}
+\nomenclature{$I_A$}{Intensity of an object $A$}
+\nomenclature{$I_a$}{Intensity in the band $a$}
+\nomenclature{$H_0$}{Hubble parameter\nomunit{$71.9^{+2.4}_{-3.0}$ \SI{}{\kilo\meter\per\second\per\mega\parsec}}}
+
+\nomenclature{$\tau$}{The ratio of a circle's circumference to its radius}
+\nomenclature{$k_\mathrm{B}$}{The Boltzmann constant\nomunit{\SI{1.38064852(79)e-23}{\joule\per\kelvin}}}
+
+\nomenclature{$\mathrm{FVU}$}{See \cref{sec:fvu}}
+\nomenclature{$\delta_i$}{See \cref{sec:regression_performance}}
+\nomenclature{$dz_i$}{See \cref{sec:regression_performance}}
+\nomenclature{mean $dz$ error}{See \cref{sec:mean_dz_error}}
+\nomenclature{$dz$ bias}{See \cref{sec:dz_bias}}
+\nomenclature{$dz$ deviation}{See \cref{sec:dz_deviation}}
+\nomenclature{fraction of $dz$ outliers}{See \cref{sec:fraction_dz_outliers}}
+
+\nomenclature{$\sigma$}{Deviation}
+\nomenclature{$\sigma_n^2$}{Noise variance}
+\nomenclature{$\mu$}{Mean}
+\nomenclature{$E$}{Loss function}
+\nomenclature{$\bw$}{Weights vector}
+\nomenclature{$\bv$}{Kernelised weights vector}
+\nomenclature{$X$}{Training input matrix}
+\nomenclature{$\by$}{Training label vector}
+\nomenclature{$H$}{Hilbert space}
+\nomenclature{$\langle\cdot,\cdot\rangle_\mathrm{F}$}{Frobenius inner product}
+
+\nomenclature{$k$}{Kernel}
+\nomenclature{$K$}{Kernel covariance matrix of $X$ with itself}
+\nomenclature{$K_*$}{Kernel covariance matrix of $X$ with $\bx$}
+\nomenclature{$K_{**}$}{Kernel covariance matrix of $\bx$ with itself}
+\nomenclature{$\Sigma$}{Covariance matrix}
+\nomenclature{$\Gamma$}{The gamma function}
+\nomenclature{$K_\nu$}{The modified Bessel function of the second kind}
+
+
+\nomenclature{$\var$}{Variance}
+\nomenclature{$\bbE$}{Expectation}
+\nomenclature{$\cG\cP$}{Gaussian process}
+\nomenclature{$\lambda$}{Regularisation constant}
+
+\nomenclature{$\pi$}{A recommender returning a set of recommendations}
+\nomenclature{$\varpi$}{A recommender returning a score}
+\nomenclature{$\Pi$}{Space of recommenders}
+\nomenclature{$P$}{Pool of unlabelled data}
+\nomenclature{$e$}{An error function}
+\nomenclature{$\cE$}{Space of error functions}
+
+\nomenclature{$t$}{Step size}
+\nomenclature{$\bt$}{Set of training example counts}
+\nomenclature{$\bbZ_{>0}$}{Positive integers}
+\nomenclature{$\bbN$}{Natural numbers (non-negative integers)}
+\nomenclature{$\ell$}{Learning curve}
+\nomenclature{$\cT$}{Space of training example count sets}
+\nomenclature{$r$}{Size of the set of training example counts}
+
+\nomenclature{$s_i$}{The $i$\textsuperscript{th} state of a physical system}
+\nomenclature{$\varepsilon_i$}{The energy of $i$\textsuperscript{th} state of a physical system}
+
+
+
+
+
 
 
 \printnomenclature
@@ -345,7 +453,7 @@ Optimal design requires us to be able to assess the uncertainties in the predict
 
   Since the speed of light is finite, electromagnetic waves coming from distant objects represent the past. Hence, observing distant objects permits us to study the history of the universe. For example, the universe is denser at larger distances, as a remnant of the earlier stages of the big bang. Similarly, large distances contain more quasars and more brighter objects. The ability to compute distance from the redshift is important in studying the past of the universe as the distance is a proxy for the age of the object we observe.
 
-  The mass of an object is correlated to its luminosity\footnote{the total amount of light emitted}. The luminosity can be approximated from the brightness using the object's distance. Hence, computing the distance of an object from the redshift permits us to approximate its size.
+  The mass of an object is correlated to its luminosity\footnote{The luminosity is its total amount of light emitted.}. The luminosity can be approximated from the brightness using the object's distance. Hence, computing the distance of an object from the redshift permits us to approximate its size.
 
   However, for some objects, we can approximate the size more directly. For closer objects, we can measure their apparent radius as the angle they span on the sky. Using trigonometry, we can then compute the actual radius of such an object from its apparent radius and redshift-derived distance.
 
@@ -360,105 +468,128 @@ Optimal design requires us to be able to assess the uncertainties in the predict
     \label{fig:spec_hist}
   \end{figure}
 
-  \jn{define photometry}
+  Photometry is a technique in astronomy, where we measure the amount of light that reaches a telescope from an object. The wavelength information is ignored, although filters may be used to discard some light, giving us limited wavelength information. \jn{cite something}
+
+  Photometry is analogous to digital photography. Our cameras use three filters (red, green, and blue) to separate colour information. They then measure he amount of light reaching the sensor. After processing, they yield three colour values per pixel. \jn{cite something?}
+
+  Spectroscopy is a related technique that not only measures the amount of received, but also measures its wavelength. This yields a full spectrum of the object, instead of a few colours. It is used to accurately compute the redshift of an object: the spectra of distant objects are compared to those of nearby objects, and the offset between them is the redshift. \jn{cite}
+
+  However, spectroscopy is expensive since a telescope can only measure the spectrum of a few objects at a time. \jn{cite} This would make it extremely time-consuming to survey the huge number of galaxies in the universe. More distant objects are particularly neglected since light conforms to the inverse square law, so it takes four times longer to measure the spectrum of an object that is twice as far away.
 
   \section{Colours}
 
-  \jn{write about the 5 magnitudes used}
+  The amount of light we receive from an object $A$ is its \emph{intensity} $I_A$. Its units are power per area, but we usually measure it in a logarithmic scale called the \emph{apparent magnitude}. The apparent magnitude $m_A$ of an object $A$ is measured relative to the apparent magnitude of Vega, defined to be $0$. An $100$-fold increase in the intensity of an object results in a magnitude that is lower by $5$: for objects $A$ and $B$,\[
+    m_A - m_B = -5 \log_{100} \left( \frac{I_A}{I_B} \right) \text.
+  \] Counterintuitively, brigter objects have a lower magnitude. The sun has an apparent magnitude of $-27$ and is the brightest object in the sky. \jn{cite}
 
-  \jn{plot the filters}
+  We use filters to separate light coming from different sections of the visible light spectrum. In our datasets, these are $u$, $g$, $r$, $i$, and $z$\footnote{In astronomy, $z$ can refer either to an object's redshift or to the infrared band. The meaning of any particular $z$ should be clear from context.}, in increasing order of wavelength. The $u$ band is ultraviolet, $g$ and $r$ are visible, and $i$ and $z$ are infrared. These five filters have a large spread, providing information about objects' emissions in a wide part of the spectrum.
 
-  \jn{why these 5 filters?}
+  \jn{a pic of the filters would be nice}
 
-  \jn{getting canonical colours from the five filters}
+  We use pairwise differences of magnitudes in these bands as the \emph{colours} in photometric redshifts. The colours are $m_u - m_g$, $m_u - m_r$, $m_r - m_i$, and $m_i - m_z$. \jn{cite where they are used} Since the magnitude is a logarithmic scale, for bands $a$ and $b$, $m_a - m_b$ is proportional to $I_b / I_a$, making the colours independent of the apparent magnitude of the object as a whole. In addition to the four colours, we use $m_r$ as a proxy for the apparent magnitude of the object.
 
   \section{Datasets}
-  \jn{TODO: WRITE}
+  To predict photometric redshifts, we need a dataset of example objects. For each, we must know the five photometric bands, as well as the spectroscopic redshift. Uncertainty bounds for the photometric data and the redshift are very common, but not used in our model.
 
-  \subsection{SDSS}
-  The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}.
+  Many suitable datasets exist. The Sloan digital sky survey (SDSS) is very common, and contains a very large number of objects. The 2-degree Field Lensing Survey (2dFLenS) is another dataset we use, with far fewer objects. They have different distributions and cover different ranges of redshifts and magnitudes, permitting us to study the behaviour of our model under differing distributions of data.
 
-  \jn{TODO: WRITE}
+  \subsection{Sloan digital sky survey}
+  The Sloan digital sky survey (SDSS) is a large photometric and spectroscopic survey of the Northern sky. As of its twelfth data release, it contains useful spectroscopic redshifts for \SI{4266444}{} objects, including \SI{2401952}{} galaxies, along with the corresponding photometric measurements. \citep{SDSS} Of these galaxies, we select those with a redshift uncertainty of less than $0.1$, leaving us with \SI{1707233}{} examples.
 
-  \subsection{2dfLenS}
-  The spectroscopic redshift distribution of objects in 2dfLenS is presented in \cref{fig:spec_hist}.
+  The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}. We see that it covers redshifts from about $z_\mathrm{spec} = 0.05$ to about $z_\mathrm{spec} = 0.8$, with some examples existing outside these bounds.
 
-\chapter{Regression on Photometric Redshifts}
+  \jn{a plot of magnitudes $r$ would be nice}
 
-Let $\cX \subset \bbR^d$ and $\cY \subset \bbR$ both be bounded. Let $f$ map $\cX$ to $\cY$. Regression is the task of reconstructing such an $f$ from finitely many examples of its inputs and outputs.
+  \jn{a plot of magnitudes $r$ vs $z$ would be nice}
 
-We are given a set \[
+  \subsection{The 2-degree field lensing survey}
+  The 2-degree field lensing survey (2dFLenS) is also a photometric and spectroscopic survey. Unlike SDSS, it observes the Southern sky. It lists \SI{50919}{} examples with spectroscopic redshifts and photometric measurements, which is significantly fewer than SDSS.
+
+  The spectroscopic redshift distribution of objects in 2dFLenS is presented in \cref{fig:spec_hist}. Its data spans from about from about $z_\mathrm{spec} = 0.05$ to about $z_\mathrm{spec} = 0.3$, with limited examples existing outside this interval. This is a lower spread than SDSS.
+
+  \jn{talk about extra features compared to SDSS}
+
+  \jn{a plot of magnitudes $r$ would be nice}
+
+  \jn{a plot of magnitudes $r$ vs $z$ would be nice}
+
+\chapter{Regression on photometric redshifts}
+
+Given some spectroscopic labels, we wish to find redshifts from photometric data. This problem can be modelled using regression. We introduce regression and develop a predictor for photo-$z$ and report its performance. We then extend regression to Gaussian processes, a family of models capable of reporting their confidence in their own predictions. These are later used in active learning to lower the number of spectra required to further improve our accuracy.
+
+To formalise regression, let $\cX \subset \bbR^d$ and $\cY \subset \bbR$ both be bounded. Let $f$ map $\cX$ to $\cY$. We are given a set \[
   \cD = \left\{\left(\bx_1, y_1\right), \dots, \left(\bx_n, y_n\right)\right\}
-\] of $n$ samples of $f$, where $y_1, \dots, y_n$ are the \textit{labels}. Let $\cP$ be the probability distribution of the label noise. Then for all $i$, \[
-  y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim \cP \text{.}
-\]
+\] of $n$ \emph{samples} of $f$, where $y_1, \dots, y_n$ are the \emph{labels}. Let $h$ be the probability distribution of the label noise. Then for all $i$, \[
+  y_i = f(\bx_i) + \epsilon \text{ for some error } \epsilon \sim h \text{.}
+\] Regression is the task of reconstructing $f$ from the finitely many examples of its inputs and outputs we have. $\cD$ is the \emph{training set}. Define $\fD \subset \cP(\cX \times \cY)$ to be the space of possible training sets.
 
-Let $\hat\cF$ be our space of possible approximations; its exact membership depends on our model. We want to find $\hat f \in \hat\cF$ that is the best approximation of $f$. Each candidate approximation $\hat f_c \in \hat\cF$ can be assigned a likelihood that quantifies how good an approximation it is:\[
+In our case, $\cX$ is the space of photometric measurements that contains our input samples, and $\cY \subset (-1, \infty)$ is the space of redshifts spanned by our labels. Let $f$ is the physical function that maps photometric measurements to redshifts. Since it is physically possible to have two objects with the same photometry but different redshifts, it is not obvious why it is valid to assume that such a function exists. To resolve this, we let $f$ be the function that maps photometric measurements to to any corresponding object's \emph{most likely} redshift. This lets us treat any inconsistency as any other source of noise.
+
+To solve a regression problem, let $\hat\cF$ be our space of approximations that we consider; its exact membership depends on our assumptions. A function $F : \fD \to \hat\cF$ is our \emph{model}. Given a training set, it returns a predictor; this is referred to as \emph{training} the model. Define $\hat f \coloneqq F(\cD)$ to be our predictor.
+
+We want to find $\hat f \in \hat\cF$ that is the best approximation of $f$. Each candidate approximation $\hat f_c \in \hat\cF$ can be assigned a likelihood that quantifies how good an approximation it is:\[
     p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
 \] We define $\hat f$ to be the function that maximises this likelihood:\[
-    \hat f \coloneqq \argmax_{\hat f_c \in \cF} p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
-\] The definition of this likelihood depends on our assumptions, such as on our assumed noise distribution $\cP$ and on any assumptions we have about $f$.
+    \hat f = F(\cD) \coloneqq \argmax_{\hat f_c \in \cF} p\left(\hat f_c \;\middle|\; \cD \right) \text{.}
+\] The definition of this likelihood depends on our assumptions about $f$, $h$, and $F$.
 
 In our specific case we always assume that the noise is distributed according to a Gaussian with a $0$ mean and a with variance $\sigma^2$ that we leave as a hyperparameter\footnote{A hyperparameter is a parameter that depends on the distribution of our data.}.
 
-We apply regression to find objects' redshifts from their photometric measurements, as a cheaper alternative to spectroscopy. We are given a set of example objects' photometric measurements and spectoscopic redshifts, and we wish to predict the redshift of any new object whose photometric colours have been measured. Hence, in our case $\cX \subset \bbR^5$ is the space of photometric measurements.
-
-Let $f : \cX \to \cY$ be the physical function that maps photometric measurements to redshifts. It is not obvious why it is valid to assume that such a function exists. Indeed, it is physically possible to have two objects with the same photometry, but different redshifts. We can let $f$ be the function that maps photometric measurements to to any corresponding object's most likely redshift. This lets us treat any inconsistency as any other source of noise.
-
-Some models are capable of not only predicting $f$ but also returning a measure of their confidence in their own prediction. Gaussian process regression is an example of such a model. This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
+Some models are capable of not only predicting $f$ but also returning a measure of their confidence in their own prediction. Gaussian process regression (GPR) is an example of such a model. This measure of confidence becomes crucial when we seek to improve our predictions with active learning.
 
 \section{Assessing performance}
+\label{sec:regression_performance}
 
-To assess the performance of a model, we must have a way of quantifying its accuracy. We withhold a portion of our data into a testing set $\cD'$ of $n'$ elements such that \[
+To assess the performance of a model, we must have a way of quantifying its accuracy. We withhold a portion of our data into a \emph{testing set} $\cD' \in \fD$ that is disjoint from $\cD$. Let $n' \coloneqq \abs{\cD'}$ and index the elements\[
   \cD' = \{(\bx'_1, y'_1), \dots, (\bx'_{n'}, y'_{n'})\}
-\] and $\cD$ is disjoint from $\cD'$.
+\].
 
-For each testing sample $(\bx'_i, y'_i)$, define the prediction as\[
-  \hat y'_i \coloneqq \hat f(\bx'_i)
-\] and define the $\delta$ error as \[
-  \delta_i \coloneqq y'_i - \hat y'_i\text.
-\] For redshifts, define $dz$ as \[
+For each $i = 1, \dots, n'$ define the prediction as\[
+  \hat y'_i \coloneqq \hat f(\bx'_i) \text{.}
+\] Define the $\delta z$ error as \[
+  \delta z_i \coloneqq \hat y'_i - y'_i\text,
+\] as used in \citep{SDSSPhotoZ} and \citep{Chris}. For redshifts, define $dz$ as \[
   dz_i \coloneqq \frac{\delta_i}{1 + y'_i} \text.
+\] This accounts for the physical significance of the redshift: $1 + z$ is the ratio of the size of the universe when the light was emitted to its size now. \jn{citation} Then $dz_i$ is proportional to the resulting error when we use our predictions to calculate the historical size of the universe.
+
+For a perfect predictor,\[
+  \hat y'_i = y'_i \text{ for all }i=1, \dots, n'\text{,}
+\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce. This is due to our fundamental ability to reconstruct an arbitrary function from a finite number of samples\footnote{The space $\cF$ of functions $\cX \to \cY$ has a higher cardinality than the space $\fD$ of training sets. Any given model $F$ is thus not bijective. Therefore there exists a function $f \in \cF$ that cannot be approximated by $F$ from a finite dataset in $\fD$.}. Even knowing the form of $f$, noise label will reduce the accuracy of our predictor.
+
+There exist many scores that permit us to compare predictors. The fraction of variance unexplained is a commonly used score. Others, more specific to photometric redshifts, are the mean $dz$ error, the $dz$ deviation, and the fraction of $dz$ outliers. Photometric redshifts suffer from a high number of outliers; their influence is reduced with these redshift-specific scores.
+
+\subsection{Fraction of variance unexplained}
+\label{sec:fvu}
+The fraction of variance unexplained (FVU) measures the fraction of the variance of the labels $y'_1, \dots, y'_{n'}$ not explained by the predictor.
+
+To define it, let $\mathrm{VAR_{err}} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'}\delta_i^2$ be the mean squared $\delta$ error. If the mean $\delta$ error is zero, this equals the variance\footnote{For a finite set $S = \{s_1, \dots, s_{\abs{S}}\} \subset \bbR$ of $\abs{S}$ elements, we define the variance as $\var S \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}(s_i - \overline{s})^2$, where $\overline{s} \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}s_i$ is the mean of $S$.} of the $\delta$ errors. Let $\mathrm{VAR_{tot}} \coloneqq \var\{y'_1, \dots, y'_{n'}\}$ be the variance of the labels of the testing set. Note that $\mathrm{VAR_{err}}$ varies with the predictor, whereas $\mathrm{VAR_{tot}}$ is constant for each testing set. We define \[
+  \mathrm{FVU} \coloneqq \frac{\mathrm{VAR_{err}}}{\mathrm{VAR_{tot}}} \text{.}
 \]
 
-For a perfect predictor then,\[
-  \hat y'_i = y'_i \text{ for all }i=1, \dots, n'\text{,}
-\] so $\delta_i = 0$. Unfortunately, perfect predictors are rarely possible to produce. This is due to noise in the labels, and also because of our fundamental ability to reconstruct an arbitrary function from a finite number of samples.
-
-Hence, we must assign a numerical score to each predictor, so we can compare their performance. The fraction of variance unexplained is a commonly used score. Others, more specific to photometric redshifts, are the mean $dz$ error, the $dz$ deviation, and the fraction of $dz$ outliers. Photometric redshifts suffer from a high number of outliers; their influence is reduced with these redshift-specific scores.
-
-\subsection{Fraction of Variance Unexplained}
-The fraction of variance unexplained (FVU) measures the fraction of the variance of the labels $y'_1, \dots, y'_{n'}$ not explained by the predictor. For a predictor that explains the entire variance $\mathrm{FVU}=0$, and for a predictor that explains none of the variance $\mathrm{FVU}=1$.
-
-Let $\mathrm{VAR_{err}} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'}\delta_i^2$ be the mean squared $\delta$ error. If the mean $\delta$ error is zero, this equals the variance\footnote{For a finite set $S = \{s_1, \dots, s_{\abs{S}}\} \subset \bbR$ of $\abs{S}$ elements, we define the variance as $\var S \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}(s_i - \overline{s})^2$, where $\overline{s} \coloneqq \frac1{\abs{S}}\sum_{i=1}^{\abs{S}}s_i$ is the mean of $S$.} of the $\delta$ errors. Let $\mathrm{VAR_{tot}} \coloneqq \var\{y'_1, \dots, y'_{n'}\}$ be the variance of the labels of the testing set. Note that $\mathrm{VAR_{err}}$ varies with the predictor, whereas $\mathrm{VAR_{tot}}$ is constant for each testing set. We define \[
-  \mathrm{FVU} \coloneqq \frac{\mathrm{VAR_{err}}}{\mathrm{VAR_{tot}}} \text{.}
-\]  Values of $\mathrm{FVU}$ closer to $0$ are better.
-
-Intuitively, a perfect predictor explains the entire variance of the labels, so we expect it to yield $\mathrm{FVU} = 0$. Indeed, a perfect predictor has $\delta_1 = \dots = \delta_{n'} = 0$, so $\mathrm{VAR_{err}} = 0$, implying that $\mathrm{FVU} = 0$.
-
-For a predictor that always returns the mean of the testing set, $\mathrm{VAR_{err}} = \mathrm{VAR_{tot}}$ by definition, so $\mathrm{FVU} = 1$, as expected since a predictor that always returns the mean explains none of the variance. A predictor with $\mathrm{FVU} > 1$ then performs worse by our metric than a predictor that always returns the mean.
+Values of $\mathrm{FVU}$ closer to $0$ are better. Intuitively, a perfect predictor explains the entire variance of the labels, so we expect it to yield $\mathrm{FVU} = 0$. Indeed, a perfect predictor has $\delta_1 = \dots = \delta_{n'} = 0$, so $\mathrm{VAR_{err}} = 0$. For a predictor that always returns the mean of the testing set, $\mathrm{VAR_{err}} = \mathrm{VAR_{tot}}$ by definition, so $\mathrm{FVU} = 1$, as expected since a predictor that always returns the mean explains none of the variance. A predictor with $\mathrm{FVU} > 1$ then performs worse by our metric than a predictor that always returns the mean.
 
 \subsection{Mean $dz$ error}
-
-The mean $dz$ error is specific to photometric redshifts. It is defined as \[
-  \textrm{mean $dz$ error} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'} \abs{dz_i} \text.
+\label{sec:mean_dz_error}
+The mean $dz$ error is specific to photometric redshifts. It is defined as the mean of all absolute $dz$ errors:\[
+  \textrm{mean $dz$ error} \coloneqq \avg\{\abs{dz_1}, \dots, \abs{dz_{n'}}\} \text.
 \] Values closer to $0$ are better.
 
-The $dz$ error scales the $\delta$ error to account for the magnitude of the label, since an error of $0.5$ on a label of $0.1$ is relatively more significant than an error of $0.5$ on a label of $1$. It does so by dividing the error by $1 + y'_i$, noting that the minimum possible redshift is $-1$.
-
-Unlike the fraction of variance unexplained error, the mean $dz$ error depends on a sum of absolute errors, as opposed to the sum of squared errors. This is an important distinction, as the sum of squared errors is more likely to be overly influenced by outliers.
+Unlike the fraction of variance unexplained error, which computes the sum of squared errors, the mean $dz$ error depends on a sum of absolute errors (it is a weighted $\ell_1$ loss). This is an important distinction, as the sum of squared errors is more likely to be overly influenced by outliers.
 
 \subsection{$dz$ bias}
+\label{sec:dz_bias}
 
-The $dz$ bias is also specific to photometric redshifts. It quantifies whether the predictor is more likely to over- or underestimate the redshift. It is defined as\[
-  \textrm{$dz$ bias} \coloneqq \frac{1}{n'}\sum_{i=1}^{n'} dz_i \text.
-\] Note that unlike the FVU and the mean $dz$ error, the $dz$ bias is permitted to be negative. In addition, a $dz$ bias of zero, whilst desirable, does not indicate a perfect predictor.
+The $dz$ bias is also specific to photometric redshifts. It quantifies whether the predictor is more likely to over- or underestimate the redshift. It is defined as to be the mean of all signed $dz$ errors:\[
+  \textrm{$dz$ bias} \coloneqq \avg\{ dz_1, \dots, dz_{n'} \} \text.
+\] Unlike the FVU and the mean $dz$ error, the $dz$ bias is permitted to be negative. In addition, a $dz$ bias of zero, whilst desirable, does not indicate a perfect predictor.
 
 \subsection{$dz$ deviation}
+\label{sec:dz_deviation}
 
-The $dz$ deviation is defined as the half-width of redshift deviation $dz$ containing $68.3\%$ of all objects. More formally, the $dz$ deviation is the smallest $\sigma \in \bbR_{\geq0}$ such that $68.3\%$ of $dz_i$ errors are within $[-\sigma, \sigma]$. It has the advantage of completely discarding outliers beyond percentile $68.3$, vastly reducing their influence.
+The $dz$ deviation is defined as the half-width of the deviation of $dz$ containing $68.3\%$ of all objects. More formally, the $dz$ deviation is the smallest $\sigma \in \bbR_{\geq0}$ such that $68.3\%$ of $dz_i$ errors are within $[-\sigma, \sigma]$. It has the advantage of completely discarding outliers beyond percentile $68.3$, vastly reducing their influence.
 
 \subsection{Fraction of $dz$ outliers}
+\label{sec:fraction_dz_outliers}
 
 The fraction of $dz$ outliers is defined as the fraction of objects with $\abs{dz} > 0.1$. It quantifies the fraction of objects whose redshifts fail to be explained by the model.
 
@@ -484,15 +615,7 @@ The fraction of $dz$ outliers is defined as the fraction of objects with $\abs{d
 
 \jn{write}
 
-\section{Linear Regression}
-
-  \begin{wrapfigure}{R}{0.4\textwidth}
-    \centering
-    \includegraphics[width=0.4\textwidth]{linreg_plain.pdf}
-    \caption{Error of linear regression with linear features. Lower is better; error of $0$ means perfect fit. Note that since this regression is purely linear, a bias term is not used.}
-    \label{fig:linreg_plain}
-  \end{wrapfigure}
-
+\section{Linear regression}
   \begin{wrapfigure}{R}{0.4\textwidth}
     \centering
     \includegraphics[width=0.4\textwidth]{linreg_polynomial.pdf}
@@ -500,113 +623,131 @@ The fraction of $dz$ outliers is defined as the fraction of objects with $\abs{d
     \label{fig:linreg_polynomial}
   \end{wrapfigure}
 
-Linear regression is the simplest regression model. \jn{is it?}
+Linear regression is a simple regression model that expresses $\hat f(\bx)$ as a fixed linear combination of the components of $\bx$.
 
-Choose $m \in \bbN$. Choose $\phi_1, \dots, \phi_m$, each mapping $\cX$ to $\bbR$.
-
-We make the assumption that $\hat f$ is a linear combination of $\phi_1, \dots, \phi_m$. Then \[
-    \hat f(\bx) = \bphi(\bx)^\top \bw \text{,}
-\] where we define \[
-    \bphi(\bx) \coloneqq \begin{bmatrix} \phi_1(\bx) \\ \vdots \\ \phi_n(\bx) \end{bmatrix}\text{,}
-\] and where $\bw \in \bbR^m$ is the weights vector we wish to find.
-
-Define also\[
-    \Phi \coloneqq \begin{bmatrix}
-        \bphi(\bx_1)^\top \\
-        \vdots \\
-        \bphi(\bx_m)^\top
-    \end{bmatrix} \text{.}
+More formally, we suppose that \[
+  \hat f(\bx) = \bx^\top\bw \text.
 \]
 
-We also make the assumption that $p(\by \mid \hat f, X)$ depends only on how well $\hat f$ approximates $f$ at $x_1, \dots, x_n$. More formally, defining \[
-    \hat y_i \coloneqq f(\bx_i) \text{ for }i = 1, \dots, n\text{ and }
-    \hat\by \coloneqq \begin{bmatrix} \hat y_1 \\ \vdots \\ \hat y_n \end{bmatrix} \text{,}
-\] we have that
-\begin{align}
-    p(\by \mid \hat f, X) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \\
-    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \text. \nonumber
-\end{align} We wish to find $\bw$ that maximises this likelihood. This is equivalent to minimising the negative log likelihood,\begin{align*}
-    -\log p(\by \mid \hat f, X) &= - \log \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \\
-    &= - \sum_{i = 1}^{n} \log\left(\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right)\right) \\
-    &= - \sum_{i = 1}^{n} \left(\log\frac{1}{\sqrt{2\pi\sigma^2}} + \log\exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right)\right) \\
-    &= - \sum_{i = 1}^{n} \left(-\frac{1}{2}\log\left(2\pi\sigma^2\right) -\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \\
-    &=  \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i = 1}^{n}\left(\hat y_i - y_i\right)^2 \text{.}
-\end{align*} Since $\frac{n}{2}\log(2\pi\sigma^2)$ is a constant, minimising $-\log p(\by \mid \hat f, X)$ is equivalent to minimising $\frac{1}{2\sigma^2}\sum_{i = 1}^{n}(\hat y_i - y_i)^2$. Further, since $1/\sigma^2$ is constant, this is equivalent to minimising $\frac12\sum_{i = 1}^{n}(\hat y_i - y_i)^2$.
+We assume that $p(\hat f \mid \cD)$ depends only on how well $\hat f$ approximates $f$ at the training samples. Assuming Gaussian likelihoods with variance $\sigma^2$, we wish to find $\bw$ that yields the best predictor. We derive the least squares error.
 
-We call this our loss function and write\[
-    E(\bw) = \frac12\sum_{i = 1}^{n}(\hat y_i(\bw) - y_i)^2 \text{.}
-\] Note that we can compute it without knowing $\sigma^2$. For reasons that should be clear, this is called the \textit{sum of squares} error.
+By our assumption of Gaussian likelihoods, \begin{align}
+    p\left(\hat f \;\middle|\; \cD\right) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \\
+    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{\tau\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \text. \nonumber
+\end{align} We wish to find $\bw$ that maximises this likelihood. This is equivalent to minimising the negative log likelihood:\begin{align*}
+    -\log p\left(\hat f \;\middle|\; \cD\right)
+    &= - \sum_{i = 1}^{n} \log\left[\frac{1}{\sqrt{\tau\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right)\right] \\
+    &= - \sum_{i = 1}^{n} \left(-\frac{1}{2}\log\left(\tau\sigma^2\right) -\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \\
+    &=  \frac{n}{2}\log\left(\tau\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i = 1}^{n}\left(\hat y_i - y_i\right)^2 \text{.}
+\end{align*} Since $\frac{n}{2}\log(\tau\sigma^2)$ and $1/\sigma^2$ are constant, minimising the negative log likelihood is equivalent to minimising $\frac{1}{2\sigma^2}\sum_{i = 1}^{n}(\hat y_i - y_i)^2$. We call this our \emph{loss} function and write \[
+  E(\bw) \coloneqq \frac{1}{2\sigma^2}\sum_{i = 1}^{n}\left(\hat y_i - y_i\right)^2 \text.
+\] This is called the \emph{sum of squares} loss. Note that we can compute it without knowing $\sigma^2$.
 
-The optimal weights vector is then given by \[
-    \argmax_{\bw} p(\by \mid \hat f(\bw), X) = \argmin_{\bw} E(\bw) \text{.}
+ minimising $-\log p(\by \mid \hat f, X)$ is equivalent to minimising $\frac{1}{2\sigma^2}\sum_{i = 1}^{n}(\hat y_i - y_i)^2$. Further, since $1/\sigma^2$ is constant, this is equivalent to minimising $\frac12\sum_{i = 1}^{n}(\hat y_i - y_i)^2$.
+
+The optimal weights vector is given by \[
+    \argmax_{\bw \in \bbR^d} p\left(\hat f \;\middle|\; \cD\right) = \argmin_{\bw \in \bbR^d} E(\bw) \text{.}
 \]
 
-We can solve this analytically. We first note that \begin{align*}
-    E(\bw) &= \frac12\sum_{i = 1}^{n}(\bphi(\bx_i)^\top \bw - y_i)^2 \\
-    &= \frac12\sum_{i = 1}^{n}(\Phi \bw - \by)_i^2 \\
-    &= \frac12(\Phi \bw - \by)^\top(\Phi \bw - \by) \text{.}
-\end{align*} Setting the derivative to zero to find the minimum, \[
-    \frac{dE(\bw)}{d\bw} = \Phi^\top (\Phi\bw - \by) = \mathbf{0} \text{.}
-\] Solving, the minimum is \[
-    \bw  = \left(\Phi^\top\Phi\right)^{-1}\Phi^\top\by
+We can solve this analytically. We rewrite \[
+  E(\bw) = \frac12(X\bw - y)^\top(X\bw - y) \text,
+\] where $X \in \bbR^{n\times d}$ such that $X_i \coloneqq \bx_i$. Setting the derivative to zero to find the minimum, \[
+    \frac{dE(\bw)}{d\bw} = X^\top (X\bw - \by) = \mathbf{0} \text{.}
+\] The minimum is \[
+    \bw  = \left(X^\top X\right)^{-1}X^\top\by \text.
 \]
 
-\subsubsection{Feature differences}
+\subsection{Feature differences}
 
-We show that create new features that are pairwise differences between existing features does not affect a linear model since the same predictor can be found using the original features.
+We show that creating new features that are pairwise differences between existing features does not affect a linear model since the same predictor will be found using the original features. This means that, for a purely linear model, our feature space of photometric colours is equivalent to that of photometric magnitudes.
 
-Consider a dataset with $n$ features. Let $\mathbf{x}$ be the $n$-dimensional feature vector.
-
-Let $\mathbf{D}$ be an $n \times n$ matrix such that \[
-    \mathbf{D}_{ij} \coloneqq \mathbf{x}_i - \mathbf{x}_j \text{.}
+Let $\bx \in \cX$ and let $G \in \bbR^{d \times d}$ be the matrix of pairwise differences:\[
+    G_{ij} \coloneqq x_i - x_j \text{.}
 \]
 
-Let $\bm{\alpha}$ be an $n$-dimensional weights vector for $\mathbf{x}$ and let $\mathcal{B}$ be an $n \times n$ weights matrix for $\mathbf{D}$. Let our predictor be\[
-    y = \bm{\alpha} \cdot \mathbf{x} + \langle \mathcal{B}, \mathbf{D} \rangle_F \text{,}\label{eq:pred1}\tag{$*$}
-\] where $\langle \mathcal{B}, \mathbf{D} \rangle_F$ is a Frobenius inner product.
+Let $\balpha \in \bbR^d$ be a weights vector for $\bx$ and let $\cB \in \bbR^{d\times d}$ be a weights matrix for $G$. Define our predictor as\[
+    \hat f(\bx) = \balpha \cdot \bx + \langle \cB, G \rangle_\mathrm{F} \text{,}\label{eq:pred1}\tag{$*$}
+\] where $\langle \cdot, \cdot \rangle_\mathrm{F}$ is the Frobenius inner product.
 
-Let $\hat{\bm{\alpha}}$ be an $n$-dimensional vector such that \[
-    \hat{\bm{\alpha}}_i \coloneqq \bm{\alpha}_i + \sum_{j=1}^n \mathcal{B}_{ij} - \sum_{j=1}^n \mathcal{B}_{ji} \text{.}
+Let $\tilde\balpha \in \bbR^d$ be defined by \[
+    \tilde\balpha_i \coloneqq \balpha_i + \sum_{j=1}^n \cB_{ij} - \sum_{j=1}^n \cB_{ji} \text{.}
 \] We show that a predictor defined as \[
-    y = \hat{\bm{\alpha}} \cdot \mathbf{x}
+    \tilde f(\bx) = \tilde{\balpha} \cdot \bx
 \] is equivalent to \eqref{eq:pred1}.
 
 We have that\begin{align*}
-    \hat{\bm{\alpha}} \cdot \mathbf{x} &= \sum_{i=1}^n \mathbf{x}_i\left( \bm{\alpha}_i + \sum_{j=1}^n \mathcal{B}_{ij} - \sum_{j=1}^n \mathcal{B}_{ji} \right) \\
-    &= \sum_{i=1}^n \mathbf{x}_i\bm{\alpha}_i +  \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ij} - \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ji} \\
-    &= \sum_{i=1}^n \mathbf{x}_i\bm{\alpha}_i +  \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_i \mathcal{B}_{ij} - \sum_{i=1}^n \sum_{j=1}^n \mathbf{x}_j \mathcal{B}_{ij} \\
-    &= \bm{\alpha}\cdot\mathbf{x} +  \sum_{i=1}^n \sum_{j=1}^n \mathcal{B}_{ij} \left(\mathbf{x}_i - \mathbf{x}_j \right) \\
-    &= \bm{\alpha}\cdot\mathbf{x} + \langle \mathcal{B}, \mathbf{D} \rangle_F
+    \tilde\balpha \cdot \bx &= \sum_{i=1}^n \bx_i\left( \balpha_i + \sum_{j=1}^n \cB_{ij} - \sum_{j=1}^n \cB_{ji} \right) \\
+    &= \sum_{i=1}^n \bx_i\balpha_i +  \sum_{i=1}^n \sum_{j=1}^n \bx_i \cB_{ij} - \sum_{i=1}^n \sum_{j=1}^n \bx_i \cB_{ji} \\
+    &= \sum_{i=1}^n \bx_i\balpha_i +  \sum_{i=1}^n \sum_{j=1}^n \bx_i \cB_{ij} - \sum_{i=1}^n \sum_{j=1}^n \bx_j \cB_{ij} \\
+    &= \balpha\cdot\bx +  \sum_{i=1}^n \sum_{j=1}^n \cB_{ij} \left(\bx_i - \bx_j \right) \\
+    &= \balpha\cdot\bx + \langle \cB, G \rangle_\mathrm{F}
 \end{align*} as desired.
 
-Note that this does not apply to non-linear models where a nonlinear transformation is applied to $\mathbf{D}$. It also does not necessarily hold when regularisation is applied to the weights.
+Note that this does not apply to models where a nonlinear transformation is applied to $G$. It also does not necessarily hold when regularisation is applied to the weights.
+
+\subsection{Nonlinear features}
+
+The constraint that $\hat y$ must be a linear combination of the elements of $\bx$ is very limiting. Few functions are well approximated by a line. To generalise linear regression, hence allowing us to approximate a wider range of functions, we can choose some basis functions $\phi_1, \dots, \phi_{d'}$, each mapping $\bbR^d \to \bbR$. Let $\bphi$ be the $d'$-dimensional vector of these functions. For notational convenience, we assume that $\bphi$ refers to $\bphi(\bx)$ and $\Phi \in \bbR^{n \times d'}$ is the matrix of basis functions for every point in the training set.
+
+To derive our linear model, we assume that $\hat f(\bx) = \bphi^\top \bw$ for some $\bw \in \bbR^{d'}$. Following a procedure analogous to linear regression, we find that the optimal solution lies at \[
+  \bw = \left(\Phi^T\Phi\right)^\top \Phi^\top \by \text.
+\]
 
 \section{Kernels}
 
 A kernel is a function $k : \bbR^d \times \bbR^d \to \bbR$ such that \[
     k(\bx, \bx') = \langle \bvarphi\left(\bx\right), \bvarphi\left(\bx'\right)\rangle \text{,}
-\] where $\bvarphi : \bbR^d \to H$ maps our feature space $\bbR^d$ to a real Hilbert space $H$. Intuitively then, we can think of a kernel as an inner product in a different space.
-
-Like other inner products, a kernel can be thought of as a similarity measure. For example, $k(\bx, \bx') = 0$, then $\bx$ and $\bx'$ are orthogonal in $H$, and thus not similar at all by our metric.
+\] where $\bvarphi : \bbR^d \to H$ maps our feature space $\bbR^d$ to a real Hilbert space $H$. Intuitively, we can think of a kernel as an inner product in a different space.
 
 Kernels permit us to generalise our earlier basis transformations $\bphi : \bbR^d \to \bbR^m$ to $\bvarphi : \bbR^d \to H$. Due to the possibly infinite-dimensional nature of $H$, we cannot use $\bvarphi$ directly. Instead, we can take advantage of it by computing $k$.
 
-\subsection{Examples of Kernels}
-\subsubsection{Gaussian Kernel}
+Like other inner products, a kernel can be thought of as a similarity measure. For example, $k(\bx, \bx') = 0$, then $\bx$ and $\bx'$ are orthogonal in $H$, and thus not similar at all by our metric.
 
-  \begin{wrapfigure}{R}{0.4\textwidth}
+For notational convenience, define $K \in \bbR^{n\times n}$ such that \[
+  K_{ij} \coloneqq k(\bx_i, \bx_j) \text{.}
+\] For a given $\bx$ to predict, define $K_* \in \bbR^n$ as \[
+  K_{*i} \coloneqq k(\bx, \bx_i)\text{,}
+\] and define $K_{**} \coloneqq k(\bx, \bx)$.
+
+\subsection{Examples of kernels}
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.5\textwidth}
     \centering
-    \includegraphics[width=0.4\textwidth]{gaussian_kernel_plot.pdf}
-    \caption{$K(0, x)$, where $K$ is the Gaussian kernel.}
+    \includegraphics[width=0.9\textwidth]{gaussian_kernel_plot.pdf}
+    \caption{$k(0, x)$, where $k$ is the Gaussian kernel.}
     \label{fig:gaussian_kernel}
-  \end{wrapfigure}
+  \end{subfigure}%
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{rational_quadratic_kernel_plot.pdf}
+    \caption{$k(0, x)$, where $k$ is the Rational-Quadratic kernel.}
+    \label{fig:rational_quadratic_kernel}
+  \end{subfigure}
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{exponential_kernel_plot.pdf}
+    \caption{$k(0, x)$, where $k$ is the Exponential kernel.}
+    \label{fig:exponential_kernel}
+  \end{subfigure}%
+  \begin{subfigure}{0.5\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{matern_kernel_plot.pdf}
+    \caption{$k(0, x)$, where $k$ is the Mat\'ern kernel.}
+    \label{fig:matern_kernel}
+  \end{subfigure}
+  \caption{Plots of kernels.}
+\end{figure}
 
-The Gaussian Kernel is defined by \[
+
+\subsubsection{Gaussian kernel}
+
+The Gaussian kernel, also known as the radial basis function (RBF) kernel, is very common. Its smoothness is very desirable for many applications and its shape resembles distributions of much real-world data. It is defined by \[
     k(\bx, \bx') \coloneqq \exp\left( - \frac{\norm{\bx - \bx'}^2}{2\sigma^2} \right) \text{,}
-\] where the hyperparamerer $\sigma$ is known as the \textit{length scale}. This is visualised in \cref{fig:gaussian_kernel}.
+\] where the hyperparameter $\sigma$ is known as the \textit{length scale}. This is visualised in \cref{fig:gaussian_kernel}.
 
-An alternative definition involves length scales $\sigma_1, \dots, \sigma_d$, permitting us to set the length independently for each axis. The definition is \[
-    k(\bx, \bx') \coloneqq \exp\left( - \frac{1}{2}\left(\bx - \bx'\right)^T\Sigma^{-1}\left(\bx - \bx'\right) \right) \text{,}
+An more general definition involves $d$ separate length scales $\sigma_1, \dots, \sigma_d$, permitting us to set the length independently for each dimension. This definition is \[
+    k(\bx, \bx') \coloneqq \exp\left( - \frac{1}{2}\left(\bx - \bx'\right)^\top\Sigma^{-1}\left(\bx - \bx'\right) \right) \text{,}
 \] where \[
     \Sigma = \begin{bmatrix}
         \sigma_1^2 & & \makebox(0,0){\text{\huge0}} \\
@@ -615,48 +756,26 @@ An alternative definition involves length scales $\sigma_1, \dots, \sigma_d$, pe
     \end{bmatrix} \text{.}
 \]
 
-\subsubsection{Rational-Quadratic Kernel}
+\subsubsection{Rational-quadratic kernel}
 
-  \begin{wrapfigure}{R}{0.4\textwidth}
-    \centering
-    \includegraphics[width=0.4\textwidth]{rational_quadratic_kernel_plot.pdf}
-    \caption{$K(0, x)$, where $K$ is the Rational-Quadratic kernel.}
-    \label{fig:rational_quadratic_kernel}
-  \end{wrapfigure}
+The Rational-quadratic kernel is defined by \[
+    k(\bx, \bx') \coloneqq \left(1 + \frac{1}{2\sigma}\norm{\bx - \bx'}^2\right)^{-\beta} \text{,}
+\] where $\sigma > 0$ is the \textit{length scale} and $\beta > 0$ is the \textit{shape parameter}. It is a reasonable approximation of the Gaussian kernel that does not require an exponentiation. It is shown in \cref{fig:rational_quadratic_kernel}.
 
-The Rational-Quadratic Kernel is defined by \[
-    k(\bx, \bx') \coloneqq \left(1 + \frac{1}{2\gamma}\norm{\bx - \bx'}^2\right)^{-\beta} \text{,}
-\] where $\gamma > 0$ is the \textit{length scale} and $\beta > 0$ is the \textit{shape parameter}. It can be thought of as an infinite sum of gaussian kernels.
+Setting $\sigma = \beta \sigma_0$ and limiting $\beta \to \infty$ yields a Gaussian kernel with length scale $\sigma_0$.
 
-The Rational-Quadratick Kernel is visualised in \cref{fig:rational_quadratic_kernel}.
+\subsubsection{Exponential kernel}
 
-Setting $\gamma = \beta \gamma_0$ and letting limiting $\beta \to \infty$ yields a Gaussian kernel with length scale $\gamma_0$.
-
-\subsubsection{Exponential Kernel}
-  \begin{wrapfigure}{R}{0.4\textwidth}
-    \centering
-    \includegraphics[width=0.4\textwidth]{exponential_kernel_plot.pdf}
-    \caption{$K(0, x)$, where $K$ is the Exponential kernel.}
-    \label{fig:exponential_kernel}
-  \end{wrapfigure}
-
-  The exponential is defined by \[
+  The exponential kernel is less common as it is not differentiable, limiting its usefulness to many models. Its definition is \[
     k(\bx, \bx') \coloneqq \exp\left( - \frac{\norm{\bx - \bx'}}{\sigma} \right) \text{,}
-  \] where $\gamma > 0$ is the \textit{length scale} and $\beta > 0$ is the \textit{shape parameter}. It is plotted in \cref{fig:exponential_kernel}.
+  \] where $\sigma > 0$. It is plotted in \cref{fig:exponential_kernel}.
 
 
-\subsubsection{Mat\'ern Kernel}
-
-  \begin{wrapfigure}{R}{0.4\textwidth}
-    \centering
-    \includegraphics[width=0.4\textwidth]{matern_kernel_plot.pdf}
-    \caption{$K(0, x)$, where $K$ is the Mat\'ern kernel.}
-    \label{fig:matern_kernel}
-  \end{wrapfigure}
+\subsubsection{Mat\'ern kernel}
 
 For some $\bx$ and $\bx'$, define $d \coloneqq \norm{\bx - \bx'}$. The Mat\'ern Kernel is defined by \[
     k(\bx, \bx') \coloneqq \frac{2^{1-\nu}}{\Gamma(\nu)}\left(\frac{\sqrt{2\nu}d}{\sigma}\right)^\nu K_\nu\left(\frac{\sqrt{2\nu}d}{\sigma}\right)
-\]$K_\nu$ is the modified Bessel function of the second kind\footnote{The definition and properties of $K_{\nu}$ are beyond our scope.}, $\Gamma$ is the Gamma function, $\nu$ is positive parameter, and $\ell$ is the length scale. It is differentiable $\floor{\nu-1}$ times. See \cref{fig:matern_kernel} for a visualisation.
+\]$K_\nu$ is the modified Bessel function of the second kind, $\Gamma$ is the Gamma function, $\nu > 0$ is a hyperparameter, and $\sigma > 0$ is the length scale. It is differentiable $\floor{\nu-1}$ times. See \cref{fig:matern_kernel} for a visualisation.
 
 For some values of $\nu$ it can be simplified. When $\nu = 1/2$,
  \[
@@ -665,23 +784,22 @@ For some values of $\nu$ it can be simplified. When $\nu = 1/2$,
    k(\bx, \bx') = \left(1 + \frac{\sqrt{3}d}{\sigma}\right)\exp\left(-\frac{\sqrt{3}d}{\sigma}\right) \text{;}
  \] and when $\nu = 5/2$,\[
   k(\bx, \bx') = \left(1 + \frac{\sqrt{5}d}{\sigma} + \frac{5d^2}{3\sigma^2}\right)\exp\left(-\frac{\sqrt{5}d}{\sigma}\right) \text.
- \] Observe that for $\nu=1/2$, it simplifies to the exponential kernel. The other two simplifications are an exponential kernel multiplied by a polynomial in $d/\sigma$.
-\subsection{Kernel Approximations}
+ \] For $\nu=1/2$, this kernel the exponential kernel. The other two expressions are an exponential kernel multiplied by a polynomial in $d/\sigma$.
 
-For large dataset, computing $K$ becomes expensive it as has a space complexity of $O(n^2)$.
+\subsection{Kernel approximations}
 
-\subsubsection{RBF Sampling}
+For large dataset, computing $K$ becomes expensive it as has a space complexity of $O(n^2)$. It is often desirable to approximate $\varphi$, the transformation to the kernel's Hilbert space. For such an approximation $\bphi$ and its corresponding $\Phi$, $K \approx \Phi\Phi^\top$. Using $\bphi$ as our feature function permits us to take advantage of many of the benefits of kernels without the corresponding large matrices.
 
-RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier transform. \jn{I literally don't know if this is correct}
+\subsubsection{RBF sampling}
 
-\jn{prove}
+RBF Sampling approximates the Gaussian (RBF) kernel by randomly sampling from its Fourier transform. We use the implementation from scikit-learn \citep{Sklearn}, which is a variant of random kitchen sinks \citep{KitchenSinks}. It has the advantage of not requiring more hyperparameters than the kernel function itself. Despite its random nature, \citep{KitchenSinks} derives a probabilistic lower bound on its accuracy.
 
-\subsubsection{Empirical Kernel Map}
+\subsubsection{Empirical kernel map}
 
 \jn{TODO: WRITE}
 
 
-\subsection{Kernelised Linear Regression}
+\subsection{Kernelised linear regression}
 
   \begin{wrapfigure}{R}{0.4\textwidth}
     \centering
@@ -690,52 +808,29 @@ RBF Sampling approximates the Gaussian Kernel by sampling from its Fourier trans
     \label{fig:linreg_kernelised}
   \end{wrapfigure}
 
-Let $\phi : \bbR^d \to \bbR^r$ be the feature map. If we are performing linear regression, then we want to find $\bw \in \bbR^r$ such that \[
-    f(\bx) \approx \phi(\bx)^T \bw \text{.}
-\]
+To extend our range of possible feature maps, we rewrite linear regression to use kernels. Let $\bphi : \bbR^{d} \to \bbR^{d'}$ be our feature map.
 
-Define \[
-    \Phi \coloneqq \begin{bmatrix}
-        \phi(\bx_1)^T \\
-        \vdots \\
-        \phi(\bx_n)^T \\
-    \end{bmatrix} \text{ and }\by \coloneqq \begin{bmatrix}
-        y_1 \\
-        \vdots \\
-        y_n
-    \end{bmatrix} \text{.}
-\]
-
-We wish to use the least-squares error with $\ell_2$ regularisation. We can define the error function to be $E : \bbR^r \to [0, \infty)$ such that \[
-    E(\bw) \coloneqq \frac{1}{2}\norm{\by - \Phi\bw}_2^2 + \frac{\lambda}{2} \norm{\bw}_2^2 \text{,}
-\] where $\lambda > 0$ is the regularisation constant.
-
-We know that $\bw \in \spn\{\phi(\bx_1), \dots, \phi(\bx_n)\}$. Hence, there exists $\bv \in \bbR^n$ such that \[
-    \bw = \Phi^T\bv \text{.}
-\]
-
-We can rewrite the error function as $E : \bbR^n \to [0, \infty)$ such that \[
-    E(\bv) = \frac{1}{2}\norm{\by - \Phi\Phi^T\bv}_2^2 + \frac{\lambda}{2} \norm{\Phi^T\bv}_2^2 \text{.}
-\] Letting $K \coloneqq \Phi\Phi^T$ be the kernel matrix,\[
-    E(\bv) = \frac{1}{2}\norm{\by - K\bv}_2^2 + \frac{\lambda}{2} \bv^T K \bv \text{.}
-\] Then $k(\bx, \bx') \coloneqq \phi(\bx) \cdot \phi(\bx')$ is our kernel function.
-
-Differentiating, we find \begin{align*}
-    \frac{dE(\bv)}{d\bv} &= -K^T(\by - K\bv) + \frac{\lambda}{2} (K + K^T)\bv \\
-    &= K(K\bv - \by) + \lambda K\bv \text{,}
-\end{align*} since $K$ is symmetric. The minimum exists at $E'(\bv) = 0$. Simplifying, we find,\[
-    K(K + \lambda I)\bv = K\by \text{.}
-\] There may be multiple solutions. One solution is at \[
-    \bv = (K + \lambda I)^{-1}\by \text{.}
+Recall that the loss function $E : \bbR^{d'} \to \bbR_{\geq0}$ that we wish to minimise is \[
+    E(\bw) = \frac{1}{2}\norm{\by - \Phi\bw}_2^2 \text.
+\] We know that $\bw \in \spn\{\bphi_1, \dots, \bphi_n\}$. Hence, there exists $\bv \in \bbR^n$ such that \[
+    \bw = \Phi^\top\bv \text{.}
+\] We can rewrite the error function as $E : \bbR^{d'} \to \bbR_{\geq0}$ such that \[
+    E(\bv) = \frac{1}{2}\norm{\by - \Phi\Phi^\top\bv}_2^2 \text{.}
+\] Letting $K \coloneqq \Phi\Phi^\top$ be the kernel matrix,\[
+    E(\bv) = \frac{1}{2}\norm{\by - K\bv}_2^2\text{.}
+\] Differentiating, we find \[
+    \frac{dE(\bv)}{d\bv} = K(K\bv - \by)
+\] using the fact that $K$ is symmetric. The minimum exists at $E'(\bv) = 0$. There may be multiple solutions. One solution is at \[
+    \bv = K^{-1}\by \text{.}
 \]
 
 For a given input $\bx$, the prediction is then \begin{align*}
-    f(\bx) &\approx \phi(\bx)^T \bw \\
-    &= \phi(\bx)^T \Phi \bv \\
-    &= \phi(\bx)^T \Phi (K + \lambda I)^{-1}\by \\
-    &= K_* (K + \lambda I)^{-1}\by \text{,}
+    \hat f(\bx) &= \bphi^\top \bw \\
+    &= \bphi^\top \Phi \bv \\
+    &= \bphi^\top \Phi K^{-1}\by \\
+    &= K_*^\top K^{-1}\by \text{,}
 \end{align*} where we define \[
-    K_* \coloneqq \phi(\bx)^T \Phi \text{.}
+    K_* \coloneqq \Phi^\top\bphi \text{.}
 \]
 
 \section{Regularisation}
@@ -747,24 +842,18 @@ For a given input $\bx$, the prediction is then \begin{align*}
     \label{fig:linreg_kernelised_regularised}
   \end{wrapfigure}
 
-Often we wish to limit the complexity of $\hat f$ to prevent overfitting \jn{Is that the underlying reason? Would it be easier to argue that we have a prior that simpler functions are more likely?}. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
-    p(w_i) = \cN(w_i \mid 0, \mu)
-\] for some variance $\mu > 0$.
+We often wish to ensure that $\hat f$ relatively simple to prevent overfitting. We can make the assumption that every element of the weights vector $\bw$ is likely to be close to zero: \[
+    p(w_i) = \cN(w_i \mid 0, \omega^2)
+\] for some variance $\omega^2 > 0$.
 
 We can then change the likelihood in \cref{eq:linearlikelihood} to account for this: \begin{align*}
-    p\left(\hat f \;\middle|\; \cD\right) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \prod_{i = 1}^{m}\cN(w_i \mid 0, \mu) \\
-    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \prod_{i = 1}^{m}\frac{1}{\sqrt{2\pi\mu}} \exp\left(-\frac{w_i^2}{2\mu}\right) \text{.}
-\end{align*}
-
-Computing the negative log likelihood,\[
-    -\log p\left(\hat f \;\middle|\; \cD\right) = \frac{n}{2}\log\left(2\pi\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{m}{2}\log\left(2\pi\mu\right) + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2 \text{.}
-\]
-
-Eliminating the constant terms, we find that \begin{align*}
-    \argmin_{\bw} \left[- \log p\left(\hat f \;\middle|\; \cD\right)\right] &= \argmin_{\bw} \left(\frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{1}{2\mu}\sum_{i=1}^{m}w_i^2\right) \\
-    &= \argmin_{\bw} \frac{1}{\sigma^2}\left(\frac12\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{\lambda}{2}\sum_{i=1}^{m}w_i^2\right) \text{,}
-\end{align*} where we defined $\lambda \coloneqq \sigma^2 / \mu > 0$. Eliminating the positive multiplicative constant,\begin{align*}
-    \argmin_{\bw} \left[- \log p\left(\hat f \;\middle|\; \cD \right)\right] &= \argmin_{\bw} \left(\frac12\sum
+    p\left(\hat f \;\middle|\; \cD\right) &= \prod_{i = 1}^{n} \cN\left(\hat y_i \;\middle|\; y_i, \sigma^2\right) \label{eq:linearlikelihood} \prod_{i = 1}^{m}\cN(w_i \mid 0, \omega^2) \\
+    &= \prod_{i = 1}^{n} \frac{1}{\sqrt{\tau\sigma^2}} \exp\left(-\frac{\left(\hat y_i - y_i\right)^2}{2\sigma^2}\right) \prod_{i = 1}^{m}\frac{1}{\sqrt{\tau\omega^2}} \exp\left(-\frac{w_i^2}{2\omega^2}\right) \text{.}
+\end{align*} Computing the negative log likelihood,\[
+    -\log p\left(\hat f \;\middle|\; \cD\right) = \frac{n}{2}\log\left(\tau\sigma^2\right) + \frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{m}{2}\log\left(\tau\omega^2\right) + \frac{1}{2\omega^2}\sum_{i=1}^{m}w_i^2 \text{.}
+\] Eliminating the constant terms and defining $\lambda \coloneqq \sigma^2 / \omega^2$, we find that \begin{align*}
+    \argmin_{\bw} \left[- \log p\left(\hat f \;\middle|\; \cD\right)\right] &= \argmin_{\bw} \left(\frac{1}{2\sigma^2}\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{1}{2\omega^2}\sum_{i=1}^{m}w_i^2\right) \\
+     &= \argmin_{\bw} \left(\frac12\sum
     _{i=1}^{n}\left(\hat y_i - y_i\right)^2 + \frac{\lambda}{2}\sum_{i=1}^{m}w_i^2\right) \\
     &= \argmin_{\bw} \left(\frac12\left(\hat \by - \by\right)^\top\left(\hat \by - \by\right) + \frac{\lambda}{2}\bw^\top\bw\right) \\
     &= \argmin_{\bw} \left(\frac12\left(\Phi \bw - \by\right)^\top\left(\Phi \bw - \by\right) + \frac{\lambda}{2}\bw^\top\bw\right) \text.
@@ -780,12 +869,15 @@ We can find $\bw$ that minimises the loss. Taking the derivative and setting it 
     \bw = \left(\Phi^\top\Phi + \lambda I\right)^{-1}\Phi^\top\by \text.
 \]
 
-\section{Finding Hyperparameters}
+\section{Finding hyperparameters}
 
-  \subsection{Grid Search}
+\jn{introduce}
 
-  Grid Search is one technique that permits us to find hyperparameters. We must first define a finite set of candidate hyperparameter configurations $H$.
+  \subsection{Grid search}
 
+  Grid search is one technique that permits us to find hyperparameters. We must first define a finite set of candidate hyperparameter configurations $H$.
+
+  \jn{rewrite in algorithm2e}
   The algorithm is as follows:
   \begin{minted}[
     gobble=4,
@@ -809,14 +901,14 @@ We can find $\bw$ that minimises the loss. Taking the derivative and setting it 
         return best_parameters
   \end{minted}
 
-  The technique is called grid search since $H$ is often a cartesian product of the options for each hyperparameter.
+  The name \emph{grid search} comes from $H$ often being a Cartesian product of the options for each hyperparameter, forming a multidimensional `grid'.
 
-  \subsection{Bayesian Optimisation}
-  Our Gaussian Process Regression has six hyperparameters: a length scale for each of the five features and a regularisation constant. The high dimensionality of the hyperparameter space makes it difficult to find the optimal parameters using grid search. Bayesian optimisation may be used instead to speed up this process.
+  \subsection{Bayesian optimisation}
+  Our regression has six hyperparameters: a length scale $\sigma_i$ for each of the five features and a regularisation constant $\lambda$. The high dimensionality of the hyperparameter space makes it difficult to find the optimal parameters using grid search. Bayesian optimisation may be used instead to speed up this process.
 
 \jn{derive bayesian optimisation}
 
-\subsection{Automatic Relevance Determination}
+\subsection{Automatic relevance determination}
   \begin{figure}
     \centering
     \includegraphics[width=0.9\textwidth]{passive_delta.pdf}
@@ -827,32 +919,28 @@ We can find $\bw$ that minimises the loss. Taking the derivative and setting it 
   \begin{figure}
     \centering
     \includegraphics[width=0.9\textwidth]{passive_r2.pdf}
-    caption{Passive learning curve: $R^2$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen at random. The shaded interval represents the two-sigma confidence interval.}
+    \caption{Passive learning curve: $R^2$ error plotted against the number of training points for both SDSS and 2dFLenS. The training points are chosen at random. The shaded interval represents the two-sigma confidence interval.}
     \label{fig:passive_r2}
   \end{figure}
 
-Automatic Relevance Determination is another technique that may be used to find the hyperparameters for our Gaussian Process Regression.
+Automatic relevance determination (ARD) is another technique that may be used to find the hyperparameters for our Gaussian Process Regression.
 
 Consider the problem of linear regression. We have a five-dimensional feature space $\cX$. The features have \jn{noise vairances?} variances $\lambda_1, \dots, \lambda_5$, respectively. We place a prior on our regression weights.
 
 Our prior variance for each weight is proportional to the variance of the weight. We also assume that the weights are uncorrelated. Hence, our sum-of-squares loss function becomes \jn{how?}\[
-    \frac12\norm{X\bw - \by}^2 + \alpha \bw^T \Lambda \bw \text.
+    \frac12\norm{X\bw - \by}^2 + \alpha \bw^\top \Lambda \bw \text.
 \]
 
 \jn{now talk about that weird convergence bullshit for the regularisation constant}
 
 \jn{we don't care about pruning right? because we're not pruning...}
 
-\section{Gaussian Processes}
-Consider the task of reconstructing a function $f: \bbR^d \to y$ from finitely many samples. As a complication, each target sample contains is noisy, with the noise having a variance $\sigma^2$.
+\section{Gaussian process regression}
+\jn{rewrite this sanely}
 
-More formally, we are given a finite set of tuples\[
-    \{ (\vec{x_1}, y_1), \dots, (\vec{x_n}, y_n) \}\text,
-\] where \[
-    y_i \sim \cN\left(f(\vec{x_i}), \sigma^2\right)\text.
-\] We wish to be able to predict $f(\vec{x})$, given an arbitrary $\vec{x}$.
+Gaussian process regression (GPR) is a predictor that yields confidence intervals for its own predictions. This is very useful when performing active learning. We derive GPR here.
 
-A Gaussian process is a distribution over functions. Formally, a Gaussian process is defined as a `collection of random variables, any finite number of which have a joint Gaussian distribution.'\footnote{C. E. Rasmussen \& C. K. I. Williams, Gaussian Processes for Machine Learning, the MIT Press, 2006, ISBN 026218253X.}
+A Gaussian process is a distribution over functions. Formally, a Gaussian process is defined as a `collection of random variables, any finite number of which have a joint Gaussian distribution.'\citep{GPBook}
 
 Defining \begin{align*}
     m(\vec{x}) &\coloneqq \bbE[f(\vec{x})] \text, \\
@@ -899,33 +987,35 @@ The value for $\vec{f_*}$ that has the highest probability is the mean of the Ga
 
 One can observe from \cref{eq:pred} that the prediction is a linear combination of the observations $\vec{y}$. This is in contrast to linear regression, where the prediction is a linear combination of the inputs.
 
-\subsection{Equivalence to Kernelised Linear Regression}
+\subsection{Equivalence to kernelised linear regression}
 
 Observe that \cref{eq:pred} is the equation for kernelised linear regression with regularisation, where $\lambda=\sigma_n^2$. Thus, Gaussian Process regression and kernelised regular regression always return the same expected value, although kernelised linear regression is unable to estimate the variance of that prediction.
 
-\section{Approximating Gaussian Processes}
+\section{Approximating Gaussian processes}
 
-Gaussian Process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$, which has a high time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jn{reference}}. This obviously does not scale well to large training sets. Instad, we can approximate Gaussian Process Regression with algorithms of a lower time complexity.
+Gaussian process regression relies on our calculation of $(K+\sigma_n^2)^{-1}$. This has a large time complexity\footnote{$O(n^3)$ for a naive implementation; $O(n^{2.373})$ for an optimised method based on the Coppersmith–Winograd algorithm.\jn{reference}}. This does not scale well to large training sets. Instead, we can approximate GPR with algorithms of a lower time complexity.
 
-\subsection{Low-rank Approximation}
+\subsection{Low-rank approximation}
 
-We can approximate this matrix product with a complexity that is linear in $n$.
+We can approximate this matrix product with a complexity that is linear in $n$. We can do so by approximating the kernel with a finitely-dimensional set of features, and reversing the kernelisation.
 
-Let $\Phi \in \bbR^{n \times f}$ for $f \ll n$ be our kernel approximation for the training set. Then $K \approx \Phi \Phi^T$. Let $\phi \in \bbR^{f}$ be the kernel approximation for the value we wish to predict for. Then $K_* \approx \Phi \phi$. Hence,\begin{align*}
-    K_*^T(K+\sigma_n^2)^{-1}K_* &\approx \phi^T\Phi^T  \left(\Phi \Phi^T + \sigma_n^2I\right)^{-1} \Phi\phi \\
-    &= \phi^T\Phi^T  \left( \sigma_n^{-2}I - \sigma_n^{-2}\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\right) \Phi\phi \\
-    &=  \sigma_n^{-2}\phi^T\Phi^T\Phi\phi - \sigma_n^{-2}\phi^T\Phi^T \Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\phi\Phi^T\Phi
-\end{align*}
+Let $\Phi \in \bbR^{n \times d'}$ for $d' \ll n$ be our kernel approximation for the training set, letting $K \approx \Phi \Phi^\top$. Let $\bphi \in \bbR^{d'}$ be the kernel approximation for the value we wish to predict for, so $K_* \approx \Phi \bphi$. We have that,\begin{align*}
+    K_*^\top(K+\sigma_n^2)^{-1} &\approx \bphi^\top\Phi^\top  \left(\Phi \Phi^\top + \sigma_n^2I\right)^{-1} \\
+    &= \bphi^\top\Phi^\top  \left( \sigma_n^{-2}I - \sigma_n^{-2}\Phi(\sigma_n^{2} + \Phi^\top\Phi)^{-1}\Phi^\top\right) \\
+    &=  \sigma_n^{-2}\bphi^\top\Phi^\top - \sigma_n^{-2}\bphi^\top\Phi^\top \Phi(\sigma_n^{2} + \Phi^\top\Phi)^{-1}\Phi^\top \text{,}
+\end{align*} where we apply the Woodbury matrix identity to reduce the rank of the matrix being inverted.
 
-Then \[
-    \hat f(\bx) = \sigma_n^{-2} \phi^T\Phi^T\by - \sigma_n^{-2} \phi^T\Phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\by
+Substituting \jn{blah} into \jn{blah} and \jn{blah}, \[
+    \hat f(\bx) = \sigma_n^{-2} \bphi^\top\Phi^\top\by - \sigma_n^{-2} \bphi^\top\Phi^\top\Phi(\sigma_n^{2} + \Phi^\top\Phi)^{-1}\Phi^\top\by
 \] and \[
-    \var \hat f(\bx) = \phi^T\phi - \sigma_n^{-2}\Phi^T \phi^T\phi\Phi - \sigma_n^{-2}\Phi^T \phi^T\Phi(\sigma_n^{2} + \Phi^T\Phi)^{-1}\Phi^T\phi\Phi\text.
-\]
+    \var \hat f(\bx) = \bphi^\top\bphi - \sigma_n^{-2}\Phi^\top \bphi^\top\bphi\Phi - \sigma_n^{-2}\Phi^\top \bphi^\top\Phi(\sigma_n^{2} + \Phi^\top\Phi)^{-1}\Phi^\top\bphi\Phi\text.
+\]Since the size of the matrix being inverted no longer depends on $n$, this is a linear-time approximation.
 
-Numerical instabilities present difficulties for small $\sigma_n^2$ as the matrix $(\Phi\Phi^T + \sigma_n^2I)$ becomes closer to being singular.
+Numerical instabilities present difficulties for small $\sigma_n^2$ as the matrix $(\Phi\Phi^\top + \sigma_n^2I)$ becomes closer to being singular.
 
-\subsection{Linear Regression and KDE}
+\subsection{Linear regression and KDE}
+
+\jn{make this sane}
 
 The mean of Gaussian Process Regression can also be approximated by linear regression. Letting $\Phi$ be the kernel approximation on the training set, we find that the regression weights are\[
     \bw = \left(\Phi^\top\Phi + \sigma_n^2 I\right) \Phi^\top\by\text,
@@ -938,11 +1028,11 @@ The actual relationship could probably be found by regression on the estimated d
 This method is less prone to numerical instabilities than my favourite approximation. However it was not used in this work, as a more direct approximation was available.
 
 
-\chapter{Active Learning}
+\chapter{Active learning}
 
 In regression on photometric redshifts, it is expensive to obtain new labels for training samples: a telescope can only measure the spectrum of one galaxy at a time. However, photometric data is cheap, so we have a large pool of unlabelled objects. We wish to spend our telescope time labelling the objects that are the most likely to improve the accuracy of our model. Active learning is a technique that permits this.
 
-In active learning, we selectively find labels to samples based on their potential for improving our model. Given an existing model and a pool of unlabelled samples, a \textit{recommender} chooses samples based on its policy. It is only after a sample is recommended that we query its label and add it to our model's training set. A procedure is presented in \cref{alg:active-learning}.
+In active learning, we selectively find labels to samples based on their potential for improving our model. \jn{CITE} Given an existing model and a pool of unlabelled samples, a \textit{recommender} chooses samples based on its policy. It is only after a sample is recommended that we query its label and add it to our model's training set. A procedure is presented in \cref{alg:active-learning}.
 
 A recommendation strategy is effective if its choices yield a more accurate model than a randomly selected training set. Active learning then reduces, compared to the naïve approach, the number of labelled samples needed to achieve a predictor of a desired accuracy, saving resources.
 
@@ -996,7 +1086,7 @@ A recommendation strategy is effective if its choices yield a more accurate mode
 
 \section{Recommenders}
 
-In active learning, a \textit{recommender} is a function\footnote{To be precise, a recommender is not always a function as it is permitted to be nondeterministic.} that predicts \jn{estimates?} what samples are the most useful to label. It can be thought of in two equivalent ways.
+In active learning, a \textit{recommender} is a function\footnote{To be precise, a recommender is not always a function as it is permitted to be nondeterministic.} that predicts \jn{estimates?} what samples are the most useful to label. \jn{CITE} It can be thought of in two equivalent ways.
 
 A recommender can be thought of as a function $\pi : \cP(\cX) \times \bbN \to \cP(\cX)$, where $\pi(P, r)$ returns the $r$ most preferred samples from the sample pool $P$. A recommender can also be a function $\varpi : \cX \to \bbR$. Then $\varpi(\bx)$ returns the preference score it assigns to $\bx$, with higher scores being preferred. Define $\Pi$ to be the space of all recommenders.
 
@@ -1007,6 +1097,11 @@ Similarly, given a recommender $\pi$ returing a set of samples, we can define a 
 \] Then the score $\varpi$ assigns to $\bx$ is the negation of its preference index in $\pi$.
 
 
+\section{Relation to optimal design}
+
+\jn{TODO: Write this section, time permitting. Else, delete it.}
+
+
 \section{Relation to Bayesian optimisation with Gaussian processes}
 
 \jn{TODO: Write this section, time permitting. Else, delete it.}
@@ -1015,7 +1110,7 @@ Similarly, given a recommender $\pi$ returing a set of samples, we can define a 
 \section{Measuring performance}
 
 \subsection{Learning curves}
-A learning curve tracks the performance of a model with a given recommender. Let $T = \{t_1, \dots, t_r\} \subset \bbN$ with $t_1 < \dots < t_r$ be the counts of training points that we try. Then the learning curve is a function $\ell : T \to \bbR_{\geq0}$, whose output is an error.
+A learning curve tracks the performance of a model with a given recommender. \jn{CITE} Let $T = \{t_1, \dots, t_r\} \subset \bbN$ with $t_1 < \dots < t_r$ be the counts of training points that we try. Then the learning curve is a function $\ell : T \to \bbR_{\geq0}$, whose output is an error.
 
 For a recommender $\pi$ and a model $F : \cP(\cX \times \cY) \to \hat\cF$, we generate the learning curve $\ell$ with \cref{alg:generate-learning-curve}. Intuitively, we begin by training $F$ with $t_1$ random samples and measuring its performance. We then repeatedly add points recommended by $\pi$, train the model, and measure its performance. This gives us $F$'s performance as a function of the cardinality of the training.
 
@@ -1070,7 +1165,7 @@ An example of a learning curve can be seen in \cref{fig:uncertainty_dz1}. In tha
     \label{fig:deficiency_example}
   \end{wrapfigure}
 
-The deficiency $d$ is a function $d : \fD \times \fF \times \cE \times \cT \times \Pi \to \bbR$. Intuitively, $d(P, F, e, T, \pi)$ measures the room for improvement that a recommender $\pi \in \Pi$ has on a model $F \in \fF$, a training set pool $P \in \fD$, at times $T \in \cT$, according to an error function $e \in \cE$. In general, the lower the deficiency, the better $\pi$ performs on our predictor and dataset.
+The deficiency $d$ is a function $d : \fD \times \fF \times \cE \times \cT \times \Pi \to \bbR$. Intuitively, $d(P, F, e, T, \pi)$ measures the room for improvement that a recommender $\pi \in \Pi$ has on a model $F \in \fF$, a training set pool $P \in \fD$, at times $T \in \cT$, according to an error function $e \in \cE$. In general, the lower the deficiency, the better $\pi$ performs on our predictor and dataset. \jn{CITE}
 
 To define $d(P, F, e, T, \pi)$, let $\ell : T \to \bbR_{\geq0}$ be the learning curve with a predictor $F$, a recommender $\pi$, a candidate pool $P$, and an error function $e$ and $F$ at times $T = \{t_1, \dots, t_r\}$ ordered in ascending order. Generally, $\ell$ reach its minimum at $t_r$. This is because, in general, models perform better with more training samples; hence, training on all available samples is likely to yield the best possible model. We use $\ell(t_r)$ as a baseline for a `perfect' recommender.\footnote{We use the word `perfect' rather loosely, as it is impossble to define a truly perfect recommender. In most cases, even the best possible recommender will not reach a deficiency of $0$ as no proper subset of $P$ will yield comparable performance to the entirety of $P$.}
 
@@ -1090,7 +1185,7 @@ For a fixed, $P$, $F$, $e$, and $T$, we may compute the deficiencies of recommen
 
 \subsection{Passive}
 
-The passive recommender is the baseline upon which we wish to improve. It yields random samples from the candidate pool. This makes it equivalent to adding extra training points without utilising any active learning techniques. The passive learning curves we use as a baseline are shown in \cref{fig:passive_dz}, \cref{fig:passive_fvu}, and \cref{fig:passive_sdss}. We use these to assess the performance of our active learning techniques.
+The passive recommender is the baseline upon which we wish to improve. It yields random samples from the candidate pool. \jn{CITE} This makes it equivalent to adding extra training points without utilising any active learning techniques. The passive learning curves we use as a baseline are shown in \cref{fig:passive_dz}, \cref{fig:passive_fvu}, and \cref{fig:passive_sdss}. We use these to assess the performance of our active learning techniques.
 
 \subsection{Uncertainty}
   \begin{figure}
@@ -1131,7 +1226,7 @@ Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref
     \label{fig:density_fvu1}
   \end{figure}{}
 
-  Let $D : \cX \to \bbR^+$ be a density function for the dataset. The density estimator is a function $\varpi : \cX \to \bb^R$ such that \[
+  Let $D : \cX \to \bbR^+$ be a density function for the dataset. The density estimator is a function $\varpi : \cX \to \bbR$ such that \[
     \varpi(\bx) \coloneqq D(x) \text.
   \]
 
@@ -1140,6 +1235,8 @@ Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref
   We plot the learning curves for SDSS and 2dFLenS under density recommendation and mean $dz$ error in \cref{fig:density_dz1}. Similar curves for the FVU error are shown in \cref{fig:density_fvu1}. We note that this recommendation strategy yields good results at the start of the learning curve, when we have trained on very few sampels. However, later on the curve flattens out and no longer produces very good results, being overtaken by uncertainty recommendation.
 
 \subsection{Boltzmann sampling}
+
+  \jn{cite Acton}
 
   \begin{figure}
     \centering
@@ -1155,17 +1252,67 @@ Learning curves for SDSS and 2dFLenS with the mean $dz$ error are shown in \cref
     \label{fig:boltz_density_dz1}
   \end{figure}
 
+\begin{table}
+\centering
+\begin{subtable}{.5\textwidth}
+\centering
+
+\begin{tabular}{l | c c}
+    & SDSS & 2dFLenS \\
+    \hline
+    Passive & 6.1 & 5.9 \\
+    Uncert. (no Boltz.) & 8.7 & 6.2 \\
+    Uncert. ($T = .01$) & 6.4 & 6.4 \\
+    Uncert. ($T = .1$) & 5.7 & 4.4 \\
+    Uncert. ($T = 1$) & 6.4 & 5.6 \\
+    Uncert. ($T \in [1,.01]$) & 5.2 & 4.9 \\
+    Density (no Boltz.) & 30 & 39 \\
+    Density ($T = 1$) & 15 & 25 \\
+    Density ($T = 10$) & 7.1 & 8.5 \\
+    Density ($T = 100$) & 6.6 & 6.9 \\
+    Density ($T \in [10,100]$) & 4.9 & 7.9 \\
+\end{tabular}
+
+\caption{Mean $dz$ error deficiencies}
+\end{subtable}% <---- don't forget this %
+\begin{subtable}{.5\textwidth}
+\centering
+
+\begin{tabular}{l | c c}
+    & SDSS & 2dFLenS \\
+    \hline
+    Passive & 48 & 135 \\
+    Uncert. (no Boltz.) & 31 & 86 \\
+    Uncert. ($T = .01$) & 26 & 89 \\
+    Uncert. ($T = .1$) & 24 & 64 \\
+    Uncert. ($T = 1$) & 39 & 122 \\
+    Uncert. ($T \in [1,.01]$) & 34 & 92 \\
+    Density (no Boltz.) & 204 & 1196 \\
+    Density ($T = 1$) & 124 & 838 \\
+    Density ($T = 10$) & 47 & 243 \\
+    Density ($T = 100$) & 36 & 178 \\
+    Density ($T \in [10,100]$) & 43 & 238 \\
+\end{tabular}
+
+\caption{FVU error deficiencies}
+\end{subtable}
+
+\caption{Deficiency of passive, uncertainty, and density recommenders. Training took place with a step size of 100. Boltzmann sampling is applied to some recommenders, either with a constant temperature or a temperature logarithmically interpolated between the marked values.}
+\label{table:boltzmann_deficiencies}
+\end{table}
+
+
 Consider a physical system that occupies one of $M$ possible states. Let $T > 0$ be the temperature of the system. For each $i=1, \dots, M$, the state $s_i$ has potential energy $\varepsilon_i$. If $\varepsilon_i < \varepsilon_{i'}$, then we must input energy equalling $\varepsilon_{i'} - \varepsilon_i$ to move from the state $s_i$ to $s_{i'}$. As an example, consider a hydrogen atom consisting of a nucleus and an electron. The electron occupies one of two shells around the nucleus: the inner shell or the outer shell. Energy is required to move this electron the inner shell to the outer shell; hence, the state of lying in the outer shell is of higher energy.
 
 A system seeks to minimise its energy, resulting in a non-uniform probability of states. Higher-energy states are improbable but not impossible, particularly in high temperatures: a sufficiently hot gas will become ionised, entering a higher-energy state. The probability of a state $s_i$ then depends on its energy $\varepsilon_i$ and on the temperature $T$ of the system. It follows the \textit{Boltzmann distribution}:\[
   p(s_i) = Z\exp\left(\frac{-\varepsilon_i}{k_\mathrm{B}T}\right) \text,
-\] where $k_\mathrm{B}$ is the Boltzmann constant, and $Z \coloneqq 1/\sum^{M}_{i=1}\exp(-\varepsilon_i/k_\mathrm{B}T)$ ensures that the probabilities sum to $1$.
+\] where $k_\mathrm{B}$ is the Boltzmann constant, and $Z \coloneqq 1/\sum^{M}_{i=1}\exp(-\varepsilon_i/k_\mathrm{B}T)$ ensures that the probabilities sum to $1$. \citep{Schroeder}
 
 We can apply these physical principles to active learning to obtain a wider variety of recommendations. Since many scoring functions are continuous, any two recommended samples are likely to be correlated, yielding redundant information. Boltzmann sampling helps reduce this effect.
 
 Let $\varpi : \cX \to \bbR$ be a recommender that assigns a score to the candidate samples. Let $P = \{\bx_1, \dots, \bx_N\}$ be the pool of candidates; think of each as a state. Then the energy of $\bx_i$ is $\varepsilon_i = -\varpi(\bx_i)$ since we prefer higher scores. A Boltzmann sampler with temperature $T$ then recommends a sample $\bx_i$ with probability \[
   p(\bx_i) \propto \exp\left(\frac{-\varepsilon_i}{T}\right) \text{\footnotemark}.
-\]\footnotetext{Observe that this formula omits $k_\mathrm{B}$, changing the scale of $T$.} Observe that samples with higher scores are still preferred. The strength of that preference is inversely proportional to $T$.
+\]\footnotetext{Observe that this formula omits $k_\mathrm{B}$, changing the scale of $T$.}Observe that samples with higher scores are still preferred. The strength of that preference is inversely proportional to $T$.\jn{CITE a ml reference}
 
 We may change the value of $T$ as we progress through our learning to balance exploration and exploitation. Random samples (high $T$) are often desirable at the start of our learning; towards the end, we can place more weight on $\varphi$ (low $T$). Conversely, if a recommender outperforms random samples at the start of our learning curve, we may wish to place more weight on its scores before transitioning to random samples.
 
@@ -1173,11 +1320,11 @@ A learning curve showing Boltzmann sampling applied to uncertainty recommendatio
 
 An analogous learning curve for density recommendation is shown in \cref{fig:boltz_density_dz1}. For SDSS, we find that $T$ interpolated from $10$ to $100$ outperforms passive learning. For 2dFLenS, although Boltzmann sampling outperforms pure density recommendation, it does not outperform passive learning.
 
-\jn{table of deficiencies}
+\Cref{table:boltzmann_deficiencies} lists the deficiencies of these curves.
 
 \subsection{Mixing recommenders}
 
-From the plots above, we see that different recommenders excel at different stages of the training. Density recommendation is best when we are starting off, and uncertainty recommendation helps us tackle the long tail of the distribution in the later stages. The need to combine the benefits of both strategies becomes clear.
+From the plots above, we see that different recommenders excel at different stages of the training. Density recommendation is best when we are starting off, and uncertainty recommendation helps us tackle the long tail of the distribution in the later stages. The need to combine the benefits of both strategies becomes clear. \jn{CITE}
 
 There are two ways of combining recommenders, depending on their definition.
 
@@ -1197,7 +1344,19 @@ This is reminiscent of the problem of exploration vs exploitation. Uncertainty s
 
 \jn{helpful plot}
 
+\chapter{Conclusions}
+
+\jn{write something}
+
+\nocite{Bishop}
+\nocite{KitchenSinks}
+\nocite{GPBook}
+\nocite{Deficiency}
+\nocite{InducingVariables}
+\nocite{OptimalDesign}
+\nocite{Chris}
+\nocite{*}
 \bibliography{references}{}
-\bibliographystyle{plain}
+\bibliographystyle{plainnat}
 
 \end{document}

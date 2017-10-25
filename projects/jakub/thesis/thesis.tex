@@ -507,6 +507,8 @@ Optimal design requires us to be able to assess the uncertainties in the predict
 
   The spectroscopic redshift distribution of objects in 2dFLenS is presented in \cref{fig:spec_hist}. Its data spans from about from about $z_\mathrm{spec} = 0.05$ to about $z_\mathrm{spec} = 0.3$, with limited examples existing outside this interval. This is a lower spread than SDSS.
 
+  \jn{talk about extra features compared to SDSS}
+
   \jn{a plot of magnitudes $r$ would be nice}
 
   \jn{a plot of magnitudes $r$ vs $z$ would be nice}
@@ -685,7 +687,11 @@ Note that this does not apply to models where a nonlinear transformation is appl
 
 \subsection{Nonlinear features}
 
-\jn{TODO: write}
+The constraint that $\hat y$ must be a linear combination of the elements of $\bx$ is very limiting. Few functions are well approximated by a line. To generalise linear regression, hence allowing us to approximate a wider range of functions, we can choose some basis functions $\phi_1, \dots, \phi_{d'}$, each mapping $\bbR^d \to \bbR$. Let $\bphi$ be the $d'$-dimensional vector of these functions. For notational convenience, we assume that $\bphi$ refers to $\bphi(\bx)$ and $\Phi \in \bbR^{n \times d'}$ is the matrix of basis functions for every point in the training set.
+
+To derive our linear model, we assume that $\hat f(\bx) = \bphi^\top \bw$ for some $\bw \in \bbR^{d'}$. Following a procedure analogous to linear regression, we find that the optimal solution lies at \[
+  \bw = \left(\Phi^T\Phi\right)^\top \Phi^\top \by \text.
+\]
 
 \section{Kernels}
 
@@ -1091,6 +1097,11 @@ Given a recommender $\varpi$ returning a score, we can define a recommender $\pi
 Similarly, given a recommender $\pi$ returing a set of samples, we can define a recommender $\varpi$ returning a score. Assuming a fixed pool $P \in \cP(\cX)$, for all $\bx\in\cX$, define\[
   \varpi(\bx) \coloneqq -\min \{ i = 1, \dots, \abs{P} \mid \bx \in \pi(\cX, i)\} \text.
 \] Then the score $\varpi$ assigns to $\bx$ is the negation of its preference index in $\pi$.
+
+
+\section{Relation to optimal design}
+
+\jn{TODO: Write this section, time permitting. Else, delete it.}
 
 
 \section{Relation to Bayesian optimisation with Gaussian processes}

@@ -386,27 +386,34 @@ Optimal design requires us to be able to assess the uncertainties in the predict
     m_A - m_B = -5 \log_{100} \left( \frac{I_A}{I_B} \right) \text.
   \] Counterintuitively, brigter objects have a lower magnitude. The sun has an apparent magnitude of $-27$ and is the brightest object in the sky. \jn{cite}
 
-  We use filters to separate light coming from different sections of the visible light spectrum. In our datasets, these are $u$, $g$, $r$, $i$, and $z$, in increasing order of wavelength. The $u$ band is ultraviolet, $g$ and $r$ are visible, and $i$ and $z$ are infrared. These five filters have a large spread, providing information about objects' emissions in a wide part of the spectrum.
+  We use filters to separate light coming from different sections of the visible light spectrum. In our datasets, these are $u$, $g$, $r$, $i$, and $z$\footnote{In astronomy, $z$ can refer either to an object's redshift or to the infrared band. The meaning of any particular $z$ should be clear from context.}, in increasing order of wavelength. The $u$ band is ultraviolet, $g$ and $r$ are visible, and $i$ and $z$ are infrared. These five filters have a large spread, providing information about objects' emissions in a wide part of the spectrum.
 
   \jn{a pic of the filters would be nice}
 
-  We use pairwise differences of magnitudes in these bands as the \emph{colours} in photometric redshifts. The colours are $m_u - m_g$, $m_u - m_r$, $m_r - m_i$, and $m_i - m_z$. \jn{cite where they are used} \jn{talk about them being independent of distance} In addition to the four colours, we use $m_r$ as a proxy for the apparent magnitude of the object,
+  We use pairwise differences of magnitudes in these bands as the \emph{colours} in photometric redshifts. The colours are $m_u - m_g$, $m_u - m_r$, $m_r - m_i$, and $m_i - m_z$. \jn{cite where they are used} Since the magnitude is a logarithmic scale, for bands $a$ and $b$, $m_a - m_b$ is proportional to $I_b / I_a$, making the colours independent of the apparent magnitude of the object as a whole. In addition to the four colours, we use $m_r$ as a proxy for the apparent magnitude of the object.
 
   \section{Datasets}
-  \jn{TODO: WRITE}
+  To predict photometric redshifts, we need a dataset of example objects. For each, we must know the five photometric bands, as well as the spectroscopic redshift. Uncertainty bounds for the photometric data and the redshift are very common, but not used in our model.
+
+  Many suitable datasets exist. The Sloan digital sky survey (SDSS) is very common, and contains a very large number of objects. The 2-degree Field Lensing Survey (2dFLenS) is another dataset we use, with far fewer objects. They have different distributions and cover different ranges of redshifts and magnitudes, permitting us to study the behaviour of our model under differing distributions of data.
 
   \subsection{Sloan digital sky survey}
-  The Sloan digital sky survey (SDSS) \jn{blah} \citep{SDSS}.
+  The Sloan digital sky survey (SDSS) is a large photometric and spectroscopic survey of the Northern sky. As of its twelfth data release, it contains useful spectroscopic redshifts for \SI{4266444}{} objects, including \SI{2401952}{} galaxies, along with the corresponding photometric measurements. \citep{SDSS} Of these galaxies, we select those with a redshift uncertainty of less than $0.1$, leaving us with \SI{1707233}{} examples.
 
-  The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}.
+  The spectroscopic redshift distribution of objects in SDSS is presented in \cref{fig:spec_hist}. We see that it covers redshifts from about $z_\mathrm{spec} = 0.05$ to about $z_\mathrm{spec} = 0.8$, with some examples existing outside these bounds.
 
-  \jn{TODO: WRITE}
+  \jn{a plot of magnitudes $r$ would be nice}
 
-  \subsection{2dFLenS}
+  \jn{a plot of magnitudes $r$ vs $z$ would be nice}
 
-  The 2-degree Field Lensing Survey is \jn{blah} \citep{Chris}.
+  \subsection{The 2-degree field lensing survey}
+  The 2-degree field lensing survey (2dFLenS) is also a photometric and spectroscopic survey. Unlike SDSS, it observes the Southern sky. It lists \SI{50919}{} examples with spectroscopic redshifts and photometric measurements, which is significantly fewer than SDSS.
 
-  The spectroscopic redshift distribution of objects in 2dFLenS is presented in \cref{fig:spec_hist}.
+  The spectroscopic redshift distribution of objects in 2dFLenS is presented in \cref{fig:spec_hist}. Its data spans from about from about $z_\mathrm{spec} = 0.05$ to about $z_\mathrm{spec} = 0.3$, with limited examples existing outside this interval. This is a lower spread than SDSS.
+
+  \jn{a plot of magnitudes $r$ would be nice}
+
+  \jn{a plot of magnitudes $r$ vs $z$ would be nice}
 
 \chapter{Regression on photometric redshifts}
 

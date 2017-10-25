@@ -796,8 +796,23 @@ RBF Sampling approximates the Gaussian (RBF) kernel by randomly sampling from it
 
 \subsubsection{Empirical kernel map}
 
-\jn{TODO: WRITE}
+A kernel represents a sample by its similarity to all other training sample. To approximate it, we can represent each sample by its similarity to a subset of training samples.\citep{Kernels}
 
+Let $\bphi^n : \cD \to \bbR^n$ such that \[
+  \bphi^n(\bx) \coloneqq (k(\bx_1, \bx), \dots, k(\bx_1, \bx))^\top \text.
+\] Let $\Phi^n \in \bbR^{n\times n}$ be such that \[
+  \Phi^n_i \coloneqq \bphi_n(\bx_i) \text.
+\] Then $\Phi^n(\Phi^n)^\top = K^2$.
+
+Let $\tilde K^{-1/2} \in \bbR^{n' \times n}$ be a low-rank approximation of $K^{-1/2}$.\footnote{We want $(\tilde K^{-1/2})^T\tilde K^{-1/2} \approx K$} Define $\bphi : \cX \to \bbR^{n'}$ as \[
+    \bphi \coloneqq \tilde K^{-1/2} \bphi^n(\bx)
+\] with a corresponding $\Phi$. Then \begin{align*}
+    \Phi\Phi^T &= \Phi^n\left(\tilde K^{-\frac12}\right)^\top \tilde K^{-\frac12}\left(\Phi^n\right)^\top \\
+    &\approx \Phi^nK^{-1}\left(\Phi^n\right)^\top \\
+    &= K \text{.}
+\end{align*}
+
+This approximation is often more accurate than RBF sampling since we may choose the subset of training samples used to approximate the data. However, choosing this subset is difficult, as is computing $\tilde K^{-1/2}$. This limits the utility of this approximation.
 
 \subsection{Kernelised linear regression}
 

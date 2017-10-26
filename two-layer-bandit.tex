@@ -122,6 +122,18 @@ astronomical domain, we find that combining active learning suggestions
 improves over each individual heuristic (including passive learning) and the
 computation is fast enough for practical use.
 
+We consider the question of combining active learning suggestions to identify informative
+training examples in binary and multiclass classifcation. Supervised machine learning
+relies on having labelled examples, but the construction labelled training sets may
+be prohibitive. Active learning heuristics have been proposed to help us pick which
+instance to annotate next. Motivated by the success of methods that combine classifiers,
+we propose to combine active learners. This solves the problem of which heuristic to use
+for a particular problem. Our experiments consider combinations of active learners
+using bandit algorithms, and rank aggregation methods from social choice theory.
+Our empirical results on small and large benchmark data demonstrate that
+combinations improve on individual active learners, and rank aggregation works
+better than bandit approaches. We show that in practice there is no need to pick a
+particular heuristic beforehand, since we can cheaply combine.
 
 \end{abstract}
 
@@ -132,6 +144,20 @@ computation is fast enough for practical use.
 \thispagestyle{empty}
 
 \section{Introduction}
+
+\begin{itemize}
+	\item We survey combining active learning suggestions.
+	\item Combining predictors are well known.
+	\item What is active learning, and why combining makes sense
+	\item Empirically review bandit combination
+	\item Additionally add ranking combination
+	\item Active is better than passive
+	\item Combining is better than single
+	\item Bandit is the same as random combine, problem with reward design
+	\item Choice is better than Bandit, hence most practical
+	\item No need to apriori pick an active learning heuristic
+\end{itemize}
+
 
 Recent advances in sensors and scientific instruments have led to an increasing
 use of machine learning techniques for managing the data deluge. Supervised

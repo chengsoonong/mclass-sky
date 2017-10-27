@@ -96,9 +96,9 @@
 \title{Combining Active Learning Suggestions}
 
 \author[1]{Alasdair Tran}
-\author[2]{Cheng Soon Ong}
+\author[2, 3]{Cheng Soon Ong}
 \author[3]{Christian Wolf}
-\affil[1]{Computational Media Lab, Australian National University}
+\affil[1]{Research School of Computer Science, Australian National University}
 \affil[2]{Machine Learning Research Group, Data61, CSIRO, Australia}
 \affil[3]{Research School of Astronomy and Astrophysics, Australian National
           University}
@@ -107,33 +107,17 @@
           expert advice, astronomy}
 
 \begin{abstract}
-
-We propose a novel approach of combining active learning suggestions to
-identify informative training examples in classification tasks. In supervised
-learning, the construction of the training set has become a significant
-bottleneck as this requires human experts to manually annotate examples. Many
-heuristics such as uncertainty sampling and version space reduction have been
-proposed to help us pick which instance from an unlabelled pool to annotate
-next. This however leads to a new problem---which heuristic should we use under
-which setting? We demonstrate that bandit and social choice theories provide a
-framework that can be used to combine and make use of all of the heuristics in
-the training stage. Using benchmark UCI data and a large dataset from the
-astronomical domain, we find that combining active learning suggestions
-improves over each individual heuristic (including passive learning) and the
-computation is fast enough for practical use.
-
-We consider the question of combining active learning suggestions to identify informative
-training examples in binary and multiclass classifcation. Supervised machine learning
-relies on having labelled examples, but the construction labelled training sets may
-be prohibitive. Active learning heuristics have been proposed to help us pick which
-instance to annotate next. Motivated by the success of methods that combine classifiers,
-we propose to combine active learners. This solves the problem of which heuristic to use
-for a particular problem. Our experiments consider combinations of active learners
-using bandit algorithms, and rank aggregation methods from social choice theory.
-Our empirical results on small and large benchmark data demonstrate that
-combinations improve on individual active learners, and rank aggregation works
-better than bandit approaches. We show that in practice there is no need to pick a
-particular heuristic beforehand, since we can cheaply combine.
+We study the problem of combining active learning suggestions to identify
+informative training examples in binary and multiclass classification.
+Supervised machine learning relies on building a training set of labeled
+examples, but this process is time-consuming as it requires manual annotation
+from human experts. Many active learning heuristics have been proposed to help
+us pick which instance to annotate next. But what is the optimal heuristic for
+a particular problem? Motivated by the success of methods that combine
+classifiers, we propose to combine active learners with bandit algorithms and
+rank aggregation methods. Using benchmark datasets, we demonstrate that there
+is no need to pick a particular heuristic a priori, since we can cheaply
+combine them without sacrificing the final accuracy.
 
 \end{abstract}
 

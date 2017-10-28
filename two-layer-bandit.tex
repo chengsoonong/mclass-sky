@@ -128,21 +128,6 @@ combine them without sacrificing the final accuracy.
 \thispagestyle{empty}
 
 \section{Introduction}
-
-\begin{itemize}
-	\item We survey combining active learning suggestions.
-	\item Combining predictors are well known.
-	\item What is active learning, and why combining makes sense
-	\item Empirically review bandit combination
-	\item Additionally add ranking combination
-	\item Active is better than passive
-	\item Combining is better than single
-	\item Bandit is the same as random combine, problem with reward design
-	\item Choice is better than Bandit, hence most practical
-	\item No need to apriori pick an active learning heuristic
-\end{itemize}
-
-
 Recent advances in sensors and scientific instruments have led to an increasing
 use of machine learning techniques for managing the data deluge. Supervised
 learning has become a widely used paradigm in many big data applications.
@@ -167,21 +152,25 @@ be labeled based on some predicted class probabilities.
 Section~\ref{sec:heuristics} describes two families of algorithms in
 detail---uncertainty sampling and version space reduction.
 
-Our novel contribution is the empirical study of how we can combine suggestions
-from all of the heuristics. By considering each active learning heuristic as an
-expert that gives recommendation on which example to label next, we propose to
-combine them using bandit and rank aggregation algorithms. The use of bandit
-algorithms have been studied before~\citep{baram04, hsu15}, but as far as we
-know, this is the first time that social choice theory is used to rank and
-aggregate the suggestions. The problem of prediction with expert advice and its
-application to active learning is described in Section~\ref{sec:expert}.
+This paper presents a survey of how we can combine suggestions from various
+heuristics. In supervised learning, combining predictors is a well-studied
+problem. Many techniques such as AdaBoost (which averages predictions from a
+set of models) and decision trees (which selects one model for making
+predictions based on the input space) have shown to perform better than just
+using a single model. Inspired by this success, we propose to combine active
+learning suggestions with bandit and social choice theories in
+Section~\ref{sec:expert}. The use of bandit algorithms, which pick one
+heuristic at each time step, have been studied before~\citep{baram04, hsu15}.
+However, as far as we know, this is the first time that social choice theory is
+used to rank and aggregate the suggestions.
 
 To compare the algorithms, we run them on 11 benchmark datasets from UCI and a
 large dataset from the Sloan Sky Digital Sky Survey (SDSS). The experiment
-setup and discussion are described in Section~\ref{sec:expt}. The key empirical
-finding is that combining suggestions, even with a very simple aggregation rule
-like Borda count, leads to better performance, especially in large datasets
-with unbalanced classes.
+setup and discussion are described in Section~\ref{sec:expt}. Our three main
+findings are: active learning is better than passive learning, combining
+active learners does not in general degrade the performance, and social choice
+theory provides more practical algorithms than bandit theory since we do not
+need to design a reward scheme.
 
 \section{Active Learning Heuristics}~\label{sec:heuristics}
 In this paper, we study the problem of multi-class classification and how to

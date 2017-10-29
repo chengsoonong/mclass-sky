@@ -5,7 +5,8 @@
 %% line numbers, and should have this option removed.
 %%
 %% Please note that the line numbering option requires
-%% version 1.1 or newer of the wlpeerj.cls file.
+%% version 1.1 or newer of the wlpeerj.cls file, and
+%% the corresponding author info requires v1.2
 
 \documentclass[fleqn,10pt,lineno]{wlpeerj} % for journal submissions
 % \documentclass[fleqn,10pt]{wlpeerj} % for preprint submissions
@@ -23,6 +24,7 @@
 \usepackage{etoolbox}
 \hypersetup{
 	colorlinks   = true, % Colours links instead of ugly boxes
+	citecolor    = {blue},
 	pdfauthor    = {Alasdair Tran and Cheng Soon Ong},
 	pdftitle	 = {Combining Active Learning Suggestions},
 }
@@ -103,8 +105,10 @@
 \affil[3]{Research School of Astronomy and Astrophysics, Australian National
           University}
 
-\keywords{machine learning, active learning, bandit, rank aggregation,
-          expert advice, astronomy}
+\corrauthor[1]{Alasdair Tran}{alasdair.tran@anu.edu.au}
+
+% \keywords{machine learning, active learning, bandit, rank aggregation,
+%           expert advice, astronomy}
 
 \begin{abstract}
 We study the problem of combining active learning suggestions to identify
@@ -114,7 +118,7 @@ examples, but this process is time-consuming as it requires manual annotation
 from human experts. Many active learning heuristics have been proposed to help
 us pick which instance to annotate next. But what is the optimal heuristic for
 a particular problem? Motivated by the success of methods that combine
-classifiers, we propose to combine active learners with bandit algorithms and
+predictors, we propose to combine active learners with bandit algorithms and
 rank aggregation methods. Using benchmark datasets, we demonstrate that there
 is no need to pick a particular heuristic a priori, since we can cheaply
 combine them without sacrificing the final accuracy.
@@ -135,7 +139,7 @@ However, labeled examples are required during the training phase of these
 algorithms, and the labeling process has become a significant bottleneck.
 
 The most common approach to produce a training set is passive learning, where
-we randomly select an instance from a large pool of unlabeled data to label,
+we randomly select an instance from a large pool of unlabeled data to annotate,
 and we continue doing this until the training set reaches a certain size or
 until the classifier makes sufficiently good predictions. Depending on how the
 underlying data is distributed, this process can be quite inefficient. To see
@@ -154,67 +158,105 @@ detail---uncertainty sampling and version space reduction.
 
 This paper presents a survey of how we can combine suggestions from various
 heuristics. In supervised learning, combining predictors is a well-studied
-problem. Many techniques such as AdaBoost (which averages predictions from a
-set of models) and decision trees (which selects one model for making
-predictions based on the input space) have shown to perform better than just
-using a single model. Inspired by this success, we propose to combine active
-learning suggestions with bandit and social choice theories in
-Section~\ref{sec:expert}. The use of bandit algorithms, which pick one
-heuristic at each time step, have been studied before~\citep{baram04, hsu15}.
-However, as far as we know, this is the first time that social choice theory is
-used to rank and aggregate the suggestions.
+problem. Many techniques such as AdaBoost~\citep{freund96} (which averages
+predictions from a set of models) and decision trees~\citep{breiman84} (which
+select one model for making predictions in each region of the input space) have
+been shown to perform better than just using a single model. Inspired by this
+success, we propose to combine active learning suggestions with bandit and
+social choice theories in Section~\ref{sec:expert}. The use of bandit
+algorithms, which pick one heuristic at each time step, has been studied
+before~\citep{baram04, hsu15}. However, as far as we know, this is the first
+time that social choice theory is used to rank and aggregate the suggestions.
 
-To compare the algorithms, we run them on 11 benchmark datasets from UCI and a
-large dataset from the Sloan Sky Digital Sky Survey (SDSS). The experiment
-setup and discussion are described in Section~\ref{sec:expt}. Our three main
-findings are: active learning is better than passive learning, combining
-active learners does not in general degrade the performance, and social choice
-theory provides more practical algorithms than bandit theory since we do not
-need to design a reward scheme.
+To compare the algorithms, we run them on 11 benchmark datasets from the UCI
+Machine Learning Repository and a large dataset from the Sloan Sky Digital Sky
+Survey (SDSS). The experiment setup and discussion are described in
+Section~\ref{sec:expt}. Our three main findings are: active learning is better
+than passive learning; combining active learners does not in general degrade
+the performance; and social choice theory provides more practical algorithms
+than bandit theory since we do not need to design a reward scheme.
 
-\section{Active Learning Heuristics}~\label{sec:heuristics}
-In this paper, we study the problem of multi-class classification and how to
-combine active learning suggestions to build a good training set. Consider the
-classification setting where we would like to learn a classifier $h$ that maps
-the feature space $\X \subset \mathbb{R}^d$ to a probability distribution over
-a finite label space $\Y$:
-\begin{IEEEeqnarray*}{lCl}
+
+\section{Overview of Active Learning}~\label{sec:heuristics}
+Consider the classification setting where we would like to learn a classifier
+$h$, which is a function that maps some feature space $\X \subseteq
+\mathbb{R}^d$ to a probability distribution over a finite label space $\Y$:
+\begin{IEEEeqnarray}{lCl}
 	h : \X \rightarrow p(\Y)
-\end{IEEEeqnarray*}
-Here $p(\Y)$ maps the labels to the probabilities that indicate how likely that
-the object belongs to a particular class. In pool-based active learning, where
-we select an object from a pool of unlabelled examples at each time step, we
-also require that some objects have already been labelled initially. In practice, this
-normally means that we label a small random sample at the beginning. These
-become the labelled set $\Labelled \subset \X \times \Y$, and the rest form the
-unlabeled set $\Unlabelled \subset \X$.
+\end{IEEEeqnarray}
+For example, in logistic regression with two classes, $\Y = \{0, 1\}$, we can
+model the probability that an object with feature vector $\bm{x}$ belongs to
+the positive class with
+\begin{IEEEeqnarray}{lCl}
+	h(\bm{x}; \bm{w}) &=& \Prob{y = 1 \mid \bm{x}; \bm{w}}
+	= \dfrac{1}{1 + e^{-\bm{w}^T \bm{x}}}
+\end{IEEEeqnarray}
+and the training process involves learning the optimal weight vector $\bm{w}$.
+
+In pool-based active learning, where we select an object from a pool of
+unlabeled examples at each time step, we also require that some objects have
+already been labeled initially. In practice, this normally means that we label
+a small random sample at the beginning. These become the labeled set
+$\Labelled_T \subset \X \times \Y$, and the rest form the unlabeled set
+$\Unlabelled \subset \X$. Finally we also need a separate test set $\Labelled_S
+\subset \X \times \Y$, which allows us to see how well the model generalizes
+to unseen data.
 
 Now consider the problem of choosing the next example in $\Unlabelled$ for
 querying. Labeling can be a very expensive task, perhaps because it requires
 actual human experts to manually examine each object. Thus we want to be smart
 in choosing the next example. This motivates us to come up with a rule
-$m(\bm{x}; h)$ that gives each unlabelled example a score based only on their
+$r(\bm{x}; h)$ that gives each unlabeled example a score based only on their
 feature vector $\bm{x}$ and the current classifier $h$. In particular, we use
-the probability estimates from the classifier over the unlabelled examples to
+the probability estimates from the classifier over the unlabeled examples to
 calculate the scores:
-\begin{IEEEeqnarray*}{lCl}
-	m : p(\Y)^{U} \rightarrow \mathbb{R}^{U}
-\end{IEEEeqnarray*}
-where $U$ is the size of the unlabelled set $\Unlabelled$. Coupled with each
-rule is an objective function $r$ that picks the most informative example
-based on the scores for labeling:
-\begin{IEEEeqnarray*}{lCl}
-	r : \mathbb{R}^{U} \rightarrow J_\Unlabelled
-\end{IEEEeqnarray*}
-where $J_\Unlabelled$ is the index set over the unlabelled instances. The rule
+\begin{IEEEeqnarray}{lCl}
+	r : p(\Y)^{U} \rightarrow \mathbb{R}^{U}
+\end{IEEEeqnarray}
+where $U$ is the size of the unlabeled set $\Unlabelled$. Coupled with each
+rule is an objective function $s$ that picks the most informative example
+for labeling based on the scores:
+\begin{IEEEeqnarray}{lCl}
+	s : \mathbb{R}^{U} \rightarrow J_\Unlabelled
+\end{IEEEeqnarray}
+where $J_\Unlabelled$ is the index set over the unlabeled instances. The rule
 can be as simple as an argmax or argmin function, depending on how the scores
-are interpreted.
+are interpreted. Algorithm~\ref{alg:active} outlines the standard pool-based
+active learning setting. Note that in practice, there can be a large amount of
+unlabeled data, so for computational reasons, we only assign a score to a small
+random sample of size $E$ from the unlabeled pool.
+
+\begin{algorithm}[htbp]
+	\KwIn{
+    	unlabeled set $\Unlabelled$,
+        labeled training set $\Labelled_T$,
+        classifier $h(\bm{x})$,
+        desired training size $n$,
+        query size $E$,
+        and active learning rule $r(\bm{x}; h)$.
+        }
+    \BlankLine
+	\While{$|\Labelled_T| < n$}{
+		Select a random sample $\Ecal$ of size $E$ from $\Unlabelled$. \;
+		Select the most informative candidate $\bm{x}_*$ from $\Ecal$ using the
+			active learning rule $r(\bm{x}; h)$. \;
+        Ask the expert to label $\bm{x}_*$. Call the label $y_*$. \;
+		Add the new labeled example to the training set:
+			$\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$. \;
+		Remove the new labeled example from the unlabeled set:
+			$\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$. \;
+        Retrain the classifier $h(\bm{x})$. \;
+    }
+
+	\caption{The pool-based active learning algorithm}
+	\label{alg:active}
+\end{algorithm}
 
 Coming up with an optimal rule is itself a difficult problem, but there have
 been many attempts to derive good heuristics. Five common ones, which we shall
 use in the experiments, are listed in Table~\ref{tab:heuristics}. They roughly
 fall into two categories: uncertainty sampling and version space reduction.
-There are also heuristics that require minimizing the variance or maximizing
+There are also heuristics that involve minimizing the variance or maximizing
 the classifier certainty of the model \citep{schein07}, but we do not consider
 them in this paper as they are computationally inefficient in practice.
 
@@ -344,9 +386,9 @@ Bandit algorithms do not need to know the internal workings of the heuristics,
 but only the reward received from using a particular heuristic. Based on
 the history of all the rewards, the bandit algorithm can decide on which
 heuristic to pick next. Formally, we have
-\begin{IEEEeqnarray*}{lCl}
+\begin{IEEEeqnarray}{lCl}
 	b : [0, 1]^{R \times T} \rightarrow J_\R
-\end{IEEEeqnarray*}
+\end{IEEEeqnarray}
 where $b$ is the bandit algorithm, $[0, 1]$ is a normalized reward between
 0 and 1, and $J_\R$ is the index set over the set of heuristics $\R$, and $T$
 is the time horizon.
@@ -378,13 +420,11 @@ active learning. The only difference between the bandit algorithms lies in the
 \textsc{Update} function that updates the algorithm's parameters when receiving
 a new reward. Refer to Algorithms~\ref{alg:thompson} to~\ref{alg:exp3pp} in
 Appendix A to see how each bandit algorithm implements these two functions.
-For computational reasons, we only assign a score to a small random sample of
-size $E$ from the unlabeled pool.
 
 \begin{algorithm}[htbp]
 	\KwIn{
-    	unlabelled set $\Unlabelled$,
-        labelled training set $\Labelled_T$,
+    	unlabeled set $\Unlabelled$,
+        labeled training set $\Labelled_T$,
         classifier $h$,
         desired training size $n$,
         query size $E$,
@@ -394,8 +434,7 @@ size $E$ from the unlabeled pool.
     \BlankLine
 	\While{$|\Labelled_T| < n$}{
     	Select a heuristic $r_* \in \R$ according to \Select. \;
-        $\Ecal$ $\leftarrow$ random sample of size $E$ from
-            $\Unlabelled$ \;
+        Select a random sample $\Ecal$ of size $E$ from $\Unlabelled$. \;
         $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*
             (\bm{x})$ \;
         $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
@@ -423,17 +462,17 @@ perfectly due to having a poor $h$. Conversely, a bad heuristic might be able
 to pick an informative candidate due to pure luck. Thus there is always a
 certain level of randomness in the reward received. We assume these errors to
 be normally distributed with mean $\nu_i$ and variance $\tau_i^2$:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		(\rho_i \mid \nu_i) \sim \Normal(\nu_i, \tau_i^2)
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 
 If we knew both $\nu_i$ and $\tau_i^2$ for all heuristics, the problem would
 become trivially easy since we just need to always use the heuristic that has
 the highest mean reward. In practice, we do not know $\nu_i$, so let us assume
 that it itself follows a normal distribution:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
         \nu_i \sim \Normal(\mu_i, \sigma_i^2)
-    \end{IEEEeqnarray*}
+    \end{IEEEeqnarray}
 
 To make the problem tractable, let us assume that the variance $\tau_i^2$ is a
 known constant. The goal now is to find a good algorithm that can estimate
@@ -449,9 +488,9 @@ that any of the heuristics offers an improvement to the performance.
 In each round, we draw a random sample $\nu_i'$ from the normal distribution
 $\Normal(\mu_i, \sigma_i^2)$ for each $i$ and select heuristic $r_*$ that has
 the highest sampled value of the mean reward:
-    \begin{IEEEeqnarray*}{lCl}
+    \begin{IEEEeqnarray}{lCl}
         r_* = \argmax_{i} \nu_i'
-    \end{IEEEeqnarray*}
+    \end{IEEEeqnarray}
 We then use this heuristic to assign scores to the candidates. The object that
 is deemed to be the most informative is then added to the training set and the
 classifier is retrained. Next we use the updated hypothesis to predict the
@@ -460,15 +499,15 @@ have a new piece of information that we can use to update our prior belief
 about the mean $\mu_*$ and the variance $\sigma_*^2$ of $r_*$. Using Bayes'
 theorem, we can show that the posterior distribution of the mean reward remains
 normal,
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
         (\nu_* \mid \rho_* = \delta) \sim \Normal (\mu_*', {\sigma'_*}^2)
-    \end{IEEEeqnarray*}
+    \end{IEEEeqnarray}
 with the following new mean and variance:
-    \begin{IEEEeqnarray*}{lClllCl}
+    \begin{IEEEeqnarray}{lClllCl}
 		\mu_*' &=& \frac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}
 		&\qquad\qquad
         {\sigma'_*}^2 &=& \frac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 
 \subsubsection{Upper Confidence Bounds}
 
@@ -485,10 +524,10 @@ kl-UCB \citep{cappe13}. They differ only in the way the upper bound is
 calculated. In this paper, we only consider the last two. In Optimally
 Confident UCB (OC-UCB), \cite{lattimore15} suggests that we pick the heuristic
 that maximizes the following upper bound:
-    \begin{IEEEeqnarray*}{lCl}
+    \begin{IEEEeqnarray}{lCl}
 		r_* = \argmax_{i} \overline{\rho_i} +
 			  \sqrt{\dfrac{\alpha}{T_i(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
-    \end{IEEEeqnarray*}
+    \end{IEEEeqnarray}
 where $\overline{\rho_i}$ is the average of the rewards from $r_i$ that we
 observe so far, $t$ is the time step, $T_i(t)$ is the number times we have
 selected from heuristic $r_i$ before step $t$, and $n$ is the maximum number of
@@ -498,10 +537,10 @@ which the author suggests setting to 3 and 2, respectively.
 \cite{cappe13} suggests that we instead consider the KL-divergence when finding
 to upper bound. In the case of normally distributed rewards with known variance
 $\sigma^2$, the chosen heuristic would be
-    \begin{IEEEeqnarray*}{lCl}
+    \begin{IEEEeqnarray}{lCl}
 		r_* = \argmax_{i} \overline{\rho_i} +
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
-    \end{IEEEeqnarray*}
+    \end{IEEEeqnarray}
 
 \subsubsection{EXP3++}
 
@@ -532,15 +571,15 @@ voice.
 For each heuristic $r_i$, we assign a score to every candidate like before. We
 are not interested in the actual raw scores, but only in the relative ranking
 $k(r_i)$ which converts the scores into a preference ordering:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		k : \mathbb{R}^{U} \rightarrow \sigma(J_\Unlabelled)
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 where $\sigma(J_\Unlabelled)$ is a permutation over the index set of the
 unlabeled pool. $\Unlabelled$. An aggregation function $c$ will then combine
 all the rankings into a combined ranking:
-    \begin{IEEEeqnarray*}{lCl}
+    \begin{IEEEeqnarray}{lCl}
 		c : \sigma(J_\Unlabelled)^{|\R|} \rightarrow \sigma(J_\Unlabelled)
-    \end{IEEEeqnarray*}
+    \end{IEEEeqnarray}
 From this, we can pick the highest-ranked candidate to label.
 
 The central question in social choice theory is how we can come up with a good
@@ -554,8 +593,8 @@ used in pool-based active learning.
 
 \begin{algorithm}[htbp]
 	\KwIn{
-    	unlabelled set $\Unlabelled$,
-        labelled training set $\Labelled_T$,
+    	unlabeled set $\Unlabelled$,
+        labeled training set $\Labelled_T$,
         classifer $h$,
         desired training size $n$,
         query size $E$,
@@ -672,11 +711,11 @@ algorithms work in Table~\ref{tab:choice}.
 
 \subsection{Description of datasets}
 
-We use 11 datasets taken from the UCI Machine Learning Repository, along
-with one large dataset SDSS from the astronomical domain \citep{alam15}.
-Table~\ref{tab:datasets} shows the size and the number of classes in each
-dataset, along with the proportion of the samples belonging to the majority
-class and the maximum achievable performance.
+We use 11 datasets taken from the UCI Machine Learning
+Repository~\citep{lichman13}, along with one large dataset SDSS from the
+astronomical domain \citep{alam15}. Table~\ref{tab:datasets} shows the size and
+the number of classes in each dataset, along with the proportion of the samples
+belonging to the majority class and the maximum achievable performance.
 
 \begin{table}[htbp]
 	\caption {Overview of datasets} \label{tab:datasets}
@@ -718,17 +757,17 @@ For each dataset, we build a classifier with the classes being the output. We
 use a 10-fold stratified shuffled split cross validation. The stratified
 strategy means that the proportion of the classes remain constant in each
 split. We standardise all features to have zero mean and unit variance.
-Although all examples has already been labelled, we simulate active learning by
+Although all examples has already been labeled, we simulate active learning by
 assuming that certain examples do not have any labels. In particular, the
-unlabelled pool size is 70\% of data up to a maximum of 10,000 examples. The
+unlabeled pool size is 70\% of data up to a maximum of 10,000 examples. The
 test pool consists of the remaining examples up to a maximum of 20,000---we
 assume labels are available here. We initialize the classifier by labeling 10
 random samples and using them as the the initial training set. We use logistic
 regression with a Gaussian kernel approximation and an L2 loss. In the binary
 case, the loss function is
-\begin{IEEEeqnarray*}{lCl}
+\begin{IEEEeqnarray}{lCl}
     L &=& \dfrac{1}{2} w^T w + C \sum_{i = 1}^n \ln\Big(1 + \exp(-y_i(f(X_i)^T w))\Big)
-\end{IEEEeqnarray*}
+\end{IEEEeqnarray}
 where the first term of the sum is the regularisation term to ensure that the
 weight vector is not too large, and $C$ is another regularisation
 hyperparameter which we set to 1000. To speed up training time, we approximate
@@ -748,13 +787,13 @@ Given that there are 12 datasets, each with 17 learning curves, we need a
 measure that can summarize in one number how well a particular heuristic or
 policy does. Building on~\cite{baram04}'s deficiency measure, we define the
 strength of an active learner or policy, relative to passive learning, as
-\begin{IEEEeqnarray*}{lCl}
+\begin{IEEEeqnarray}{lCl}
     \text{Strength}(h; m) &=&
     	1 - \dfrac{\sum_{t=1}^{n}\big(m(\max) - m(h, t)\big)}
     	{\sum_{t=1}^{n}\big(m(\max) - m(\passive, t)\big)}
-\end{IEEEeqnarray*}
+\end{IEEEeqnarray}
 where $m$ is a chosen metric (e.g. accuracy rate, F1-score, MPBA), $m(\max)$ is
-the best possible performance achieved from using all labelled data in the
+the best possible performance achieved from using all labeled data in the
 training set, and $m(h, t)$ is the performance achieved using the first $t$
 examples selected by heuristic $h$. The summation can then be thought of as the
 area between the best possible performance line and the learning curve of $h$.
@@ -838,6 +877,13 @@ policy manages to beat passive learning. This dataset does have the lowest
 maximum performance, where we achieve an MPBA of only 58\% (slightly above
 random guessing) when using the all examples in training. This indicates that
 we would be better off with passive learning with datasets that are very noisy.
+
+\begin{itemize}
+	\item Additionally add ranking combination
+	\item Active is better than passive
+	\item Combining is better than single
+	\item Bandit is the same as random combine, problem with reward design
+\end{itemize}
 
 \begin{figure}[tbp]
 	\centering
@@ -1104,18 +1150,18 @@ $N_i$ objects in the universe. Given a hypothesis, we can predict the label of
 every object and compare our prediction to the true label. Let $G_i$ be the
 number of objects in class $i$ that are correctly predicted.
 Then we define the recall $A_i$ of class $i$ as\index{recall}
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		A_i &=& \frac{G_i}{N_i}
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 The problem is that it is not feasible to get the actual values of $G_i$ and
 $N_i$ since that would require us to obtain the true label of every object.
 Thus we need a method to estimate these quantities when we only have a sample.
 Initially we have no information about $G_i$ and $N_i$, so we can assume that
 each $A_i$ follows a uniform prior from 0 to 1. This is the same as a Beta
 distribution with shape parameters $\alpha = \beta = 1$:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		A_i &\sim& \Beta(1,1)
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 The PDF of $A_i$ is then
     \begin{IEEEeqnarray}{lCl}
         f_{A_i}(a) &=& \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\,
@@ -1128,12 +1174,12 @@ After we have trained the classifier, suppose we have a test set containing
 $n_i$ objects in class $i$. Running the classifier on this test set is the same
 as conducting $k$ binomial experiments, where, in the $i$th experiment, the
 sample size is $n_i$ and the probability of success is simply $A_i$. Let $g_i$
-be the number of correctly labelled objects belonging to class $i$ in the test
+be the number of correctly labeled objects belonging to class $i$ in the test
 set. Then, conditional on the accuracy rate, $g_i$ follows a binomial
 distribution:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		(g_i \mid A_i) &\sim& \Bin(n_i, A_i)
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 The probability mass function of $(g_i \mid A_i = a)$ is thus
     \begin{IEEEeqnarray}{lCl}
 		p_{g_i \mid A_i}(g_i) &=& \binom{n_i}{g_i} a^{g_i} (1 - a)^{n_i - g_i}
@@ -1143,33 +1189,33 @@ The probability mass function of $(g_i \mid A_i = a)$ is thus
 In the Bayesian \index{Bayesian} setting,~\eqref{eqn:prior} is the prior and
 \eqref{eqn:likelihood} is the likelihood. To get the posterior PDF, we simply
 multiply the prior with the likelihood:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		f_{A_i \mid \bm{g}}(a)
 		&\propto& f_{A_i}(a) \times f_{g_i \mid A_i}(g_i) \\
 		&\propto& a^{1-1}(1-a)^{1-1} \times a^{g_i} (1 - a)^{n_i - g_i} \\
 		&=& a^{1 + g_i - 1}(1-a)^{1 + n_i - g_i - 1}
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 Thus, with respect to the binomial likelihood function,
 the Beta distribution is conjugate to itself. The posterior recall rate $A_i$
 also follows a Beta distribution, now with parameters
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		(A_i \mid g_i) &\sim& \Beta(1 + g_i, 1 + n_i - g_i)
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 Our goal is to have a balanced accuracy rate, $A$, that puts an equal weight in
 each class. One way to achieve this is to take the average of the individual
 recalls:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		A &=& \frac{1}{k} \sum_{i=1}^k A_i \\
 		&=& \frac{1}{k} A_T
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 Here we have defined $A_T$ to be the sum of the individual recalls. We call
 $(A \mid \bm{g})$ the posterior balanced accuracy (PBA), where $\bm{g}
 =(g_1,...,g_k)$. Most of the time, we simply want to calculate its expected
 value:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		\E{A \given \bm{g}} &=& \frac{1}{k} \, \E{A_T \given \bm{g}} \\
 		&=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{g}}(a) \, da
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 Let us call this the mean posterior balanced accuracy (MPBA). Note that there
 is no closed form solution for the PDF $f_{A_T \mid \bm{g}}(a)$. However
 assuming that $A_T$ is a sum of $k$ independent Beta random variables, $f_{A_T
@@ -1183,18 +1229,18 @@ Having the knowledge of $f_{A \mid \bm{g}}(a)$ will allow us to make violin
 plots, construct confidence intervals and do hypothesis tests. To get an
 expression for this, let us first rewrite the cumulative distribution function
 (CDF) as
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		F_{A\mid \bm{g}}(a) &=& \Prob{A \leq a \mid \bm{g}} \\
 		&=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{g}} \\
 		&=& \Prob{A_T \leq ka \given \bm{g}} \\
 		&=& F_{A_T \mid \bm{g}}(ka) \IEEEyesnumber \label{eqn:CDF}
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{g})$:
-	\begin{IEEEeqnarray*}{lCl}
+	\begin{IEEEeqnarray}{lCl}
 		f_{A \mid \bm{g}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{g}}(ka) \\
 		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka}
 			F_{A_T \mid \bm{g}}(ka) \\
 		&=& k \cdot f_{A_T \mid \bm{g}}(ka)
-	\end{IEEEeqnarray*}
+	\end{IEEEeqnarray}
 
 \end{document}

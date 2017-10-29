@@ -27,6 +27,9 @@ There are two main notebooks used to replicate the experiments.
 2. [Active Learning Suggestions](active_learning_suggestions.ipynb):
    The second notebook contains the code used to replicate the experiments
    and produce all the plots used in the paper. Note that with the larger
-   datasets, it can take up to a day to run. If you just want to test
-   the code, we recommend running with the small datasets such as `glass`
-   or `wine`.
+   datasets, it can take up to a day to run. For testing purposes, we recommend
+   running with the small datasets such as `wine`. If you would like to
+   reproduce the plots used in the paper without re-running the experiments,
+   set the `RUN_EXPERIMENTS` constant to `False` in the notebook and
+   pull the latest result data from the subdirectory `results` (which is
+   a git submodule).

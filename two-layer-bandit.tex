@@ -188,7 +188,7 @@ For example, in logistic regression with two classes, $\Y = \{0, 1\}$, we can
 model the probability that an object with feature vector $\bm{x}$ belongs to
 the positive class with
 \begin{IEEEeqnarray}{lCl}
-	h(\bm{x}; \bm{w}) &=& \Prob{y = 1 \mid \bm{x}; \bm{w}}
+	h(\bm{x}; \bm{w}) &=& p(1 \mid \bm{x}; \bm{w})
 	= \dfrac{1}{1 + e^{-\bm{w}^T \bm{x}}}
 \end{IEEEeqnarray}
 and the training process involves learning the optimal weight vector $\bm{w}$.
@@ -254,56 +254,85 @@ random sample of size $E$ from the unlabeled pool.
 
 Coming up with an optimal rule is itself a difficult problem, but there have
 been many attempts to derive good heuristics. Five common ones, which we shall
-use in the experiments, are listed in Table~\ref{tab:heuristics}. They roughly
-fall into two categories: uncertainty sampling and version space reduction.
-There are also heuristics that involve minimizing the variance or maximizing
-the classifier certainty of the model \citep{schein07}, but we do not consider
-them in this paper as they are computationally inefficient in practice.
+use in the experiments, are described in Section~\ref{subsec:uncertainty}
+and~\ref{subsec:version}. They roughly fall into two categories: uncertainty
+sampling and version space reduction. There are also heuristics that involve
+minimizing the variance or maximizing the classifier certainty of the model
+\citep{schein07}, but we do not consider them in this paper as they are
+computationally inefficient in practice.
 
-\subsection{Uncertainty Sampling}
-
+\subsection{Uncertainty Sampling}~\label{subsec:uncertainty}
 \cite{lewis94} introduce the idea of uncertainty sampling, where we select the
-example whose class membership the classifier is least certain about. These
+instance whose class membership the classifier is least certain about. These
 tend to be points that are near the decision boundary of the classifier.
 Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
 confidence heuristic, where we pick the candidate whose most likely label the
-classifier is most uncertain about. A second option is to calculate the entropy
-\citep{shannon48}, which measures the amount of information needed to encode a
-distribution. Intuitively, the closer the class probabilities of an object are
-to random guessing, the higher its entropy will be. This gives us the heuristic
-of picking the candidate with the highest entropy of the distribution over the
-classes. Finally we can pick the candidate with the smallest margin, which is
-defined as the difference between the two highest class probabilities
-\citep{scheffer01} Since the sum of all probabilities must be 1, the smaller
-the margin is, the more uncertain we are about the object's class membership.
+classifier is most uncertain about:
+\begin{IEEEeqnarray}{lCl}
+	(s \circ r)(\bm{x}; h) &=& \argmax_{x \in \Unlabelled}
+	\left\{ \max_{y \in \Y} p(y | \bm{x}; h) \right\}
+\end{IEEEeqnarray}
+A second option is to calculate the entropy \citep{shannon48}, which measures
+the amount of information needed to encode a distribution. Intuitively, the
+closer the class probabilities of an object are to random guessing, the higher
+its entropy will be. This gives us the heuristic of picking the candidate with
+the highest entropy of the distribution over the classes:
+\begin{IEEEeqnarray}{lCl}
+	(s \circ r)(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
+	\left\{\sum_{y \in \Y} p(y | \bm{x}; h)
+	\log \big[ p(y | \bm{x}; h) \big] \right\}
+\end{IEEEeqnarray}
+Finally we can pick the candidate with the smallest margin, which is defined as
+the difference between the two highest class probabilities \citep{scheffer01}:
+\begin{IEEEeqnarray}{lCl}
+	(s \circ r)(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
+	\left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
+	\max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}
+\end{IEEEeqnarray}
+Since the sum of all probabilities must be 1, the smaller the margin is, the
+more uncertain we are about the object's class membership.
 
-\subsection{Version Space Reduction}
-
+\subsection{Version Space Reduction}~\label{subsec:version}
 Instead of focussing on the uncertainty of individual predictions, we could
 instead try to constrain the size of the version space, thus allowing the
-search for the optimal hypothesis to be more precise. The version space is
-defined as the set of all possible hypotheses that are consistent with the
+search for the optimal classifier to be more precise. The version space is
+defined as the set of all possible classifiers that are consistent with the
 current training set. To quantify the size of this space, we can train a
-committee of classifiers, $\B = \{h_1, h_2, ..., h_B\}$, and measure the
-disagreement among the members about an object's class membership. Each
-committee member needs to have a hypothesis that is as different from the
-others as possible but that is still in the version space \citep{melville04}.
-In order to have this diversity, we give each member only a subset of the
-training examples. Since there might not be enough training data, we need to
-use bootstrapping and select samples with replacement. Hence this method is
-often called Query by Bagging (QBB).
+committee of $B$ classifiers, $\B = \{h_1, h_2, ..., h_B\}$, and measure the
+disagreement among the members about an object's class membership. Ideally,
+each member should be as different from the others as possible but still be
+still in the version space \citep{melville04}. In order to have this diversity,
+we give each member only a subset of the training examples. Since there might
+not be enough training data, we need to use bootstrapping and select samples
+with replacement. Hence this method is often called Query by Bagging (QBB).
 
 One way to measure the level of disagreement is to calculate the margin using
-the class probabilities estimated by the committee \citep{melville04}. This
-looks similar to one of the uncertainty sampling heuristics, except now we
-first average out the probabilities of the members before minimizing the
-margin.~\cite{mccallum98} offer an alternative disagreement measure which
-involves picking the candidate with the largest expected Kullback-Leibler (KL)
-divergence from the average.
+the class probabilities estimated by the committee \citep{melville04}:
+\begin{IEEEeqnarray}{lCl}
+	(s \circ r)(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
+	\left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
+	\max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}
+\end{IEEEeqnarray}
+This looks similar to one of the uncertainty sampling heuristics, except now we
+first average out the class probabilities predicted by the members before
+minimizing the margin.~\cite{mccallum98} offer an alternative disagreement
+measure which involves picking the candidate with the largest expected
+Kullback-Leibler (KL) divergence from the average:
+\begin{IEEEeqnarray}{lCl}
+	(s \circ r)(\bm{x}; h) &=& \argmax_{x \in \Unlabelled}
+	\left\{ \dfrac{1}{B}
+	\sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}
+\end{IEEEeqnarray}
+where $D_{\mathrm{KL}}(p_b\|p_\B)$ is the KL divergence from the probability
+distribution that is averaged across the committee $\B$, to the distribution
+predicted by a member $b \in \B$.
+
+For convenience, we summarize the five heuristics discussed above in
+Table~\ref{tab:heuristics}.
 
 \begin{table}[h]
-	\caption {Summary of active learning heuristics used in our experiments,
-			  where $p(y | \bm{x}; h)$ is the probability of that an object
+	\caption {Summary of active learning heuristics used in our experiments.
+			  Notations: $p(y | \bm{x}; h)$ is the probability of that an object
 			  with feature vector $\bm{x}$ has label $y$ under classifier $h$,
 			  $\B$ is the set of $B$ classifiers $\{h_1, h_2, ..., h_B\}$, $\Y$
 			  is the set of possible labels, $\Unlabelled$ is the set of
@@ -356,10 +385,10 @@ question.
 This leads us to a more general problem of whether we can learn the optimality
 by just looking at the predictions given by the heuristics. Let us frame this
 as the problem of prediction with expert advice. Consider the heuristics as a
-collection of $R$ experts, $\R = \{r_1, r_2, ..., r_R\}$. How each expert comes up
-with the prediction does not matter to us. At every step $t$, however, we have
-the ability to ask each expert $r_i$ for a prediction, either of the next most
-informative instance in the unlabeled pool, or a rank on all the unlabeled
+collection of $R$ experts, $\R = \{r_1, r_2, ..., r_R\}$. How each expert comes
+up with the prediction is not important. At every step $t$, however, we
+have the ability to ask each expert $r_i$ for a prediction, either of the next
+most informative instance in the unlabeled pool, or a rank on all the unlabeled
 instances. Our task now is to use this information, along with the history of
 rewards in the case of bandits, to choose the best candidate. In the standard
 setting, the environment would reveal the correct answer after we have made our
@@ -380,7 +409,7 @@ lever gives out a random reward according to some unknown distribution. The
 goal of the game is to come up with a strategy that can maximize the gambler's
 lifetime rewards while minimizing the number of pulls.
 
-In the context of active learning, each heuristic is a lever with a different
+In the context of active learning, each lever is a heuristic with a different
 ability to identify the candidate whose labeling information is most valuable.
 Bandit algorithms do not need to know the internal workings of the heuristics,
 but only the reward received from using a particular heuristic. Based on
@@ -410,16 +439,15 @@ There have been some attempts to combine active learning suggestions in the
 literature.~\cite{baram04} use the EXP4 multi-armed bandit algorithm to
 automate the selection process.~\cite{hsu15} study an improved version, EXP4.P,
 along with importance weighting to estimate the rewards using only the training
-set. In this paper, we will be more comprehensive by studying and comparing
-four algorithms that address this exploration-vs-exploitation problem: Thompson
-sampling, OC-UCB, kl-OCB, and EXP3++.
+set. In this paper, we will be more comprehensive by comparing four algorithms
+that address this exploration-vs-exploitation problem: Thompson sampling,
+OC-UCB, kl-OCB, and EXP3++.
 
 Algorithm~\ref{alg:bandit} outlines how bandits can be used in pool-based
 active learning. The only difference between the bandit algorithms lies in the
 \textsc{Select} function that picks which heuristic to use and the
 \textsc{Update} function that updates the algorithm's parameters when receiving
-a new reward. Refer to Algorithms~\ref{alg:thompson} to~\ref{alg:exp3pp} in
-Appendix A to see how each bandit algorithm implements these two functions.
+a new reward.
 
 \begin{algorithm}[htbp]
 	\KwIn{
@@ -428,20 +456,23 @@ Appendix A to see how each bandit algorithm implements these two functions.
         classifier $h$,
         desired training size $n$,
         query size $E$,
-        set of active learning suggestions $\R$,
+        set of active learning heuristics $\R$,
         and bandit algorithm $B$ with two functions \Select\,and \Update.
         }
     \BlankLine
 	\While{$|\Labelled_T| < n$}{
-    	Select a heuristic $r_* \in \R$ according to \Select. \;
-        Select a random sample $\Ecal$ of size $E$ from $\Unlabelled$. \;
-        $\bm{x}_* \leftarrow \argmax_{\bm{x} \in \Ecal} r_*
-            (\bm{x})$ \;
-        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
-        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
-        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
-        $h(\bm{x}) \leftarrow$ retrain the classifier \;
-        $\delta$ $\leftarrow$ incremental increase in the accuracy \;
+		Select a heuristic $r_* \in \R$ according to \Select. \;
+		Select a random sample $\Ecal$ of size $E$ from $\Unlabelled$. \;
+		Select the most informative candidate $\bm{x}_*$ from $\Ecal$ using the
+			heuristic $r(\bm{x}; h)$. \;
+        Ask the expert to label $\bm{x}_*$. Call the label $y_*$. \;
+		Add the new labeled example to the training set:
+			$\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$. \;
+		Remove the new labeled example from the unlabeled set:
+			$\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$. \;
+		Retrain the classifier $h(\bm{x})$. \;
+		Run the updated classifier on the test set to compute the increase
+			 in the performance $\delta$. \;
         Update the parameters of $B$ with \Update$(\delta)$. \;
     }
     \caption{Pool-based active learning with bandit theory}
@@ -493,7 +524,7 @@ the highest sampled value of the mean reward:
     \end{IEEEeqnarray}
 We then use this heuristic to assign scores to the candidates. The object that
 is deemed to be the most informative is then added to the training set and the
-classifier is retrained. Next we use the updated hypothesis to predict the
+classifier is retrained. Next we use the updated classifier to predict the
 labels of objects in the test set. Let $\delta$ be the reward observed. We now
 have a new piece of information that we can use to update our prior belief
 about the mean $\mu_*$ and the variance $\sigma_*^2$ of $r_*$. Using Bayes'
@@ -508,13 +539,36 @@ with the following new mean and variance:
 		&\qquad\qquad
         {\sigma'_*}^2 &=& \frac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}
 	\end{IEEEeqnarray}
+Algorithm~\ref{alg:thompson} summarizes the \textsc{Select} and \textsc{Update}
+functions used in Thompson sampling.
+\SetKwFunction{SelectFn}{Select}%
+\begin{algorithm}[htbp]
+	\Fn{\Select()}{
+		\For{$i \in \{1, 2, ..., R\}$}{
+			$\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$ \;
+			}
+		Select the heuristic with the highest sampled value: $r_* \leftarrow \argmax_{i} \nu_i'$ \;
+	}
+	\BlankLine
+	\Fn{\Update($\delta$)}{
+		$\mu_* \leftarrow \dfrac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}$
+		$\qquad\qquad$
+		$\sigma_*^2 \leftarrow \dfrac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}$ \;
+	}
+	\caption{Thompson sampling with normally distributed rewards. Notations:
+			$\R$ is the set of $R$ heuristics, $\bmu$ is the mean parameter of
+			the average reward, $\bsigma^2$ is the variance parameter of the
+			average reward, and $\btau^2$ is the variance parameter of the
+			reward, and $\delta$ is the reward received.}
+	\label{alg:thompson}
+\end{algorithm}
 
 \subsubsection{Upper Confidence Bounds}
 
-Next we consider the Upper Confidence Bound (UCB) algorithms which use the
+ Next we consider the Upper Confidence Bound (UCB) algorithms which use the
 principle of ``optimism in the face of uncertainty''. In choosing which
-heuristic to use, we first estimate the upper bound of the reward (i.e.\ make
-an optimistic guess) and pick the one with the highest bound. If our guess
+heuristic to use, we first estimate the upper bound of the reward (that is, we
+make an optimistic guess) and pick the one with the highest bound. If our guess
 turns out to be wrong, the upper bound of the chosen heuristic will decrease,
 making it less likely to get selected in the next iteration.
 
@@ -525,22 +579,64 @@ calculated. In this paper, we only consider the last two. In Optimally
 Confident UCB (OC-UCB), \cite{lattimore15} suggests that we pick the heuristic
 that maximizes the following upper bound:
     \begin{IEEEeqnarray}{lCl}
-		r_* = \argmax_{i} \overline{\rho_i} +
+		r_* = \argmax_{i} \overline{\delta_i} +
 			  \sqrt{\dfrac{\alpha}{T_i(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
     \end{IEEEeqnarray}
-where $\overline{\rho_i}$ is the average of the rewards from $r_i$ that we
+where $\overline{\delta_i}$ is the average of the rewards from $r_i$ that we
 observe so far, $t$ is the time step, $T_i(t)$ is the number times we have
 selected from heuristic $r_i$ before step $t$, and $n$ is the maximum number of
 steps we are going take. There are two tunable parameters, $\alpha$ and $\psi$,
 which the author suggests setting to 3 and 2, respectively.
 
+\begin{algorithm}[htbp]
+	\BlankLine
+	\Fn{\Select()}{
+		$r_* \leftarrow \argmax_{i} \overline{\delta_i} +
+			  \sqrt{\dfrac{3}{T_i(t)} \ln\Big(\dfrac{2 n}{t}\Big)}$ \;
+	}
+	\BlankLine
+	\Fn{\Update($\delta$)}{
+		$t \leftarrow t + 1$ \;
+		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
+	}
+	\caption{Optimally Confident UCB. Notations: $\R$ is the set of heursitics,
+			 $n$ is the time horizon (maximum number of steps), $t$ is the
+			 current time step, $T_i(t)$ counts of how many times heuristic $i$
+			 has been selected, $\delta$ is the reward received, and
+			 $\overline{\delta_i}$ is the average of the rewards from $r_i$ so
+			 far.}
+	\label{alg:oc-ucb}
+\end{algorithm}
+
+
 \cite{cappe13} suggests that we instead consider the KL-divergence when finding
 to upper bound. In the case of normally distributed rewards with known variance
 $\sigma^2$, the chosen heuristic would be
     \begin{IEEEeqnarray}{lCl}
-		r_* = \argmax_{i} \overline{\rho_i} +
+		r_* = \argmax_{i} \overline{\delta_i} +
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
     \end{IEEEeqnarray}
+Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize the these two OCB
+approaches.
+
+\begin{algorithm}[htbp]
+	\BlankLine
+	\Fn{\Select()}{
+		$r_* \leftarrow \argmax_{i} \overline{\delta_i} +
+				\sqrt{2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t}}$ \;
+	}
+	\BlankLine
+	\Fn{\Update($\delta$)}{
+		$t \leftarrow t + 1$ \;
+		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
+	}
+	\caption{kl-UCB with normally distributed rewards. Notations: $\R$ is the
+	set of heursitics, $\sigma$ is the variance of the rewards, $t$ is the
+	current time step, $T_i(t)$ counts of how many times heuristic $i$ has been
+	selected, $\delta$ is the reward received, and $\overline{\delta_i}$ is the
+	average of the rewards from $r_i$ so far.}
+	\label{alg:kl-ucb}
+\end{algorithm}
 
 \subsubsection{EXP3++}
 
@@ -548,11 +644,36 @@ The EXP3 algorithm was first developed by \cite{auer2002nonstochastic} to solve
 the non-stochastic bandit problem where we make no statistical assumption about
 the reward distribution. This is also often known as the adversarial setting,
 where we have an adversary who generates an arbitrary sequence of rewards for
-each heuristic in advance. We shall test \cite{seldin14}'s EXP3++ algorithm
+each heuristic in advance. We shall test~\cite{seldin14}'s EXP3++ algorithm
 (see Algorithm~\ref{alg:exp3pp}). This is a generalization of the original
-formulation that is shown to perform well in both the stochastic (where the
+EXP3 and it has been shown to perform well in both the stochastic (where the
 reward of each heuristic follows an unknown reward distribution) and
 adversarial regime.
+
+\begin{algorithm}[htbp]
+	\BlankLine
+	\Fn{\Select()}{
+		$\beta = \dfrac{1}{2}\sqrt{\dfrac{\ln R}{t R}}$ \;
+		\For{$i \in \{1, 2, ..., R\}$}{
+			$\xi_i = \dfrac{18 \ln(t)^2}{t \min(1, \dfrac{1}{t} (L_i - \min(L)))^2}$ \;
+			$\epsilon_i = \min\large(\dfrac{1}{2 R}, \beta, \xi_i \large)  $ \;
+			$\rho_i = \dfrac{e^{-\beta * L_i}}{\sum_j e^{-\beta * L_j}}$ \;
+			}
+		$r_* \leftarrow \text{draw a sample from $\R$ with probabilities $\rho$}$ \;
+	}
+	\BlankLine
+	\Fn{\Update($\delta$)}{
+		$t \leftarrow t + 1$ \;
+		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
+		$L_* \leftarrow \dfrac{L_* + (1 - \delta)}{(1 - \sum_j \epsilon_j)
+			   \rho_* + \epsilon_*} $
+	}
+	\caption{EXP3++ algorithm. Notations: $\R$ is the set of $R$ heursitics,
+	$t$ is the current time step, $\beta$ is a parameter used to weight the
+	heuristics for selection, $\xi_i$ and $\epsilon_i$ are used
+	to compute the loss $L_i$, and $\delta$ is the reward received.}
+	\label{alg:exp3pp}
+\end{algorithm}
 
 \subsection{Combining Suggestions with Social Choice Theory}
 
@@ -1034,101 +1155,7 @@ of Washington, and Yale University.
 
 \pagebreak
 
-\section*{Appendix A: Algorithms}
-
-\SetKwFunction{SelectFn}{Select}%
-\begin{algorithm}[htbp]
-	\KwIn{
-    	set of suggestions $\R$,
-        posterior mean vector $\bmu$,
-        posterior variance vector $\bsigma^2$,
-        likelihood variance vector $\btau^2$.
-    }
-    \BlankLine
-    \Fn{\Select()}{
-    	\For{$i \in \{1, 2, ..., |\R|\}$}{
-        	$\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$ \;
-       	}
-        $r_* \leftarrow \argmax_{i} \nu_i'$ \;
-    }
-    \BlankLine
-    \Fn{\Update($\delta$)}{
-    	$\mu_* \leftarrow \dfrac{\mu_* \tau^2_* + \delta \sigma^2_*}{\sigma^2_* + \tau^2_*}$ \;
-        $\sigma_*^2 \leftarrow \dfrac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}$ \;
-    }
-	\caption{Thompson sampling with normally distributed rewards}
-    \label{alg:thompson}
-\end{algorithm}
-
-\begin{algorithm}[htbp]
-	\KwIn{
-		set of suggestions $\R$,
-    	time horizon $n$,
-    }
-    \BlankLine
-    \Fn{\Select()}{
-        $r_* \leftarrow \argmax_{i} \overline{\rho_i} +
-			  \sqrt{\dfrac{3}{T_i(t)} \ln\Big(\dfrac{2 n}{t}\Big)}$ \;
-    }
-    \BlankLine
-    \Fn{\Update($\delta$)}{
-		$t \leftarrow t + 1$ \;
-		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
-    }
-	\caption{Optimally Confident UCB}
-    \label{alg:oc-ucb}
-\end{algorithm}
-
-\begin{algorithm}[htbp]
-	\KwIn{
-		set of suggestions $\R$,
-    	time horizon $n$,
-    }
-    \BlankLine
-    \Fn{\Select()}{
-        $r_* \leftarrow \argmax_{i} \overline{\rho_i} +
-			  \sqrt{2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t}}$ \;
-    }
-    \BlankLine
-    \Fn{\Update($\delta$)}{
-		$t \leftarrow t + 1$ \;
-		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
-    }
-	\caption{kl-UCB with normally distributed rewards}
-    \label{alg:kl-ucb}
-\end{algorithm}
-
-\begin{algorithm}[htbp]
-	\KwIn{
-		set of suggestions $\R$,
-    	time horizon $n$,
-    }
-    \BlankLine
-    \Fn{\Select()}{
-		$\beta = \dfrac{1}{2}\sqrt{\dfrac{\ln |\R|}{t |\R|}}$ \;
-		$\forall i, \xi = \dfrac{18 \ln(t)^2}{t \min(1, \dfrac{1}{t} (L_i - \min(L)))^2}$ \;
-		$\forall i, \epsilon = \min(\dfrac{1}{2|\R|}, \beta, \xi)  $ \;
-		$\forall i, \rho = \dfrac{e^{-beta * L_i}}{\sum_j e^{-beta * L_j}}$ \;
-
-        $r_* \leftarrow \text{draw a sample from $\R$ with probabilities $\rho$}$ \;
-    }
-    \BlankLine
-    \Fn{\Update($\delta$)}{
-		$t \leftarrow t + 1$ \;
-		$T_*(t) \leftarrow T_*(t - 1) + 1$ \;
-		$L_* \leftarrow \dfrac{L_* + (1 - \delta)}{(1 - \sum_j \epsilon_j)
-		  	 \rho_* + \epsilon_*} $
-    }
-	\caption{EXP3++}
-    \label{alg:exp3pp}
-\end{algorithm}
-
-
-\pagebreak
-
-
-
-\section*{Appendix B: Posterior Balanced Accuracy}
+\section*{Appendix A: Posterior Balanced Accuracy}
 
 
 Most real-world datasets are unbalanced. In the SDSS dataset, for example,
@@ -1146,7 +1173,7 @@ balanced accuracy distribution can overcome the bias in the binary case. We now
 extend this idea to the multi-class setting.
 
 Suppose we have $k$ classes. For each class $i$ between $1$ and $k$, there are
-$N_i$ objects in the universe. Given a hypothesis, we can predict the label of
+$N_i$ objects in the universe. Given a classifier, we can predict the label of
 every object and compare our prediction to the true label. Let $G_i$ be the
 number of objects in class $i$ that are correctly predicted.
 Then we define the recall $A_i$ of class $i$ as\index{recall}

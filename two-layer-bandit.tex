@@ -133,7 +133,7 @@ combine them without sacrificing the final accuracy.
 
 \section{Introduction}
 Recent advances in sensors and scientific instruments have led to an increasing
-use of machine learning techniques for managing the data deluge. Supervised
+use of machine learning techniques to manage the data deluge. Supervised
 learning has become a widely used paradigm in many big data applications.
 However, labeled examples are required during the training phase of these
 algorithms, and the labeling process has become a significant bottleneck.
@@ -142,12 +142,10 @@ The most common approach to produce a training set is passive learning, where
 we randomly select an instance from a large pool of unlabeled data to annotate,
 and we continue doing this until the training set reaches a certain size or
 until the classifier makes sufficiently good predictions. Depending on how the
-underlying data is distributed, this process can be quite inefficient. To see
-why, consider two objects with very similar features. If we have already
-labeled one of them, there would be little benefit in also labeling the other
-object, especially if we assume that there is no noise in the label. Instead it
-is often more informative to pick examples near the decision boundary of the
-classifier, where the class membership is still uncertain.
+underlying data is distributed, this process can be quite inefficient. Instead
+of picking a random instance to label, it is often more informative to pick
+examples near the decision boundary of the classifier, where we are still
+unsure which class the example belongs to.
 
 This leads to the development of many active learning algorithms that try to
 reduce the labeling bottleneck without sacrificing the classifier's
@@ -169,12 +167,13 @@ before~\citep{baram04, hsu15}. However, as far as we know, this is the first
 time that social choice theory is used to rank and aggregate the suggestions.
 
 To compare the algorithms, we run them on 11 benchmark datasets from the UCI
-Machine Learning Repository and a large dataset from the Sloan Sky Digital Sky
-Survey (SDSS). The experiment setup and discussion are described in
-Section~\ref{sec:expt}. Our three main findings are: active learning is better
-than passive learning; combining active learners does not in general degrade
-the performance; and social choice theory provides more practical algorithms
-than bandit theory since we do not need to design a reward scheme.
+Machine Learning Repository and a large dataset from the Sloan Digital Sky
+Survey (SDSS). The experimental setup and discussion are described in
+Section~\ref{sec:expt} and~\ref{sec:discuss}. Our three main findings are:
+active learning is better than passive learning; combining active learners does
+not in general degrade the performance; and social choice theory provides more
+practical algorithms than bandit theory since we do not need to design a reward
+scheme.
 
 
 \section{Overview of Active Learning}~\label{sec:heuristics}
@@ -184,9 +183,9 @@ $h$, which is a function that maps some feature space $\X \subseteq
 \begin{IEEEeqnarray}{lCl}
 	h : \X \rightarrow p(\Y)
 \end{IEEEeqnarray}
-For example, in logistic regression with two classes, $\Y = \{0, 1\}$, we can
-model the probability that an object with feature vector $\bm{x}$ belongs to
-the positive class with
+For example, in logistic regression with only two classes, i.e. $\Y = \{0,
+1\}$, we can model the probability that an object with feature vector $\bm{x}$
+belongs to the positive class with
 \begin{IEEEeqnarray}{lCl}
 	h(\bm{x}; \bm{w}) &=& p(1 \mid \bm{x}; \bm{w})
 	= \dfrac{1}{1 + e^{-\bm{w}^T \bm{x}}}
@@ -203,12 +202,12 @@ $\Unlabelled \subset \X$. Finally we also need a separate test set $\Labelled_S
 to unseen data.
 
 Now consider the problem of choosing the next example in $\Unlabelled$ for
-querying. Labeling can be a very expensive task, perhaps because it requires
-actual human experts to manually examine each object. Thus we want to be smart
-in choosing the next example. This motivates us to come up with a rule
-$r(\bm{x}; h)$ that gives each unlabeled example a score based only on their
-feature vector $\bm{x}$ and the current classifier $h$. In particular, we use
-the probability estimates from the classifier over the unlabeled examples to
+querying. Labeling can be a very expensive task, because it requires actual
+human experts to manually examine each object. Thus we want to be smart in
+choosing the next example. This motivates us to come up with a rule $r(\bm{x};
+h)$ that gives each unlabeled example a score based only on their feature
+vector $\bm{x}$ and the current classifier $h$. In particular, we use the
+probability estimates from the classifier over the unlabeled examples to
 calculate the scores:
 \begin{IEEEeqnarray}{lCl}
 	r : p(\Y)^{U} \rightarrow \mathbb{R}^{U}
@@ -445,9 +444,9 @@ OC-UCB, kl-OCB, and EXP3++.
 
 Algorithm~\ref{alg:bandit} outlines how bandits can be used in pool-based
 active learning. The only difference between the bandit algorithms lies in the
-\textsc{Select} function that picks which heuristic to use and the
-\textsc{Update} function that updates the algorithm's parameters when receiving
-a new reward.
+\textsc{Select} function that selects which heuristic to use and the
+\textsc{Update} function that updates the algorithm's selection parameters when
+receiving a new reward.
 
 \begin{algorithm}[htbp]
 	\KwIn{
@@ -616,7 +615,7 @@ $\sigma^2$, the chosen heuristic would be
 		r_* = \argmax_{i} \overline{\delta_i} +
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
     \end{IEEEeqnarray}
-Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize the these two OCB
+Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two OCB
 approaches.
 
 \begin{algorithm}[htbp]
@@ -644,11 +643,14 @@ The EXP3 algorithm was first developed by \cite{auer2002nonstochastic} to solve
 the non-stochastic bandit problem where we make no statistical assumption about
 the reward distribution. This is also often known as the adversarial setting,
 where we have an adversary who generates an arbitrary sequence of rewards for
-each heuristic in advance. We shall test~\cite{seldin14}'s EXP3++ algorithm
-(see Algorithm~\ref{alg:exp3pp}). This is a generalization of the original
-EXP3 and it has been shown to perform well in both the stochastic (where the
-reward of each heuristic follows an unknown reward distribution) and
-adversarial regime.
+each heuristic in advance. Like Thompson sampling, the algorithm samples from a
+probability distribution at each step to pick a heursitic. Here however, we
+construct the distribution with exponential weighting (hence the name EXP3,
+which stands for exponential-weight algorithm for exploration and
+exploitation). We shall test~\cite{seldin14}'s EXP3++ algorithm (see
+Algorithm~\ref{alg:exp3pp}). This is a generalization of the original EXP3 and
+it has been shown to perform well in both the stochastic (where the reward of
+each heuristic follows an unknown reward distribution) and adversarial regime.
 
 \begin{algorithm}[htbp]
 	\BlankLine
@@ -680,28 +682,30 @@ adversarial regime.
 A drawback of the bandit methods is that at each iteration, we could only use
 information from one particular suggestion. In addition, we also need to keep
 around a test set, which is expensive and sometimes impossible to obtain in
-practice. Since most suggestions require little computation, we could in fact
-run all of them at the same time and then combine the rankings. This leads us
-to social choice theory. Originally developed by political scientists like
+practice. Since most heuristics require little computation, we could in fact
+run all of them at the same time and then combine the suggestions. This leads
+us to social choice theory. Originally developed by political scientists like
 Nicolas de Condorcet and Jean-Charles de Borda, this field of study is
 concerned with how we aggregate preferences of a group of people to determine,
-for example, the winner of an election~\citep{list13}. It has the nice property
-that everyone (or in our context, every active learning heuristic) has a
-voice.
+for example, the winner in an election~\citep{list13}. It has the nice property
+that everyone (or in our context, every active learning heuristic) has a voice.
 
 For each heuristic $r_i$, we assign a score to every candidate like before. We
-are not interested in the actual raw scores, but only in the relative ranking
-$k(r_i)$ which converts the scores into a preference ordering:
+are not interested in the actual raw scores, but only in the relative ranking.
+This is achieved by a function $k(r_i(\bm{x}; h))$ which converts the scores
+into a preference ordering:
 	\begin{IEEEeqnarray}{lCl}
 		k : \mathbb{R}^{U} \rightarrow \sigma(J_\Unlabelled)
 	\end{IEEEeqnarray}
 where $\sigma(J_\Unlabelled)$ is a permutation over the index set of the
-unlabeled pool. $\Unlabelled$. An aggregation function $c$ will then combine
-all the rankings into a combined ranking:
+unlabeled pool. $\Unlabelled$. For example, $k$ could assign the candidate with
+the highest score a rank of 1, the next best candidate a rank of 2, and so on.
+An aggregation function $c$ will then combine all the rankings into a combined
+ranking,
     \begin{IEEEeqnarray}{lCl}
-		c : \sigma(J_\Unlabelled)^{|\R|} \rightarrow \sigma(J_\Unlabelled)
+		c : \sigma(J_\Unlabelled)^{R} \rightarrow \sigma(J_\Unlabelled)
     \end{IEEEeqnarray}
-From this, we can pick the highest-ranked candidate to label.
+from which we can pick the highest-ranked candidate to label.
 
 The central question in social choice theory is how we can come up with a good
 preference aggregation rule. The main difference between this approach and the
@@ -720,7 +724,7 @@ used in pool-based active learning.
         desired training size $n$,
         query size $E$,
         set of active learning suggestions $\R$,
-        and rank aggregator $G$.
+        and rank aggregator $(c \circ k)$.
         }
     \BlankLine
 	\While{$|\Labelled_T| < n$}{
@@ -729,12 +733,14 @@ used in pool-based active learning.
         \For{$r \in \R$}{
         	Rank all the candidates in $\Ecal$. \;
         }
-        Aggregate all the rankings into one ranking using $G$. \;
-        $\bm{x}_* \leftarrow$ the highest ranked candidate in the aggregation. \;
-        $y_* \leftarrow$ ask the expert to label $\bm{x}_*$ \;
-        $\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$ \;
-        $\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$ \;
-        $h(\bm{x}) \leftarrow$ retrain the classifier \;
+        Aggregate all the rankings into one ranking using the aggregator $c$. \;
+        Select the highest-ranked candidate $\bm{x}_*$ from $\Ecal$. \;
+		Ask the expert to label $\bm{x}_*$. Call the label $y_*$. \;
+		Add the new labeled example to the training set:
+			$\Labelled_T \leftarrow \Labelled_T  \cup (\bm{x}_*, y_*)$. \;
+		Remove the new labeled example from the unlabeled set:
+			$\Unlabelled \leftarrow \Unlabelled \setminus \bm{x}_*$. \;
+		Retrain the classifier $h(\bm{x})$. \;
     }
     \caption{Pool-based active learning with social choice theory}
     \label{alg:choice}
@@ -748,35 +754,38 @@ candidate receives from every heuristic. The candidate with the most points
 is declared the winner and is to be labeled next.
 
 We can think of Borda count, then, as ranking the candidate according to the
-arithmetic mean. An alternative approach is to use the geometric mean
-\citep{bedo14}, where instead of adding up the points, we multiply them.
+arithmetic mean. An alternative approach is to use the geometric mean, where
+instead of adding up the points, we multiply them~\citep{bedo14}.
 
 The third approach we consider is the Schulze method~\citep{schulze11}. This
 method is more computationally intensive since it requires examining all pairs
-of candidates. In particular, we first compute the number of heuristics that
-prefer candidate $i$ to candidate $j$. Let us call this $d(i, j)$. We then
-define a path from candidate $i$ to $j$ as a sequence of candidates that starts
-with $i$ and ends with $j$, where, as we move along the path, the number of
-heuristics that prefer the current candidate over the next candidate must be
-strictly decreasing. Intuitively, the path is the rank of a subset of
-candidates, where $i$ is at the top and $j$ is at the bottom.
+of candidates. First we compute the number of heuristics that prefer candidate
+$x_i$ to candidate $x_j$, for all possible pairs $(x_i, x_j)$. Let us call this
+$d(x_i, x_j)$. We then define a path from candidate $x_i$ to $x_j$ as a
+sequence of candidates, $\{ x_i, x_1, x_2,... ,x_j \}$, that starts with $x_i$
+and ends with $x_j$, where, as we move along the path, the number of heuristics
+that prefer the current candidate over the next candidate must be strictly
+decreasing. Intuitively, the path is the rank of a subset of candidates, where
+$x_i$ is the highest-ranked candidate and $x_j$ is at the lowest-ranked.
 
-Associated with each path is a strength $p$, which is the minimum of $d(i, j)$
-for all consecutive $i$ and $j$ along the path. Our task, then, is to find the
-path of the strongest strength from each candidate to every other. This problem
-has a similar flavour to the problem of finding the shortest path. In fact, the
-implementation uses a variant of the Floyd–Warshall algorithm to find the
-strongest path. This is the most efficient implementation that we know of,
-taking quadratic time in the number of candidates.
+Associated with each path is a strength $p$, which is the minimum of $d(x_i,
+x_j)$ for all consecutive $x_i$ and $x_j$ along the path. The core part of the
+algorithm is finding the path of the strongest strength from each candidate to
+every other. Let us call $p(x_i, x_j)$ the strength of strongest path between
+$x_i$ and $x_j$. Candidate $x_i$ is a potential winner if $p(x_i, x_j) \geq
+p(x_j, x_i)$ for other $x_j$. This problem has a similar flavour to the problem
+of finding the shortest path. In fact, the implementation uses a variant of the
+Floyd–Warshall algorithm to find the strongest path. This is the most efficient
+implementation that we know of, taking cubic time in the number of candidates.
 
 We end this section with a small illustration of how the three aggregation
 algorithms work in Table~\ref{tab:choice}.
 
 \begin{table}[htbp]
-	\caption {An example of how social choice theory algorithms rank four
-	          candidates by aggregating three heuristics: $r_1$, $r_2$, and
-	          $r_3$. The unlabeled pool consists of four objects: A, B, C, and
-	          D.} \label{tab:choice}
+	\caption {An example of how social choice theory algorithms rank candidates
+	          by aggregating three heuristics: $r_1$, $r_2$, and $r_3$. There
+	          are four candidates in the unlabelled pool: A, B, C, and D.}
+	          \label{tab:choice}
 	\centering
 	\begin{subtable}{\linewidth}
 		\centering
@@ -789,7 +798,9 @@ algorithms work in Table~\ref{tab:choice}.
 				$r_3$ & B D C A \\
 			\bottomrule
 		\end{tabular}
-		\caption{An example of how the three heuristics rank four candidates $A, B, C, D$.}
+		\caption{An example of how the three heuristics rank four candidates
+		$A, B, C,$ and $D$. For instance, heuristic $r_1$ considers $B$ to
+		be the highest rank candidate, followed by $A$, $C$, and $D$.}
 	\end{subtable}
 
 	\begin{subtable}{\linewidth}
@@ -804,8 +815,11 @@ algorithms work in Table~\ref{tab:choice}.
 				D & $1 + 1 + 3 = 5$ & $1 * 1 * 3 = 3$ \\
 			\bottomrule
 		\end{tabular}
-		\caption{Aggregated ranking with Borda count and geometric mean: In both
-		methods, candidate B receives the highest aggregated score.}
+		\caption{Aggregated ranking with Borda count and geometric mean. The
+		scores are determined by the relative ranking in each heursitic. For
+		example, $A$ is ranked second by $r_1$, first by $r_1$, and last by
+		$r_3$, giving us a score of 3, 4 and 1, respectively. In both methods,
+		candidate B receives the highest aggregated score.}
 	\end{subtable}
 
 	\begin{subtable}{\linewidth}
@@ -820,30 +834,30 @@ algorithms work in Table~\ref{tab:choice}.
 				D & 2 & 0 & 1 &   \\
 			\bottomrule
 		\end{tabular}
-		\caption{Aggregated ranking with Schulze method: We show the strongest
-		path strengths $p(i, j)$ between all pairs of candidates. Candidate B
-		is the winner since $p(B, A) > p(A, B)$, $p(B, C) > p(C, B)$, and $p(B,
-		D) > p(D, B)$.}
+		\caption{Aggregated ranking with Schulze method. The table shows the
+		strongest path strengths $p(x_i, x_j)$ between all pairs of candidates.
+		Candidate B is the winner since $p(B, A) > p(A, B)$, $p(B, C) > p(C,
+		B)$, and $p(B, D) > p(D, B)$.}
 	\end{subtable}
 \end{table}
 
 
 \section{Experiments}\label{sec:expt}
 
-\subsection{Description of datasets}
-
 We use 11 datasets taken from the UCI Machine Learning
-Repository~\citep{lichman13}, along with one large dataset SDSS from the
-astronomical domain \citep{alam15}. Table~\ref{tab:datasets} shows the size and
-the number of classes in each dataset, along with the proportion of the samples
-belonging to the majority class and the maximum achievable performance.
+Repository~\citep{lichman13}, along with a large dataset which we extracted
+from the SDSS \citep{alam15}. The code for the experiments can be found on our
+GitHub repository\footnote{\url{https://github.com/chengsoonong/mclass-sky}}.
+Table~\ref{tab:datasets} shows the size and the number of classes in each
+dataset, along with the proportion of the samples belonging to the majority
+class and the maximum achievable performance using logistic regression.
 
 \begin{table}[htbp]
 	\caption {Overview of datasets} \label{tab:datasets}
 	\centering
 	\begin{tabular}{lrrrrr}
 		\toprule
-		{Dataset}  & Size &  Classes & Features & Majority & Max MPBA \\
+		{Dataset}  & Size &  Classes & Features & Majority Class & Max Performance \\
 		\midrule
         \href{https://archive.ics.uci.edu/ml/datasets/Glass+Identification}{glass}
         	& $214$ & $6$ & $10$ & $33\%$ & $65\%$ \\
@@ -873,19 +887,18 @@ belonging to the majority class and the maximum achievable performance.
 	\end{tabular}
 \end{table}
 
-\subsection{Experimental Setup}
-For each dataset, we build a classifier with the classes being the output. We
-use a 10-fold stratified shuffled split cross validation. The stratified
-strategy means that the proportion of the classes remain constant in each
-split. We standardise all features to have zero mean and unit variance.
-Although all examples has already been labeled, we simulate active learning by
-assuming that certain examples do not have any labels. In particular, the
-unlabeled pool size is 70\% of data up to a maximum of 10,000 examples. The
-test pool consists of the remaining examples up to a maximum of 20,000---we
-assume labels are available here. We initialize the classifier by labeling 10
-random samples and using them as the the initial training set. We use logistic
-regression with a Gaussian kernel approximation and an L2 loss. In the binary
-case, the loss function is
+For each dataset, we build a classifier to predict the class of an instance
+based on its features. We use a 10-fold stratified shuffled split cross
+validation. The stratified strategy means that the proportion of the classes
+remain constant in each split. We standardise all features to have zero mean
+and unit variance. Although all examples has already been labeled, we simulate
+active learning by assuming that certain examples do not have any labels. In
+particular, the unlabeled pool size is 70\% of data up to a maximum of 10,000
+examples. The test pool consists of the remaining examples up to a maximum of
+20,000---we assume labels are available here. We initialize the classifier by
+labeling 10 random samples and using them as the the initial training set. We
+use logistic regression with a Gaussian kernel approximation and an L2 loss. In
+the binary case, the loss function is
 \begin{IEEEeqnarray}{lCl}
     L &=& \dfrac{1}{2} w^T w + C \sum_{i = 1}^n \ln\Big(1 + \exp(-y_i(f(X_i)^T w))\Big)
 \end{IEEEeqnarray}
@@ -970,7 +983,9 @@ The abbreviations used when discussing the results are outlined in Table~\ref{ta
 	\end{tabular}
 \end{table}
 
-\section{Discussion}
+\section{Results and Discussion}\label{sec:discuss}
+
+\subsection{Results}
 
 Figures~\ref{fig:strengths-accuracy} to~\ref{fig:strengths-mpba} show the
 strengths of all policies that we consider, while
@@ -983,6 +998,8 @@ the literature. The best performing bandit algorithm is EXP3++, and if we want
 to use information form all heuristics, Borda count would be a good choice. On
 some datasets such as magic and pima, Borda count does better than EXP3++,
 although the effect is fairly small.
+
+\subsection{Discussion}
 
 In practice, we do not have a representative test set that can be used to
 compute the reward. Thus aggregation methods like Borda are are suitable than
@@ -1130,10 +1147,17 @@ we would be better off with passive learning with datasets that are very noisy.
 
 \section{Acknowledgments}
 
-Funding for SDSS-III has been provided by the Alfred P. Sloan Foundation, the
-Participating Institutions, the National Science Foundation, and the U.S.
-Department of Energy Office of Science. The SDSS-III web site is
-http://www.sdss3.org/.
+The UCI datasets were downloaded from the UCI Machine Learning
+Repository\footnote{\url{http://archive.ics.uci.edu/ml}}. In particular, the
+vehicle
+dataset\footnote{\url{https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes)}}
+comes from the Turing Institute, Glasgow, Scotland.
+
+The SDSS dataset\footnote{\url{http://dx.doi.org/10.5281/zenodo.58500}} was
+extracted from Data Release 12 of SDSS-III. Funding for SDSS-III has been
+provided by the Alfred P. Sloan Foundation, the Participating Institutions, the
+National Science Foundation, and the U.S. Department of Energy Office of
+Science. The SDSS-III web site is http://www.sdss3.org/.
 
 SDSS-III is managed by the Astrophysical Research Consortium for the
 Participating Institutions of the SDSS-III Collaboration including the

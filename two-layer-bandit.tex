@@ -204,26 +204,28 @@ to unseen data.
 Now consider the problem of choosing the next example in $\Unlabelled$ for
 querying. Labeling can be a very expensive task, because it requires actual
 human experts to manually examine each object. Thus we want to be smart in
-choosing the next example. This motivates us to come up with a rule $r(\bm{x};
-h)$ that gives each unlabeled example a score based only on their feature
-vector $\bm{x}$ and the current classifier $h$. In particular, we use the
-probability estimates from the classifier over the unlabeled examples to
+choosing the next example. This motivates us to come up with a rule
+$s(\bm{x}; h)$ that gives each unlabeled example a score based only on their
+feature vector $\bm{x}$ and the current classifier $h$. In particular, we use
+the probability estimates from the classifier over the unlabeled examples to
 calculate the scores:
 \begin{IEEEeqnarray}{lCl}
-	r : p(\Y)^{U} \rightarrow \mathbb{R}^{U}
+	s : p(\Y)^{U} \rightarrow \mathbb{R}^{U}
 \end{IEEEeqnarray}
 where $U$ is the size of the unlabeled set $\Unlabelled$. Coupled with each
-rule is an objective function $s$ that picks the most informative example
+rule is an objective function $\phi$ that picks the most informative example
 for labeling based on the scores:
 \begin{IEEEeqnarray}{lCl}
-	s : \mathbb{R}^{U} \rightarrow J_\Unlabelled
+	\phi : \mathbb{R}^{U} \rightarrow J_\Unlabelled
 \end{IEEEeqnarray}
 where $J_\Unlabelled$ is the index set over the unlabeled instances. The rule
 can be as simple as an argmax or argmin function, depending on how the scores
-are interpreted. Algorithm~\ref{alg:active} outlines the standard pool-based
-active learning setting. Note that in practice, there can be a large amount of
-unlabeled data, so for computational reasons, we only assign a score to a small
-random sample of size $E$ from the unlabeled pool.
+are interpreted. The composition of the above two functions, $r (\bm{x}; h)
+\equiv (\phi \circ s)(\bm{x}; h)$, is the active leaner.
+Algorithm~\ref{alg:active} outlines the standard pool-based active learning
+setting. Note that in practice, there can be a large amount of unlabeled data,
+so for computational reasons, we only assign a score to a small random sample
+of size $E$ from the unlabeled pool.
 
 \begin{algorithm}[htbp]
 	\KwIn{
@@ -232,7 +234,7 @@ random sample of size $E$ from the unlabeled pool.
         classifier $h(\bm{x})$,
         desired training size $n$,
         query size $E$,
-        and active learning rule $r(\bm{x}; h)$.
+        and active leaner $r(\bm{x}; h)$.
         }
     \BlankLine
 	\While{$|\Labelled_T| < n$}{
@@ -268,7 +270,7 @@ Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
 confidence heuristic, where we pick the candidate whose most likely label the
 classifier is most uncertain about:
 \begin{IEEEeqnarray}{lCl}
-	(s \circ r)(\bm{x}; h) &=& \argmax_{x \in \Unlabelled}
+	r_{LC}(\bm{x}; h) &=& \argmax_{x \in \Unlabelled}
 	\left\{ \max_{y \in \Y} p(y | \bm{x}; h) \right\}
 \end{IEEEeqnarray}
 A second option is to calculate the entropy \citep{shannon48}, which measures
@@ -277,14 +279,14 @@ closer the class probabilities of an object are to random guessing, the higher
 its entropy will be. This gives us the heuristic of picking the candidate with
 the highest entropy of the distribution over the classes:
 \begin{IEEEeqnarray}{lCl}
-	(s \circ r)(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
+	r_{HE}(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
 	\left\{\sum_{y \in \Y} p(y | \bm{x}; h)
 	\log \big[ p(y | \bm{x}; h) \big] \right\}
 \end{IEEEeqnarray}
 Finally we can pick the candidate with the smallest margin, which is defined as
 the difference between the two highest class probabilities \citep{scheffer01}:
 \begin{IEEEeqnarray}{lCl}
-	(s \circ r)(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
+	r_{SM}(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
 	\left\{ \max_{y \in \Y} p(y | \bm{x}; h) -
 	\max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h)  \right\}
 \end{IEEEeqnarray}
@@ -308,7 +310,7 @@ with replacement. Hence this method is often called Query by Bagging (QBB).
 One way to measure the level of disagreement is to calculate the margin using
 the class probabilities estimated by the committee \citep{melville04}:
 \begin{IEEEeqnarray}{lCl}
-	(s \circ r)(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
+	r_{QBBM}(\bm{x}; h) &=& \argmin_{x \in \Unlabelled}
 	\left\{ \max_{y \in \Y} p(y | \bm{x}; \B) -
 	\max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B)  \right\}
 \end{IEEEeqnarray}
@@ -318,7 +320,7 @@ minimizing the margin.~\cite{mccallum98} offer an alternative disagreement
 measure which involves picking the candidate with the largest expected
 Kullback-Leibler (KL) divergence from the average:
 \begin{IEEEeqnarray}{lCl}
-	(s \circ r)(\bm{x}; h) &=& \argmax_{x \in \Unlabelled}
+	r_{QBBKL}(\bm{x}; h) &=& \argmax_{x \in \Unlabelled}
 	\left\{ \dfrac{1}{B}
 	\sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}
 \end{IEEEeqnarray}
@@ -385,9 +387,9 @@ This leads us to a more general problem of whether we can learn the optimality
 by just looking at the predictions given by the heuristics. Let us frame this
 as the problem of prediction with expert advice. Consider the heuristics as a
 collection of $R$ experts, $\R = \{r_1, r_2, ..., r_R\}$. How each expert comes
-up with the prediction is not important. At every step $t$, however, we
-have the ability to ask each expert $r_i$ for a prediction, either of the next
-most informative instance in the unlabeled pool, or a rank on all the unlabeled
+up with the prediction is not important. At every step $t$, however, we have
+the ability to ask each expert for a prediction, either of the next most
+informative instance in the unlabeled pool, or a rank on all the unlabeled
 instances. Our task now is to use this information, along with the history of
 rewards in the case of bandits, to choose the best candidate. In the standard
 setting, the environment would reveal the correct answer after we have made our
@@ -399,7 +401,7 @@ consider the advice of only one expert at each time step (with bandit
 algorithms), or we can aggregate the advice of all the experts (with social
 choice theory).
 
-\subsection{Combining Suggestions with Bandit Theory}
+\subsection{Combining Suggestions with Bandit Theory}\label{subsec:bandit}
 
 First let us turn our attention to the multi-armed bandit problem in
 probability theory. The colorful name originates from the situation where a
@@ -690,10 +692,11 @@ concerned with how we aggregate preferences of a group of people to determine,
 for example, the winner in an election~\citep{list13}. It has the nice property
 that everyone (or in our context, every active learning heuristic) has a voice.
 
-For each heuristic $r_i$, we assign a score to every candidate like before. We
-are not interested in the actual raw scores, but only in the relative ranking.
-This is achieved by a function $k(r_i(\bm{x}; h))$ which converts the scores
-into a preference ordering:
+For each heuristic, we assign a score to every candidate with the score
+function $s(\bm{x}, h)$ like before. We are neither interested in the actual
+raw scores nor the candidate with the highest score. Instead, we only need
+a ranking of the candidates, which is achieved by a function $k(s(\bm{x}; h))$
+which converts the scores into a preference ordering:
 	\begin{IEEEeqnarray}{lCl}
 		k : \mathbb{R}^{U} \rightarrow \sigma(J_\Unlabelled)
 	\end{IEEEeqnarray}
@@ -761,7 +764,7 @@ The third approach we consider is the Schulze method~\citep{schulze11}. This
 method is more computationally intensive since it requires examining all pairs
 of candidates. First we compute the number of heuristics that prefer candidate
 $x_i$ to candidate $x_j$, for all possible pairs $(x_i, x_j)$. Let us call this
-$d(x_i, x_j)$. We then define a path from candidate $x_i$ to $x_j$ as a
+$d(x_i, x_j)$. Let us also define a path from candidate $x_i$ to $x_j$ as the
 sequence of candidates, $\{ x_i, x_1, x_2,... ,x_j \}$, that starts with $x_i$
 and ends with $x_j$, where, as we move along the path, the number of heuristics
 that prefer the current candidate over the next candidate must be strictly
@@ -770,13 +773,14 @@ $x_i$ is the highest-ranked candidate and $x_j$ is at the lowest-ranked.
 
 Associated with each path is a strength $p$, which is the minimum of $d(x_i,
 x_j)$ for all consecutive $x_i$ and $x_j$ along the path. The core part of the
-algorithm is finding the path of the strongest strength from each candidate to
-every other. Let us call $p(x_i, x_j)$ the strength of strongest path between
-$x_i$ and $x_j$. Candidate $x_i$ is a potential winner if $p(x_i, x_j) \geq
-p(x_j, x_i)$ for other $x_j$. This problem has a similar flavour to the problem
-of finding the shortest path. In fact, the implementation uses a variant of the
-Floyd–Warshall algorithm to find the strongest path. This is the most efficient
-implementation that we know of, taking cubic time in the number of candidates.
+algorithm involves finding the path of the strongest strength from each
+candidate to every other. Let us call $p(x_i, x_j)$ the strength of strongest
+path between $x_i$ and $x_j$. Candidate $x_i$ is a potential winner if $p(x_i,
+x_j) \geq p(x_j, x_i)$ for all other $x_j$. This problem has a similar flavour
+to the problem of finding the shortest path. In fact, the implementation uses a
+variant of the Floyd–Warshall algorithm to find the strongest path. This is the
+most efficient implementation that we know of, taking cubic time in the number
+of candidates.
 
 We end this section with a small illustration of how the three aggregation
 algorithms work in Table~\ref{tab:choice}.
@@ -809,17 +813,17 @@ algorithms work in Table~\ref{tab:choice}.
 			\toprule
 			{Candidate}  &  Borda count & Geometric mean \\
 			\midrule
-				A & $3 + 4 + 1 = 8$ & $3 * 4 * 1 = 12$ \\
-				B & $4 + 2 + 4 = 10$ & $4 * 2 * 4 = 32$ \\
-				C & $2 + 3 + 2 = 7$ & $2 * 3 * 2 = 12$ \\
-				D & $1 + 1 + 3 = 5$ & $1 * 1 * 3 = 3$ \\
+				A & $3 + 4 + 1 = 8$ & $3 \times 4 \times 1 = 12$ \\
+				B & $4 + 2 + 4 = 10$ & $4 \times 2 \times 4 = 32$ \\
+				C & $2 + 3 + 2 = 7$ & $2 \times 3 \times 2 = 12$ \\
+				D & $1 + 1 + 3 = 5$ & $1 \times 1 \times 3 = 3$ \\
 			\bottomrule
 		\end{tabular}
 		\caption{Aggregated ranking with Borda count and geometric mean. The
 		scores are determined by the relative ranking in each heursitic. For
 		example, $A$ is ranked second by $r_1$, first by $r_1$, and last by
-		$r_3$, giving us a score of 3, 4 and 1, respectively. In both methods,
-		candidate B receives the highest aggregated score.}
+		$r_3$, thus giving us a score of 3, 4 and 1, respectively. In both
+		methods, candidate B receives the highest aggregated score.}
 	\end{subtable}
 
 	\begin{subtable}{\linewidth}
@@ -834,10 +838,10 @@ algorithms work in Table~\ref{tab:choice}.
 				D & 2 & 0 & 1 &   \\
 			\bottomrule
 		\end{tabular}
-		\caption{Aggregated ranking with Schulze method. The table shows the
-		strongest path strengths $p(x_i, x_j)$ between all pairs of candidates.
-		Candidate B is the winner since $p(B, A) > p(A, B)$, $p(B, C) > p(C,
-		B)$, and $p(B, D) > p(D, B)$.}
+		\caption{Aggregated ranking with the Schulze method. The table shows
+		the strongest path strengths $p(x_i, x_j)$ between all pairs of
+		candidates. Candidate B is the winner since $p(B, A) > p(A, B)$, $p(B,
+		C) > p(C, B)$, and $p(B, D) > p(D, B)$.}
 	\end{subtable}
 \end{table}
 
@@ -890,107 +894,178 @@ class and the maximum achievable performance using logistic regression.
 For each dataset, we build a classifier to predict the class of an instance
 based on its features. We use a 10-fold stratified shuffled split cross
 validation. The stratified strategy means that the proportion of the classes
-remain constant in each split. We standardise all features to have zero mean
+remains constant in each split. We standardize all features to have zero mean
 and unit variance. Although all examples has already been labeled, we simulate
 active learning by assuming that certain examples do not have any labels. In
 particular, the unlabeled pool size is 70\% of data up to a maximum of 10,000
 examples. The test pool consists of the remaining examples up to a maximum of
 20,000---we assume labels are available here. We initialize the classifier by
-labeling 10 random samples and using them as the the initial training set. We
-use logistic regression with a Gaussian kernel approximation and an L2 loss. In
-the binary case, the loss function is
+labeling 10 random samples and using them as the the initial training set. In
+each step, we feed 300 randomly selected candidates from the unlabeled pool
+into the algorith, i.e. $E = 300$. We use logistic regression with a Gaussian
+kernel approximation and an L2 loss. In the binary case, the loss function is
 \begin{IEEEeqnarray}{lCl}
-    L &=& \dfrac{1}{2} w^T w + C \sum_{i = 1}^n \ln\Big(1 + \exp(-y_i(f(X_i)^T w))\Big)
+	L &=& \dfrac{1}{2} \bm{w}^T \bm{w} + C \sum_{i = 1}^n
+	      \ln\Big(1 + \exp(-y_i(f(\bm{x}_i)^T w))\Big)
 \end{IEEEeqnarray}
-where the first term of the sum is the regularisation term to ensure that the
-weight vector is not too large, and $C$ is another regularisation
-hyperparameter which we set to 1000. To speed up training time, we approximate
-the feature map of the Gaussian kernel using Random Kitchen Sinks
-\citep{rahimi08}, transforming the raw features $X_i$ into a fixed
-100-dimensional feature vector $f(X_i)$. In the multiclass case, we use the
+where $\bm{x_i}$ is the feature vector of the $i$th example, $y_i \in \{0, 1\}$
+is the label of $\bm{x_i}$, and $n$ is the training size. The first term of the
+sum is the regularization term to ensure that the weight vector $\bm{w}$ is not
+too large, and $C$ is another regularization hyperparameter which we simply set
+to 1000. To speed up the training time while still using the Gaussian kernel,
+we approximate the feature map of the kernel with Random Kitchen Sinks
+\citep{rahimi08}, transforming the raw features $\bm{x}_i$ into a fixed
+100-dimensional feature vector $f(\bm{x_i})$. In the multiclass case, we use the
 One-vs-Rest strategy, where for every class, we build a binary classifier that
-determines whether a particular example is in that class or not.
+determines whether a particular example belongs to that class or not.
 
-For the reward, we use the mean posterior balanced accuracy (MPBA) as the
-reward. Compared to a simple accuracy rate, this measure takes into account the
-class imbalance. Intuitively, we calculate the recall rate in each class and
-then take the average, giving each class an equal weight. Refer to Appendix B
-for the derivation of the MPBA.
+For the bandit algorithms, the mean posterior balanced accuracy (MPBA) is used
+as the reward. Compared to a simple accuracy rate, this measure takes into
+account the class imbalance. Intuitively, we calculate the recall rate in each
+class and then take the average, giving each class an equal weight. Refer to
+Appendix A for the derivation of the MPBA.
 
-Given that there are 12 datasets, each with 17 learning curves, we need a
-measure that can summarize in one number how well a particular heuristic or
-policy does. Building on~\cite{baram04}'s deficiency measure, we define the
+In total, we test 17 methods. This includes passive learning, 8 active learning
+heuristics, 5 bandit algorithms, and 3 aggregation methods. See
+Table~\ref{tab:abbre} for the list of abbreviations associated with the
+methods.
+\begin{table}[htbp]
+	\caption {Summary of active learning heuristics and combiners used
+	in the experiments} \label{tab:abbre}
+	\centering
+	\begin{tabular}{lll}
+		\toprule
+		Abbreviation & Type  & Description \\
+		\midrule
+        \textsc{passive}
+        	& Heuristic & Passive learning \\
+		\textsc{confidence}
+			& Heuristic & Least confidence heuristic \\
+		\textsc{w-confidence}
+        	& Heuristic & Least confidence heuristic with information density weighting \\
+        \textsc{margin}
+        	& Heuristic & Smallest margin heuristic \\
+        \textsc{w-margin}
+        	& Heuristic & Smallest margin heuristic with information density weighting \\
+        \textsc{entropy}
+        	& Heuristic & Highest entropy heuristic \\
+		\textsc{w-entropy}
+        	& Heuristic & Highest entropy heuristic with information density weighting \\
+        \textsc{qbb-margin}
+        	& Heuristic & Smallest QBB margin heuristic \\
+		\textsc{qbb-kl}
+        	& Heuristic & Largest QBB KL-divergence heuristic \\
+        \textsc{explore}
+			& Bandit & Bandit algorithm with 100\% exploration \\
+		\textsc{thompson}
+        	& Bandit & Thompson sampling \\
+		\textsc{ocucb}
+			& Bandit & Optimally Confidence UCB algorithm \\
+		\textsc{klucb}
+			& Bandit & kl-UCB algorithm \\
+		\textsc{exp++}
+			& Bandit & EXP3++ algorithm \\
+		\textsc{borda}
+			& Aggregation & Aggregation with Borda count \\
+		\textsc{geometric}
+			& Aggregation & Aggergation with the geometric mean \\
+		\textsc{schulze}
+			& Aggregation & Aggregation with the Schulze method \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+With the least confidence, smallest margin, and highest entropy
+heuristics, we also test a slight variant, in which we weight the score
+with the information density to give more importance to instances in regions
+of high density:
+\begin{IEEEeqnarray}{lCl}
+	s_{ID}(\bm{x}; h) &=&
+		\bigg(\dfrac{1}{E} \sum_{k = 1}^E
+		\text{sim}(\bm{x}, \bm{x}^{(k)})\bigg) s(\bm{x}; h)
+\end{IEEEeqnarray}
+where $h$ is the classifier, $s(\bm{x}; h)$ is the original score function of
+the instance with feature vetor $\bm{x}$, $E$ is the size of the candidate
+pool, and $\text{sim}(\bm{x}, \bm{x}^{(k)})$ is the similarity between $\bm{x}$
+and another instance $\bm{x}^{(k)}$ using the Gaussian kernel:
+\begin{IEEEeqnarray}{lCl}
+	\text{sim}(\bm{x}, \bm{x}^{(k)})
+		&=& \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2)
+\end{IEEEeqnarray}
+We set $\gamma$ in the experiments to be the inverse of the 90th percentile of
+all pairwise distances. The information density weighting is proposed
+by~\cite{settles08} to discourage the acitve learner from picking outliers.
+Although the class membership of outliers might be uncertain, knowing their
+labels would probably not affect the classifer's performance on the data as a
+whole.
+
+In addition to the 4 bandit algorithms described in
+Section~\ref{subsec:bandit}, we add a baseline method called \textsc{explore}
+which simply selects a random heuristic at each time step. In other words, we
+ignore the rewards and explore 100\% of the time. For all bandit and rank
+aggregation methods, we take advice from six experts:
+\textsc{passive}, \textsc{confidence}, \textsc{margin}, \textsc{entropy},
+\textsc{qbb-margin}, and \textsc{qbb-kl}.
+
+Given that there are 12 datasets, each with 17 learning curves, we
+need a measure that can summarize in one number how well a particular heuristic
+or policy does. Building on~\cite{baram04}'s deficiency measure, we define the
 strength of an active learner or policy, relative to passive learning, as
 \begin{IEEEeqnarray}{lCl}
     \text{Strength}(h; m) &=&
     	1 - \dfrac{\sum_{t=1}^{n}\big(m(\max) - m(h, t)\big)}
     	{\sum_{t=1}^{n}\big(m(\max) - m(\passive, t)\big)}
 \end{IEEEeqnarray}
-where $m$ is a chosen metric (e.g. accuracy rate, F1-score, MPBA), $m(\max)$ is
-the best possible performance achieved from using all labeled data in the
-training set, and $m(h, t)$ is the performance achieved using the first $t$
-examples selected by heuristic $h$. The summation can then be thought of as the
-area between the best possible performance line and the learning curve of $h$.
-The better the heuristic is, the faster it would approach this maximum line,
-and thus the smaller the area. Finally, so that we can compare the performance
+where $m$ is a chosen metric (e.g. accuracy rate, F1-score), $m(\max)$ is the
+best possible performance achieved from using all labeled data in the training
+set, and $m(h, t)$ is the performance achieved using the first $t$ examples
+selected by heuristic $h$. The summation can then be thought of as the area
+between the best possible performance line and the learning curve of $h$. The
+better the heuristic is, the faster it would approach this maximum line, and
+thus the smaller the area. Finally, so that we can compare the performance
 across datasets, we normalise the measure with the area obtained from using
-just passive learning.
+just passive learning. Refer to Figure~\ref{fig:strength} for a visualization
+of the strength measure.
 
-The abbreviations used when discussing the results are outlined in Table~\ref{tab:abbre}.
-
-\begin{table}[htbp]
-	\caption {Heuristics and Policies} \label{tab:abbre}
+\begin{figure}[htbp]
 	\centering
-	\begin{tabular}{ll}
-		\toprule
-		{Abbreviation}  & Description \\
-		\midrule
-        passive
-        	& Passive learning \\
-		confidence
-			& Least confidence heuristic \\
-		w-confidence
-        	& Least confidence heuristic with information density weighting \\
-        margin
-        	& Smallest margin heuristic \\
-        w-margin
-        	& Smallest margin heuristic with information density weighting \\
-        entropy
-        	& Highest entropy heuristic \\
-		w-entropy
-        	& Highest entropy heuristic with information density weighting \\
-        qbb-margin
-        	& Smallest QBB margin heuristic \\
-		qbb-kl
-        	& Largest QBB KL-divergence heuristic \\
-        explore
-			& Bandit algorithm with 100\% exploration \\
-		thompson
-        	& Thompson sampling \\
-		ocucb
-			& Optimally Confidence UCB algorithm \\
-		klucb
-			& kl-UCB algorithm \\
-		exp++
-			& EXP3++ algorithm \\
-		borda
-			& Aggregation with borda count \\
-		geometric
-			& Aggergation with geometric mean \\
-		schulze
-			& Aggregation with Schulze method \\
-		\bottomrule
-	\end{tabular}
-\end{table}
+	\includegraphics[width=0.7\textwidth]{figures/strength}
+	\caption[Strength Measure]{An example of the strength measure. It is
+	proportional to the shaded area between the (red) passive learning curve
+	and the (blue) active learning curve. The bigger the area is, the more
+	the active leaner outperforms the passive leaner. The top dotted line
+	indicates the maximum performance (by using the entire lableled pool
+	as training data).}
+	\label{fig:strength}
+\end{figure}
 
 \section{Results and Discussion}\label{sec:discuss}
 
 \subsection{Results}
 
-Figures~\ref{fig:strengths-accuracy} to~\ref{fig:strengths-mpba} show the
-strengths of all policies that we consider, while
-Figures~\ref{fig:learning_curves-accuracy} to~\ref{fig:learning_curves-mpba}
-provides the learning curves of a selected few. With the exception of the wpbc
+Figure~\ref{fig:strengths-accuracy} and~\ref{fig:strengths-f1} show the
+strengths of all methods that we consider, while
+Figure~\ref{fig:learning_curves-accuracy} and~\ref{fig:learning_curves-f1}
+provide selected learning curves. Each figure contains two subfigures,
+one for the 6 small datasets with fewer than 500 examples (glass, ionosphere,
+iris, sonar, wine, and wpbc), and one for the 6 large datasets (magic,
+miniboone, pageblocks, pima, sdss, and vehicle).
+
+We observe that with the small datasets, the effect of active learning is
+minimal. All the box plots in Figure \ref{fig:strengths-accuracy-small}
+and \ref{fig:strengths-f1-small} cross the zero line, which means that there
+is no statistical difference between the corresponding heuristic/combiner
+and passive learning.
+
+We start to benefit from active learning with the large datasets.
+
+For small datasets with less than 500 examples (Figure
+\ref{fig:strengths-accuracy-small}, \ref{fig:strengths-f1-small},
+\ref{fig:learning_curves-accuracy-small}, and
+\ref{fig:learning_curves-f1-small}), the effect of active learning is minimal.
+All of the box plots in
+
+
+With the exception of the wpbc
 dataset, most of the policies manage to beat passive learning. For the
 individual heuristics, the least confidence seems to perform very well while
 being very simple to calculate. This is consistent with have been observed in
@@ -1028,18 +1103,23 @@ we would be better off with passive learning with datasets that are very noisy.
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-accuracy-small}
-        \caption{Small datasets}
+		\caption{Small datasets}
+		\label{fig:strengths-accuracy-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-accuracy-large}
-        \caption{Large datasets}
+		\caption{Large datasets}
+		\label{fig:strengths-accuracy-large}
     \end{subfigure}
-	\caption[Policy strength]{Boxplots of accuracy strength of policies and
-	heuristics relative to passive learning. The more positive the strength is,
-	the better the heuristic/policy. Blue boxes represent individual
-	heuristics; red boxes represent bandit alogrithms, and green boxes are for
-	rank aggragation algorithms. Each plot is over 10 trials.}
+	\caption[Policy strength]{Boxplots of accuracy strength of the 16 active
+	learning strategies, relative to passive learning. The more positive the
+	strength is, the better the heuristic/combiner is. Blue boxes represent
+	individual heuristics; red boxes represent bandit alogrithms, and green
+	boxes are for rank aggragation methods. A strategy that is above the zero
+	line is better than passive learning. Each box contains 10 trials.
+	The accuracy rate is a simple metric that simply counts up the number
+	of correct predictions.}
 	\label{fig:strengths-accuracy}
 \end{figure}
 
@@ -1048,39 +1128,25 @@ we would be better off with passive learning with datasets that are very noisy.
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-f1-small}
-        \caption{Small datasets}
+		\caption{Small datasets}
+		\label{fig:strengths-f1-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-f1-large}
-        \caption{Large datasets}
+		\caption{Large datasets}
+		\label{fig:strengths-f1-large}
     \end{subfigure}
-	\caption[Policy strength]{Boxplots of F1 strength of policies and
-	heuristics relative to passive learning. The more positive the strength is,
-	the better the heuristic/policy. Blue boxes represent individual
+	\caption[Policy strength]{Boxplots of F1 strength of the 16 active learning
+	strategies, relative to passive learning. The more positive the strength
+	is, the better the heuristic/combiner is. Blue boxes represent individual
 	heuristics; red boxes represent bandit alogrithms, and green boxes are for
-	rank aggragation algorithms. Each plot is over 10 trials.}
+	rank aggragation methods. A strategy that is above the zero line is better
+	than passive learning. Each box contains 10 trials. The accuracy rate is a
+	simple metric that simply counts up the number of correct predictions. The
+	F1 score, being the weighted average of the recall and precision, gives an
+	equal representation to each class.}
 	\label{fig:strengths-f1}
-\end{figure}
-
-\begin{figure}[tbp]
-	\centering
-	\begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/strengths-mpba-small}
-        \caption{Small datasets}
-	\end{subfigure}
-	\begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/strengths-mpba-large}
-        \caption{Large datasets}
-    \end{subfigure}
-	\caption[Policy strength]{Boxplots of MPBA strength of policies and
-	heuristics relative to passive learning. The more positive the strength is,
-	the better the heuristic/policy. Blue boxes represent individual
-	heuristics; red boxes represent bandit alogrithms, and green boxes are for
-	rank aggragation algorithms. Each plot is over 10 trials.}
-	\label{fig:strengths-mpba}
 \end{figure}
 
 
@@ -1089,18 +1155,20 @@ we would be better off with passive learning with datasets that are very noisy.
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/learning_curves-accuracy-small}
-        \caption{Small datasets}
+		\caption{Small datasets}
+		\label{fig:learning_curves-accuracy-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/learning_curves-accuracy-large}
-        \caption{Large datasets}
+		\caption{Large datasets}
+		\label{fig:learning_curves-accuracy-large}
     \end{subfigure}
 	\caption[Selected learning curves]{Selected accuracy rate learning curves.
 	As it would get too cluttered to plot 16 learning curves, we only show the
-	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
-	and the Borda aggregation policy. The learning curves are averaged over 10
-	shuffles.}
+	accuracy rate learning curves for passive learning, the least confidence
+	heuristic, the EXP3++ bandit policy, and the Borda aggregator. The
+	learning curves are averaged over 10 trials.}
 	\label{fig:learning_curves-accuracy}
 \end{figure}
 
@@ -1109,39 +1177,21 @@ we would be better off with passive learning with datasets that are very noisy.
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/learning_curves-f1-small}
-        \caption{Small datasets}
+		\caption{Small datasets}
+		\label{fig:learning_curves-f1-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/learning_curves-f1-large}
-        \caption{Large datasets}
+		\caption{Large datasets}
+		\label{fig:learning_curves-f1-large}
     \end{subfigure}
 	\caption[Selected learning curves]{Selected F1-score learning curves.
 	As it would get too cluttered to plot 16 learning curves, we only show the
-	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
-	and the Borda aggregation policy. The learning curves are averaged over 10
-	shuffles.}
+	F1-score learning curves for passive learning, the least confidence
+	heuristic, the EXP3++ bandit policy, and the Borda aggregator. The
+	learning curves are averaged over 10 trials.}
 	\label{fig:learning_curves-f1}
-\end{figure}
-
-\begin{figure}[tbp]
-	\centering
-	\begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/learning_curves-mpba-small}
-        \caption{Small datasets}
-	\end{subfigure}
-	\begin{subfigure}[t]{\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/learning_curves-mpba-large}
-        \caption{Large datasets}
-    \end{subfigure}
-	\caption[Selected learning curves]{Selected MPBA learning curves.
-	As it would get too cluttered to plot 16 learning curves, we only show the
-	MPBA curves for the least confidence heuristic, the EXP3++ bandit policy,
-	and the Borda aggregation policy. The learning curves are averaged over 10
-	shuffles.}
-	\label{fig:learning_curves-mpba}
 \end{figure}
 
 

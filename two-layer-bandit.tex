@@ -920,7 +920,7 @@ One-vs-Rest strategy, where for every class, we build a binary classifier that
 determines whether a particular example belongs to that class or not.
 
 For the bandit algorithms, the mean posterior balanced accuracy (MPBA) is used
-as the reward. Compared to a simple accuracy rate, this measure takes into
+as the reward. Compared to the raw accuracy score, this metric takes into
 account the class imbalance. Intuitively, we calculate the recall rate in each
 class and then take the average, giving each class an equal weight. Refer to
 Appendix A for the derivation of the MPBA.
@@ -991,12 +991,12 @@ and another instance $\bm{x}^{(k)}$ using the Gaussian kernel:
 	\text{sim}(\bm{x}, \bm{x}^{(k)})
 		&=& \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2)
 \end{IEEEeqnarray}
-We set $\gamma$ in the experiments to be the inverse of the 90th percentile of
-all pairwise distances. The information density weighting is proposed
-by~\cite{settles08} to discourage the acitve learner from picking outliers.
-Although the class membership of outliers might be uncertain, knowing their
-labels would probably not affect the classifer's performance on the data as a
-whole.
+We set $\gamma$ in the experiments to be the inverse of the
+90\textsuperscript{th} percentile of all pairwise distances. The information
+density weighting is proposed by~\cite{settles08} to discourage the acitve
+learner from picking outliers. Although the class membership of outliers might
+be uncertain, knowing their labels would probably not affect the classifer's
+performance on the data as a whole.
 
 In addition to the 4 bandit algorithms described in
 Section~\ref{subsec:bandit}, we add a baseline method called \textsc{explore}
@@ -1015,16 +1015,24 @@ strength of an active learner or policy, relative to passive learning, as
     	1 - \dfrac{\sum_{t=1}^{n}\big(m(\max) - m(h, t)\big)}
     	{\sum_{t=1}^{n}\big(m(\max) - m(\passive, t)\big)}
 \end{IEEEeqnarray}
-where $m$ is a chosen metric (e.g. accuracy rate, F1-score), $m(\max)$ is the
-best possible performance achieved from using all labeled data in the training
-set, and $m(h, t)$ is the performance achieved using the first $t$ examples
-selected by heuristic $h$. The summation can then be thought of as the area
-between the best possible performance line and the learning curve of $h$. The
-better the heuristic is, the faster it would approach this maximum line, and
-thus the smaller the area. Finally, so that we can compare the performance
+where $m$ is a chosen metric (e.g. accuracy rate, MPBA), $m(\max)$
+is the best possible performance achieved from using all labeled data in the
+training set, and $m(h, t)$ is the performance achieved using the first $t$
+examples selected by heuristic $h$. The summation can then be thought of as the
+area between the best possible performance line and the learning curve of $h$.
+The better the heuristic is, the faster it would approach this maximum line,
+and thus the smaller the area. Finally, so that we can compare the performance
 across datasets, we normalise the measure with the area obtained from using
 just passive learning. Refer to Figure~\ref{fig:strength} for a visualization
 of the strength measure.
+
+We evaluate the algorithm performance with two metrics: the accuracy score and
+the MPBA. The accuracy score is simply the proportion of instances in
+the test set where the predicted label matches the true label. If a dataset had
+a dominant class, then the accuracy score of instances within that class would
+also dominate the overall accuracy score. The MPBA, on the other hand, puts
+an equal weight in each class and thus favors algorithms that can predict
+the label of all classes equally well.
 
 \begin{figure}[htbp]
 	\centering
@@ -1042,61 +1050,80 @@ of the strength measure.
 
 \subsection{Results}
 
-Figure~\ref{fig:strengths-accuracy} and~\ref{fig:strengths-f1} show the
+Figure~\ref{fig:strengths-accuracy} and~\ref{fig:strengths-mpba} show the
 strengths of all methods that we consider, while
-Figure~\ref{fig:learning_curves-accuracy} and~\ref{fig:learning_curves-f1}
-provide selected learning curves. Each figure contains two subfigures,
-one for the 6 small datasets with fewer than 500 examples (glass, ionosphere,
-iris, sonar, wine, and wpbc), and one for the 6 large datasets (magic,
-miniboone, pageblocks, pima, sdss, and vehicle).
+Figure~\ref{fig:learning_curves-accuracy} and~\ref{fig:learning_curves-mpba}
+provide selected learning curves. Each figure contains two subfigures. The top
+subfigure is for the 6 small datasets with fewer than 500 examples (glass,
+ionosphere, iris, sonar, wine, and wpbc). The bottom subfigure is for the 2
+medium-sized datasets (pima and vehicle) and the 4 large datasets (magic,
+miniboone, pageblocks, and sdss).
 
-We observe that with the small datasets, the effect of active learning is
-minimal. All the box plots in Figure \ref{fig:strengths-accuracy-small}
-and \ref{fig:strengths-f1-small} cross the zero line, which means that there
-is no statistical difference between the corresponding heuristic/combiner
-and passive learning.
+We observe that with the small and medium-sized datasets, the effect of active
+learning is minimal. The box plots for all of these datasets cross the zero
+line, which means that there is no statistical difference between the
+corresponding heuristic/combiner and passive learning. With the pima dataset,
+active learning appears to perform better if we look at the raw accuracy score.
+However from the MPBA score, where the class imbalance is taken into account,
+the benefit starts to disappear. It is only with the 4 large datasets that
+there is a visible gap between the passive learning curve and the active
+learning curve for most methods.
 
-We start to benefit from active learning with the large datasets.
+Out of the 8 active learning heuristics tested, the heuristics with the
+information density weighting (\textsc{w-confidence},
+\textsc{w-margin}, \textsc{w-entropy}) outperform passive learning only in
+the pageblocks dataset (the most imbalanced dataset, with 90\% of the examples
+being in the majority class). \textsc{qbb-kl} performs slightly better in
+pageblocks and miniboone. The remaining heuristics---\textsc{confidence},
+\textsc{margin}, \textsc{entropy}, and \textsc{qbb-margin}---perform equally
+well in magic, miniboone, pageblocks, and sdss.
 
-For small datasets with less than 500 examples (Figure
-\ref{fig:strengths-accuracy-small}, \ref{fig:strengths-f1-small},
-\ref{fig:learning_curves-accuracy-small}, and
-\ref{fig:learning_curves-f1-small}), the effect of active learning is minimal.
-All of the box plots in
+We find no difference in performance between the bandit algorithms and
+the rank aggregation methods. Combining active learners does not seem
+to hurt the performance, even if we include a poorly performing heuristic
+such as \textsc{qbb-kl}.
 
-
-With the exception of the wpbc
-dataset, most of the policies manage to beat passive learning. For the
-individual heuristics, the least confidence seems to perform very well while
-being very simple to calculate. This is consistent with have been observed in
-the literature. The best performing bandit algorithm is EXP3++, and if we want
-to use information form all heuristics, Borda count would be a good choice. On
-some datasets such as magic and pima, Borda count does better than EXP3++,
-although the effect is fairly small.
 
 \subsection{Discussion}
 
-In practice, we do not have a representative test set that can be used to
-compute the reward. Thus aggregation methods like Borda are are suitable than
-bandit algorithms such as EXP3++ and Thompson sampling. In the absence of such
-a test set, \cite{hsu15} addressed this problem by using importance weighting
-to remove the bias in the accuracy on the training set. For this to work,
-however, we need to ensure that every training example and active learning
-suggestion have a non-zero probability of being selected in every iteration.
+The experimental results allow us to answer the following questions:
 
-Finally, it is worth noting that active learning might degrade the classifier's
-performance in some cases. This can be seen with the wpbc dataset, where no
-policy manages to beat passive learning. This dataset does have the lowest
-maximum performance, where we achieve an MPBA of only 58\% (slightly above
-random guessing) when using the all examples in training. This indicates that
-we would be better off with passive learning with datasets that are very noisy.
+\begin{enumerate}
+	\item \textbf{Can active learning degrade performance?} Yes, there is no
+	guarantee that active learning will always beat passive learning. For
+	example, \textsc{w-entropy} actually slows down the learning in the magic
+	dataset. However, this only happens with certain heuristics (e.g.
+	when we use information density weighting).
 
-\begin{itemize}
-	\item Additionally add ranking combination
-	\item Active is better than passive
-	\item Combining is better than single
-	\item Bandit is the same as random combine, problem with reward design
-\end{itemize}
+	\item \textbf{What is the best single active learning heursitic?} Although
+	all four heuristics---\textsc{confidence}, \textsc{margin},
+	\textsc{entropy}, and \textsc{qbb-margin}---have a similar performance,
+	\textsc{confidence} is perhaps the simpliest to compute and thus is a good
+	default choice.
+
+	\item \textbf{Which bandit algorithm should I use in practice to combine
+	active leaners?} We do not recommend using any bandit algorithm to combine
+	active leaners. There are two reasons for this. First, we do not have a
+	representative test set that can be used to compute the reward in practice.
+	Second, designing a good reward scheme is difficult As a workaround to the
+	first problem, \cite{hsu15} compute the reward on the training set and then
+	use importance weighting to remove any potential bias. For this to work, we
+	need to ensure that every training example and active learning suggestion
+	have a non-zero probability of being selected in every iteration. Solving
+	the second problem is more tricky. Is the increase in the classifer
+	performance actually a good reward scheme? This type of reward is
+	non-stationary (getting smaller after each step as learning saturates) and
+	eventually the rewards actually go to zero.
+
+	\item \textbf{Which rank aggregator should I use in practice to combine
+	active leaners?} Given that there is no difference between the three rank
+	aggregators, we recommend using a simple one like Borda count if we do not
+	want to select a heuristic a priori. Rank aggregators do not need a notion
+	of the reward (we simply give all suggestions an equal weight when
+	combining). Thus we neither need keep a keep a separate test set, nor do we
+	need to worry about designing a good reward scheme.
+\end{enumerate}
+
 
 \begin{figure}[tbp]
 	\centering
@@ -1109,7 +1136,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-accuracy-large}
-		\caption{Large datasets}
+		\caption{Medium-sized and large datasets}
 		\label{fig:strengths-accuracy-large}
     \end{subfigure}
 	\caption[Policy strength]{Boxplots of accuracy strength of the 16 active
@@ -1127,26 +1154,26 @@ we would be better off with passive learning with datasets that are very noisy.
 	\centering
 	\begin{subfigure}[t]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/strengths-f1-small}
+        \includegraphics[width=\textwidth]{figures/strengths-mpba-small}
 		\caption{Small datasets}
-		\label{fig:strengths-f1-small}
+		\label{fig:strengths-mpba-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/strengths-f1-large}
-		\caption{Large datasets}
-		\label{fig:strengths-f1-large}
+        \includegraphics[width=\textwidth]{figures/strengths-mpba-large}
+		\caption{Medium-sized and large datasets}
+		\label{fig:strengths-mpba-large}
     \end{subfigure}
-	\caption[Policy strength]{Boxplots of F1 strength of the 16 active learning
-	strategies, relative to passive learning. The more positive the strength
-	is, the better the heuristic/combiner is. Blue boxes represent individual
-	heuristics; red boxes represent bandit alogrithms, and green boxes are for
-	rank aggragation methods. A strategy that is above the zero line is better
-	than passive learning. Each box contains 10 trials. The accuracy rate is a
-	simple metric that simply counts up the number of correct predictions. The
-	F1 score, being the weighted average of the recall and precision, gives an
-	equal representation to each class.}
-	\label{fig:strengths-f1}
+	\caption[Policy strength]{Boxplots of MPBA strength of the 16 active
+	learning strategies, relative to passive learning. The more positive the
+	strength is, the better the heuristic/combiner is. Blue boxes represent
+	individual heuristics; red boxes represent bandit alogrithms, and green
+	boxes are for rank aggragation methods. A strategy that is above the zero
+	line is better than passive learning. Each box contains 10 trials. The
+	accuracy rate is a simple metric that simply counts up the number of
+	correct predictions. The MPBA score, being the weighted average of the
+	recall and precision, gives an equal representation to each class.}
+	\label{fig:strengths-mpba}
 \end{figure}
 
 
@@ -1161,7 +1188,7 @@ we would be better off with passive learning with datasets that are very noisy.
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/learning_curves-accuracy-large}
-		\caption{Large datasets}
+		\caption{Medium-sized and large datasets}
 		\label{fig:learning_curves-accuracy-large}
     \end{subfigure}
 	\caption[Selected learning curves]{Selected accuracy rate learning curves.
@@ -1176,22 +1203,22 @@ we would be better off with passive learning with datasets that are very noisy.
 	\centering
 	\begin{subfigure}[t]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/learning_curves-f1-small}
+        \includegraphics[width=\textwidth]{figures/learning_curves-mpba-small}
 		\caption{Small datasets}
-		\label{fig:learning_curves-f1-small}
+		\label{fig:learning_curves-mpba-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/learning_curves-f1-large}
-		\caption{Large datasets}
-		\label{fig:learning_curves-f1-large}
+        \includegraphics[width=\textwidth]{figures/learning_curves-mpba-large}
+		\caption{Medium-sized and large datasets}
+		\label{fig:learning_curves-mpba-large}
     \end{subfigure}
-	\caption[Selected learning curves]{Selected F1-score learning curves.
+	\caption[Selected learning curves]{Selected MPBA learning curves.
 	As it would get too cluttered to plot 16 learning curves, we only show the
-	F1-score learning curves for passive learning, the least confidence
+	MPBA learning curves for passive learning, the least confidence
 	heuristic, the EXP3++ bandit policy, and the Borda aggregator. The
 	learning curves are averaged over 10 trials.}
-	\label{fig:learning_curves-f1}
+	\label{fig:learning_curves-mpba}
 \end{figure}
 
 

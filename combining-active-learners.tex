@@ -97,12 +97,13 @@
 
 \title{Combining Active Learning Suggestions}
 
-\author[1]{Alasdair Tran}
-\author[1, 2]{Cheng Soon Ong}
-\author[3]{Christian Wolf}
+\author[1, 2]{Alasdair Tran}
+\author[1, 3]{Cheng Soon Ong}
+\author[4]{Christian Wolf}
 \affil[1]{Research School of Computer Science, Australian National University}
-\affil[2]{Machine Learning Research Group, Data61, CSIRO, Australia}
-\affil[3]{Research School of Astronomy and Astrophysics, Australian National
+\affil[2]{Data to Decisions Cooperative Research Centre, Australia}
+\affil[3]{Machine Learning Research Group, Data61, CSIRO, Australia}
+\affil[4]{Research School of Astronomy and Astrophysics, Australian National
           University}
 
 \corrauthor[1]{Alasdair Tran}{alasdair.tran@anu.edu.au}
@@ -843,8 +844,10 @@ algorithms work in Table~\ref{tab:choice}.
 		\end{tabular}
 		\caption{Aggregated ranking with the Schulze method. The table shows
 		the strongest path strength $p(x_i, x_j)$ between all pairs of
-		candidates. Candidate B is the winner since $p(B, A) > p(A, B)$, $p(B,
-		C) > p(C, B)$, and $p(B, D) > p(D, B)$.}
+		candidates. For example, $p(B, D) = 3$ because the path $B \rightarrow
+		D$ is the strongest path from $B$ to $D$, where three heuristics prefer
+		B over D. Candidate B is the winner since $p(B, A) > p(A, B)$, $p(B, C)
+		> p(C, B)$, and $p(B, D) > p(D, B)$.}
 	\end{subtable}
 \end{table}
 
@@ -1272,6 +1275,10 @@ The experimental results allow us to answer the following questions:
 
 
 \section{Acknowledgments}
+
+The work has been supported by the Data to Decisions Cooperative Research
+Centre whose activities are funded by the Australian Commonwealth Government’s
+Cooperative Research Centres Programme.
 
 The UCI datasets were downloaded from the UCI Machine Learning
 Repository\footnote{\url{http://archive.ics.uci.edu/ml}}. In particular, the

@@ -1,0 +1,183 @@
+\documentclass[oneside, 11pt]{article}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{cleveref}
+\usepackage{txfonts}
+
+\DeclareMathOperator{\cov}{cov}
+
+\allowdisplaybreaks
+
+\begin{document}
+
+Consider regression with Gaussian Processes. It relies on a matrix $K$ that represents the assumed covariance between samples. If we have two samples $\mathbf{x}$ and $\mathbf{x}'$, the covariance $\cov\left[f(\mathbf{x}),f(\mathbf{x}')\right] = k(\mathbf{x}, \mathbf{x}')$ for some $k$ that we assume. Usually \[
+    \lim_{\left\|\mathbf{x} - \mathbf{x}'\right\| \to 0}k(\mathbf{x}, \mathbf{x}') = 1
+\] and \[
+    \lim_{\left\|\mathbf{x} - \mathbf{x}'\right\| \to \infty}k(\mathbf{x}, \mathbf{x}') = 0 \text{.}
+\]
+
+This works well when we know $\mathbf{x}$ and $\mathbf{x}'$ exactly, but fails if we only know them up to an uncertainty. Suppose all we know if that $\mathbf{x}$ is a sample from $\mathcal{N}(\bm{\mu}, \Sigma)$ and $\mathbf{x}'$ is a sample from $\mathcal{N}(\bm{\mu}', \Sigma')$ for some small $\|\bm{\mu} - \bm{\mu}'\|$ and very large spreads $\Sigma$ and $\Sigma'$. By our na\"ive definition,\[
+    \cov\left[f(\mathbf{x}),f(\mathbf{x}')\right] = k(\bm{\mu}, \bm{\mu}') \approx 1 \text{.}
+\] However, for $\Sigma$ and $\Sigma'$ large enough, we expect\[
+    \cov\left[f(\mathbf{x}),f(\mathbf{x}')\right] \approx 0 \text{.}
+\]
+
+It is thus desirable to extend the definition of kernels $k$ such that they are not just a function $k(\mathbf{x}, \mathbf{x}')$ of known values, but a function $k(\mathcal{P}_\mathbf{x}, \mathcal{P}_{\mathbf{x}'})$ of their probability distributions. This permits us to account for uncertainties of input data in scientific contexts. We derive this extended definition.
+
+For known values $\mathbf{x}$ and $\mathbf{x}'$, the definition of $\cov[f(\mathbf{x}),f(\mathbf{x}')]$ is \begin{align*}
+    \cov\left[f(\mathbf{x}),f(\mathbf{x}')\right] &= \mathbb{E}\left[\left(f\left(\mathbf{x}\right) - \mathbb{E}\left[f\left(\mathbf{x}\right)\right]\right)\left(f\left(\mathbf{x}'\right) - \mathbb{E}\left[f\left(\mathbf{x}'\right)\right]\right)\right] \\
+    &= \mathbb{E}\left[f\left(\mathbf{x}\right)f\left(\mathbf{x}'\right)\right] \\
+    &= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} y y' p\left(y = f\left(\mathbf{x}\right), y' = f\left(\mathbf{x}'\right)\right) dy'dy \\
+    &= k(\mathbf{x}, \mathbf{x}')
+\end{align*} since $\mathbb{E}[f(\mathbf{x})] = \mathbb{E}[f(\mathbf{x}')] = 0$ by the Gaussian process prior.
+
+For values of $\mathbf{x}$ and $\mathbf{x}'$ sampled from $\mathcal{P}_\mathbf{x}$ and $\mathcal{P}_{\mathbf{x}'}$ respectively,  \begin{align*}
+    \cov\left[f(\mathbf{x}),f(\mathbf{x}')\right] &= \mathbb{E}\left[\left(f\left(\mathbf{x}\right) - \mathbb{E}\left[f\left(\mathbf{x}\right)\right]\right)\left(f\left(\mathbf{x}'\right) - \mathbb{E}\left[f\left(\mathbf{x}'\right)\right]\right)\right] \\
+    &= \mathbb{E}\left[f\left(\mathbf{x}\right)f\left(\mathbf{x}'\right)\right] \\
+    &= \int_{\mathcal{X}}\int_{\mathcal{X}}\int_{-\infty}^{\infty} \int_{-\infty}^{\infty} y y' p\left(y = f\left(\mathbf{x}\right), y' = f\left(\mathbf{x}'\right)\right) \mathcal{P}_{\mathbf{x}}(\mathbf{x}) \mathcal{P}_{\mathbf{x}'}(\mathbf{x}') dy'dyd\mathbf{x}d\mathbf{x}' \\
+    &= \int_{\mathcal{X}}\int_{\mathcal{X}}\mathcal{P}_{\mathbf{x}}(\mathbf{x}) \mathcal{P}_{\mathbf{x}'}(\mathbf{x}')\int_{-\infty}^{\infty} \int_{-\infty}^{\infty} y y' p\left(y = f\left(\mathbf{x}\right), y' = f\left(\mathbf{x}'\right)\right)  dy'dyd\mathbf{x}d\mathbf{x}' \\
+    &= \int_{\mathcal{X}}\int_{\mathcal{X}}\mathcal{P}_{\mathbf{x}}(\mathbf{x}) \mathcal{P}_{\mathbf{x}'}(\mathbf{x}')k(\mathbf{x}, \mathbf{x}')d\mathbf{x}d\mathbf{x}' \text{,}
+\end{align*} where $k(\mathbf{x}, \mathbf{x}')$ is the kernel defined on $\mathbf{x}$ and $\mathbf{x}'$ with no uncertainty.
+
+For $\mathcal{P}_\mathbf{x} = \mathcal{N}(\bm{\mu}, \Sigma)$ and $\mathcal{P}_{\mathbf{x}'} = \mathcal{N}(\bm{\mu}', \Sigma')$, and for the Gaussian kernel $k(\mathbf{x}, \mathbf{x}') = \exp(-\frac12(\mathbf{x} - \mathbf{x}')^\top S^{-1} (\mathbf{x} - \mathbf{x}')$, our kernel with uncertainty \begin{align*}
+    k(\mathcal{P}_\mathbf{x}, \mathcal{P}_{\mathbf{x}'}) \\
+    &= \int_{\mathcal{X}}\int_{\mathcal{X}}\mathcal{P}_{\mathbf{x}}(\mathbf{x}) \mathcal{P}_{\mathbf{x}'}(\mathbf{x}')k(\mathbf{x}, \mathbf{x}')d\mathbf{x}d\mathbf{x}' \\
+    &= \sqrt{\frac{\det S}{\det\left(\Sigma + \Sigma' + S\right)}} \exp\left(-\frac{1}{2}\left(\bm{\mu}' - \bm{\mu}\right)^\top \left( \Sigma + \Sigma' + S\right)^{-1}\left(\bm{\mu}' - \bm{\mu}\right)\right) \text{.}
+\end{align*} See \cref{sec:integral} for the derivation.
+
+\appendix
+\section{Finding the integral}
+\label{sec:integral}
+
+    We want to find the integral\begin{align*}
+        &\int_{\mathbb{R}^d} \det(2\pi\Sigma)^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}-\bm{\mu}\right)^\top \Sigma^{-1} \left(\mathbf{x}-\bm{\mu}\right) \right) \\
+        &\hspace{30pt} \int_{\mathbb{R}^d} \det(2\pi\Sigma')^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}'-\bm{\mu}'\right)^\top \Sigma'^{-1} \left(\mathbf{x'}-\bm{\mu}'\right) \right) \\
+        &\hspace{60pt}\exp\left(-\frac12 \left(\mathbf{x}'-\mathbf{x}\right)^\top S^{-1} \left(\mathbf{x}'-\mathbf{x}\right) \right) d\mathbf{x}' d\mathbf{x} \text{.}
+    \end{align*}
+
+    We first tackle the inner integral, \begin{align*}
+        &\int_{\mathbb{R}^d} \det(2\pi\Sigma')^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}'-\bm{\mu}'\right)^\top \Sigma'^{-1} \left(\mathbf{x'}-\bm{\mu}'\right) \right) \\
+        &\hspace{60pt}\exp\left(-\frac12 \left(\mathbf{x}'-\mathbf{x}\right)^\top S^{-1} \left(\mathbf{x}'-\mathbf{x}\right) \right) d\mathbf{x}' \text{,}
+    \end{align*} where we treat $\mathbf{x}$ as a constant.
+
+    Changing variables, \[
+        \mathbf{y}' \coloneqq S^{-1/2} (\mathbf{x}' - \mathbf{x}) \text{,}
+    \] so\[
+        \mathbf{x}' = S^{1/2} \mathbf{y}' + \mathbf{x} \text{.}
+    \] We note that \[
+        d\mathbf{y}' = S^{-1/2} d\mathbf{x}' \text{.}
+    \]
+
+    Then \begin{align*}
+        &\int_{\mathbb{R}^d} \det(2\pi\Sigma')^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}'-\bm{\mu}'\right)^\top \Sigma'^{-1} \left(\mathbf{x'}-\bm{\mu}'\right) \right) \\
+        &\hspace{60pt}\exp\left(-\frac12 \left(\mathbf{x}'-\mathbf{x}\right)^\top S^{-1} \left(\mathbf{x}'-\mathbf{x}\right) \right) d\mathbf{x}' \\
+        &= \det(2\pi\Sigma')^{-1/2} \left|\det S^{1/2}\right| \int_{\mathbb{R}^d} \exp\left(-\frac12 \left(S^{1/2} \mathbf{y}' + \mathbf{x} - \bm{\mu}'\right)^\top \Sigma'^{-1} \left(S^{1/2} \mathbf{y}' + \mathbf{x} - \bm{\mu}'\right) \right) \\
+        &\hspace{150pt}\exp\left(-\frac12 \mathbf{y}'^\top \mathbf{y}' \right)  d\mathbf{y}' \text{.}
+    \end{align*}
+
+    Setting \[
+        C' \coloneqq S^{\frac12}\Sigma'^{-1}S^{\frac12}
+    \] and \[
+        \mathbf{m'} \coloneqq -S^{-\frac12} (\mathbf{x} - \bm{\mu}') \text{,}
+    \] this changes to \begin{align*}
+        &\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(S^{1/2} \mathbf{y}' + \mathbf{x} - \bm{\mu}'\right)^\top \Sigma'^{-1} \left(S^{1/2} \mathbf{y}' + \mathbf{x} - \bm{\mu}'\right) \right) \exp\left(-\frac12 \mathbf{y}'^\top \mathbf{y}' \right)  d\mathbf{y}' \\
+        &= \int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\mathbf{y}' - \mathbf{m}'\right)^\top C' \left(\mathbf{y}' - \mathbf{m}'\right) \right) \exp\left(-\frac12 \mathbf{y}'^\top \mathbf{y}' \right)  d\mathbf{y}' \text{.}
+    \end{align*}
+
+    In the 1-dimensional case we get \begin{align*}
+        &\int_{-\infty}^{\infty} \exp\left(-\frac{c'}2 \left(y' - m'\right)^2 \right) \exp\left(-\frac12 y'^2 \right)  dy \\
+        &= \frac{\sqrt{2\pi}}{\sqrt{1 + c'}} \exp\left(-\frac{1}{2}\frac{c'}{1+c'}m'^2 \right) \text{.}
+    \end{align*}
+
+    In the 2-dimensional case, \begin{align*}
+        &\int_{\mathbb{R}^2} \exp\left(-\frac12 \left(\mathbf{y}' - \mathbf{m}'\right)^\top C' \left(\mathbf{y}' - \mathbf{m}'\right) \right) \exp\left(-\frac12 \mathbf{y}'^\top \mathbf{y}' \right)  d\mathbf{y}' \\
+        &= 2 \pi \sqrt{\frac{1}{\det(I + C')}} \exp\left(-\frac{1}{2}\mathbf{m}'^\top \left(C'^{-1} + I\right)^{-1}\mathbf{m}'\right) \text{.}
+    \end{align*}
+
+    In the 3-dimensional case Mathematica shits itself and outputs hundreds of lines of symbols. For a simplified scenario where $C'$ is diagonal, we get\begin{align*}
+        &\int_{\mathbb{R}^3} \exp\left(-\frac12 \left(\mathbf{y}' - \mathbf{m}'\right)^\top C' \left(\mathbf{y}' - \mathbf{m}'\right) \right) \exp\left(-\frac12 \mathbf{y}'^\top \mathbf{y}' \right)  d\mathbf{y}' \\
+        &= (2 \pi)^{3/2} \sqrt{\frac{1}{\det(I + C')}} \exp\left(-\frac{1}{2}\mathbf{m}'^\top \left(C'^{-1} + I\right)^{-1}\mathbf{m}'\right) \text{.}
+    \end{align*}
+
+    We recognise the pattern, \begin{align*}
+        &\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\mathbf{y}' - \mathbf{m}'\right)^\top C' \left(\mathbf{y}' - \mathbf{m}'\right) \right) \exp\left(-\frac12 \mathbf{y}'^\top \mathbf{y}' \right)  d\mathbf{y}' \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det(I + C')}} \exp\left(-\frac{1}{2}\mathbf{m}'^\top \left(C'^{-1} + I\right)^{-1}\mathbf{m}'\right) \text{.}
+    \end{align*}
+
+    Substituting back,\begin{align*}
+        &(2 \pi)^{d/2} \sqrt{\frac{1}{\det(I + C')}} \exp\left(-\frac{1}{2}\mathbf{m}'^\top \left(C'^{-1} + I\right)^{-1}\mathbf{m}'\right) \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + S^{\frac12}\Sigma'^{-1}S^{\frac12}\right)}} \exp\left(-\frac{1}{2}\mathbf{m}'^\top \left(S^{-\frac12}\Sigma'S^{-\frac12} + I\right)^{-1}\mathbf{m}'\right) \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + S^{\frac12}\Sigma'^{-1}S^{\frac12}\right)}} \exp\left(-\frac{1}{2}\left(-S^{-\frac12} \left(\mathbf{x} - \bm{\mu}'\right)\right)^\top \left(S^{-\frac12}\Sigma'S^{-\frac12} + I\right)^{-1}\left(-S^{-\frac12} \left(\mathbf{x} - \bm{\mu}'\right)\right)\right) \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + S^{\frac12}\Sigma'^{-1}S^{\frac12}\right)}} \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right) \text{.}
+    \end{align*}
+
+    Hence, \begin{align*}
+        &\int_{\mathbb{R}^d} \det(2\pi\Sigma')^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}'-\bm{\mu}'\right)^\top \Sigma'^{-1} \left(\mathbf{x'}-\bm{\mu}'\right) \right) \\
+        &\hspace{60pt}\exp\left(-\frac12 \left(\mathbf{x}'-\mathbf{x}\right)^\top S^{-1} \left(\mathbf{x}'-\mathbf{x}\right) \right) d\mathbf{x}' \\
+        &= \det(2\pi\Sigma')^{-1/2} \left|\det S^{1/2}\right| \int_{\mathbb{R}^d} \exp\left(-\frac12 \left(S^{1/2} \mathbf{y}' + \mathbf{x} - \bm{\mu}'\right)^\top \Sigma'^{-1} \left(S^{1/2} \mathbf{y}' + \mathbf{x} - \bm{\mu}'\right) \right) \\
+        &\hspace{150pt}\exp\left(-\frac12 \mathbf{y}'^\top \mathbf{y}' \right)  d\mathbf{y}' \\
+        &= \det(2\pi\Sigma')^{-1/2} \left|\det S^{1/2}\right| (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + S^{\frac12}\Sigma'^{-1}S^{\frac12}\right)}} \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right) \\
+        &=  \sqrt{\frac{\det S}{\det\Sigma'\det\left(I + S^{\frac12}\Sigma'^{-1}S^{\frac12}\right)}} \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right) \\
+        &=  \sqrt{\frac{1}{\det\left(\Sigma'S^{-1} + I\right)}} \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right)
+    \end{align*}
+
+    Now tackling the outer integral, \begin{align*}
+        &\int_{\mathbb{R}^d} \det(2\pi\Sigma)^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}-\bm{\mu}\right)^\top \Sigma^{-1} \left(\mathbf{x}-\bm{\mu}\right) \right) \\
+        &\hspace{30pt} \int_{\mathbb{R}^d} \det(2\pi\Sigma')^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}'-\bm{\mu}'\right)^\top \Sigma'^{-1} \left(\mathbf{x'}-\bm{\mu}'\right) \right) \\
+        &\hspace{60pt}\exp\left(-\frac12 \left(\mathbf{x}'-\mathbf{x}\right)^\top S^{-1} \left(\mathbf{x}'-\mathbf{x}\right) \right) d\mathbf{x}' d\mathbf{x} \\
+        &= \int_{\mathbb{R}^d} \det(2\pi\Sigma)^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}-\bm{\mu}\right)^\top \Sigma^{-1} \left(\mathbf{x}-\bm{\mu}\right) \right) \\
+        &\hspace{30pt} \sqrt{\frac{1}{\det\left(\Sigma'S^{-1} + I\right)}} \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right) d\mathbf{x} \\
+        &= \det(2\pi\Sigma)^{-1/2} \sqrt{\frac{1}{\det\left(\Sigma'S^{-1} + I\right)}} \\
+        &\hspace{30pt}\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\mathbf{x}-\bm{\mu}\right)^\top \Sigma^{-1} \left(\mathbf{x}-\bm{\mu}\right) \right) \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right) d\mathbf{x} \text{.}
+    \end{align*}
+
+    As before, we change variables with \[
+        \mathbf{y} \coloneqq \left(\Sigma' + S\right)^{-\frac12}\left(\mathbf{x} - \bm{\mu}'\right) \text{,}
+    \] which implies \[
+        \mathbf{x} = \left(\Sigma' + S\right)^{\frac12}\mathbf{y} + \bm{\mu}' \text{,}
+    \] so \[
+        d\mathbf{x} = \left(\Sigma' + S\right)^{\frac12}d\mathbf{y} \text{.}
+    \] Then \begin{align*}
+        &\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\mathbf{x}-\bm{\mu}\right)^\top \Sigma^{-1} \left(\mathbf{x}-\bm{\mu}\right) \right) \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right) d\mathbf{x} \\
+        &= \left|\det(\Sigma' + S)^{\frac12} \right|\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\left(\Sigma' + S\right)^{\frac12}\mathbf{y} + \bm{\mu}'-\bm{\mu}\right)^\top \Sigma^{-1} \left(\left(\Sigma' + S\right)^{\frac12}\mathbf{y} + \bm{\mu}'-\bm{\mu}\right) \right) \\
+        &\hspace{120pt}\exp\left(-\frac{1}{2}\mathbf{y}^\top\mathbf{y}\right) d\mathbf{y} \text{.}
+    \end{align*}
+
+    Setting \[
+        C \coloneqq \left(\Sigma' + S\right)^{\frac12} \Sigma^{-1} \left(\Sigma' + S\right)^{\frac12}
+    \] and \[
+        \mathbf{m} \coloneqq -\left(\Sigma' + S\right)^{-\frac12} (\bm{\mu}' - \bm{\mu}) \text{,}
+    \] we get \begin{align*}
+        &\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\left(\Sigma' + S\right)^{\frac12}\mathbf{y} + \bm{\mu}'-\bm{\mu}\right)^\top \Sigma^{-1} \left(\left(\Sigma' + S\right)^{\frac12}\mathbf{y} + \bm{\mu}'-\bm{\mu}\right) \right) \exp\left(-\frac{1}{2}\mathbf{y}^\top\mathbf{y}\right) d\mathbf{y} \\
+        &= \int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\mathbf{y} - \mathbf{m}\right)^\top C \left(\mathbf{y} - \mathbf{m}\right) \right) \exp\left(-\frac{1}{2}\mathbf{y}^\top\mathbf{y}\right) d\mathbf{y} \text{.}
+    \end{align*}
+
+    By our previous result, \begin{align*}
+        &\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\mathbf{y} - \mathbf{m}\right)^\top C \left(\mathbf{y} - \mathbf{m}\right) \right) \exp\left(-\frac{1}{2}\mathbf{y}^\top\mathbf{y}\right) d\mathbf{y} \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det(I + C)}} \exp\left(-\frac{1}{2}\mathbf{m}^\top \left(C^{-1} + I\right)^{-1}\mathbf{m}\right) \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + \left(\Sigma' + S\right)^{\frac12} \Sigma^{-1} \left(\Sigma' + S\right)^{\frac12}\right)}} \exp\left(-\frac{1}{2}\mathbf{m}^\top \left(\left(\Sigma' + S\right)^{-\frac12} \Sigma \left(\Sigma' + S\right)^{-\frac12} + I\right)^{-1}\mathbf{m}\right) \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + \left(\Sigma' + S\right)^{\frac12} \Sigma^{-1} \left(\Sigma' + S\right)^{\frac12}\right)}} \\
+        &\hspace{60pt}\exp\left(-\frac{1}{2}\left(\left(\Sigma' + S\right)^{-\frac12} \left(\bm{\mu}' - \bm{\mu}\right)\right)^\top \left(\left(\Sigma' + S\right)^{-\frac12} \Sigma \left(\Sigma' + S\right)^{-\frac12} + I\right)^{-1}\left(\left(\Sigma' + S\right)^{-\frac12} \left(\bm{\mu}' - \bm{\mu}\right)\right)\right) \\
+        &= (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + \left(\Sigma' + S\right)^{\frac12} \Sigma^{-1} \left(\Sigma' + S\right)^{\frac12}\right)}} \exp\left(-\frac{1}{2}\left(\bm{\mu}' - \bm{\mu}\right)^\top \left( \Sigma + \Sigma' + S\right)^{-1}\left(\bm{\mu}' - \bm{\mu}\right)\right) \text.
+    \end{align*}
+
+    Then \begin{align*}
+        &\det(2\pi\Sigma)^{-1/2} \sqrt{\frac{1}{\det\left(\Sigma'S^{-1} + I\right)}} \\
+        &\hspace{30pt}\int_{\mathbb{R}^d} \exp\left(-\frac12 \left(\mathbf{x}-\bm{\mu}\right)^\top \Sigma^{-1} \left(\mathbf{x}-\bm{\mu}\right) \right) \exp\left(-\frac{1}{2}\left(\mathbf{x} - \bm{\mu}'\right)^\top \left(\Sigma' + S\right)^{-1}\left(\mathbf{x} - \bm{\mu}'\right)\right) d\mathbf{x} \\
+        &= \det(2\pi\Sigma)^{-1/2} \sqrt{\frac{1}{\det\left(\Sigma'S^{-1} + I\right)}} \left|\det(\Sigma' + S)^{\frac12} \right| (2 \pi)^{d/2} \sqrt{\frac{1}{\det\left(I + \left(\Sigma' + S\right)^{\frac12} \Sigma^{-1} \left(\Sigma' + S\right)^{\frac12}\right)}} \\
+        &\hspace{30pt} \exp\left(-\frac{1}{2}\left(\bm{\mu}' - \bm{\mu}\right)^\top \left( \Sigma + \Sigma' + S\right)^{-1}\left(\bm{\mu}' - \bm{\mu}\right)\right) \\
+        &= \sqrt{\frac{\det S}{\det\left(\Sigma + \Sigma' + S\right)}} \exp\left(-\frac{1}{2}\left(\bm{\mu}' - \bm{\mu}\right)^\top \left( \Sigma + \Sigma' + S\right)^{-1}\left(\bm{\mu}' - \bm{\mu}\right)\right) \text{.}
+    \end{align*}
+
+    Hence,\begin{align*}
+        &\int_{\mathbb{R}^d} \det(2\pi\Sigma)^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}-\bm{\mu}\right)^\top \Sigma^{-1} \left(\mathbf{x}-\bm{\mu}\right) \right) \\
+        &\hspace{30pt} \int_{\mathbb{R}^d} \det(2\pi\Sigma')^{-1/2} \exp\left(-\frac12 \left(\mathbf{x}'-\bm{\mu}'\right)^\top \Sigma'^{-1} \left(\mathbf{x'}-\bm{\mu}'\right) \right) \\
+        &\hspace{60pt}\exp\left(-\frac12 \left(\mathbf{x}'-\mathbf{x}\right)^\top S^{-1} \left(\mathbf{x}'-\mathbf{x}\right) \right) d\mathbf{x}' d\mathbf{x} \\
+        &= \sqrt{\frac{\det S}{\det\left(\Sigma + \Sigma' + S\right)}} \exp\left(-\frac{1}{2}\left(\bm{\mu}' - \bm{\mu}\right)^\top \left( \Sigma + \Sigma' + S\right)^{-1}\left(\bm{\mu}' - \bm{\mu}\right)\right) \text{.}
+    \end{align*}
+
+    Functionally, this makes sense. For our uncertain kernel, if $\Sigma=\Sigma'=0$, then we fall back to the original case. However, if they are large, then that places an upper bound on the maximum covariance that we assume. It is also a function of the difference $\bm{\mu}' - \bm{\mu}$, instead of taking each in to account separately. It is symmetric in $\Sigma$ and $\Sigma'$ and $\bm{\mu}$ and $\bm{\mu}'$.
+
+\end{document}

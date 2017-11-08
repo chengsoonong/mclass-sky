@@ -113,16 +113,20 @@
 
 \begin{abstract}
 We study the problem of combining active learning suggestions to identify
-informative training examples in binary and multiclass classification.
-Supervised machine learning relies on building a training set of labeled
-examples, but this process is time-consuming as it requires manual annotation
-from human experts. Many active learning heuristics have been proposed to help
+informative training examples by empirically comparing methods on benchmark datasets.
+Many active learning heuristics for classification problems
+have been proposed to help
 us pick which instance to annotate next. But what is the optimal heuristic for
-a particular problem? Motivated by the success of methods that combine
-predictors, we propose to combine active learners with bandit algorithms and
-rank aggregation methods. Using benchmark datasets, we demonstrate that there
-is no need to pick a particular heuristic a priori, since we can cheaply
-combine them without sacrificing the final accuracy.
+a particular source of data? Motivated by the success of methods that combine
+predictors, we propose to combine active learners. In addition to combining
+active learners using bandits (which have been partially investigated before),
+we propose to combine active learning recommendations using rank aggregation
+approaches. Using benchmark datasets, we demonstrate that there
+is no need to pick a particular active learner a priori, since we can cheaply
+combine them. We discuss challenges to
+finding good rewards for bandit approaches, and show that rank aggregation
+performs well. Our results show that for large datasets, a combination of
+active learners outperforms passive learning.
 
 \end{abstract}
 
@@ -136,16 +140,42 @@ combine them without sacrificing the final accuracy.
 Recent advances in sensors and scientific instruments have led to an increasing
 use of machine learning techniques to manage the data deluge. Supervised
 learning has become a widely used paradigm in many big data applications.
-However, labeled examples are required during the training phase of these
-algorithms, and the labeling process has become a significant bottleneck.
+%However, labeled examples are required during the training phase of these
+%algorithms, and the labeling process has become a significant bottleneck.
+Supervised machine learning relies on building a training set of labeled
+examples, but this process is time-consuming as it requires manual annotation
+from human experts.
+
+In this paper we consider the binary and multiclass classification setting
+where we would like to learn a classifier
+$h$, which is a function that maps some feature space $\X \subseteq
+\mathbb{R}^d$ to a probability distribution over a finite label space $\Y$:
+\begin{IEEEeqnarray}{lCl}
+	h : \X \rightarrow p(\Y)
+\end{IEEEeqnarray}
+In other words, we require that the classifier produces class probability
+estimates for each test example.
+For example, in logistic regression with only two classes, i.e. $\Y = \{0,
+1\}$, we can model the probability that an object with feature vector $\bm{x}$
+belongs to the positive class with
+\begin{IEEEeqnarray}{lCl}
+	h(\bm{x}; \bm{w}) &=& p(y=1 \mid \bm{x}; \bm{w})
+	= \dfrac{1}{1 + e^{-\bm{w}^T \bm{x}}}
+\end{IEEEeqnarray}
+and the training process involves learning the optimal weight vector $\bm{w}$.
+We can further consider kernel logistic regression, where the feature space $\X$
+is the feature space corresponding to a given kernel, allowing for non-linear
+decision functions.
 
 The most common approach to produce a training set is passive learning, where
 we randomly select an instance from a large pool of unlabeled data to annotate,
 and we continue doing this until the training set reaches a certain size or
 until the classifier makes sufficiently good predictions. Depending on how the
-underlying data is distributed, this process can be quite inefficient. Instead
-of picking a random instance to label, it is often more informative to pick
-examples near the decision boundary of the classifier, where we are still
+underlying data is distributed, this process can be quite inefficient.
+It seems that we could exploit the current set of labelled data to identify
+more informative unlabelled examples to annotate. For example to pick
+examples near the decision boundary of the classifier (with uncertain
+class probability estimates), where we are still
 unsure which class the example belongs to.
 
 This leads to the development of many active learning heuristics that try to
@@ -156,7 +186,8 @@ describes two families of algorithms in detail---uncertainty sampling and
 version space reduction.
 
 This paper presents a survey of how we can combine suggestions from various
-heuristics. In supervised learning, combining predictors is a well-studied
+active learning heuristics.
+In supervised learning, combining predictors is a well-studied
 problem. Many techniques such as AdaBoost~\citep{freund96} (which averages
 predictions from a set of models) and decision trees~\citep{breiman84} (which
 select one model for making predictions in each region of the input space) have
@@ -178,36 +209,25 @@ scheme.
 
 
 \section{Overview of Active Learning}~\label{sec:heuristics}
-Consider the classification setting where we would like to learn a classifier
-$h$, which is a function that maps some feature space $\X \subseteq
-\mathbb{R}^d$ to a probability distribution over a finite label space $\Y$:
-\begin{IEEEeqnarray}{lCl}
-	h : \X \rightarrow p(\Y)
-\end{IEEEeqnarray}
-For example, in logistic regression with only two classes, i.e. $\Y = \{0,
-1\}$, we can model the probability that an object with feature vector $\bm{x}$
-belongs to the positive class with
-\begin{IEEEeqnarray}{lCl}
-	h(\bm{x}; \bm{w}) &=& p(1 \mid \bm{x}; \bm{w})
-	= \dfrac{1}{1 + e^{-\bm{w}^T \bm{x}}}
-\end{IEEEeqnarray}
-and the training process involves learning the optimal weight vector $\bm{w}$.
 
+Recall that in active learning, we exploit the class probability estimates
+from a trained classifier to estimate a score of informativeness for each
+test example.
 In pool-based active learning, where we select an object from a pool of
-unlabeled examples at each time step, we also require that some objects have
-already been labeled initially. In practice, this normally means that we label
-a small random sample at the beginning. These become the labeled set
-$\Labelled_T \subset \X \times \Y$, and the rest form the unlabeled set
-$\Unlabeled \subset \X$. Finally we also need a separate test set $\Labelled_S
-\subset \X \times \Y$, which allows us to see how well the model generalizes
-to unseen data.
+unlabeled examples at each time step, we require that some objects have
+already been labeled. In practice, this normally means that we label
+a small random sample at the beginning. These become the labeled (\emph{Training}) set
+$\Labelled_T \subset \X \times \Y$, and the rest form the \emph{Unlabeled} set
+$\Unlabeled \subset \X$.
 
 Now consider the problem of choosing the next example in $\Unlabeled$ for
 querying. Labeling can be a very expensive task, because it requires actual
 human experts to manually examine each object. Thus we want to be smart in
 choosing the next example. This motivates us to come up with a rule
 $s(\bm{x}; h)$ that gives each unlabeled example a score based only on their
-feature vector $\bm{x}$ and the current classifier $h$. In particular, we use
+feature vector $\bm{x}$ and the current classifier $h$.
+Recall that the classifier produces a probability estimate for each class $p(\Y)$.
+We use
 the probability estimates from the classifier over the unlabeled examples to
 calculate the scores:
 \begin{IEEEeqnarray}{lCl}
@@ -222,7 +242,9 @@ for labeling based on the scores:
 where $J_\Unlabeled$ is the index set over the unlabeled instances. The rule
 can be as simple as an argmax or argmin function, depending on how the scores
 are interpreted. The composition of the above two functions, $r (\bm{x}; h)
-\equiv (\phi \circ s)(\bm{x}; h)$, is the active leaner.
+\equiv (\phi \circ s)(\bm{x}; h)$, is the active learner. The value of $r(\bm{x}; h)$
+indicates the informativeness of example $\bm{x}$, and we would like to choose
+the example with the largest value of $r(\bm{x}; h)$.
 Algorithm~\ref{alg:active} outlines the standard pool-based active learning
 setting. Note that in practice, there can be a large amount of unlabeled data,
 so for computational reasons, we only assign a score to a small random sample
@@ -235,7 +257,7 @@ of size $E$ from the unlabeled pool.
         classifier $h(\bm{x})$,
         desired training size $n$,
         query size $E$,
-        and active leaner $r(\bm{x}; h)$.
+        and active learner $r(\bm{x}; h)$.
         }
     \BlankLine
 	\While{$|\Labelled_T| < n$}{
@@ -261,7 +283,7 @@ and~\ref{subsec:version}. They roughly fall into two categories: uncertainty
 sampling and version space reduction. There are also heuristics that involve
 minimizing the variance or maximizing the classifier certainty of the model
 \citep{schein07}, but we do not consider them in this paper as they are
-computationally inefficient in practice.
+computationally inefficient	.
 
 \subsection{Uncertainty Sampling}~\label{subsec:uncertainty}
 \cite{lewis94} introduce the idea of uncertainty sampling, where we select the
@@ -271,20 +293,20 @@ Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
 confidence heuristic, where we pick the candidate whose most likely label the
 classifier is most uncertain about:
 \begin{IEEEeqnarray}{lCl}
-	r_{LC}(\bm{x}; h) &=& \argmax_{x \in \Unlabeled}
+	r_{LC}(\bm{x}; h) &=& \argmin_{x \in \Unlabeled}
 	\left\{ \max_{y \in \Y} p(y | \bm{x}; h) \right\}
 \end{IEEEeqnarray}
 A second option is to calculate the entropy \citep{shannon48}, which measures
 the amount of information needed to encode a distribution. Intuitively, the
-closer the class probabilities of an object are to random guessing, the higher
+closer the class probabilities of an object are to a uniform distribution, the higher
 its entropy will be. This gives us the heuristic of picking the candidate with
 the highest entropy of the distribution over the classes:
 \begin{IEEEeqnarray}{lCl}
-	r_{HE}(\bm{x}; h) &=& \argmin_{x \in \Unlabeled}
-	\left\{\sum_{y \in \Y} p(y | \bm{x}; h)
+	r_{HE}(\bm{x}; h) &=& \argmax_{x \in \Unlabeled}
+	\left\{\sum_{y \in \Y} - p(y | \bm{x}; h)
 	\log \big[ p(y | \bm{x}; h) \big] \right\}
 \end{IEEEeqnarray}
-Finally we can pick the candidate with the smallest margin, which is defined as
+As a third option we can pick the candidate with the smallest margin, which is defined as
 the difference between the two highest class probabilities \citep{scheffer01}:
 \begin{IEEEeqnarray}{lCl}
 	r_{SM}(\bm{x}; h) &=& \argmin_{x \in \Unlabeled}
@@ -301,7 +323,7 @@ search for the optimal classifier to be more precise. The version space is
 defined as the set of all possible classifiers that are consistent with the
 current training set. To quantify the size of this space, we can train a
 committee of $B$ classifiers, $\B = \{h_1, h_2, ..., h_B\}$, and measure the
-disagreement among the members about an object's class membership. Ideally,
+disagreement among the members of the committee about an object's class membership. Ideally,
 each member should be as different from the others as possible but still be in
 the version space \citep{melville04}. In order to have this diversity, we give
 each member only a subset of the training examples. Since there might not be
@@ -332,7 +354,7 @@ predicted by a member $b \in \B$.
 For convenience, we summarize the five heuristics discussed above in
 Table~\ref{tab:heuristics}.
 
-\begin{table}[h]
+\begin{table}[t]
 	\caption {Summary of active learning heuristics used in our experiments.
 			  Notations: $p(y | \bm{x}; h)$ is the probability of that an object
 			  with feature vector $\bm{x}$ has label $y$ under classifier $h$,
@@ -373,11 +395,11 @@ Table~\ref{tab:heuristics}.
 	\end{tabular}
 \end{table}
 
-\section{Combining Suggestions with Expert Advice}~\label{sec:expert}
+\section{Combining Suggestions}~\label{sec:expert}
 Out of the five heuristics discussed, how do we know which one is the most
 optimal one? There have been some attempts in the literature to do a
 theoretical analysis. Proofs are however scarce, and when there is one
-available, they normally only work under restricted assumptions. For example,
+available, they normally only work under restrictive assumptions. For example,
 \cite{freund97} show that the query by committee algorithm (a slight variant of
 our two QBB heuristics) guarantees an exponential decrease in the prediction
 error with the training size, but only when there is no noise. In general,
@@ -407,7 +429,7 @@ choice theory).
 First let us turn our attention to the multi-armed bandit problem in
 probability theory. The colorful name originates from the situation where a
 gambler stands in front of a slot machine with $R$ levers. When pulled, each
-lever gives out a random reward according to some unknown distribution. The
+lever gives out a reward according to some unknown distribution. The
 goal of the game is to come up with a strategy that can maximize the gambler's
 lifetime rewards while minimizing the number of pulls.
 
@@ -425,10 +447,16 @@ where $b$ is the bandit algorithm, $[0, 1]$ is a normalized reward between
 is the time horizon.
 
 What would be an appropriate reward in this setting? One option is the
-incremental increase in the performance of the test set after the candidate is
+incremental increase in the performance $\delta$ of the test set after the candidate is
 added to the training set. This, of course, means that we need to keep a
 separate labeled test set around, just for the purpose of computing the
 rewards.
+%Finally we also need a separate \emph{teSt} set $\Labelled_S
+%\subset \X \times \Y$, which allows us to see how well the model generalizes
+%to unseen data.
+We could, as is common practice in machine learning, use cross
+validation or bootstrap on $\Labelled_T$ to estimate the generalisation performance.
+However for simplicity of presentation we use a separate test set.
 
 The main problem in multi-armed bandits is the trade-off between exploring random
 heuristics and exploiting the best heuristic so far. There are many situations
@@ -443,7 +471,7 @@ automate the selection process.~\cite{hsu15} study an improved version, EXP4.P,
 along with importance weighting to estimate the rewards using only the training
 set. In this paper, we will be more comprehensive by comparing four algorithms
 that address this exploration-vs-exploitation problem: Thompson sampling,
-OC-UCB, kl-OCB, and EXP3++.
+OC-UCB, kl-UCB, and EXP3++.
 
 Algorithm~\ref{alg:bandit} outlines how bandits can be used in pool-based
 active learning. The only difference between the bandit algorithms lies in the
@@ -487,9 +515,7 @@ The oldest bandit algorithm is Thompson sampling \citep{thompson33} which
 solves the exploration-exploitation trade-off from a Bayesian perspective.
 
 Let $\rho_i$ be the reward\index{reward} of heuristic $r_i \in \R$. Observe
-that even with the optimal heuristic, there are still two sources of error.
-First, there could be error during the labeling process that causes the
-performance to decrease. In addition, even without any label noise, the
+that even with the optimal heuristic, the
 classifier trained on finite data might not be the right one, so we still
 cannot score perfectly due to having a poor classifier. Conversely, a bad
 heuristic might be able to pick an informative candidate due to pure luck. Thus
@@ -599,8 +625,10 @@ $\sigma^2$, the chosen heuristic would be
 		r_* = \argmax_{i} \overline{\delta_i} +
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
     \end{IEEEeqnarray}
-Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two OCB
-approaches.
+Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two UCB
+approaches. Note that the size of the reward $\delta$ is not used in
+\Update($\delta$) of UCB, except
+to select the best arm.
 
 \begin{algorithm}[htbp]
 	\BlankLine
@@ -1122,8 +1150,8 @@ The experimental results allow us to answer the following questions:
 	practice.
 
 	\item \textbf{Which bandit algorithm should I use in practice to combine
-	active leaners?} We do not recommend using any bandit algorithm to combine
-	active leaners. The reasons are twofold. First, we do not have a
+	active learners?} We do not recommend using any bandit algorithm to combine
+	active learners. The reasons are twofold. First, we do not have a
 	representative test set that can be used to compute the reward in practice.
 	Second, designing a good reward scheme is difficult. As a workaround to the
 	first problem, \cite{hsu15} compute the reward on the training set and then
@@ -1136,7 +1164,7 @@ The experimental results allow us to answer the following questions:
 	learning saturates) and the rewards will eventually go to zero.
 
 	\item \textbf{Which rank aggregator should I use in practice to combine
-	active leaners?} Given that there is no difference between the three rank
+	active learners?} Given that there is no difference between the three rank
 	aggregators, we recommend using a simple one like Borda count if we do not
 	want to select a heuristic a priori. Rank aggregators do not need a notion
 	of a reward---we simply give all suggestions an equal weight when

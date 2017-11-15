@@ -120,13 +120,13 @@ datasets. Many active learning heuristics for classification problems have been
 proposed to help us pick which instance to annotate next. But what is the
 optimal heuristic for a particular source of data? Motivated by the success of
 methods that combine predictors, we propose to combine active learners. In
-addition to combining active learners using bandits (which have been partially
+addition to combining active learners using bandits (which has been partially
 investigated before), we propose to combine active learning recommendations
 using rank aggregation approaches. Using benchmark datasets, we demonstrate
 that there is no need to pick a particular active learner a priori, since we
 can cheaply combine them. We discuss challenges to finding good rewards for
-bandit approaches, and show that rank aggregation performs well. Our results
-show that for large datasets, a combination of active learners outperforms
+bandit approaches and show that rank aggregation performs well. Our results
+indicate that for large datasets, a combination of active learners outperforms
 passive learning.
 
 \end{abstract}
@@ -165,15 +165,15 @@ $\bm{\theta}$. We can further consider kernel logistic regression, where the
 feature space $\X$ is the feature space corresponding to a given kernel,
 allowing for non-linear decision functions.
 
-The most common approach to produce a training set is passive learning, where
+The most common approach to producing a training set is passive learning, where
 we randomly select an instance from a large pool of unlabeled data to annotate,
 and we continue doing this until the training set reaches a certain size or
 until the classifier makes sufficiently good predictions. Depending on how the
 underlying data is distributed, this process can be quite inefficient. It seems
-that we could exploit the current set of labelled data to identify more
-informative unlabelled examples to annotate. For instance we can pick examples
-near the decision boundary of the classifier (with uncertain class probability
-estimates), where we are still unsure which class the example belongs to.
+that we could exploit the current set of labeled data to identify more
+informative unlabeled examples to annotate. For instance we can pick examples
+near the decision boundary of the classifier, where we are still unsure which
+class the example belongs to (i.e. the class probability estimates are uncertain).
 
 This leads to the development of many active learning heuristics that try to
 reduce the labeling bottleneck without sacrificing the classifier performance.
@@ -231,7 +231,7 @@ $s(\bm{x}; h)$ indicates the informativeness of example $\bm{x}$, and we would
 like to choose the example with the largest value of $s(\bm{x}; h)$. This
 will be our active learning rule $r$:
 \begin{IEEEeqnarray}{lCl}
-	r(\bm{x}; h) &=& \argmax_{x \in \Unlabeled} s(\bm{x}; h)
+	r(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled} s(\bm{x}; h)
 \end{IEEEeqnarray}
 Algorithm~\ref{alg:active} outlines the standard pool-based active learning
 setting.
@@ -242,7 +242,6 @@ setting.
         labeled training set $\Labeled_T$,
         classifier $h(\bm{x})$,
         desired training size $n$,
-        query size $E$,
         and active learner $r(\bm{x}; h)$.
         }
     \BlankLine
@@ -278,7 +277,7 @@ Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
 confidence heuristic, where we pick the candidate whose most likely label the
 classifier is most uncertain about:
 \begin{IEEEeqnarray}{lCl}
-	r_{LC}(\bm{x}; h) &=& \argmax_{x \in \Unlabeled}
+	r_{LC}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \max_{y \in \Y} p(y | \bm{x}; h) \right\}
 \end{IEEEeqnarray}
 where, for consistency, we have flipped the sign of the score function so that
@@ -290,14 +289,14 @@ closer the class probabilities of an object are to a uniform distribution, the h
 its entropy will be. This gives us the heuristic of picking the candidate with
 the highest entropy of the distribution over the classes:
 \begin{IEEEeqnarray}{lCl}
-	r_{HE}(\bm{x}; h) &=& \argmax_{x \in \Unlabeled}
+	r_{HE}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \sum_{y \in \Y} p(y | \bm{x}; h)
 	\log \big[ p(y | \bm{x}; h) \big] \right\}
 \end{IEEEeqnarray}
 As a third option we can pick the candidate with the smallest margin, which is defined as
 the difference between the two highest class probabilities \citep{scheffer01}:
 \begin{IEEEeqnarray}{lCl}
-	r_{SM}(\bm{x}; h) &=& \argmax_{x \in \Unlabeled}
+	r_{SM}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \left ( \max_{y \in \Y} p(y | \bm{x}; h) -
 	\max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h) \right) \right\}
 \end{IEEEeqnarray}
@@ -322,7 +321,7 @@ replacement. Hence this method is often called Query by Bagging (QBB).
 One way to measure the level of disagreement is to calculate the margin using
 the class probabilities estimated by the committee \citep{melville04}:
 \begin{IEEEeqnarray}{lCl}
-	r_{QBBM}(\bm{x}; h) &=& \argmax_{x \in \Unlabeled}
+	r_{QBBM}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \left( \max_{y \in \Y} p(y | \bm{x}; \B) -
 	\max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B) \right) \right\}
 \end{IEEEeqnarray}
@@ -332,7 +331,7 @@ minimizing the margin.~\cite{mccallum98} offer an alternative disagreement
 measure which involves picking the candidate with the largest expected
 Kullback-Leibler (KL) divergence from the average:
 \begin{IEEEeqnarray}{lCl}
-	r_{QBBKL}(\bm{x}; h) &=& \argmax_{x \in \Unlabeled}
+	r_{QBBKL}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ \dfrac{1}{B}
 	\sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}
 \end{IEEEeqnarray}
@@ -365,22 +364,22 @@ Table~\ref{tab:heuristics}.
 		{Active Learning Heuristic}  &  Objective Function  \\
 		\midrule
         Least Confidence &
-			$\argmax_{x \in \Unlabeled}
+			$\argmax_{\bm{x} \in \Unlabeled}
 			\left\{ - \max_{y \in \Y} p(y | \bm{x}; h) \right\}$ \\
 		Highest Entropy &
-			$\argmax_{x \in \Unlabeled} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
+			$\argmax_{\bm{x} \in \Unlabeled} \left\{-\sum_{y \in \Y} p(y | \bm{x}; h)
             \log \big[ p(y | \bm{x}; h) \big] \right\}$
 			\\[2ex]
 		Smallest Margin &
-			$\argmax_{x \in \Unlabeled} \left\{ - \left( \max_{y \in \Y} p(y | \bm{x}; h) -
+			$\argmax_{\bm{x} \in \Unlabeled} \left\{ - \left( \max_{y \in \Y} p(y | \bm{x}; h) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; h) \right) \right\}$
 			\\[2ex]
 		Smallest QBB Margin &
-			$\argmax_{x \in \Unlabeled} \left\{ - \left( \max_{y \in \Y} p(y | \bm{x}; \B) -
+			$\argmax_{\bm{x} \in \Unlabeled} \left\{ - \left( \max_{y \in \Y} p(y | \bm{x}; \B) -
             \max_{z \in \Y \setminus \{y\}} p(z | \bm{x}; \B) \right) \right\}$
 			\\[2ex]
 		Largest QBB KL &
-			$\argmax_{x \in \Unlabeled} \left\{ \dfrac{1}{B}
+			$\argmax_{\bm{x} \in \Unlabeled} \left\{ \dfrac{1}{B}
                \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
 			\\
 		\bottomrule
@@ -489,7 +488,7 @@ minimum height=3em, minimum width=6em, align=left]
 			\draw [active] (oracle) -- node[name=xy] {$(\bm{x}_*, y_*)$} (pool);
 			\draw [bandit] (heuristic input) -- node[name=heuristics] {$\R$} (heuristic);
 		\end{tikzpicture}
-		\caption{In the active learning pipelines with rank aggregation
+		\caption{In the active learning pipeline with rank aggregation
 		methods, there is only one cycle, in which we aggregate information
 		from all heursitics. Additional notation: $\sigma(J_\Unlabeled)$ is a
 		permutation (i.e. rank) on the index set of the unlabeled data.}
@@ -561,7 +560,6 @@ receiving a new reward.
         labeled training set $\Labeled_T$,
         classifier $h$,
         desired training size $n$,
-        query size $E$,
         set of active learning heuristics $\R$,
         and bandit algorithm $B$ with two functions \Select\,and \Update.
         }
@@ -1016,19 +1014,20 @@ the unlabeled pool into the algorithm. We use logistic
 regression with a Gaussian kernel approximation and an L2 loss. In the binary
 case, the loss function is
 \begin{IEEEeqnarray}{lCl}
-	L &=& \dfrac{1}{2} \bm{w}^T \bm{w} + C \sum_{i = 1}^n
-	      \ln\Big(1 + \exp(-y_i(\bm{w}^T f(\bm{x}_i)))\Big)
+	L &=& \dfrac{1}{2} \bm{w}^T \bm{\theta} + C \sum_{i = 1}^n
+	      \ln\Big(1 + \exp(-y_i(\bm{\theta}^T f(\bm{x}_i)))\Big)
 \end{IEEEeqnarray}
 where $\bm{x}_i$ is the feature vector of the $i$th example, $y_i \in \{0, 1\}$
 is the label of $\bm{x}_i$, and $n$ is the training size. The first term of the
-sum is the regularization term to ensure that the weight vector $\bm{w}$ is not
-too large, and $C$ is another regularization hyperparameter which we simply set
-to 1000. To speed up the training time while still using the Gaussian kernel,
-we approximate the feature map of the kernel with Random Kitchen Sinks
-\citep{rahimi08}, transforming the raw features $\bm{x}_i$ into a fixed
-100-dimensional feature vector $f(\bm{x}_i)$. In the multiclass case, we use the
-One-vs-Rest strategy, where for every class, we build a binary classifier that
-determines whether a particular example belongs to that class or not.
+sum is the regularization term to ensure that the weight vector $\bm{\theta}$
+is not too large, and $C$ is another regularization hyperparameter which we
+simply set to 1000. To speed up the training time while still using the
+Gaussian kernel, we approximate the feature map of the kernel with Random
+Kitchen Sinks \citep{rahimi08}, transforming the raw features $\bm{x}_i$ into a
+fixed 100-dimensional feature vector $f(\bm{x}_i)$. In the multiclass case, we
+use the One-vs-Rest strategy, where for every class, we build a binary
+classifier that determines whether a particular example belongs to that class
+or not.
 
 For the bandit algorithms, the increase in the mean posterior balanced accuracy
 (MPBA) on the test set is used as the reward. Compared to the raw accuracy

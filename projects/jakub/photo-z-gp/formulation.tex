@@ -1,0 +1,39 @@
+\documentclass[11pt]{report}
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{cleveref}
+\usepackage{txfonts}
+
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bsigma}{\bm{\sigma}}
+\newcommand{\bbR}{\mathbb{R}}
+
+\DeclareMathOperator{\diag}{diag}
+
+\begin{document}
+Let $n$ be the number of training points. Let $\bx_1, \dots, \bx_n$ be the $d$-dimensional training inputs, associated with labels $y_1, \dots, y_n$. Let $\bsigma_i \in \bbR^d_{\geq0}$ be the uncertainty associated with $\bx_i$.
+
+Let $\ell_1, \dots, \ell_d$ be the kernel length-scale parameters. Let $\alpha_i$ be the predicted variance of the target function at point $\bx_i$.
+
+We apply the kernel \begin{align*}
+    &k(\bx, \bsigma; \bx', \bsigma') \\
+    &= \sqrt{\frac{\det S}{\det\left(\Sigma + \Sigma' + S\right)}} \exp\left(-\frac{1}{2}\left(\bm{\mu}' - \bm{\mu}\right)^\top \left( \Sigma + \Sigma' + S\right)^{-1}\left(\bm{\mu}' - \bm{\mu}\right)\right) \text{,}
+\end{align*} where $S \coloneqq \diag(\ell_1, \dots, \ell_d)^\top \in \bbR^{d\times d}$, $\Sigma \coloneqq \diag\bsigma \in \bbR^{d\times d}$, and $\Sigma' \coloneqq \diag\bsigma' \in \bbR^{d\times d}$.
+
+Define $K \in \bbR^{n\times n}$ such that $K_{ij} = k(\bx_i, \bsigma_i; \bx_j, \bsigma_j)$. Define $\by$ to be the label vector. For a point $\bx$ with uncertainty $\bsigma$, define $K_* \in \bbR^n$ such that $K_{*i} \coloneqq k(\bx, \bsigma; \bx_i, \bsigma_i)$. Our prediction for $\bx$ is then \[
+    K_*\left(K + \diag\left(\alpha_1, \dots, \alpha_n\right)^\top\right)^{-1}\by\text.
+\]
+
+We can estimate $\alpha_1, \dots, \alpha_n$ with a heuristic. For a point $\bx_i$, let \[
+    \theta_i \coloneqq \frac{1}{\sum_{j \neq i}k(\bx_i, \bsigma_i; \bx_j, \bsigma_j)} \sum_{j \neq i}y_jk(\bx_i, \bsigma_i; \bx_j, \bsigma_j) \text.
+\] This weighted average is a simple estimate for $y_i$ using the other data points. We can then compute the squared deviation with \[
+    \phi_i \coloneqq (y_i - \theta_i)^2 \text.
+\] Finally, we set \[
+    \alpha_i = \frac{1}{\sum_{j \neq i}k(\bx_i, \bsigma_i; \bx_j, \bsigma_j)} \sum_{j \neq i}\phi_jk(\bx_i, \bsigma_i; \bx_j, \bsigma_j)
+\] to be the estimated deviation at that point.
+
+Lastly, $\ell_1, \dots, \ell_d$ are found using Bayesian optimisation with Hyperopt.
+\end{document}

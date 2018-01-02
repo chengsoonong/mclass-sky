@@ -171,7 +171,7 @@ that we could exploit the current set of labeled data to identify more
 informative unlabeled examples to annotate. For instance we can pick examples
 near the decision boundary of the classifier, where we are still unsure which
 class the example belongs to (i.e. where the class probability estimates are
-uncertain).
+still uncertain).
 
 This led to the development of many active learning heuristics that try to
 reduce the labeling bottleneck without sacrificing the classifier performance.
@@ -188,7 +188,7 @@ decision trees~\citep{breiman84} (which select one model for making predictions
 in each region of the input space) have been shown to perform better than just
 using a single model. Inspired by this success, we propose to combine active
 learning suggestions with bandit and social choice theories in
-Section~\ref{sec:expert}. The use of bandit algorithms, where we only pick one
+Section~\ref{sec:expert}. The use of bandit algorithms, where we pick only one
 heuristic at each time step, has been studied before~\citep{baram04, hsu15}.
 However, as far as we know, this is the first time that social choice theory is
 used to rank and aggregate suggestions.
@@ -215,9 +215,8 @@ expensive equipment or human experts to manually examine each object. Thus we
 want to be smart in choosing the next example. This motivates us to come up
 with a rule $s(\bm{x}; h)$ that gives each unlabeled example a score based only
 on their feature vector $\bm{x}$ and the current classifier $h$. Recall that
-the classifier produces $p(\Y)$, a probability estimate for each class. We use
-these probability estimates from the classifier over the unlabeled examples to
-calculate the scores:
+the classifier produces $p(\Y)$, a probability estimate for each class. We can
+use these probability estimates to calculate the scores:
 \begin{IEEEeqnarray}{lCl}
 	s : p(\Y) \rightarrow \mathbb{R}
 \end{IEEEeqnarray}
@@ -501,13 +500,15 @@ minimum height=3em, minimum width=6em, align=left]
 		\draw [bandit, dashed] (best heuristic) -- (heuristic);
 
 	\end{tikzpicture}
-	\caption{In the active learning pipeline with bandit algorithms, we
-	need to collect rewards $w$ from the test set $\Labeled_S$ in order to
-	decide which heuristic to choose at each time step. This routine is
-	indicated by the red arrows. Notations: $\R$ is the set of heuristics
-	$\{r_1, ..., r_R\}$, $\Labeled_T$ is the training set, $\Labeled_S$
-	is the test set, $\Unlabeled$ is the unlabeled set, and $p(\Y)$ is the
-	predicted class probabilities on the unlabeled data $\Unlabeled$.}
+	\caption{In the active learning pipeline with bandit algorithms, we need to
+	collect rewards $w$ from the test set $\Labeled_S$ in order to decide which
+	heuristic to choose at each time step. This routine is indicated by the red
+	arrows. Note that with QBB heuristics, we would need to provide the score
+	function $s$ with probability estimates from the commitee $\B$ instead of
+	the classifier $h$. Notations: $\R$ is the set of heuristics $\{r_1, ...,
+	r_R\}$, $\Labeled_T$ is the training set, $\Labeled_S$ is the test set,
+	$\Unlabeled$ is the unlabeled set, and $p(\Y)$ is the predicted class
+	probabilities on the unlabeled data $\Unlabeled$.}
 	\label{fig:pipeline-bandit}
 \end{figure}
 
@@ -634,14 +635,16 @@ principle of ``optimism in the face of uncertainty''. In choosing which
 heuristic to use, we first estimate the upper bound of the reward (that is, we
 make an optimistic guess) and pick the one with the highest bound. If our guess
 turns out to be wrong, the upper bound of the chosen heuristic will decrease,
-making it less likely to get selected in the next iteration.
+making it less likely to get selected in the next iteration. Intuitively, the
+upper bound can be high when the expected reward is high or when the
+uncertainty is large.
 
 There are many different algorithms in the UCB family, e.g. UCB1-TUNED \& UCB2
 \citep{auer02finite}, V-UCB \citep{audibert09}, OC-UCB \citep{lattimore15}, and
 kl-UCB \citep{cappe13}. They differ only in the way the upper bound is
-calculated. In this paper, we only consider the last two. In Optimally
-Confident UCB (OC-UCB), \cite{lattimore15} suggests that we pick the heuristic
-that maximizes the following upper bound:
+calculated. In this paper, we only consider the two most recently proposed
+methods. In Optimally Confident UCB (OC-UCB), \cite{lattimore15} suggested that
+we pick the heuristic that maximizes the following upper bound:
     \begin{IEEEeqnarray}{lCl}
 		r_* = \argmax_{i} \overline{w_i} +
 			  \sqrt{\dfrac{\alpha}{T_i(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
@@ -650,9 +653,9 @@ where $\overline{w_i}$ is the average of the rewards from $r_i$ that we observe
 so far, $t$ is the time step, $T_i(t)$ is the number times we have selected
 heuristic $r_i$ before step $t$, and $n$ is the maximum number of steps that we
 are going to take. There are two tunable parameters, $\alpha$ and $\psi$, which
-the author suggests setting to 3 and 2, respectively.
+\cite{lattimore15} suggested setting to 3 and 2, respectively.
 
-\cite{cappe13} suggest that we instead consider the KL-divergence when finding
+\cite{cappe13} suggested that we instead consider the KL-divergence when finding
 the upper bound. In the case of normally distributed rewards with known variance
 $\sigma^2$, the chosen heuristic would be
     \begin{IEEEeqnarray}{lCl}
@@ -713,11 +716,13 @@ rewards for each heuristic in advance. Like Thompson sampling, the algorithm
 samples from a probability distribution at each step to pick a heuristic. Here
 however, we construct the distribution with exponential weighting (hence the
 name EXP3, which stands for exponential-weight algorithm for exploration and
-exploitation). We shall test~\cite{seldin14}'s EXP3++ algorithm (see
-Algorithm~\ref{alg:exp3pp}). This is a generalization of the original EXP3 and
-it has been shown to perform well in both the stochastic (where the reward of
-each heuristic follows an unknown reward distribution) and the adversarial
-regime.
+exploitation). There are many extensions of of the EXP3. EXP4, also proposed by
+\cite{auer2002nonstochastic}, adds an extra layer of expert advice.
+\cite{beygelzimer10}. We shall
+test~\cite{seldin14}'s EXP3++ algorithm (see Algorithm~\ref{alg:exp3pp}). This
+is a generalization of the original EXP3 and it has been shown to perform well
+in both the stochastic (where the reward of each heuristic follows an unknown
+reward distribution) and the adversarial regime.
 
 \begin{algorithm}[htbp]
 	\BlankLine
@@ -1039,15 +1044,16 @@ that determines whether a particular example belongs to that class or not. For
 the QBB algorithms, we train a committee of 7 classifiers, where each member is
 given a sample of 100 examples that have already been labeled.
 
-For the bandit algorithms, the increase in the mean posterior balanced accuracy
-(MPBA) on the test set is used as the reward. The MPBA can be thought of as the
-expected value of the average recall, where we treat the recall as a random
-variable that follows a Beta distribution. Compared to the raw accuracy score,
-this metric takes into account of the class imbalance. This is because we first
-calculate the recall rate in each class and then take the average, thus giving
-each class an equal weight. Refer to Appendix A for the derivation of the MPBA,
-which extends \cite{brodersen10}'s formula from the binary to the multiclass
-setting.
+For Thompson sampling, we fix $\tau^2$ at 0.02 and set the initial value of
+$\mu$ and $\sigma^2$ to 0.5 and 0.2, respectively. For all bandit algorithms,
+the increase in the mean posterior balanced accuracy (MPBA) on the test set is
+used as the reward. The MPBA can be thought of as the expected value of the
+average recall, where we treat the recall as a random variable that follows a
+Beta distribution. Compared to the raw accuracy score, this metric takes into
+account of the class imbalance. This is because we first calculate the recall
+rate in each class and then take the average, thus giving each class an equal
+weight. Refer to Appendix A for the derivation of the MPBA, which extends
+\cite{brodersen10}'s formula from the binary to the multiclass setting.
 
 In total, we test 17 methods. This includes passive learning, 8 active learning
 heuristics, 5 bandit algorithms, and 3 aggregation methods. See

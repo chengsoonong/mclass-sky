@@ -142,7 +142,7 @@ learning has become a widely used paradigm in many big data applications. This
 relies on building a training set of labeled examples, which is time-consuming
 as it requires manual annotation from human experts.
 
-In this paper we consider the binary and multiclass classification setting
+In this paper we consider the binary and multiclass classification setting,
 where we would like to learn a classifier $h$, which is a function that maps
 some feature space $\X \subseteq \mathbb{R}^d$ to a probability distribution
 over a finite label space $\Y$:
@@ -158,9 +158,9 @@ with feature vector $\bm{x}$ belongs to the positive class with
 	= \dfrac{1}{1 + e^{-\bm{\theta}^T \bm{x}}}
 \end{IEEEeqnarray}
 and the training process involves learning the optimal weight vector
-$\bm{\theta}$. We can further consider kernel logistic regression, where the
-feature space $\X$ is the feature space corresponding to a given kernel,
-allowing for non-linear decision functions.
+$\bm{\theta}$. We can further consider kernel logistic regression, where $\X$
+is the feature space corresponding to a given kernel, allowing for non-linear
+decision functions.
 
 The most common approach to producing a training set is passive learning, where
 we randomly select an instance from a large pool of unlabeled data to annotate,
@@ -294,7 +294,7 @@ the difference between the two highest class probabilities \citep{scheffer01}:
 	\left\{ - \left ( \max_{y \in \Y} p(y | \bm{x}; h) -
 	\max_{z \in \Y \setminus \{y^*\}} p(z | \bm{x}; h) \right) \right\}
 \end{IEEEeqnarray}
-where $y^* = \argmax_{y \in \Y} p(z | \bm{x}; h)$ and we again flip the sign
+where $y^* = \argmax_{y \in \Y} p(y | \bm{x}; h)$ and we again flip the sign
 of the score function. Since the sum of all probabilities must be 1, the
 smaller the margin is, the more uncertain we are about the object's class
 membership.
@@ -323,8 +323,8 @@ the class probabilities estimated by the committee \citep{melville04}:
 \end{IEEEeqnarray}
 where
 \begin{IEEEeqnarray}{rCl}
-	y^* &=& \argmax_{y \in \Y} p(z | \bm{x}; \B) \\
-	p(z | \bm{x}; \B) &=& \dfrac{1}{B} \sum_{b \in \B} p(y | \bm{x}; h_b)
+	y^* &=& \argmax_{y \in \Y} p(y | \bm{x}; \B) \\
+	p(y | \bm{x}; \B) &=& \dfrac{1}{B} \sum_{b \in \B} p(y | \bm{x}; h_b)
 \end{IEEEeqnarray}
 This looks similar to one of the uncertainty sampling heuristics, except now we
 use $p(y | \bm{x}; \B)$ instead of $ p(y | \bm{x}; h)$. That is, we first
@@ -335,7 +335,7 @@ divergence from the average:
 \begin{IEEEeqnarray}{lCl}
 	r_{QBBKL}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ \dfrac{1}{B}
-	\sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}
+	\sum_{b \in \B} D_{\mathrm{KL}}(p_b\|p_\B) \right\}
 \end{IEEEeqnarray}
 where $D_{\mathrm{KL}}(p_b\|p_\B)$ is the KL divergence from $p_\B$ (the
 probability distribution that is averaged across the committee $\B$), to $p_b$
@@ -382,7 +382,7 @@ Table~\ref{tab:heuristics}.
 			\\[2ex]
 		\textsc{qbb-kl} & Largest QBB KL &
 			$\argmax_{\bm{x} \in \Unlabeled} \left\{ \dfrac{1}{B}
-               \sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
+               \sum_{b \in \B} D_{\mathrm{KL}}(p_b\|p_\B) \right\}$
 			\\
 		\bottomrule
 	\end{tabular}
@@ -425,10 +425,10 @@ By always exploiting, we could miss out on the optimal heuristic. On the other
 hand, if we explore too much, it could take us a long time to reach the desired
 accuracy.
 
-Bandit algorithms do not need to know the internal workings of the heuristics,
-but only the reward received from using any of them. Based on the history of
-all the rewards, the bandit algorithm can decide on which heuristic to pick
-next. Formally, we need to learn the function
+Most bandit algorithms do not need to know the internal workings of the
+heuristics, but only the reward received from using any of them. Based on the
+history of all the rewards, the bandit algorithm can decide on which heuristic
+to pick next. Formally, we need to learn the function
 \begin{IEEEeqnarray}{lCl}
 	b : [0, 1]^{R \times T} \rightarrow J_\R
 \end{IEEEeqnarray}
@@ -550,43 +550,43 @@ minimum height=3em, minimum width=6em, align=left]
 The oldest bandit algorithm is Thompson sampling \citep{thompson33} which
 solves the exploration-exploitation trade-off from a Bayesian perspective.
 
-Let $W_i$ be the reward\index{reward} of heuristic $r_i \in \R$. Observe
+Let $W_r$ be the reward\index{reward} of some heuristic $r \in \R$. Observe
 that even with the optimal heuristic, the
 classifier trained on finite data might not be the right one, so we still
 cannot score perfectly due to having a poor classifier. Conversely, a bad
 heuristic might be able to pick an informative candidate due to pure luck. Thus
 there is always a certain level of randomness in the reward received. Let us
-treat the reward  $W_i$ as a random variable and assume the errors to be
-normally distributed with mean $\nu_i$ and variance $\tau_i^2$:
+treat the reward  $W_r$ as a random variable and assume the errors to be
+normally distributed with mean $\nu_r$ and variance $\tau_r^2$:
 	\begin{IEEEeqnarray}{lCl}
-		(W_i \mid \nu_i) \sim \Normal(\nu_i, \tau_i^2)
+		(W_r \mid \nu_r) \sim \Normal(\nu_r, \tau_r^2)
 	\end{IEEEeqnarray}
 
-If we knew both $\nu_i$ and $\tau_i^2$ for all heuristics, the problem would
+If we knew both $\nu_r$ and $\tau_r^2$ for all heuristics, the problem would
 become trivially easy since we just need to always use the heuristic that has
 the highest mean reward. In practice, we do not know the true mean of the
-reward $\nu_i$, so let us add a second layer of randomness and assume that
+reward $\nu_r$, so let us add a second layer of randomness and assume that
 the mean itself follows a normal distribution:
 	\begin{IEEEeqnarray}{lCl}
-        \nu_i \sim \Normal(\mu_i, \sigma_i^2)
+        \nu_r \sim \Normal(\mu_r, \sigma_r^2)
     \end{IEEEeqnarray}
 
-To make the problem tractable, let us assume that the variance $\tau_i^2$ in
+To make the problem tractable, let us assume that the variance $\tau_r^2$ in
 the first layer is a known constant. The goal now is to find a good algorithm
-that can estimate $\mu_i$ and $\sigma_i^2$.
+that can estimate $\mu_r$ and $\sigma_r^2$.
 
-We start with a prior knowledge of $\mu_i$ and $\sigma_i^2$ for each heuristic
-$r_i$. The choice of prior do not usually matter in the long run. Since
+We start with a prior knowledge of $\mu_r$ and $\sigma_r^2$ for each heuristic
+$r$. The choice of prior do not usually matter in the long run. Since
 initially we do not have any information about the performance of each
-heuristic, the appropriate prior value for $\mu_i$ is $0$, i.e.\ there is no
+heuristic, the appropriate prior value for $\mu_r$ is $0$, i.e.\ there is no
 evidence (yet) that any of the heuristics offers an improvement to the
 performance.
 
-In each round, we draw a random sample $\nu_i'$ from the normal distribution
-$\Normal(\mu_i, \sigma_i^2)$ for each $i$ and select heuristic $r_*$ that has
+In each round, we draw a random sample $\nu_r'$ from the normal distribution
+$\Normal(\mu_r, \sigma_r^2)$ for each $i$ and select heuristic $r_*$ that has
 the highest sampled value of the mean reward:
     \begin{IEEEeqnarray}{lCl}
-        r_* = \argmax_{i} \nu_i'
+        r_* = \argmax_{r \in \R} \nu_r'
     \end{IEEEeqnarray}
 We then use this heuristic to select the object that is deemed to be the most
 informative, add it to the training set, and retrain the classifier. Next we
@@ -609,10 +609,11 @@ functions used in Thompson sampling.
 \SetKwFunction{SelectFn}{Select}%
 \begin{algorithm}[htbp]
 	\Fn{\Select()}{
-		\For{$i \in \{1, 2, ..., R\}$}{
-			$\nu_i' \leftarrow$ draw a sample from $\Normal(\mu_i, \sigma^2_i)$ \;
+		\For{$r \in \R$}{
+			$\nu_r' \leftarrow$ draw a sample from $\Normal(\mu_r, \sigma^2_r)$ \;
 			}
-		Select the heuristic with the highest sampled value: $r_* \leftarrow \argmax_{i} \nu_i'$ \;
+		Select the heuristic with the highest sampled value: $r_*
+		\leftarrow \argmax_{r \in \R} \nu_r'$ \;
 	}
 	\BlankLine
 	\Fn{\Update($w$)}{
@@ -646,12 +647,12 @@ calculated. In this paper, we only consider the two most recently proposed
 methods. In Optimally Confident UCB (OC-UCB), \cite{lattimore15} suggested that
 we pick the heuristic that maximizes the following upper bound:
     \begin{IEEEeqnarray}{lCl}
-		r_* = \argmax_{i} \overline{w_i} +
-			  \sqrt{\dfrac{\alpha}{T_i(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
+		r_* = \argmax_{r \in \R} \overline{w_r} +
+			  \sqrt{\dfrac{\alpha}{T_r(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
     \end{IEEEeqnarray}
-where $\overline{w_i}$ is the average of the rewards from $r_i$ that we observe
-so far, $t$ is the time step, $T_i(t)$ is the number times we have selected
-heuristic $r_i$ before step $t$, and $n$ is the maximum number of steps that we
+where $\overline{w_r}$ is the average of the rewards from $r_r$ that we observe
+so far, $t$ is the time step, $T_r(t)$ is the number times we have selected
+heuristic $r$ before step $t$, and $n$ is the maximum number of steps that we
 are going to take. There are two tunable parameters, $\alpha$ and $\psi$, which
 \cite{lattimore15} suggested setting to 3 and 2, respectively.
 
@@ -659,8 +660,8 @@ are going to take. There are two tunable parameters, $\alpha$ and $\psi$, which
 the upper bound. In the case of normally distributed rewards with known variance
 $\sigma^2$, the chosen heuristic would be
     \begin{IEEEeqnarray}{lCl}
-		r_* = \argmax_{i} \overline{w_i} +
-			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
+		r_* = \argmax_{r \in \R} \overline{w_r} +
+			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_r(t)\big)}{t} }
     \end{IEEEeqnarray}
 Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two UCB
 approaches. Note that the size of the reward $w$ is not used in
@@ -670,8 +671,8 @@ to select the best arm.
 \begin{algorithm}[htbp]
 	\BlankLine
 	\Fn{\Select()}{
-		$r_* \leftarrow \argmax_{i} \overline{w_i} +
-			  \sqrt{\dfrac{3}{T_i(t)} \ln\Big(\dfrac{2 n}{t}\Big)}$ \;
+		$r_* \leftarrow \argmax_{r \in \R} \overline{w_r} +
+			  \sqrt{\dfrac{3}{T_r(t)} \ln\Big(\dfrac{2 n}{t}\Big)}$ \;
 	}
 	\BlankLine
 	\Fn{\Update($w$)}{
@@ -680,9 +681,9 @@ to select the best arm.
 	}
 	\caption{Optimally Confident UCB. Notations: $\R$ is the set of heuristics,
 			 $n$ is the time horizon (maximum number of steps), $t$ is the
-			 current time step, $T_i(t)$ counts of how many times heuristic $i$
+			 current time step, $T_r(t)$ counts of how many times heuristic $i$
 			 has been selected, $w$ is the reward received, and
-			 $\overline{w_i}$ is the average of the rewards from $r_i$ so
+			 $\overline{w}$ is the average of the rewards from $r$ so
 			 far.}
 	\label{alg:oc-ucb}
 \end{algorithm}
@@ -690,8 +691,8 @@ to select the best arm.
 \begin{algorithm}[htbp]
 	\BlankLine
 	\Fn{\Select()}{
-		$r_* \leftarrow \argmax_{i} \overline{w_i} +
-				\sqrt{2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t}}$ \;
+		$r_* \leftarrow \argmax_{r \in \R} \overline{w_r} +
+				\sqrt{2 \sigma^2 \dfrac{\ln\big(T_r(t)\big)}{t}}$ \;
 	}
 	\BlankLine
 	\Fn{\Update($w$)}{
@@ -700,9 +701,9 @@ to select the best arm.
 	}
 	\caption{kl-UCB with normally distributed rewards. Notations: $\R$ is the
 	set of heuristics, $\sigma$ is the variance of the rewards, $t$ is the
-	current time step, $T_i(t)$ counts of how many times heuristic $i$ has been
-	selected, $w$ is the reward received, and $\overline{w_i}$ is the
-	average of the rewards from $r_i$ so far.}
+	current time step, $T_r(t)$ counts of how many times heuristic $i$ has been
+	selected, $w$ is the reward received, and $\overline{w_r}$ is the
+	average of the rewards from $r$ so far.}
 	\label{alg:kl-ucb}
 \end{algorithm}
 
@@ -716,22 +717,35 @@ rewards for each heuristic in advance. Like Thompson sampling, the algorithm
 samples from a probability distribution at each step to pick a heuristic. Here
 however, we construct the distribution with exponential weighting (hence the
 name EXP3, which stands for exponential-weight algorithm for exploration and
-exploitation). There are many extensions of of the EXP3. EXP4, also proposed by
-\cite{auer2002nonstochastic}, adds an extra layer of expert advice.
-\cite{beygelzimer10}. We shall
-test~\cite{seldin14}'s EXP3++ algorithm (see Algorithm~\ref{alg:exp3pp}). This
-is a generalization of the original EXP3 and it has been shown to perform well
-in both the stochastic (where the reward of each heuristic follows an unknown
-reward distribution) and the adversarial regime.
+exploitation).
+
+There are many extensions of EXP3. \cite{seldin14}'s EXP3++ algorithm is a
+generalization of the original EXP3 and has been shown to perform well in both
+the stochastic (where the reward of each heuristic follows an unknown reward
+distribution) and the adversarial regime.
+
+One problem with both EXP3 and EXP3++ is that they treat the heuristics as
+black boxes. Once a heuristic is selected, we simply return a reward to update
+the parameters. How each heuristic scores the unlabeled pool is not relevant.
+\cite{auer2002nonstochastic} proposed an extension, EXP4, that now includes the
+weighting of each unlabeled example by each heuristic. This requires us to
+first convert the scores $s(\bm{x}; h)$ into probabilities.
+\cite{beygelzimer11}'s EXP4.P is an improved version of EXP4 that has a better
+regret bound. Both EXP4 and EXP4.P have been used to combine active learning
+suggestions \cite{baram04, hsu15}.
+
+In this paper, we shall test the EXP3++ algorithm due to its simple
+implementation. Refer to Algorithm~\ref{alg:exp3pp} for the details.
+
 
 \begin{algorithm}[htbp]
 	\BlankLine
 	\Fn{\Select()}{
 		$\beta = \dfrac{1}{2}\sqrt{\dfrac{\ln R}{t R}}$ \;
-		\For{$i \in \{1, 2, ..., R\}$}{
-			$\xi_i = \dfrac{18 \ln(t)^2}{t \min(1, \dfrac{1}{t} (L_i - \min(L)))^2}$ \;
-			$\epsilon_i = \min\large(\dfrac{1}{2 R}, \beta, \xi_i \large)  $ \;
-			$\rho_i = \dfrac{e^{-\beta * L_i}}{\sum_j e^{-\beta * L_j}}$ \;
+		\For{$r \in \R$}{
+			$\xi_r = \dfrac{18 \ln(t)^2}{t \min(1, \dfrac{1}{t} (L_r - \min(L)))^2}$ \;
+			$\epsilon_r = \min\large(\dfrac{1}{2 R}, \beta, \xi_r \large)  $ \;
+			$\rho_r = \dfrac{e^{-\beta * L_r}}{\sum_j e^{-\beta * L_j}}$ \;
 			}
 		$r_* \leftarrow \text{draw a sample from $\R$ with
 		probability distribution $\rho$}$. \;
@@ -745,8 +759,8 @@ reward distribution) and the adversarial regime.
 	}
 	\caption{EXP3++ algorithm. Notations: $\R$ is the set of $R$ heuristics,
 	$t$ is the current time step, $\beta$ is a parameter used to weight the
-	heuristics for selection, $\xi_i$ and $\epsilon_i$ are used
-	to compute the loss $L_i$, and $w$ is the reward received.}
+	heuristics for selection, $\xi_r$ and $\epsilon_r$ are used
+	to compute the loss $L_r$, and $w$ is the reward received.}
 	\label{alg:exp3pp}
 \end{algorithm}
 
@@ -758,13 +772,13 @@ around a test set, which is expensive and sometimes impossible to obtain in
 practice. Since most heuristics require little computation, we could in fact
 run all of them at the same time and then combine the suggestions. This leads
 us to social choice theory. Originally developed by political scientists like
-Nicolas de Condorcet and Jean-Charles de Borda, this field of study is
+\cite{condorcet1765} and \cite{borda1784}, this field of study is
 concerned with how we aggregate preferences of a group of people to determine,
 for example, the winner in an election~\citep{list13}. It has the nice property
 that everyone (or in our context, every active learning heuristic) has a voice.
 
 For each heuristic, we assign a score to every candidate with the score
-function $s(\bm{x}, h)$ like before. We are neither interested in the actual
+function $s(\bm{x}; h)$ like before. We are neither interested in the actual
 raw scores nor the candidate with the highest score. Instead, we only need
 a ranking of the candidates, which is achieved by a function $k(s(\bm{x}; h))$
 that converts the scores into a preference ordering:
@@ -864,11 +878,11 @@ count, the geometric mean, and the Schulze method.
 
 In the simplest approach, Borda count, we assign an integer point to each
 candidate. The lowest-ranked candidate receives a point of 1, and each
-candidate receives one more point than the candidate below. To aggregate, we
-simply add up all the points each candidate receives from every heuristic. The
-candidate with the most points is declared the winner and is to be labeled
-next. We can think of Borda count, then, as ranking the candidate according to
-the arithmetic mean.
+candidate receives one more point than the candidate below \citep{saari90}. To
+aggregate, we simply add up all the points each candidate receives from every
+heuristic. The candidate with the most points is declared the winner and is to
+be labeled next. We can think of Borda count, then, as ranking the candidate
+according to the arithmetic mean.
 
 An alternative approach is to use the geometric mean, where instead of adding
 up the points, we multiply them. \cite{bedo14} showed that the geometric mean
@@ -1015,18 +1029,21 @@ For each dataset, we build a classifier to predict the class of an instance
 based on its features. We use a 10-fold stratified shuffled split cross
 validation. The stratified strategy means that the proportion of the classes
 remains constant in each split. We standardize all features to have zero mean
-and unit variance. Although all examples have already been labeled, we simulate
-active learning by assuming that certain examples do not have any labels. In
-particular, the unlabeled pool size is 70\% of data up to a maximum of 10,000
-examples. The test pool consists of the remaining examples up to a maximum of
-20,000---we assume labels are available here. We initialize the classifier by
-labeling 10 random instances and using them as the initial training set. Note
-that in practice, there can be a large amount of unlabeled data, so for
-computational reasons, we only assign a score to a small random sample from the
-unlabeled pool. In particular, we feed 300 randomly selected candidates from
-the unlabeled pool into the algorithm. We use logistic
-regression with a Gaussian kernel approximation and an L2 loss. In the binary
-case, the loss function is
+and unit variance. Although all examples have already been labeled, we can
+simulate active learning by assuming that certain examples do not have any
+labels. In particular, the unlabeled pool size is 70\% of data up to a maximum
+of 10,000 examples. The test pool consists of the remaining examples up to a
+maximum of 20,000---we assume labels are available here. We use this test pool
+to plot the learning curves and, in the case of bandit algorithms, to compute
+the rewards.
+
+We initialize the classifier by labeling 10 random instances and using them as
+the initial training set. Note that in practice, there can be a large amount of
+unlabeled data, so for computational reasons, we only assign a score to a small
+random sample from the unlabeled pool. In particular, we feed 300 randomly
+selected candidates from the unlabeled pool into the algorithm. We use
+Scikit-learn implemetnation of logistic regression with an L2 loss
+\citep{pedregosa11}. In the binary case, the loss function is
 \begin{IEEEeqnarray}{lCl}
 	L &=& \dfrac{1}{2} \bm{w}^T \bm{\theta} + C \sum_{i = 1}^n
 	      \ln\Big(1 + \exp(-y_i(\bm{\theta}^T f(\bm{x}_i)))\Big)

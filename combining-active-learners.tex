@@ -168,7 +168,7 @@ and we continue doing this until the training set reaches a certain size or
 until the classifier makes sufficiently good predictions. Depending on how the
 underlying data is distributed, this process can be quite inefficient. It seems
 that we could exploit the current set of labeled data to identify more
-informative unlabeled examples to annotate. For instance we can pick examples
+informative unlabeled examples to annotate. For instance, we can pick examples
 near the decision boundary of the classifier, where we are still unsure which
 class the example belongs to (i.e. where the class probability estimates are
 still uncertain).
@@ -347,7 +347,7 @@ probability distribution that is averaged across the committee $\B$), to $p_b$
 For convenience, we summarize the five heuristics discussed above in
 Table~\ref{tab:heuristics}.
 
-\begin{table}[t]
+\begin{table}[tbp]
 	\caption {Summary of active learning heuristics used in our experiments.
 			  Notations: $p(y | \bm{x}; h)$ is the probability of that an
 			  object with feature vector $\bm{x}$ has label $y$ under
@@ -472,7 +472,7 @@ minimum height=3em, minimum width=6em, align=left]
 \tikzstyle{active} = [->, blue]
 \tikzstyle{bandit} = [->, red]
 
-\begin{figure}[p]
+\begin{figure}[tbp]
 	\centering
 	\begin{tikzpicture}[auto, node distance=2cm,>=latex', scale=0.8, transform shape]
 		\node [input, name=test input] {};
@@ -481,7 +481,7 @@ minimum height=3em, minimum width=6em, align=left]
 		\node [block, right of=heuristic, node distance=5cm] (best) {Select candidate \\ with highest score};
 		\node [block, below of=heuristic, node distance=2.5cm] (oracle) {Label candidate};
 		\node [block, below of=classifier, node distance=2.5cm] (pool) {Add to training pool};
-		\node [block, above of=classifier, node distance=2cm] (bandit) {Select heuristic with $b$};
+		\node [block, above of=classifier, node distance=2cm] (bandit) {Select heuristic with \\ bandit algorithm $b$};
 		\node [input, name=heuristic input, left of=bandit, node distance=3cm] {};
 		\node [above of=heuristic] (best heuristic) {chosen heursitic $r$};
 
@@ -513,7 +513,7 @@ minimum height=3em, minimum width=6em, align=left]
 \end{figure}
 
 
-\begin{algorithm}[p]
+\begin{algorithm}[htbp]
 	\KwIn{
     	unlabeled set $\Unlabeled$,
 		labeled training set $\Labeled_T$,
@@ -540,8 +540,8 @@ minimum height=3em, minimum width=6em, align=left]
     }
 	\caption{Pool-based active learning with bandit theory. Note that in
 	addition to the set of active learning heuristics $\R$ and the test set
-	$\Labeled_S$, some bandit algorithms also need to know $n$, the maximum
-	size of the training set, in the advance.}
+	$\Labeled_S$, some bandit algorithms also need to know in advance $n$, the
+	maximum size of the training set.}
     \label{alg:bandit}
 \end{algorithm}
 
@@ -556,7 +556,7 @@ classifier trained on finite data might not be the right one, so we still
 cannot score perfectly due to having a poor classifier. Conversely, a bad
 heuristic might be able to pick an informative candidate due to pure luck. Thus
 there is always a certain level of randomness in the reward received. Let us
-treat the reward  $W_r$ as a random variable and assume the errors to be
+treat the reward $W_r$ as a random variable and assume the errors to be
 normally distributed with mean $\nu_r$ and variance $\tau_r^2$:
 	\begin{IEEEeqnarray}{lCl}
 		(W_r \mid \nu_r) \sim \Normal(\nu_r, \tau_r^2)
@@ -583,7 +583,7 @@ evidence (yet) that any of the heuristics offers an improvement to the
 performance.
 
 In each round, we draw a random sample $\nu_r'$ from the normal distribution
-$\Normal(\mu_r, \sigma_r^2)$ for each $i$ and select heuristic $r_*$ that has
+$\Normal(\mu_r, \sigma_r^2)$ for each $r$ and select heuristic $r_*$ that has
 the highest sampled value of the mean reward:
     \begin{IEEEeqnarray}{lCl}
         r_* = \argmax_{r \in \R} \nu_r'
@@ -607,7 +607,7 @@ with the following new mean and variance:
 Algorithm~\ref{alg:thompson} summarizes the \textsc{Select} and \textsc{Update}
 functions used in Thompson sampling.
 \SetKwFunction{SelectFn}{Select}%
-\begin{algorithm}[htbp]
+\begin{algorithm}[p]
 	\Fn{\Select()}{
 		\For{$r \in \R$}{
 			$\nu_r' \leftarrow$ draw a sample from $\Normal(\mu_r, \sigma^2_r)$ \;
@@ -631,26 +631,28 @@ functions used in Thompson sampling.
 
 \subsubsection{Upper Confidence Bounds}
 
- Next we consider the Upper Confidence Bound (UCB) algorithms which use the
+Next we consider the Upper Confidence Bound (UCB) algorithms which use the
 principle of ``optimism in the face of uncertainty''. In choosing which
 heuristic to use, we first estimate the upper bound of the reward (that is, we
 make an optimistic guess) and pick the one with the highest bound. If our guess
 turns out to be wrong, the upper bound of the chosen heuristic will decrease,
 making it less likely to get selected in the next iteration. Intuitively, the
-upper bound can be high when the expected reward is high or when the
-uncertainty is large.
+upper bound is high when the expected reward is high or when the uncertainty is
+large.
 
-There are many different algorithms in the UCB family, e.g. UCB1-TUNED \& UCB2
+There are many algorithms in the UCB family, e.g. UCB1-TUNED \& UCB2
 \citep{auer02finite}, V-UCB \citep{audibert09}, OC-UCB \citep{lattimore15}, and
 kl-UCB \citep{cappe13}. They differ only in the way the upper bound is
 calculated. In this paper, we only consider the two most recently proposed
-methods. In Optimally Confident UCB (OC-UCB), \cite{lattimore15} suggested that
+methods, OC-UCB and kl-UCB.
+
+In OC-UCB (Optimally Confident UCB), \cite{lattimore15} suggested that
 we pick the heuristic that maximizes the following upper bound:
     \begin{IEEEeqnarray}{lCl}
 		r_* = \argmax_{r \in \R} \overline{w_r} +
 			  \sqrt{\dfrac{\alpha}{T_r(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
     \end{IEEEeqnarray}
-where $\overline{w_r}$ is the average of the rewards from $r_r$ that we observe
+where $\overline{w_r}$ is the average of the rewards from $r$ that we observe
 so far, $t$ is the time step, $T_r(t)$ is the number times we have selected
 heuristic $r$ before step $t$, and $n$ is the maximum number of steps that we
 are going to take. There are two tunable parameters, $\alpha$ and $\psi$, which
@@ -664,9 +666,8 @@ $\sigma^2$, the chosen heuristic would be
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_r(t)\big)}{t} }
     \end{IEEEeqnarray}
 Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two UCB
-approaches. Note that the size of the reward $w$ is not used in
-\Update($w$) of UCB, except
-to select the best arm.
+approaches. Note that the reward $w$ itself is not used in
+\Update($w$) of UCB, but it is used when selecting the best arm.
 
 \begin{algorithm}[htbp]
 	\BlankLine
@@ -681,9 +682,9 @@ to select the best arm.
 	}
 	\caption{Optimally Confident UCB. Notations: $\R$ is the set of heuristics,
 			 $n$ is the time horizon (maximum number of steps), $t$ is the
-			 current time step, $T_r(t)$ counts of how many times heuristic $i$
+			 current time step, $T_r(t)$ counts of how many times heuristic $r$
 			 has been selected, $w$ is the reward received, and
-			 $\overline{w}$ is the average of the rewards from $r$ so
+			 $\overline{w_r}$ is the average of the rewards from $r$ so
 			 far.}
 	\label{alg:oc-ucb}
 \end{algorithm}
@@ -701,7 +702,7 @@ to select the best arm.
 	}
 	\caption{kl-UCB with normally distributed rewards. Notations: $\R$ is the
 	set of heuristics, $\sigma$ is the variance of the rewards, $t$ is the
-	current time step, $T_r(t)$ counts of how many times heuristic $i$ has been
+	current time step, $T_r(t)$ counts of how many times heuristic $r$ has been
 	selected, $w$ is the reward received, and $\overline{w_r}$ is the
 	average of the rewards from $r$ so far.}
 	\label{alg:kl-ucb}
@@ -712,12 +713,12 @@ to select the best arm.
 The EXP3 algorithm was first developed by \cite{auer2002nonstochastic} to solve
 the non-stochastic bandit problem where we make no statistical assumptions
 about the reward distribution. This is also often known as the adversarial
-setting, where we have an adversary who generates an arbitrary sequence of
-rewards for each heuristic in advance. Like Thompson sampling, the algorithm
-samples from a probability distribution at each step to pick a heuristic. Here
-however, we construct the distribution with exponential weighting (hence the
-name EXP3, which stands for exponential-weight algorithm for exploration and
-exploitation).
+setting, where we imagine that there is an adversary who generates an arbitrary
+sequence of rewards for each heuristic in advance. Like Thompson sampling, the
+algorithm samples from a probability distribution at each step to pick a
+heuristic. Here however, we construct the distribution with exponential
+weighting (hence the name EXP3, which stands for exponential-weight algorithm
+for exploration and exploitation).
 
 There are many extensions of EXP3. \cite{seldin14}'s EXP3++ algorithm is a
 generalization of the original EXP3 and has been shown to perform well in both
@@ -727,12 +728,12 @@ distribution) and the adversarial regime.
 One problem with both EXP3 and EXP3++ is that they treat the heuristics as
 black boxes. Once a heuristic is selected, we simply return a reward to update
 the parameters. How each heuristic scores the unlabeled pool is not relevant.
-\cite{auer2002nonstochastic} proposed an extension, EXP4, that now includes the
+\cite{auer2002nonstochastic} proposed an extension, EXP4, that includes the
 weighting of each unlabeled example by each heuristic. This requires us to
 first convert the scores $s(\bm{x}; h)$ into probabilities.
 \cite{beygelzimer11}'s EXP4.P is an improved version of EXP4 that has a better
 regret bound. Both EXP4 and EXP4.P have been used to combine active learning
-suggestions \cite{baram04, hsu15}.
+suggestions \citep{baram04, hsu15}.
 
 In this paper, we shall test the EXP3++ algorithm due to its simple
 implementation. Refer to Algorithm~\ref{alg:exp3pp} for the details.
@@ -778,15 +779,15 @@ for example, the winner in an election~\citep{list13}. It has the nice property
 that everyone (or in our context, every active learning heuristic) has a voice.
 
 For each heuristic, we assign a score to every candidate with the score
-function $s(\bm{x}; h)$ like before. We are neither interested in the actual
-raw scores nor the candidate with the highest score. Instead, we only need
-a ranking of the candidates, which is achieved by a function $k(s(\bm{x}; h))$
-that converts the scores into a preference ordering:
+function $s(\bm{x}; h)$ like before. However, we are not interested in the
+actual raw scores or the candidate with the highest score. Instead, we only
+need a ranking of the candidates, which is achieved by a function $k(s(\bm{x};
+h))$ that converts the scores into a preference ordering:
 	\begin{IEEEeqnarray}{lCl}
 		k : \mathbb{R}^{U} \rightarrow \sigma(J_\Unlabeled)
 	\end{IEEEeqnarray}
 where $\sigma(J_\Unlabeled)$ is a permutation over the index set of the
-unlabeled pool. $\Unlabeled$. For example, $k$ could assign the candidate with
+unlabeled pool $\Unlabeled$. For example, $k$ could assign the candidate with
 the highest score a rank of 1, the next best candidate a rank of 2, and so on.
 An aggregation function $c$ will then combine all the rankings into a combined
 ranking,
@@ -817,7 +818,7 @@ re-weight the heuristics before aggregating at each step.
 Figure~\ref{fig:pipeline-choice} and Algorithm~\ref{alg:choice} provide an
 overview of how social choice theory is used in pool-based active learning.
 
-\begin{figure}[p]
+\begin{figure}[tbp]
 	\centering
 	\begin{tikzpicture}[auto, node distance=2cm,>=latex', scale=0.8, transform shape]
 		\node [block, node distance=3cm] (classifier) {Train with classifier $h$};
@@ -839,14 +840,17 @@ overview of how social choice theory is used in pool-based active learning.
 		\draw [active] (oracle) -- node[name=xy] {$(\bm{x}_*, y_*)$} (pool);
 		\draw [bandit] (heuristic input) -- node[name=heuristics] {$\R$} (heuristic);
 	\end{tikzpicture}
-	\caption{In the active learning pipeline with rank aggregation
-	methods, there is only one cycle, in which we aggregate information
-	from all heursitics. Additional notation: $\sigma(J_\Unlabeled)$ is a
-	permutation (i.e. rank) on the index set of the unlabeled data.}
+	\caption{In the active learning pipeline with rank aggregation methods,
+	there is only one cycle, in which we aggregate information from all
+	heuristics. Notations: $\R$ is the set of heuristics $\{r_1, ..., r_R\}$,
+	$\Labeled_T$ is the training set, $\Unlabeled$ is the unlabeled set,
+	$p(\Y)$ is the predicted class probabilities on the unlabeled data
+	$\Unlabeled$, and $\sigma(J_\Unlabeled)$ is a permutation (i.e. rank) on
+	the index set of the unlabeled data.}
 	\label{fig:pipeline-choice}
 \end{figure}
 
-\begin{algorithm}[p]
+\begin{algorithm}[tbp]
 	\KwIn{
     	unlabeled set $\Unlabeled$,
         labeled training set $\Labeled_T$,
@@ -868,7 +872,7 @@ overview of how social choice theory is used in pool-based active learning.
 			$\Unlabeled \leftarrow \Unlabeled \setminus \{ \bm{x}_* \}$. \;
 		Retrain the classifier $h(\bm{x})$ using $\Labeled_T$. \;
     }
-    \caption{Pool-based active learning with social choice theory}
+    \caption{Pool-based active learning with social choice theory.}
     \label{alg:choice}
 \end{algorithm}
 
@@ -886,7 +890,7 @@ according to the arithmetic mean.
 
 An alternative approach is to use the geometric mean, where instead of adding
 up the points, we multiply them. \cite{bedo14} showed that the geometric mean
-maximizes the Spearman correlation bewteen the ranks. Note that this method
+maximizes the Spearman correlation between the ranks. Note that this method
 requires the ranks to be scaled so that they lie strictly between 0 and 1. This
 can be achieved by simply dividing the ranks by $(U + 1)$, where $U$ is the
 number of candidates.
@@ -899,15 +903,15 @@ $d(x_i, x_j)$. Let us also define a path from candidate $x_i$ to $x_j$ as the
 sequence of candidates, $\{ x_i, x_1, x_2,... ,x_j \}$, that starts with $x_i$
 and ends with $x_j$, where, as we move along the path, the number of heuristics
 that prefer the current candidate over the next candidate must be strictly
-decreasing. Intuitively, the path is the rank of a subset of candidates, where
-$x_i$ is the highest-ranked candidate and $x_j$ is at the lowest-ranked.
+decreasing. Intuitively, the path is the ranking of a subset of candidates,
+where $x_i$ is the highest-ranked candidate and $x_j$ is the lowest-ranked.
 
 Associated with each path is a strength $p$, which is the minimum of $d(x_i,
 x_j)$ for all consecutive $x_i$ and $x_j$ along the path. The core part of the
 algorithm involves finding the path of the strongest strength from each
 candidate to every other. Let us call $p(x_i, x_j)$ the strength of strongest
 path between $x_i$ and $x_j$. Candidate $x_i$ is a potential winner if $p(x_i,
-x_j) \geq p(x_j, x_i)$ for all other $x_j$. This problem has a similar flavour
+x_j) \geq p(x_j, x_i)$ for all other $x_j$. This problem has a similar flavor
 to the problem of finding the shortest path. In fact, the implementation uses a
 variant of the Floyd–Warshall algorithm to find the strongest path. This is the
 most efficient implementation that we know of, taking cubic time in the number
@@ -916,7 +920,7 @@ of candidates.
 We end this section with a small illustration of how the three aggregation
 algorithms work in Table~\ref{tab:choice}.
 
-\begin{table}[htbp]
+\begin{table}[tbp]
 	\caption {An example of how social choice theory algorithms rank candidates
 	          by aggregating three heuristics: $r_1$, $r_2$, and $r_3$. There
 	          are four candidates in the unlabeled pool: A, B, C, and D.}
@@ -952,7 +956,7 @@ algorithms work in Table~\ref{tab:choice}.
 		\end{tabular}
 		\caption{Aggregated ranking with Borda count and geometric mean. The
 		scores are determined by the relative ranking in each heuristic. For
-		example, $A$ is ranked second by $r_1$, first by $r_1$, and last by
+		example, $A$ is ranked second by $r_1$, first by $r_2$, and last by
 		$r_3$, thus giving us a score of 3, 4 and 1, respectively. In both
 		methods, candidate B receives the highest aggregated score.}
 	\end{subtable}
@@ -990,7 +994,7 @@ Table~\ref{tab:datasets} shows the size and the number of classes in each
 dataset, along with the proportion of the samples belonging to the majority
 class and the maximum achievable performance using logistic regression.
 
-\begin{table}[htbp]
+\begin{table}[tbp]
 	\caption {Overview of datasets} \label{tab:datasets}
 	\centering
 	\begin{tabular}{lrrrrr}
@@ -1026,23 +1030,24 @@ class and the maximum achievable performance using logistic regression.
 \end{table}
 
 For each dataset, we build a classifier to predict the class of an instance
-based on its features. We use a 10-fold stratified shuffled split cross
+based on its features. We use a 10-fold stratified shuffle split cross
 validation. The stratified strategy means that the proportion of the classes
-remains constant in each split. We standardize all features to have zero mean
+remains constant in each fold. The shuffle split strategy allows an example to
+be re-sampled in multiple folds. We standardize all features to have zero mean
 and unit variance. Although all examples have already been labeled, we can
 simulate active learning by assuming that certain examples do not have any
-labels. In particular, the unlabeled pool size is 70\% of data up to a maximum
-of 10,000 examples. The test pool consists of the remaining examples up to a
-maximum of 20,000---we assume labels are available here. We use this test pool
-to plot the learning curves and, in the case of bandit algorithms, to compute
-the rewards.
+labels. In particular, the unlabeled pool size is 70\% of the data up to a
+maximum of 10,000 examples. The test pool consists of the remaining examples up
+to a maximum of 20,000---we assume labels are available here. We use this test
+pool to plot the learning curves and, in the case of bandit algorithms, to
+compute the rewards.
 
 We initialize the classifier by labeling 10 random instances and using them as
 the initial training set. Note that in practice, there can be a large amount of
 unlabeled data, so for computational reasons, we only assign a score to a small
 random sample from the unlabeled pool. In particular, we feed 300 randomly
-selected candidates from the unlabeled pool into the algorithm. We use
-Scikit-learn implemetnation of logistic regression with an L2 loss
+selected candidates from the unlabeled pool into the algorithm. We use the
+Scikit-learn implementation of logistic regression with an L2 loss
 \citep{pedregosa11}. In the binary case, the loss function is
 \begin{IEEEeqnarray}{lCl}
 	L &=& \dfrac{1}{2} \bm{w}^T \bm{\theta} + C \sum_{i = 1}^n
@@ -1058,8 +1063,8 @@ kernel, we approximate the feature map of the kernel with Random Kitchen Sinks
 100-dimensional feature vector $f(\bm{x}_i)$. In the multiclass case, we use
 the One-vs-Rest strategy, where for every class, we build a binary classifier
 that determines whether a particular example belongs to that class or not. For
-the QBB algorithms, we train a committee of 7 classifiers, where each member is
-given a sample of 100 examples that have already been labeled.
+the QBB algorithms, we train a committee of 7 logistic classifiers, each of
+whom is given a sample of 100 examples that have already been labeled.
 
 For Thompson sampling, we fix $\tau^2$ at 0.02 and set the initial value of
 $\mu$ and $\sigma^2$ to 0.5 and 0.2, respectively. For all bandit algorithms,
@@ -1075,7 +1080,7 @@ weight. Refer to Appendix A for the derivation of the MPBA, which extends
 In total, we test 17 methods. This includes passive learning, 8 active learning
 heuristics, 5 bandit algorithms, and 3 aggregation methods. See
 Table~\ref{tab:abbre} for a list of abbreviations associated with the methods.
-\begin{table}[htbp]
+\begin{table}[tbp]
 	\caption {Summary of active learning heuristics and combiners used
 	in the experiments} \label{tab:abbre}
 	\centering
@@ -1114,7 +1119,7 @@ Table~\ref{tab:abbre} for a list of abbreviations associated with the methods.
 		\textsc{borda}
 			& Aggregation & Aggregation with Borda count \\
 		\textsc{geometric}
-			& Aggregation & Aggergation with the geometric mean \\
+			& Aggregation & Aggregation with the geometric mean \\
 		\textsc{schulze}
 			& Aggregation & Aggregation with the Schulze method \\
 		\bottomrule
@@ -1141,7 +1146,7 @@ between $\bm{x}$ and another instance $\bm{x}^{(k)}$ using the Gaussian kernel:
 \end{IEEEeqnarray}
 We set $\gamma$ in the experiments to be the inverse of the
 90\textsuperscript{th} percentile of all pairwise distances. The information
-density weighting is proposed by~\cite{settles08} to discourage the active
+density weighting was proposed by~\cite{settles08} to discourage the active
 learner from picking outliers. Although the class membership of outliers might
 be uncertain, knowing their labels would probably not affect the classifier
 performance on the data as a whole.
@@ -1153,13 +1158,13 @@ ignore the rewards and explore 100\% of the time. For all bandit and rank
 aggregation methods, we take advice from six representative experts:
 \textsc{passive}, \textsc{confidence}, \textsc{margin}, \textsc{entropy},
 \textsc{qbb-margin}, and \textsc{qbb-kl}. We have not explored how adding the
-heursitics with information density weighting to the bandits would impact
+heuristics with information density weighting as experts would impact
 the performance.
 
-Given that there are 12 datasets, each with 17 learning curves, we
-need a measure that can summarize in one number how well a particular heuristic
-or policy does. Building on~\cite{baram04}'s deficiency measure, we define the
-strength of an active learner or a combiner, relative to passive learning, as
+Given that there are 12 datasets, each with 17 learning curves, we need a
+measure that can summarize in one number how well a particular method does.
+Building on~\cite{baram04}'s deficiency measure, we define the strength of an
+active learner or a combiner, relative to passive learning, as
 \begin{IEEEeqnarray}{lCl}
     \text{Strength}(h; m) &=&
     	1 - \dfrac{\sum_{t=1}^{n}\big(m(\max) - m(h, t)\big)}
@@ -1168,9 +1173,9 @@ strength of an active learner or a combiner, relative to passive learning, as
 where $m$ is a chosen metric (e.g. accuracy rate, MPBA), $m(\max)$ is the best
 possible performance achieved from using all labeled data in the training set,
 and $m(h, t)$ is the performance achieved using the first $t$ examples selected
-by heuristic $h$. We can think of the summation as the area between the best
+by method $h$. We can think of the summation as the area between the best
 possible performance line and the learning curve of $h$. The better the
-heuristic is, the faster it would approach this maximum line, and thus the
+method is, the faster it would approach this maximum line, and thus the
 smaller the area. Finally, so that we can compare the performance across
 datasets, we normalize the measure with the area obtained from using just
 passive learning. Refer to Figure~\ref{fig:strength} for a visualization of the
@@ -1184,7 +1189,7 @@ also dominate the overall accuracy score. The MPBA, on the other hand, puts
 an equal weight in each class and thus favors algorithms that can predict
 the label of all classes equally well.
 
-\begin{figure}[htbp]
+\begin{figure}[tbp]
 	\centering
 	\includegraphics[width=0.7\textwidth]{figures/strength}
 	\caption[Strength Measure]{An illustration of the strength measure. It is
@@ -1220,7 +1225,11 @@ active learning appears to perform better if we look at the raw accuracy score.
 However from the MPBA score, where the class imbalance is taken into account,
 the benefit starts to disappear. It is only with the 4 large datasets that
 there is a visible gap between the passive learning curve and the active
-learning curve for most methods.
+learning curve for most methods. In fact, some of the gains are very
+significant. In the sdss dataset, for example, the Borda method achieves an
+MPBA of 87\% after only 200 labeled examples, while passive learning could only
+reach the same performance after 1000 labeled examples (see
+Figure~\ref{fig:learning_curves-mpba-large}).
 
 Out of the 8 active learning heuristics tested, the heuristics with the
 information density weighting (\textsc{w-confidence},
@@ -1239,7 +1248,8 @@ such as \textsc{qbb-kl}.
 For bandit algorithms, it is interesting to note that \textsc{thompson}
 favors certain heuristics a lot more than others, while the behavior of
 \textsc{exp3++}, \textsc{ocucb}, and \textsc{klucb} is almost indistinguishable
-from \textsc{explore}, where we explore 100\% of the time.
+from \textsc{explore}, where we explore 100\% of the time (see
+Figure~\ref{fig:selection}).
 
 \subsection{Discussion}
 
@@ -1255,8 +1265,8 @@ The experimental results allow us to answer the following questions:
 	\item \textbf{Can active learning degrade performance?} Yes, there is no
 	guarantee that active learning will always beat passive learning. For
 	example, \textsc{w-entropy} actually slows down the learning in the magic
-	dataset. However, this only happens with certain heuristics, like those
-	using the information density weighting.
+	dataset. However, this only happens with certain heuristics, like when the
+	information density weighting is used.
 
 	\item \textbf{What is the best single active learning heuristic?} All of
 	\textsc{confidence}, \textsc{margin}, \textsc{entropy}, and
@@ -1292,7 +1302,7 @@ The experimental results allow us to answer the following questions:
 		of candidates. This might lead to memory issues if we need to rank
 		a large number of candidates from the unlabeled pool.
 		\item Before aggregating the rankings, we throw away the score
-		magntitudes, which could cause a loss of information.
+		magnitudes, which could cause a loss of information.
 		\item Unlike bandit algorithms, all of the rank aggregators always give
 		each heuristic an equal weight.
 	\end{enumerate}
@@ -1309,24 +1319,26 @@ The experimental results allow us to answer the following questions:
 
 \section{Conclusion}
 
-In this paper we compared 16 active learning methods with passive learning.
-Our three main findings are: active learning is better than passive learning;
-combining active learners does not in general degrade the performance; and
-social choice theory provides more practical algorithms than bandit theory
-since we do not need to design a reward scheme.
+In this paper we empirically compared 16 active learning methods with passive
+learning. Using benchmark datasets, we found that active learning can reduce
+the training set size considerably, especially when we have a lot of unlabeled
+data. Combining active learners with bandit and rank aggregation methods does
+not in general degrade the performance. In particular, Borda count and the
+geometric mean are good practical algorithms given their simplicity and the
+fact that we do not have to design a reward scheme.
 
 \begin{figure}[tbp]
 	\centering
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-accuracy-small}
-		\caption{Accuracy score}
+		\caption{Accuracy strength}
 		\label{fig:strengths-accuracy-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-mpba-small}
-		\caption{MPBA score}
+		\caption{MPBA strength}
 		\label{fig:strengths-accuracy-large}
     \end{subfigure}
 	\caption[Policy strength]{Boxplots of the accuracy and MPBA strength of the
@@ -1337,8 +1349,8 @@ since we do not need to design a reward scheme.
 	green boxes are for rank aggregation methods. A strategy that is above the
 	zero line is better than passive learning. Each boxplot contains 10 trials.
 	The accuracy score is a simple metric that simply counts up the number of
-	correct predictions. The MPBA score, being the weighted average of the
-	recall and precision, gives an equal representation to each class.}
+	correct predictions. The MPBA score, being the average of the recall, gives
+	an equal representation to each class.}
 	\label{fig:strengths-small}
 \end{figure}
 
@@ -1347,26 +1359,26 @@ since we do not need to design a reward scheme.
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-accuracy-large}
-		\caption{Accuracy score}
+		\caption{Accuracy strength}
 		\label{fig:strengths-mpba-small}
 	\end{subfigure}
 	\begin{subfigure}[t]{\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/strengths-mpba-large}
-		\caption{MPBA score}
+		\caption{MPBA strength}
 		\label{fig:strengths-mpba-large}
     \end{subfigure}
 	\caption[Policy strength]{Boxplots of the accuracy and MPBA strength of the
-	16 active learning strategies, relative to passive learning, using medium
-	to the large datasets (magic, miniboone, pageblocks, pima, sdss, and
+	16 active learning strategies, relative to passive learning, using the
+	medium-to-large datasets (magic, miniboone, pageblocks, pima, sdss, and
 	vehicle). The more positive the strength is, the better the
 	heuristic/combiner is. Blue boxes represent individual heuristics; red
 	boxes represent bandit algorithms, and green boxes are for rank aggregation
 	methods. A strategy that is above the zero line is better than passive
 	learning. Each boxplot contains 10 trials. The accuracy score is a simple
 	metric that simply counts up the number of correct predictions. The MPBA
-	score, being the weighted average of the recall and precision, gives an
-	equal representation to each class.}
+	score, being the weighted average of the recall, gives an equal
+	representation to each class.}
 	\label{fig:strengths-large}
 \end{figure}
 
@@ -1409,7 +1421,7 @@ since we do not need to design a reward scheme.
 		\label{fig:learning_curves-mpba-large}
     \end{subfigure}
 	\caption[Selected learning curves]{Selected accuracy and MPBA learning
-	curves for the medium to large datasets (magic, miniboone, pageblocks,
+	curves for the medium-to-large datasets (magic, miniboone, pageblocks,
 	pima, sdss, and vehicle). As it would get too cluttered to plot 17 learning
 	curves, we only show the learning curve for \textsc{passive},
 	\textsc{confidence}, \textsc{exp3++}, and \textsc{borda}. The learning
@@ -1494,12 +1506,12 @@ there are 4.5 times as many galaxies as quasars. The problem of class imbalance
 is even more severe in the pageblocks dataset, where one class makes up 90\% of
 the data and the remaining four classes only make up 10\%. An easy fix is to
 undersample the dominant class when creating the training and test sets. This,
-of course, means that the size of these sets are limited by the size of the
+of course, means that the size of these sets is limited by the size of the
 minority class.
 
 When we do not want to alter the underlying class distribution or when larger
 training and test sets are desired, we need a performance measure that can
-correct for the class imbalance.~\cite{brodersen10} show that the posterior
+correct for the class imbalance.~\cite{brodersen10} showed that the posterior
 balanced accuracy distribution can overcome the bias in the binary case. We now
 extend this idea to the multi-class setting.
 

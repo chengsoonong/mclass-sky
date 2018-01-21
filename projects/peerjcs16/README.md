@@ -11,7 +11,14 @@ need to have the `mclearn` installed. To install it from source:
 
 ```
 git clone https://github.com/chengsoonong/mclass-sky.git
-cd mclass-sky; python setup.py develop
+cd mclass-sky; python3 setup.py develop
+
+# We also need a few more dependencies
+pip3 install joblib  # or conda install joblib
+
+# Download the results
+git submodule update --init
+git submodule foreach git pull origin master
 ```
 
 ## Replicating the Experiments
@@ -22,7 +29,7 @@ There are two main notebooks used to replicate the experiments.
    Run this notebook first to generate process the UCI data and put them
    in the right format for the experiments. In addition to the UCI data,
    you also need to have the SDSS dataset, which can be manually downloaded
-   from [Zendo](http://dx.doi.org/10.5281/zenodo.58500).
+   from [Zenodo](http://dx.doi.org/10.5281/zenodo.58500).
 
 2. [Active Learning Suggestions](active_learning_suggestions.ipynb):
    The second notebook contains the code used to replicate the experiments

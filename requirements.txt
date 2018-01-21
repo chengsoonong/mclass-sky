@@ -2,3 +2,4 @@
 pexpect
 pickleshare
 simplegeneric
+joblib

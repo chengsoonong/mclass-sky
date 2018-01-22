@@ -10,7 +10,9 @@ mclass-sky
 :License: This package is distributed under a a 3-clause ("Simplified" or "New") BSD license.
 :Source: `<https://github.com/chengsoonong/mclass-sky>`_
 :Doc: `<https://mclearn.readthedocs.org/en/latest/>`_
-:Publications: `Active Learning with Gaussian Processes <projects/jakub/thesis/nabaglo17photometric-redshift.pdf>`_ by Jakub Nabaglo
+:Publications: `Combining Active Learning Suggestions <projects/peerjcs16/paper>`_ by Alasdair Tran, Cheng Soon Ong, and Christian Wolf
+
+               `Active Learning with Gaussian Processes <projects/jakub/thesis/nabaglo17photometric-redshift.pdf>`_ by Jakub Nabaglo
 
                `Photometric Classification with Thompson Sampling <projects/alasdair/thesis/tran15honours-thesis.pdf>`__ by Alasdair Tran
 
@@ -29,9 +31,11 @@ mclass-sky
 Introduction
 ------------
 This repository contains a collection of projects related to active learning
-methods with application in astronomy.
+methods with application in astronomy. Click on one of the links below
+to go to the directory of a particular project.
 
-1. `Combining Active Learning Suggestions <projects/peerjcs16>`_
+1. `Combining Active Learning Suggestions <projects/peerjcs16>`_ by Alasdair Tran, Cheng Soon Ong,
+   and Christian Wolf
 
 2. `Active Learning with Gaussian Processes for Photometric Redshift Prediction <projects/jakub>`_
 

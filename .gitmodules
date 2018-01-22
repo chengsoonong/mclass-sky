@@ -1,6 +1,3 @@
-[submodule "projects/peerjcs16/paper"]
-	path = projects/peerjcs16/paper
-	url = https://git.overleaf.com/4852885wpjkcp
 [submodule "projects/peerjcs16/results"]
 	path = projects/peerjcs16/results
 	url = https://gitlab.com/chengsoon.ong/mclass-sky-data.git

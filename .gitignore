@@ -13,9 +13,6 @@ __pycache__
 *.so
 *.c
 
-# Explicitly add pdf files if needed
-*.pdf
-
 # latex files
 *.aux
 *.log

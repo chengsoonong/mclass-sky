@@ -300,6 +300,28 @@ of the score function. Since the sum of all probabilities must be 1, the
 smaller the margin is, the more uncertain we are about the object's class
 membership.
 
+An extension to the above three heuristics is to weight the score with the
+information density so that we give more importance to instances in regions of
+high density:
+\begin{IEEEeqnarray}{lCl}
+	s_{ID}(\bm{x}; h) &=&
+		\bigg(\dfrac{1}{U} \sum_{k = 1}^E
+		\text{sim}(\bm{x}, \bm{x}^{(k)})\bigg) s(\bm{x}; h)
+\end{IEEEeqnarray}
+where $h$ is the classifier, $s(\bm{x}; h)$ is the original score function of
+the instance with feature vetor $\bm{x}$, $U$ is the size of the unlabeled
+pool, and $\text{sim}(\bm{x}, \bm{x}^{(k)})$ is the similarity between $\bm{x}$
+and another instance $\bm{x}^{(k)}$ using the Gaussian kernel with parameter
+$\gamma$:
+\begin{IEEEeqnarray}{lCl}
+	\text{sim}(\bm{x}, \bm{x}^{(k)})
+		&=& \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2)
+\end{IEEEeqnarray}
+The information density weighting was proposed by~\cite{settles08} to
+discourage the active learner from picking outliers. Although the class
+membership of outliers might be uncertain, knowing their labels would probably
+not affect the classifier performance on the data as a whole.
+
 \subsection{Version Space Reduction}~\label{subsec:version}
 Instead of focusing on the uncertainty of individual predictions, we could
 instead try to constrain the size of the version space, thus allowing the
@@ -1098,30 +1120,9 @@ Table~\ref{tab:abbre} for a list of abbreviations associated with the methods.
 	\end{tabular}
 \end{table}
 
-With the least confidence, smallest margin, and highest entropy
-heuristics, we also test a slight variant (\textsc{w-confidence},
-\textsc{w-margin}, \textsc{w-entropy}), in which we weight the score with the
-information density to give more importance to instances in regions of high
-density:
-\begin{IEEEeqnarray}{lCl}
-	s_{ID}(\bm{x}; h) &=&
-		\bigg(\dfrac{1}{E} \sum_{k = 1}^E
-		\text{sim}(\bm{x}, \bm{x}^{(k)})\bigg) s(\bm{x}; h)
-\end{IEEEeqnarray}
-where $h$ is the classifier, $s(\bm{x}; h)$ is the original score function of
-the instance with feature vetor $\bm{x}$, $E$ is the size of the candidate pool
-(which is 300), and $\text{sim}(\bm{x}, \bm{x}^{(k)})$ is the similarity
-between $\bm{x}$ and another instance $\bm{x}^{(k)}$ using the Gaussian kernel:
-\begin{IEEEeqnarray}{lCl}
-	\text{sim}(\bm{x}, \bm{x}^{(k)})
-		&=& \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2)
-\end{IEEEeqnarray}
-We set $\gamma$ in the experiments to be the inverse of the
-90\textsuperscript{th} percentile of all pairwise distances. The information
-density weighting is proposed by~\cite{settles08} to discourage the active
-learner from picking outliers. Although the class membership of outliers might
-be uncertain, knowing their labels would probably not affect the classifier
-performance on the data as a whole.
+With \textsc{w-confidence}, \textsc{w-margin}, and \textsc{w-entropy}, we set
+$\gamma$ in the Gaussian kernel to be the inverse of the 90\textsuperscript{th}
+percentile of all pairwise distances.
 
 In addition to the 4 bandit algorithms described in
 Section~\ref{subsec:bandit}, we add a baseline method called \textsc{explore}

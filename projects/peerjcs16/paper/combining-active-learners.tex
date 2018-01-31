@@ -190,8 +190,12 @@ using a single model. Inspired by this success, we propose to combine active
 learning suggestions with bandit and social choice theories in
 Section~\ref{sec:expert}. The use of bandit algorithms, where we only pick one
 heuristic at each time step, has been studied before~\citep{baram04, hsu15}.
-However, as far as we know, this is the first time that social choice theory is
-used to rank and aggregate suggestions.
+Rank aggregation methods have been used in the context of multi-task learning
+for linguistic annotations \citep{reichart08}, where we have one active learner
+selecting examples to improve the performance of multiple tasks (e.g.
+part-of-speech tagging and name entity recognition). However, as far as we
+know, this is the first time that social choice theory is used to rank and
+aggregate suggestions from multiple active learners.
 
 To compare the algorithms, we run them on 11 benchmark datasets from the UCI
 Machine Learning Repository~\citep{lichman13} and a large dataset from the

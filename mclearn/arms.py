@@ -59,9 +59,33 @@ class Arm(ABC):
             self.seed = RandomState(random_state)
 
     @abstractmethod
-    def select(self, candidate_mask, predictions, n_best_candidates):
-        """ Needs to return an array of indices of objects from the pool. """
+    def score(self, candidate_mask, predictions):
+        """ Compute the score of each candidate. """
         pass
+
+    def select(self, candidate_mask, predictions, n_best_candidates):
+        """ Pick the candidates with the hihgest scores.
+
+            Parameters
+            ----------
+            candidate_mask : numpy boolean array
+                The boolean array that tells us which examples the arm is allowed to examine.
+
+            predictions : numpy array
+                Current class probabilities of the unlabelled candidates.
+
+            n_best_candidates : int, optional (default=1)
+                The number of best candidates to be returned.
+
+            Returns
+            -------
+            best_candidates : int
+                The indices of the best candidates.
+        """
+        scores = self.score(candidate_mask, predictions)
+        best_candidates = self._select_from_scores(candidate_mask, scores, n_best_candidates)
+        return best_candidates
+
 
     def _select_from_scores(self, candidate_mask, candidate_scores, n_best_candidates):
         """ Pick the candidates with the highest scores. """
@@ -90,9 +114,8 @@ class RandomArm(Arm):
         random_state : int or RandomState object, optional (default=None)
             Provide a random seed if the results need to be reproducible.
     """
-    def select(self, candidate_mask, predictions, n_best_candidates=1):
+    def score(self, candidate_mask, predictions):
         """ Pick random candidates from the unlabelled pool.
-
             Parameters
             ----------
             candidate_mask : numpy boolean array
@@ -101,18 +124,12 @@ class RandomArm(Arm):
             predictions : numpy array
                 Current class probabilities of the unlabelled candidates.
 
-            n_best_candidates : int, optional (default=1)
-                The number of best candidates to be returned.
-
             Returns
             -------
-            best_candidates : int
-                The indices of the best candidates.
+            scores : [float]
+                The scores of the best candidates.
         """
-        candidate_indices = np.where(candidate_mask)[0]
-        n_best_candidates = min(n_best_candidates, len(candidate_indices))
-        random_candidates = self.seed.choice(candidate_indices, n_best_candidates, replace=False)
-        return random_candidates
+        return self.seed.rand(len(predictions))
 
 
 class WeightedArm(Arm):
@@ -174,7 +191,7 @@ class MarginArm(WeightedArm):
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
-    def select(self, candidate_mask, predictions, n_best_candidates=1):
+    def score(self, candidate_mask, predictions):
         """ Pick the candidates with the smallest margin.
 
             Parameters
@@ -185,13 +202,10 @@ class MarginArm(WeightedArm):
             predictions : numpy array
                 Current class probabilities of the unlabelled candidates.
 
-            n_best_candidates : int, optional (default=1)
-                The number of best candidates to be returned.
-
             Returns
             -------
-            best_candidates : int
-                The indices of the best candidates.
+            scores : [float]
+                The scores of the candidates.
         """
         # sort the probabilities from smallest to largest
         predictions = np.sort(predictions, axis=1)
@@ -201,8 +215,7 @@ class MarginArm(WeightedArm):
         #   to those candidates with a smaller margin
         margin = 1 - np.abs(predictions[:, -1] - predictions[:, -2])
 
-        best_candidates = self._select_from_scores(candidate_mask, margin, n_best_candidates)
-        return best_candidates
+        return margin
 
 
 class ConfidenceArm(WeightedArm):
@@ -223,7 +236,7 @@ class ConfidenceArm(WeightedArm):
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
-    def select(self, candidate_mask, predictions, n_best_candidates=1):
+    def score(self, candidate_mask, predictions):
         """ Pick the candidates with the smallest probability of the most likely label.
 
             Parameters
@@ -234,19 +247,15 @@ class ConfidenceArm(WeightedArm):
             predictions : numpy array
                 Current class probabilities of the unlabelled candidates.
 
-            n_best_candidates : int, optional (default=1)
-                The number of best candidates to be returned.
-
             Returns
             -------
-            best_candidates : int
-                The indices of the best candidates.
+            scores : [float]
+                The scores of the candidates.
         """
         # extract the probability of the most likely label
         most_likely_probs = 1 - np.max(predictions, axis=1)
 
-        best_candidates = self._select_from_scores(candidate_mask, most_likely_probs, n_best_candidates)
-        return best_candidates
+        return most_likely_probs
 
 
 class EntropyArm(WeightedArm):
@@ -267,7 +276,7 @@ class EntropyArm(WeightedArm):
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
-    def select(self, candidate_mask, predictions, n_best_candidates=1):
+    def score(self, candidate_mask, predictions):
         """ Pick the candidates whose prediction vectors display the greatest entropy.
 
             Parameters
@@ -278,20 +287,16 @@ class EntropyArm(WeightedArm):
             predictions : numpy array
                 Current class probabilities of the unlabelled candidates.
 
-            n_best_candidates : int, optional (default=1)
-                The number of best candidates to be returned.
-
             Returns
             -------
-            best_candidates : int
-                The indices of the best candidates.
+            scores : [float]
+                The scores of the candidates.
         """
         # comptue Shannon entropy
         # in case of 0 * log(0), need to tell numpy to set it to zero
         entropy = -np.sum(np.nan_to_num(predictions * np.log(predictions)), axis=1)
 
-        best_candidates = self._select_from_scores(candidate_mask, entropy, n_best_candidates)
-        return best_candidates
+        return entropy
 
 
 class CommitteeArm(WeightedArm):
@@ -357,8 +362,8 @@ class QBBMarginArm(CommitteeArm):
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
-    def select(self, candidate_mask, predictions, n_best_candidates=1):
-        """ Pick the candidates with the smallest average margins.
+    def score(self, candidate_mask, predictions):
+        """ Compute the average margin of each candidate.
 
             Parameters
             ----------
@@ -368,13 +373,10 @@ class QBBMarginArm(CommitteeArm):
             predictions : numpy array
                 Current class probabilities of the unlabelled candidates.
 
-            n_best_candidates : int, optional (default=1)
-                The number of best candidates to be returned.
-
             Returns
             -------
-            best_candidates : int
-                The indices of the best candidates.
+            scores : [float]
+                The scores of the candidates.
         """
         # check that the max bagging sample is not too big
         self.committee.max_samples = min(self.n_committee_samples, np.sum(~self.labels.mask))
@@ -387,10 +389,7 @@ class QBBMarginArm(CommitteeArm):
             logger.info('Iteration {}: Class distribution is too skewed.'.format(
                          np.sum(~self.labels.mask)) +
                         'Falling back to passive learning.')
-            candidate_indices = np.where(candidate_mask)[0]
-            n_best_candidates = min(n_best_candidates, len(candidate_indices))
-            random_candidates = self.seed.choice(candidate_indices, n_best_candidates, replace=False)
-            return random_candidates
+            return self.seed.rand(len(predictions))
 
         committee_predictions = self._predict(candidate_mask)
 
@@ -402,8 +401,7 @@ class QBBMarginArm(CommitteeArm):
         #   to those candidates with a smaller margin
         margin = 1 - np.abs(committee_predictions[:,-1] - committee_predictions[:,-2])
 
-        best_candidates = self._select_from_scores(candidate_mask, margin, n_best_candidates)
-        return best_candidates
+        return margin
 
     def _predict(self, candidate_mask):
         """ Generate prediction vectors for the unlabelled candidates. """
@@ -458,7 +456,7 @@ class QBBKLArm(CommitteeArm):
             A similarity matrix of all the examples in the pool. If not given,
             The information density will not be used.
     """
-    def select(self, candidate_mask, predictions, n_best_candidates=1):
+    def score(self, candidate_mask, predictions):
         """ Pick the candidates with the largest average KL divergence from the mean.
 
             Parameters
@@ -469,13 +467,10 @@ class QBBKLArm(CommitteeArm):
             predictions : numpy array
                 Current class probabilities of the unlabelled candidates.
 
-            n_best_candidates : int, optional (default=1)
-                The number of best candidates to be returned.
-
             Returns
             -------
-            best_candidates : int
-                The indices of the best candidates.
+            scores : [float]
+                The scores of the candidates.
         """
         # check that the max bagging sample is not too big
         self.committee.max_samples = min(self.n_committee_samples, np.sum(~self.labels.mask))
@@ -488,10 +483,7 @@ class QBBKLArm(CommitteeArm):
             logger.info('Iteration {}: Class distribution is too skewed.'.format(
                          np.sum(~self.labels.mask)) +
                         'Falling back to passive learning.')
-            candidate_indices = np.where(candidate_mask)[0]
-            n_best_candidates = min(n_best_candidates, len(candidate_indices))
-            random_candidates = self.seed.choice(candidate_indices, n_best_candidates, replace=False)
-            return random_candidates
+            return self.seed.rand(len(predictions))
 
         avg_probs, prob_list = self._predict(candidate_mask)
 
@@ -506,8 +498,7 @@ class QBBKLArm(CommitteeArm):
         # average out the KL divergence
         avg_kl /= len(self.committee)
 
-        best_candidates = self._select_from_scores(candidate_mask, avg_kl, n_best_candidates)
-        return best_candidates
+        return avg_kl
 
     def _predict(self, candidate_mask):
         """ Generate prediction vectors for the unlabelled candidates. """

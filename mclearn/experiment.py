@@ -15,11 +15,20 @@ from sklearn.externals import joblib
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.metrics.pairwise import pairwise_distances, rbf_kernel
 from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 from mclearn.arms import RandomArm, MarginArm, ConfidenceArm, EntropyArm, QBBMarginArm, QBBKLArm
 from mclearn.performance import mpba_score, micro_f1_score
-from mclearn.policies import BaselineCombiner, SingleSuggestion, ThompsonSampling, OCUCB, KLUCB, EXP3PP, ActiveAggregator
+from mclearn.policies import (
+    BaselineCombiner,
+    SingleSuggestion,
+    ThompsonSampling,
+    OCUCB,
+    KLUCB,
+    EXP3PP,
+    ActiveAggregator,
+    COMB,
+)
 
 
 def save_results(dataset, policy, results):
@@ -103,6 +112,12 @@ class ActiveExperiment:
             n_splits=n_splits, train_size=train_size, test_size=test_size, random_state=seed)
         self.kfold = list(splitter.split(self.X, self.y))
 
+        self.label_encoder = LabelEncoder()
+        self.label_encoder.fit(y)
+
+        if policy_name == 'COMB':
+            assert len(self.label_encoder.classes_) == 2, 'COMB only works with binary classification.'
+
     def run_policies(self):
         start_time = time()
         outputs = Parallel(n_jobs=self.n_jobs)(delayed(self._run_fold)(train_index, test_index)
@@ -179,6 +194,9 @@ class ActiveExperiment:
         accuracy.append(accuracy_score(y_test, y_pred))
         f1.append(micro_f1_score(y_test, y_pred, n_classes))
 
+        if isinstance(policy, COMB):
+            entropy = [comb_entropy(policy, self.label_encoder)]
+
         # start running the policy
         while np.sum(~labels.mask) < training_size:
             # use the policy to select the next instance for labelling
@@ -188,22 +206,30 @@ class ActiveExperiment:
             policy.add(best_candidates, oracle[best_candidates])
 
             # observe the reward
-            y_pred = classifier.predict(X_test)
-            mpba.append(mpba_score(y_test, y_pred))
-            reward = mpba[-1] - mpba[-2]
+            if isinstance(policy, COMB):
+                entropy.append(comb_entropy(policy, self.label_encoder))
 
-            # also compute accuracy and f1 score
-            accuracy.append(accuracy_score(y_test, y_pred))
-            f1.append(micro_f1_score(y_test, y_pred, n_classes))
+                # Calculate reward utility
+                reward = ((np.exp(entropy[-1]) - np.exp(entropy[-1])) - (1 - np.exp(1))) / (2 * np.exp(1) - 2)
+            else:
+                y_pred = classifier.predict(X_test)
+                mpba.append(mpba_score(y_test, y_pred))
+                reward = mpba[-1] - mpba[-2]
 
-            # normalise the reward to [0, 1]
-            reward = (reward + 1) / 2
+                # also compute accuracy and f1 score
+                accuracy.append(accuracy_score(y_test, y_pred))
+                f1.append(micro_f1_score(y_test, y_pred, n_classes))
+
+                # normalise the reward to [0, 1]
+                reward = (reward + 1) / 2
+
             policy.receive_reward(reward)
 
         history = policy.history()
         history['mpba'] = np.array(mpba)
         history['accuracy'] = np.array(accuracy)
         history['f1'] = np.array(f1)
+        history['entropy'] = np.array(entropy)
 
         return history
 
@@ -265,7 +291,27 @@ class ActiveExperiment:
         elif request == 'schulze':
             policy = ActiveAggregator(pool, labels, classifier, arms, request, seed, 100)
 
+        elif request == 'comb':
+            policy = COMB(pool, labels, classifier, arms, seed)
+
         else:
             raise ValueError('The given policy name {} is not recognised'.format(request))
 
         return policy
+
+def comb_entropy(policy, label_encoder):
+    print('COMB: Calculate CEM Score')
+    unlabeled_idx = policy.labels.mask
+    pred = policy.classifier.predict(pool[unlabeled_idx])
+    neg_class, pos_class = label_encoder.classes_
+    n_neg = np.sum(pred == neg_class)
+    n_pos = np.sum(pred == pos_class)
+    assert n_neg + n_pos == len(pred), 'Mismatch between negative and positive count'
+
+    # Calculate binary entropy
+    p = n_pos / (n_neg + n_pos)
+    h1 = -p * np.log2(p) if p > 0 else 0
+    h2 = - (1 - p) * np.log2(1 - p) if p < 1 else 0
+    entropy = h1 + h2
+
+    return entropy

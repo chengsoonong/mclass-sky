@@ -28,7 +28,8 @@ __all__ = ['SingleSuggestion',
            'OCUCB',
            'KLUCB',
            'EXP3PP',
-           'ActiveAggregator']
+           'ActiveAggregator',
+           'COMB']
 
 
 class Policy(ABC):

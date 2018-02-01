@@ -625,7 +625,7 @@ class EXP3PP(ActiveBandit):
         return self._select_from_arm()
 
     def receive_reward(self, reward):
-        """ Receive a reward from the environment and updates the polcicy's prior beliefs.
+        """ Receive a reward from the environment and updates the policy's prior beliefs.
 
             Parameters
             ----------
@@ -729,6 +729,134 @@ class KLUCB(ActiveBandit):
             ucb = self.mu + np.sqrt(2 * self.sigma * max_kl)
             self.selected_arm = np.argmax(ucb)
             return self._select_from_arm()
+
+
+
+class COMB(ActiveBandit):
+    """ The COMB algorithm described in Baram, El-Yaniv, and Luz (2004).
+
+        Parameters
+        ----------
+        pool : numpy array of shape [n_samples, n_features]
+            The feature matrix of all the examples (labelled and unlabelled).
+
+        labels : numpy masked array of shape [n_samples].
+            The missing entries of y corresponds to the unlabelled examples.
+
+        classifier : Classifier object
+            The classifier should have the same interface as scikit-learn classifier.
+            In particular, it needs to have the fit and predict methods.
+
+        arms : array of Arm objects
+            Each arm is a particular active learning rule. The arm needs to implement
+            the ``select`` method that returns an array of indices of objects from the
+            pool for labelling.
+
+        random_state : int or RandomState object, optional (default=None)
+            Provide a random seed if the results need to be reproducible.
+
+        n_candidates : int, optional (default=None)
+            The number of candidates in the unlabelled pool to be chosen for evaluation
+            at each iteration. For very large datasets, it might be useful to limit
+            the the number of candidates to a small number (like 300) since some
+            policies can take a long time to run. If not set, the whole unlabelled
+            pool will be used.
+
+        n_best_candidates : int, optional (default=1)
+            The number of candidates returned at each iteration for labelling. Batch-mode
+            active learning is where this parameter is greater than 1.
+
+        alpha : float, optional (default=0)
+            The probability threshold
+
+        beta : float, optional (default=0.02)
+            The probability scaling factor
+    """
+    def __init__(self, pool, labels, classifier, arms, random_state=None,
+                 n_candidates=None, n_best_candidates=1, alpha=0.05, beta=100):
+        super().__init__(pool, labels, classifier, arms, random_state,
+                         n_candidates, n_best_candidates)
+        self.alpha = alpha
+        self.beta = beta
+        self.w = np.ones(self.n_arms, dtype=np.float64)
+        self.w_history = [self.w.copy()]
+        self.r = 1  # Parameters for reward limit
+        assert n_best_candidates == 1, 'COMB only works with 1 candidate at a time.'
+
+    def select(self):
+        """ Use the COMB algorithm to choose the next candidates for labelling.
+
+            Returns
+            -------
+            best_candidates : array of ints
+                An array of indices of objects in the pool.
+        """
+
+        candidate_mask = self._sample()
+        predictions = self.classifier.predict_proba(self.pool[candidate_mask])
+
+        # Receive advice scoring vectors from active learners
+        scores = []
+        for arm in self.arms:
+            score = arm.score(candidate_mask, predictions)
+            # Scale score to be between 0 and 1
+            score = (score - score.min()) / (score.max() - score.min())
+            scores.append(score)
+        scores = np.asarray(scores)
+
+        # Scale advice scoring vectors
+        scores = np.exp(-self.beta * (1 - scores))
+        Z = np.sum(scores, axis=1)
+        Z = np.tile(Z, (self.n_arms, 1)).T
+        scores = scores / Z
+
+        # Extract effective pool
+        candidate_idx = np.where(candidate_mask)[0]
+        effective_mask = np.zeros(len(candidate_idx), dtype=bool)
+        alpha = self.alpha
+        pool_scores = np.full(len(candidate_mask), -np.inf)
+        while np.sum(effective_mask) == 0:
+            max_scores = np.max(scores, axis=0)
+            effective_mask = max_scores >= alpha
+            alpha /= 2
+        candidate_mask = np.zeros(len(candidate_mask), dtype=bool)
+        candidate_mask[effective_mask] = True
+        scores = scores[effective_mask]
+
+        n_eff_candidates = np.sum(effective_mask)
+        g_max = (n_eff_candidates * np.log(self.n_arms) / np.exp(1) - 1) * 4**self.r
+        gamma = np.sqrt((n_eff_candidates * np.log(self.n_arms)) /
+                        ((np.exp(1) - 1) * g_max))
+
+        W = np.sum(self.w)
+        w = np.tile(self.w, (n_eff_candidates, 1)).T
+        p = (1 - gamma) * np.sum(w * scores) / W + gamma / n_eff_candidates
+
+        # Sort from largest to smallest and pick the candidate(s) with the highest score(s)
+        best_candidates = np.argsort(-p)[:1]
+        self.p_max = np.max(p)
+        self.p_max_idx = np.argmax(p)
+
+        self.scores = scores
+        self.n_eff_candidates = n_eff_candidates
+        self.gamma = gamma
+
+        return best_candidates
+
+    def receive_reward(self, reward):
+        """ Receive a reward from the environment and updates the policy's prior beliefs.
+
+            Parameters
+            ----------
+            reward : float
+                The reward should be the classification entropy maximization
+                score.
+        """
+        r_hat = reward / self.p_max
+        for i in range(self.n_arms):
+            self.w[i] = self.w[i] * np.exp(self.scores[i][self.p_max_idx] * self.gamma / self.n_eff_candidates)
+
+        self.w_history.append(self.w.copy())
 
 
 class ActiveAggregator(MultipleSuggestions):

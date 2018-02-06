@@ -119,7 +119,7 @@ We study the problem of combining active learning suggestions to identify
 informative training examples by empirically comparing methods on benchmark
 datasets. Many active learning heuristics for classification problems have been
 proposed to help us pick which instance to annotate next. But what is the
-optimal heuristic for a particular source of data? Motivated by the success of
+best heuristic for a particular source of data? Motivated by the success of
 methods that combine predictors, we combine active learners with bandit
 algorithms and rank aggregation methods. We demonstrate that a combination of
 active learners outperforms passive learning in large benchmark datasets and
@@ -416,15 +416,14 @@ Table~\ref{tab:heuristics}.
 \end{table}
 
 \section{Combining Suggestions}~\label{sec:expert}
-Out of the five heuristics discussed, how do we know which one is the most
-optimal one? There have been some attempts in the literature to do a
-theoretical analysis. Proofs are however scarce, and when there is one
-available, they normally only work under restrictive assumptions. For example,
-\cite{freund97} showed that the query by committee algorithm (a slight variant
-of our two QBB heuristics) guarantees an exponential decrease in the prediction
-error with the training size, but only when there is no noise. In general,
-whether any of these heuristics is guaranteed to beat passive learning is still
-an open question.
+Out of the five heuristics discussed, how do we know which one is the best?
+There have been some attempts in the literature to do a theoretical analysis.
+Proofs are however scarce, and when there is one available, they normally only
+work under restrictive assumptions. For example, \cite{freund97} showed that
+the query by committee algorithm (a slight variant of our two QBB heuristics)
+guarantees an exponential decrease in the prediction error with the training
+size, but only when there is no noise. In general, whether any of these
+heuristics is guaranteed to beat passive learning is still an open question.
 
 Even though we do not know which one is the best, we can still combine
 suggestions from all of the heuristics. This can be thought of as the problem
@@ -448,7 +447,7 @@ candidate whose labeling information is most valuable.
 The main problem in multi-armed bandits is the trade-off between exploring
 random heuristics and exploiting the best heuristic so far. There are many
 situations in which we find our previously held beliefs to be completely wrong.
-By always exploiting, we could miss out on the optimal heuristic. On the other
+By always exploiting, we could miss out on the best heuristic. On the other
 hand, if we explore too much, it could take us a long time to reach the desired
 accuracy.
 
@@ -576,7 +575,7 @@ The oldest bandit algorithm is Thompson sampling \citep{thompson33} which
 solves the exploration-exploitation trade-off from a Bayesian perspective.
 
 Let $W_i$ be the reward\index{reward} of heuristic $r_i \in \R$. Observe
-that even with the optimal heuristic, the
+that even with the best heuristic, the
 classifier trained on finite data might not be the right one, so we still
 cannot score perfectly due to having a poor classifier. Conversely, a bad
 heuristic might be able to pick an informative candidate due to pure luck. Thus

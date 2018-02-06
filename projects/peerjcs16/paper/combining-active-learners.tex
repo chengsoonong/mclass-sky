@@ -150,9 +150,9 @@ over a finite label space $\Y$:
 	h : \X \rightarrow p(\Y)
 \end{IEEEeqnarray}
 In other words, we require that the classifier produces class probability
-estimates for each test example. For instance, in logistic regression with only
-two classes, i.e. $\Y = \{0, 1\}$, we can model the probability that an object
-with feature vector $\bm{x}$ belongs to the positive class with
+estimates for each candidate example. For instance, in logistic regression with
+only two classes, i.e. $\Y = \{0, 1\}$, we can model the probability that an
+object with feature vector $\bm{x}$ belongs to the positive class with
 \begin{IEEEeqnarray}{lCl}
 	h(\bm{x}; \bm{\theta}) &=& \Prob{y=1 \given \bm{x}; \bm{\theta}}
 	= \dfrac{1}{1 + e^{-\bm{\theta}^T \bm{x}}}
@@ -313,7 +313,7 @@ high density:
 		\text{sim}(\bm{x}, \bm{x}^{(k)})\bigg) s(\bm{x}; h)
 \end{IEEEeqnarray}
 where $h$ is the classifier, $s(\bm{x}; h)$ is the original score function of
-the instance with feature vetor $\bm{x}$, $U$ is the size of the unlabeled
+the instance with feature vector $\bm{x}$, $U$ is the size of the unlabeled
 pool, and $\text{sim}(\bm{x}, \bm{x}^{(k)})$ is the similarity between $\bm{x}$
 and another instance $\bm{x}^{(k)}$ using the Gaussian kernel with parameter
 $\gamma$:
@@ -684,7 +684,7 @@ $\sigma^2$, the chosen heuristic would be
 		r_* = \argmax_{i} \overline{w_i} +
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
     \end{IEEEeqnarray}
-Algorithm~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two UCB
+Algorithms~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two UCB
 approaches. Note that the size of the reward $w$ is not used in
 \Update($w$) of UCB, except
 to select the best arm.
@@ -1044,11 +1044,11 @@ labeling 10 random instances and using them as the initial training set. Note
 that in practice, there can be a large amount of unlabeled data, so for
 computational reasons, we only assign a score to a small random sample from the
 unlabeled pool. In particular, we feed 300 randomly selected candidates from
-the unlabeled pool into the algorithm. We use logistic
-regression with a Gaussian kernel approximation and an L2 loss. In the binary
-case, the loss function is
+the unlabeled pool into the algorithm. We use logistic regression with a
+Gaussian kernel approximation and an L2 regularizer. In the binary case, the
+loss function is
 \begin{IEEEeqnarray}{lCl}
-	L &=& \dfrac{1}{2} \bm{w}^T \bm{\theta} + C \sum_{i = 1}^n
+	L &=& \dfrac{1}{2} \bm{\theta}^T \bm{\theta} + C \sum_{i = 1}^n
 	      \ln\Big(1 + \exp(-y_i(\bm{\theta}^T f(\bm{x}_i)))\Big)
 \end{IEEEeqnarray}
 where $\bm{x}_i$ is the feature vector of the $i$th example, $y_i \in \{0, 1\}$
@@ -1258,8 +1258,8 @@ The experimental results allow us to answer the following questions:
 		training example and every active learning suggestion have a non-zero
 		probability of being selected in each step.
 		\item Finally, some bandit algorithms such as Thompson sampling
-		require that the reward follows a certain distribution (e.g. Gaussian).
-		This can be hard to satisfy.
+		assumes that the reward follows a certain distribution (e.g. Gaussian).
+		However, this assumption is unrealistic.
 	\end{enumerate}
 
 	\item \textbf{What are the challenges in using rank aggregation

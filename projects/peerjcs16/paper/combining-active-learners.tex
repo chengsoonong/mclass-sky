@@ -299,10 +299,10 @@ the difference between the two highest class probabilities \citep{scheffer01}:
 	\left\{ - \left ( \max_{y \in \Y} p(y | \bm{x}; h) -
 	\max_{z \in \Y \setminus \{y^*\}} p(z | \bm{x}; h) \right) \right\}
 \end{IEEEeqnarray}
-where $y^* = \argmax_{y \in \Y} p(z | \bm{x}; h)$ and we again flip the sign
-of the score function. Since the sum of all probabilities must be 1, the
-smaller the margin is, the more uncertain we are about the object's class
-membership.
+where $y^* = \argmax_{y \in \Y} p(z | \bm{x}; h)$ and we again flip the sign of
+the score function. Since the sum of all probabilities must be 1, the smaller
+the margin is, the harder it is to differentiate between the two most likely
+labels.
 
 An extension to the above three heuristics is to weight the score with the
 information density so that we give more importance to instances in regions of
@@ -1320,7 +1320,9 @@ since we do not need to design a reward scheme.
 	zero line is better than passive learning. Each boxplot contains 10 trials.
 	The accuracy score is a simple metric that simply counts up the number of
 	correct predictions. The MPBA score, being the weighted average of the
-	recall and precision, gives an equal representation to each class.}
+	recall and precision, gives an equal representation to each class. The
+	boxes represent the quartiles and the whiskers extend to 1.5 times of the
+	interquartile range.}
 	\label{fig:strengths-small}
 \end{figure}
 
@@ -1348,7 +1350,8 @@ since we do not need to design a reward scheme.
 	learning. Each boxplot contains 10 trials. The accuracy score is a simple
 	metric that simply counts up the number of correct predictions. The MPBA
 	score, being the weighted average of the recall and precision, gives an
-	equal representation to each class.}
+	equal representation to each class. The boxes represent the quartiles and
+	the whiskers extend to 1.5 times of the interquartile range.}
 	\label{fig:strengths-large}
 \end{figure}
 

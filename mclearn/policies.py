@@ -794,6 +794,7 @@ class COMB(ActiveBandit):
         """
 
         candidate_mask = self._sample()
+        n_actual_candidates = np.sum(candidate_mask)
         predictions = self.classifier.predict_proba(self.pool[candidate_mask])
 
         # Receive advice scoring vectors from active learners
@@ -808,7 +809,7 @@ class COMB(ActiveBandit):
         # Scale advice scoring vectors
         scores = np.exp(-self.beta * (1 - scores))
         Z = np.sum(scores, axis=1)
-        Z = np.tile(Z, (self.n_arms, 1)).T
+        Z = np.tile(Z, (n_actual_candidates, 1)).T
         scores = scores / Z
 
         # Extract effective pool
@@ -820,9 +821,15 @@ class COMB(ActiveBandit):
             max_scores = np.max(scores, axis=0)
             effective_mask = max_scores >= alpha
             alpha /= 2
+
+        # Keep only scores of the candidates whose score is above threshold
+        candidate_idx = candidate_idx[effective_mask]
         candidate_mask = np.zeros(len(candidate_mask), dtype=bool)
-        candidate_mask[effective_mask] = True
-        scores = scores[effective_mask]
+        candidate_mask[candidate_idx] = True
+        new_scores = []
+        for score in scores:
+            new_scores.append(score[effective_mask])
+        new_scores = np.asarray(new_scores)
 
         n_eff_candidates = np.sum(effective_mask)
         g_max = (n_eff_candidates * np.log(self.n_arms) / np.exp(1) - 1) * 4**self.r
@@ -831,14 +838,14 @@ class COMB(ActiveBandit):
 
         W = np.sum(self.w)
         w = np.tile(self.w, (n_eff_candidates, 1)).T
-        p = (1 - gamma) * np.sum(w * scores) / W + gamma / n_eff_candidates
+        p = (1 - gamma) * np.sum(w * new_scores) / W + gamma / n_eff_candidates
 
         # Sort from largest to smallest and pick the candidate(s) with the highest score(s)
         best_candidates = np.argsort(-p)[:1]
         self.p_max = np.max(p)
         self.p_max_idx = np.argmax(p)
 
-        self.scores = scores
+        self.scores = new_scores
         self.n_eff_candidates = n_eff_candidates
         self.gamma = gamma
 

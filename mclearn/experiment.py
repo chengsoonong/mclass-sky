@@ -195,7 +195,7 @@ class ActiveExperiment:
         f1.append(micro_f1_score(y_test, y_pred, n_classes))
 
         if isinstance(policy, COMB):
-            entropy = [comb_entropy(policy, self.label_encoder)]
+            entropy = [comb_entropy(policy, pool, self.label_encoder)]
 
         # start running the policy
         while np.sum(~labels.mask) < training_size:
@@ -207,7 +207,7 @@ class ActiveExperiment:
 
             # observe the reward
             if isinstance(policy, COMB):
-                entropy.append(comb_entropy(policy, self.label_encoder))
+                entropy.append(comb_entropy(policy, pool, self.label_encoder))
 
                 # Calculate reward utility
                 reward = ((np.exp(entropy[-1]) - np.exp(entropy[-1])) - (1 - np.exp(1))) / (2 * np.exp(1) - 2)
@@ -299,8 +299,7 @@ class ActiveExperiment:
 
         return policy
 
-def comb_entropy(policy, label_encoder):
-    print('COMB: Calculate CEM Score')
+def comb_entropy(policy, pool, label_encoder):
     unlabeled_idx = policy.labels.mask
     pred = policy.classifier.predict(pool[unlabeled_idx])
     neg_class, pos_class = label_encoder.classes_

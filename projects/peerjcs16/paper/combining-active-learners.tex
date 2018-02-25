@@ -94,7 +94,7 @@
 \AtBeginDocument{%
 \patchBothAmsMathEnvironmentsForLineno{equation}%
 \patchBothAmsMathEnvironmentsForLineno{align}%
-\patchBothAmsMathEnvironmentsForLineno{IEEEeqnarray}%
+% \patchBothAmsMathEnvironmentsForLineno{IEEEeqnarray}%
 }
 
 \title{Combining Active Learning Suggestions}
@@ -146,17 +146,17 @@ In this paper we consider the binary and multiclass classification setting
 where we would like to learn a classifier $h$, which is a function that maps
 some feature space $\X \subseteq \mathbb{R}^d$ to a probability distribution
 over a finite label space $\Y$:
-\begin{IEEEeqnarray}{lCl}
+\begin{align}
 	h : \X \rightarrow p(\Y)
-\end{IEEEeqnarray}
+\end{align}
 In other words, we require that the classifier produces class probability
 estimates for each candidate example. For instance, in logistic regression with
 only two classes, i.e. $\Y = \{0, 1\}$, we can model the probability that an
 object with feature vector $\bm{x}$ belongs to the positive class with
-\begin{IEEEeqnarray}{lCl}
-	h(\bm{x}; \bm{\theta}) &=& \Prob{y=1 \given \bm{x}; \bm{\theta}}
+\begin{align}
+	h(\bm{x}; \bm{\theta}) &= \Prob{y=1 \given \bm{x}; \bm{\theta}}
 	= \dfrac{1}{1 + e^{-\bm{\theta}^T \bm{x}}}
-\end{IEEEeqnarray}
+\end{align}
 and the training process involves learning the optimal weight vector
 $\bm{\theta}$. We can further consider kernel logistic regression, where the
 feature space $\X$ is the feature space corresponding to a given kernel,
@@ -222,15 +222,15 @@ on their feature vector $\bm{x}$ and the current classifier $h$. Recall that
 the classifier produces $p(\Y)$, a probability estimate for each class. We use
 these probability estimates from the classifier over the unlabeled examples to
 calculate the scores:
-\begin{IEEEeqnarray}{lCl}
+\begin{align}
 	s : p(\Y) \rightarrow \mathbb{R}
-\end{IEEEeqnarray}
+\end{align}
 The value of $s(\bm{x}; h)$ indicates the informativeness of example $\bm{x}$,
 where bigger is better. Thus we would like to choose the example with the
 largest value of $s(\bm{x}; h)$. This will be our active learning rule $r$:
-\begin{IEEEeqnarray}{lCl}
-	r(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled} s(\bm{x}; h)
-\end{IEEEeqnarray}
+\begin{align}
+	r(\bm{x}; h) &= \argmax_{\bm{x} \in \Unlabeled} s(\bm{x}; h)
+\end{align}
 Algorithm~\ref{alg:active} outlines the standard pool-based active learning
 setting.
 
@@ -273,10 +273,10 @@ tend to be points that are near the decision boundary of the classifier.
 Perhaps the simplest way to quantify uncertainty is~\cite{culotta05}'s least
 confidence heuristic, where we pick the candidate whose most likely label the
 classifier is most uncertain about:
-\begin{IEEEeqnarray}{lCl}
-	r_{LC}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
+\begin{align}
+	r_{LC}(\bm{x}; h) &= \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \max_{y \in \Y} p(y | \bm{x}; h) \right\}
-\end{IEEEeqnarray}
+\end{align}
 where $p(y | \bm{x}; h)$ is the probability that the object with feature vector
 $\bm{x}$ belongs to class $y$ under classifier $h$. For consistency, we have
 flipped the sign of the score function so that the candidate with the highest
@@ -287,18 +287,18 @@ the amount of information needed to encode a distribution. Intuitively, the
 closer the class probabilities of an object are to a uniform distribution, the
 higher its entropy will be. This gives us the heuristic of picking the
 candidate with the highest entropy of the distribution over the classes:
-\begin{IEEEeqnarray}{lCl}
-	r_{HE}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
+\begin{align}
+	r_{HE}(\bm{x}; h) &= \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \sum_{y \in \Y} p(y | \bm{x}; h)
 	\log \big[ p(y | \bm{x}; h) \big] \right\}
-\end{IEEEeqnarray}
+\end{align}
 As a third option we can pick the candidate with the smallest margin, which is defined as
 the difference between the two highest class probabilities \citep{scheffer01}:
-\begin{IEEEeqnarray}{lCl}
-	r_{SM}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
+\begin{align}
+	r_{SM}(\bm{x}; h) &= \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \left ( \max_{y \in \Y} p(y | \bm{x}; h) -
 	\max_{z \in \Y \setminus \{y^*\}} p(z | \bm{x}; h) \right) \right\}
-\end{IEEEeqnarray}
+\end{align}
 where $y^* = \argmax_{y \in \Y} p(z | \bm{x}; h)$ and we again flip the sign of
 the score function. Since the sum of all probabilities must be 1, the smaller
 the margin is, the harder it is to differentiate between the two most likely
@@ -307,20 +307,20 @@ labels.
 An extension to the above three heuristics is to weight the score with the
 information density so that we give more importance to instances in regions of
 high density:
-\begin{IEEEeqnarray}{lCl}
-	s_{ID}(\bm{x}; h) &=&
+\begin{align}
+	s_{ID}(\bm{x}; h) &=
 		\bigg(\dfrac{1}{U} \sum_{k = 1}^E
 		\text{sim}(\bm{x}, \bm{x}^{(k)})\bigg) s(\bm{x}; h)
-\end{IEEEeqnarray}
+\end{align}
 where $h$ is the classifier, $s(\bm{x}; h)$ is the original score function of
 the instance with feature vector $\bm{x}$, $U$ is the size of the unlabeled
 pool, and $\text{sim}(\bm{x}, \bm{x}^{(k)})$ is the similarity between $\bm{x}$
 and another instance $\bm{x}^{(k)}$ using the Gaussian kernel with parameter
 $\gamma$:
-\begin{IEEEeqnarray}{lCl}
+\begin{align}
 	\text{sim}(\bm{x}, \bm{x}^{(k)})
-		&=& \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2)
-\end{IEEEeqnarray}
+		&= \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2)
+\end{align}
 The information density weighting was proposed by~\cite{settles08} to
 discourage the active learner from picking outliers. Although the class
 membership of outliers might be uncertain, knowing their labels would probably
@@ -343,34 +343,34 @@ Bagging (QBB).
 
 One way to measure the level of disagreement is to calculate the margin using
 the class probabilities estimated by the committee \citep{melville04}:
-\begin{IEEEeqnarray}{lCl}
-	r_{QBBM}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
+\begin{align}
+	r_{QBBM}(\bm{x}; h) &= \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ - \left( \max_{y \in \Y} p(y | \bm{x}; \B) -
 	\max_{z \in \Y \setminus \{y^*\}} p(z | \bm{x}; \B) \right) \right\}
-\end{IEEEeqnarray}
+\end{align}
 where
-\begin{IEEEeqnarray}{rCl}
-	y^* &=& \argmax_{y \in \Y} p(z | \bm{x}; \B) \\
-	p(z | \bm{x}; \B) &=& \dfrac{1}{B} \sum_{b \in \B} p(y | \bm{x}; h_b)
-\end{IEEEeqnarray}
+\begin{align}
+	y^* &= \argmax_{y \in \Y} p(z | \bm{x}; \B) \\
+	p(z | \bm{x}; \B) &= \dfrac{1}{B} \sum_{b \in \B} p(y | \bm{x}; h_b)
+\end{align}
 This looks similar to one of the uncertainty sampling heuristics, except now we
 use $p(y | \bm{x}; \B)$ instead of $ p(y | \bm{x}; h)$. That is, we first
 average out the class probabilities predicted by the members before minimizing
 the margin.~\cite{mccallum98} offered an alternative disagreement measure which
 involves picking the candidate with the largest mean Kullback-Leibler (KL)
 divergence from the average:
-\begin{IEEEeqnarray}{lCl}
-	r_{QBBKL}(\bm{x}; h) &=& \argmax_{\bm{x} \in \Unlabeled}
+\begin{align}
+	r_{QBBKL}(\bm{x}; h) &= \argmax_{\bm{x} \in \Unlabeled}
 	\left\{ \dfrac{1}{B}
 	\sum_{b=1}^B D_{\mathrm{KL}}(p_b\|p_\B) \right\}
-\end{IEEEeqnarray}
+\end{align}
 where $D_{\mathrm{KL}}(p_b\|p_\B)$ is the KL divergence from $p_\B$ (the
 probability distribution that is averaged across the committee $\B$), to $p_b$
 (the distribution predicted by a member $b \in \B$):
-\begin{IEEEeqnarray*}{lCl}
+\begin{align}
 	D_{\mathrm{KL}}(p_b\|p_\B) = \sum_{y \in \Y} p(y | \bm{x}; h_b) \,
 								 \ln\frac{p(y | \bm{x}; h_b)}{p(y | \bm{x}; \B)}
-\end{IEEEeqnarray*}
+\end{align}
 For convenience, we summarize the five heuristics discussed above in
 Table~\ref{tab:heuristics}.
 
@@ -455,9 +455,9 @@ Bandit algorithms do not need to know the internal workings of the heuristics,
 but only the reward received from using any of them. Based on the history of
 all the rewards, the bandit algorithm can decide on which heuristic to pick
 next. Formally, we need to learn the function
-\begin{IEEEeqnarray}{lCl}
+\begin{align}
 	b : [0, 1]^{R \times T} \rightarrow J_\R
-\end{IEEEeqnarray}
+\end{align}
 where $b$ is the bandit algorithm, $[0, 1]$ is a normalized reward between
 0 and 1, $J_\R$ is the index set over the set of heuristics $\R$, and $T$
 is the time horizon.
@@ -582,18 +582,18 @@ heuristic might be able to pick an informative candidate due to pure luck. Thus
 there is always a certain level of randomness in the reward received. Let us
 treat the reward  $W_i$ as a random variable and assume the errors to be
 normally distributed with mean $\nu_i$ and variance $\tau_i^2$:
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
 		(W_i \mid \nu_i) \sim \Normal(\nu_i, \tau_i^2)
-	\end{IEEEeqnarray}
+	\end{align}
 
 If we knew both $\nu_i$ and $\tau_i^2$ for all heuristics, the problem would
 become trivially easy since we just need to always use the heuristic that has
 the highest mean reward. In practice, we do not know the true mean of the
 reward $\nu_i$, so let us add a second layer of randomness and assume that
 the mean itself follows a normal distribution:
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
         \nu_i \sim \Normal(\mu_i, \sigma_i^2)
-    \end{IEEEeqnarray}
+    \end{align}
 
 To make the problem tractable, let us assume that the variance $\tau_i^2$ in
 the first layer is a known constant. The goal now is to find a good algorithm
@@ -609,9 +609,9 @@ performance.
 In each round, we draw a random sample $\nu_i'$ from the normal distribution
 $\Normal(\mu_i, \sigma_i^2)$ for each $i$ and select heuristic $r_*$ that has
 the highest sampled value of the mean reward:
-    \begin{IEEEeqnarray}{lCl}
+    \begin{align}
         r_* = \argmax_{i} \nu_i'
-    \end{IEEEeqnarray}
+    \end{align}
 We then use this heuristic to select the object that is deemed to be the most
 informative, add it to the training set, and retrain the classifier. Next we
 use the updated classifier to predict the labels of objects in the test set.
@@ -619,15 +619,15 @@ Let $w$ be the reward observed. We now have a new piece of information that we
 can use to update our prior belief about the mean $\mu_*$ and the variance
 $\sigma_*^2$ of the mean reward. Using Bayes' theorem, we can show that the
 posterior distribution of the mean reward remains normal,
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
         (\nu_* \mid W_* = w) \sim \Normal (\mu_*', {\sigma'_*}^2)
-    \end{IEEEeqnarray}
+    \end{align}
 with the following new mean and variance:
-    \begin{IEEEeqnarray}{lClllCl}
-		\mu_*' &=& \frac{\mu_* \tau^2_* + w \sigma^2_*}{\sigma^2_* + \tau^2_*}
+    \begin{align}
+		\mu_*' &= \frac{\mu_* \tau^2_* + w \sigma^2_*}{\sigma^2_* + \tau^2_*}
 		&\qquad\qquad
-        {\sigma'_*}^2 &=& \frac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}
-	\end{IEEEeqnarray}
+        {\sigma'_*}^2 &= \frac{\sigma^2_* \tau^2_*}{\sigma^2_* + \tau^2_*}
+	\end{align}
 Algorithm~\ref{alg:thompson} summarizes the \textsc{Select} and \textsc{Update}
 functions used in Thompson sampling.
 \SetKwFunction{SelectFn}{Select}%
@@ -667,10 +667,10 @@ kl-UCB \citep{cappe13}. They differ only in the way the upper bound is
 calculated. In this paper, we only consider the last two. In Optimally
 Confident UCB (OC-UCB), \cite{lattimore15} suggests that we pick the heuristic
 that maximizes the following upper bound:
-    \begin{IEEEeqnarray}{lCl}
+    \begin{align}
 		r_* = \argmax_{i} \overline{w_i} +
 			  \sqrt{\dfrac{\alpha}{T_i(t)} \ln\Big(\dfrac{\psi n}{t}\Big)}
-    \end{IEEEeqnarray}
+    \end{align}
 where $\overline{w_i}$ is the average of the rewards from $r_i$ that we observe
 so far, $t$ is the time step, $T_i(t)$ is the number times we have selected
 heuristic $r_i$ before step $t$, and $n$ is the maximum number of steps that we
@@ -680,10 +680,10 @@ the author suggests setting to 3 and 2, respectively.
 \cite{cappe13} suggest that we instead consider the KL-divergence when finding
 the upper bound. In the case of normally distributed rewards with known variance
 $\sigma^2$, the chosen heuristic would be
-    \begin{IEEEeqnarray}{lCl}
+    \begin{align}
 		r_* = \argmax_{i} \overline{w_i} +
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
-    \end{IEEEeqnarray}
+    \end{align}
 Algorithms~\ref{alg:oc-ucb} and~\ref{alg:kl-ucb} summarize these two UCB
 approaches. Note that the size of the reward $w$ is not used in
 \Update($w$) of UCB, except
@@ -788,17 +788,17 @@ function $s(\bm{x}, h)$ like before. We are neither interested in the actual
 raw scores nor the candidate with the highest score. Instead, we only need
 a ranking of the candidates, which is achieved by a function $k(s(\bm{x}; h))$
 that converts the scores into a preference ordering:
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
 		k : \mathbb{R}^{U} \rightarrow \sigma(J_\Unlabeled)
-	\end{IEEEeqnarray}
+	\end{align}
 where $\sigma(J_\Unlabeled)$ is a permutation over the index set of the
 unlabeled pool. $\Unlabeled$. For example, $k$ could assign the candidate with
 the highest score a rank of 1, the next best candidate a rank of 2, and so on.
 An aggregation function $c$ will then combine all the rankings into a combined
 ranking,
-    \begin{IEEEeqnarray}{lCl}
+    \begin{align}
 		c : \sigma(J_\Unlabeled)^{R} \rightarrow \sigma(J_\Unlabeled)
-    \end{IEEEeqnarray}
+    \end{align}
 from which we can pick the highest-ranked candidate to annotate. See
 Table~\ref{tab:rank} for an exmaple.
 
@@ -1001,7 +1001,8 @@ class and the maximum achievable performance using logistic regression.
 	\centering
 	\begin{tabular}{lrrrrr}
 		\toprule
-		{Dataset}  & Size &  Classes & Features & Majority Class & Max Performance \\
+		{Dataset}  & Size &  No. of   & No. of    & Majority & Max Performance  \\
+		           &      &  Classes  & Features  &    Class & (MPBA) \\
 		\midrule
         \href{https://archive.ics.uci.edu/ml/datasets/Glass+Identification}{glass}
         	& $214$ & $6$ & $10$ & $33\%$ & $65\%$ \\
@@ -1047,10 +1048,10 @@ unlabeled pool. In particular, we feed 300 randomly selected candidates from
 the unlabeled pool into the algorithm. We use logistic regression with a
 Gaussian kernel approximation and an L2 regularizer. In the binary case, the
 loss function is
-\begin{IEEEeqnarray}{lCl}
-	L &=& \dfrac{1}{2} \bm{\theta}^T \bm{\theta} + C \sum_{i = 1}^n
+\begin{align}
+	L &= \dfrac{1}{2} \bm{\theta}^T \bm{\theta} + C \sum_{i = 1}^n
 	      \ln\Big(1 + \exp(-y_i(\bm{\theta}^T f(\bm{x}_i)))\Big)
-\end{IEEEeqnarray}
+\end{align}
 where $\bm{x}_i$ is the feature vector of the $i$th example, $y_i \in \{0, 1\}$
 is the label of $\bm{x}_i$, and $n$ is the training size. The first term of the
 sum is the regularization term to ensure that the weight vector $\bm{\theta}$
@@ -1141,11 +1142,11 @@ Given that there are 12 datasets, each with 17 learning curves, we
 need a measure that can summarize in one number how well a particular heuristic
 or policy does. Building on~\cite{baram04}'s deficiency measure, we define the
 strength of an active learner or a combiner, relative to passive learning, as
-\begin{IEEEeqnarray}{lCl}
-    \text{Strength}(h; m) &=&
+\begin{align}
+    \text{Strength}(h; m) &=
     	1 - \dfrac{\sum_{t=1}^{n}\big(m(\max) - m(h, t)\big)}
     	{\sum_{t=1}^{n}\big(m(\max) - m(\passive, t)\big)}
-\end{IEEEeqnarray}
+\end{align}
 where $m$ is a chosen metric (e.g. accuracy rate, MPBA), $m(\max)$ is the best
 possible performance achieved from using all labeled data in the training set,
 and $m(h, t)$ is the performance achieved using the first $t$ examples selected
@@ -1492,9 +1493,9 @@ $N_i$ objects in the universe. Given a classifier, we can predict the label of
 every object and compare our prediction with the true label. Let $G_i$ be the
 number of objects in class $i$ that are correctly predicted.
 Then we define the recall $A_i$ of class $i$ as\index{recall}
-	\begin{IEEEeqnarray}{lCl}
-		A_i &=& \frac{G_i}{N_i}
-	\end{IEEEeqnarray}
+	\begin{align}
+		A_i &= \frac{G_i}{N_i}
+	\end{align}
 The problem is that it is not feasible to get the actual values of $G_i$ and
 $N_i$ since that would require us to obtain the true label of every object in
 the universe. Thus we need a method to estimate these quantities when we only
@@ -1502,15 +1503,15 @@ have a sample. Initially we have no information about $G_i$ and $N_i$, so we
 can assume that each $A_i$ follows a uniform prior distribution between 0 and
 1. This is the same as a Beta distribution with shape parameters $\alpha =
 \beta = 1$:
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
 		A_i &\sim& \Beta(1,1)
-	\end{IEEEeqnarray}
+	\end{align}
 The probability density function (PDF) of $A_i$ is then
-    \begin{IEEEeqnarray}{lCl}
-        f_{A_i}(a) &=& \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\,
+    \begin{align}
+        f_{A_i}(a) &= \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\,
         a^{\alpha-1}(1-a)^{\beta-1} \label{eqn:prior} \\
         &\propto&   a^{1-1}(1-a)^{1-1}  \notag
-    \end{IEEEeqnarray}
+    \end{align}
 where $\Gamma(\alpha)$ is the gamma function.
 
 After we have trained the classifier, suppose we have a test set containing
@@ -1520,44 +1521,44 @@ sample size is $n_i$ and the probability of success is simply $A_i$. Let $g_i$
 be the number of correctly labeled objects belonging to class $i$ in the test
 set. Then, conditional on the recall rate $A_i$, $g_i$ follows a binomial
 distribution:
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
 		(g_i \mid A_i) &\sim& \Bin(n_i, A_i)
-	\end{IEEEeqnarray}
+	\end{align}
 The probability mass function of $(g_i \mid A_i = a)$ is thus
-    \begin{IEEEeqnarray}{lCl}
-		p_{g_i \mid A_i}(g_i) &=& \binom{n_i}{g_i} a^{g_i} (1 - a)^{n_i - g_i}
+    \begin{align}
+		p_{g_i \mid A_i}(g_i) &= \binom{n_i}{g_i} a^{g_i} (1 - a)^{n_i - g_i}
 						  							\label{eqn:likelihood} \\
                               &\propto& a^{g_i} (1 - a)^{n_i - g_i} \notag
-    \end{IEEEeqnarray}
+    \end{align}
 In the Bayesian \index{Bayesian} setting, Eq. ~\eqref{eqn:prior} is the prior
 and Eq. \eqref{eqn:likelihood} is the likelihood. To get the posterior PDF, we
 simply multiply the prior with the likelihood:
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
 		f_{A_i \mid \bm{g}}(a)
 		&\propto& f_{A_i}(a) \times f_{g_i \mid A_i}(g_i) \\
 		&\propto& a^{1-1}(1-a)^{1-1} \times a^{g_i} (1 - a)^{n_i - g_i} \\
-		&=& a^{1 + g_i - 1}(1-a)^{1 + n_i - g_i - 1}
-	\end{IEEEeqnarray}
+		&= a^{1 + g_i - 1}(1-a)^{1 + n_i - g_i - 1}
+	\end{align}
 Thus, with respect to the binomial likelihood function,
 the Beta distribution is conjugate to itself. The posterior recall rate $A_i$
 also follows a Beta distribution, now with parameters
-	\begin{IEEEeqnarray}{lCl}
+	\begin{align}
 		(A_i \mid g_i) &\sim& \Beta(1 + g_i, 1 + n_i - g_i)
-	\end{IEEEeqnarray}
+	\end{align}
 Our goal is to have a balanced accuracy rate, $A$, that puts an equal weight in
 each class. One way to achieve this is to take the average of the individual
 recalls:
-	\begin{IEEEeqnarray}{lCl}
-		A &=& \frac{1}{k} \sum_{i=1}^k A_i \\
-		&=& \frac{1}{k} A_T
-	\end{IEEEeqnarray}
+	\begin{align}
+		A &= \frac{1}{k} \sum_{i=1}^k A_i \\
+		&= \frac{1}{k} A_T
+	\end{align}
 Here we have defined $A_T$ to be the sum of the individual recalls. We call $(A
 \mid \bm{g})$ the posterior balanced accuracy, where $\bm{g} =(g_1,...,g_k)$.
 Most of the time, we simply want to calculate its expected value:
-	\begin{IEEEeqnarray}{lCl}
-		\E{A \given \bm{g}} &=& \frac{1}{k} \, \E{A_T \given \bm{g}} \\
-		&=& \frac{1}{k} \int a \cdot f_{A_T \mid \bm{g}}(a) \, da
-	\end{IEEEeqnarray}
+	\begin{align}
+		\E{A \given \bm{g}} &= \frac{1}{k} \, \E{A_T \given \bm{g}} \\
+		&= \frac{1}{k} \int a \cdot f_{A_T \mid \bm{g}}(a) \, da
+	\end{align}
 Let us call this the mean posterior balanced accuracy (MPBA). Note that there
 is no closed form solution for the PDF $f_{A_T \mid \bm{g}}(a)$. However
 assuming that $A_T$ is a sum of $k$ independent Beta random variables, $f_{A_T
@@ -1571,19 +1572,19 @@ Having the knowledge of $f_{A \mid \bm{g}}(a)$ will allow us to make violin
 plots, construct confidence intervals and do hypothesis tests. To get an
 expression for this, let us first rewrite the cumulative distribution function
 (CDF) as
-	\begin{IEEEeqnarray}{lCl}
-		F_{A\mid \bm{g}}(a) &=& \Prob{A \leq a \mid \bm{g}} \\
-		&=& \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{g}} \\
-		&=& \Prob{A_T \leq ka \given \bm{g}} \\
-		&=& F_{A_T \mid \bm{g}}(ka) \IEEEyesnumber \label{eqn:CDF}
-	\end{IEEEeqnarray}
+	\begin{align}
+		F_{A\mid \bm{g}}(a) &= \Prob{A \leq a \mid \bm{g}} \\
+		&= \Prob[\Big]{\frac{1}{k} A_T \leq a \given \bm{g}} \\
+		&= \Prob{A_T \leq ka \given \bm{g}} \\
+		&= F_{A_T \mid \bm{g}}(ka) \IEEEyesnumber \label{eqn:CDF}
+	\end{align}
 Differentiating \eqref{eqn:CDF} with respect to $a$, we obtain the PDF of $(A \mid \bm{g})$:
-	\begin{IEEEeqnarray}{lCl}
-		f_{A \mid \bm{g}}(a) &=& \frac{\partial}{\partial a} F_{A \mid \bm{g}}(ka) \\
-		&=& \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka}
+	\begin{align}
+		f_{A \mid \bm{g}}(a) &= \frac{\partial}{\partial a} F_{A \mid \bm{g}}(ka) \\
+		&= \frac{\partial}{\partial a} (ka) \cdot \frac{\partial}{\partial ka}
 			F_{A_T \mid \bm{g}}(ka) \\
-		&=& k \cdot f_{A_T \mid \bm{g}}(ka)
-	\end{IEEEeqnarray}
+		&= k \cdot f_{A_T \mid \bm{g}}(ka)
+	\end{align}
 A Python implementation for the posterior balanced accuracy can be found
 on our GitHub repository\footnote{\url{https://github.com/chengsoonong/mclass-sky}}.
 \end{document}

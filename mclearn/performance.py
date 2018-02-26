@@ -383,9 +383,9 @@ def micro_f1_score(y_true, y_pred, n_classes=None):
     """
 
     if n_classes is not None:
-        average = 'binary' if n_classes == 2 else 'micro'
+        average = 'binary' if n_classes == 2 else 'macro'
     else:
-        average = 'binary' if len(np.unique(y_true)) == 2 else 'micro'
+        average = 'binary' if len(np.unique(y_true)) == 2 else 'macro'
 
 
     return metrics.f1_score(y_true, y_pred, average=average)

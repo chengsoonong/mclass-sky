@@ -229,7 +229,8 @@ class ActiveExperiment:
         history['mpba'] = np.array(mpba)
         history['accuracy'] = np.array(accuracy)
         history['f1'] = np.array(f1)
-        history['entropy'] = np.array(entropy)
+        if isinstance(policy, COMB):
+            history['entropy'] = np.array(entropy)
 
         return history
 

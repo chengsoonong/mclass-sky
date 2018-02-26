@@ -8,7 +8,7 @@ import numpy as np
 from time import time
 from joblib import Parallel, delayed
 from numpy.random import RandomState
-from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit, GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import BaggingClassifier
 from sklearn.externals import joblib
@@ -88,7 +88,7 @@ def sample_from_every_class(y, size, seed=None):
 
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
-    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=20, passive=True, n_jobs=-1):
+    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=10, passive=True, n_jobs=-1):
         seed = RandomState(1234)
         self.X = np.asarray(X, dtype=np.float64)
         self.y = np.asarray(y)
@@ -176,8 +176,20 @@ class ActiveExperiment:
         initial_n = 10
         horizon = training_size - initial_n
 
-        # initialise classifier
+        # Conduct a grid search to find the best C
         classifier = LogisticRegression(multi_class='ovr', penalty='l2', C=1000,
+                                        random_state=seed, class_weight='balanced')
+        grid_test_size = int(min(100, 0.3 * len(pool)))
+        grid_train_size = int(min(100, 0.7 * len(pool)))
+        cv = StratifiedShuffleSplit(n_splits=5, train_size=grid_train_size,
+                                    test_size=grid_test_size, random_state=17)
+        C_range = np.logspace(-6, 6, 13)
+        param_grid = dict(C=C_range)
+        grid = GridSearchCV(classifier, param_grid)
+        grid.fit(pool, oracle)
+
+        # initialise classifier
+        classifier = LogisticRegression(multi_class='ovr', penalty='l2', C=grid.best_params_['C'],
                                         random_state=seed, class_weight='balanced')
         committee = BaggingClassifier(classifier, n_estimators=7, n_jobs=1, max_samples=100,
                                       random_state=seed)

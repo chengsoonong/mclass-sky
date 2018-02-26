@@ -88,7 +88,7 @@ def sample_from_every_class(y, size, seed=None):
 
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
-    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=10, passive=True, n_jobs=-1):
+    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=10, passive=True, n_jobs=-1, overwrite=False):
         seed = RandomState(1234)
         self.X = np.asarray(X, dtype=np.float64)
         self.y = np.asarray(y)
@@ -97,6 +97,7 @@ class ActiveExperiment:
         self.dataset = dataset
         self.passive = passive
         self.n_jobs = n_jobs
+        self.overwrite = overwrite
 
         # estimate the kernel using the 90th percentile heuristic
         random_idx = seed.choice(X.shape[0], 1000)
@@ -119,6 +120,10 @@ class ActiveExperiment:
             assert len(self.label_encoder.classes_) == 2, 'COMB only works with binary classification.'
 
     def run_policies(self):
+        save_name = self.policy_name if self.passive else self.policy_name + '-wop'
+        if not self.overwrite and os.path.exists(os.path.join('results', self.dataset, save_name)):
+            return
+
         start_time = time()
         outputs = Parallel(n_jobs=self.n_jobs)(delayed(self._run_fold)(train_index, test_index)
                                       for train_index, test_index in self.kfold)
@@ -130,10 +135,13 @@ class ActiveExperiment:
             results[key] = [fold[key] for fold in outputs]
             results[key] = np.asarray(results[key])
             results['time'] = end_time - start_time
-        save_name = self.policy_name if self.passive else self.policy_name + '-wop'
+
         save_results(self.dataset, save_name, results)
 
     def run_asymptote(self):
+        if not self.overwrite and os.path.exists(os.path.join('results', self.dataset, 'asymptote')):
+            return
+
         results = {
             'asymptote_mpba': [],
             'asymptote_accuracy': [],

@@ -1,7 +1,7 @@
 %% Submissions for peer-review must enable line-numbering
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL combining-active-learners-v1.tex   Sun Feb 25 12:12:15 2018
-%DIF ADD combining-active-learners.tex      Sun Feb 25 20:46:44 2018
+%DIF ADD combining-active-learners.tex      Tue Mar 13 10:28:59 2018
 %% using the lineno option in the \documentclass command.
 %%
 %% Preprints and camera-ready submissions do not need
@@ -295,7 +295,11 @@ and~\ref{subsec:version}. They roughly fall into two categories: uncertainty
 sampling and version space reduction. There are also heuristics that involve
 minimizing the variance or maximizing the classifier certainty of the model
 \citep{schein07}, but we do not consider them in this paper as they are
-computationally inefficient.
+computationally inefficient. \DIFaddbegin \DIFadd{A more comprehensive treatment of these active
+learning heuristics can be found in \mbox{%DIFAUXCMD
+\cite{settles12}}\hspace{0pt}%DIFAUXCMD
+.
+}\DIFaddend
 
 \subsection{Uncertainty Sampling}~\label{subsec:uncertainty}
 \cite{lewis94} introduced the idea of uncertainty sampling, where we select the
@@ -472,13 +476,15 @@ choice theory).
 \subsection{Combining Suggestions with Bandit Theory}\label{subsec:bandit}
 
 First let us turn our attention to the multi-armed bandit problem in
-probability theory. The colorful name originates from the situation where a
-gambler stands in front of a slot machine with $R$ levers. When pulled, each
-lever gives out a reward according to some unknown distribution. The goal of
-the game is to come up with a strategy that can maximize the gambler's lifetime
-rewards while minimizing the number of pulls. In the context of active
-learning, each lever is a heuristic with a different ability to identify the
-candidate whose labeling information is most valuable.
+probability theory \DIFaddbegin \DIFadd{\mbox{%DIFAUXCMD
+\citep{berry85}}\hspace{0pt}%DIFAUXCMD
+}\DIFaddend . The colorful name originates from the
+situation where a gambler stands in front of a slot machine with $R$ levers.
+When pulled, each lever gives out a reward according to some unknown
+distribution. The goal of the game is to come up with a strategy that can
+maximize the gambler's lifetime rewards while minimizing the number of pulls.
+In the context of active learning, each lever is a heuristic with a different
+ability to identify the candidate whose labeling information is most valuable.
 
 The main problem in multi-armed bandits is the trade-off between exploring
 random heuristics and exploiting the best heuristic so far. There are many
@@ -507,7 +513,7 @@ rewards.
 %\subset \X \times \Y$, which allows us to see how well the model generalizes
 %to unseen data.
 We could, as is common practice in machine learning, use cross validation or
-bootstrap on $\Labeled_T$ to estimate the generalisation performance. However
+bootstrap on $\Labeled_T$ to estimate the \DIFdelbegin \DIFdel{generalisation }\DIFdelend \DIFaddbegin \DIFadd{generalization }\DIFaddend performance. However
 for simplicity of presentation we use a separate test set $\Labeled_S$.
 
 Figure~\ref{fig:pipeline-bandit} and Algorithm~\ref{alg:bandit} outline how
@@ -519,10 +525,21 @@ receiving a new reward.
 
 There have been some attempts to combine active learning suggestions in the
 literature.~\cite{baram04} used the EXP4 multi-armed bandit algorithm to
-automate the selection process.~\cite{hsu15} studied an improved version,
-EXP4.P, along with importance weighting to estimate the rewards using only the
-training set. This paper empirically compares the following four algorithms:
-Thompson sampling, OC-UCB, kl-UCB, and EXP3++.
+automate the selection process. \DIFdelbegin \DIFdel{~}\DIFdelend \DIFaddbegin \DIFadd{They proposed a reward called the
+classification entropy maximization, which can be shown to grow at a similar
+rate to the true accuracy in binary classification with support vector machines
+(SVMs). We will not compare our results directly with those in \mbox{%DIFAUXCMD
+\cite{baram04}
+}\hspace{0pt}%DIFAUXCMD
+since we would like to evaluate algorithms that can work with both binary and
+multi-class classification. Our experiments also use logistic regression which
+produces probability estimates directly, rather than SVMs which only produce
+unnormalized scores. }\DIFaddend \cite{hsu15} studied an improved version \DIFdelbegin \DIFdel{,
+}\DIFdelend \DIFaddbegin \DIFadd{of EXP4, called
+}\DIFaddend EXP4.P, \DIFdelbegin \DIFdel{along with }\DIFdelend \DIFaddbegin \DIFadd{and used }\DIFaddend importance weighting to estimate the \DIFdelbegin \DIFdel{rewards }\DIFdelend \DIFaddbegin \DIFadd{true classifier
+performance }\DIFaddend using only the training set. \DIFdelbegin \DIFdel{This paperempirically compares }\DIFdelend \DIFaddbegin \DIFadd{In this paper, we empirically compare
+}\DIFaddend the following four \DIFaddbegin \DIFadd{bandit }\DIFaddend algorithms: Thompson sampling, OC-UCB, kl-UCB, and
+EXP3++.
 
 \tikzstyle{block} = [draw, fill=white, rectangle,
 minimum height=3em, minimum width=6em, align=left]
@@ -536,7 +553,36 @@ minimum height=3em, minimum width=6em, align=left]
 
 \begin{figure}[p]
 	\centering
-	\begin{tikzpicture}[auto, node distance=2cm,>=latex', scale=0.8, transform shape]
+	\DIFdelbeginFL %DIFDELCMD < \begin{tikzpicture}[auto, node distance=2cm,>=latex', scale=0.8, transform shape]
+%DIFDELCMD < 		\node [input, name=test input] {};
+%DIFDELCMD < 		\node [block, right of=test input, node distance=3cm] (classifier) {Train with classifier $h$};
+%DIFDELCMD < 		\node [block, right of=classifier, node distance=5cm] (heuristic) {Assign scores with $s$};
+%DIFDELCMD < 		\node [block, right of=heuristic, node distance=5cm] (best) {Select candidate \\ with highest score};
+%DIFDELCMD < 		\node [block, below of=heuristic, node distance=2.5cm] (oracle) {Label candidate};
+%DIFDELCMD < 		\node [block, below of=classifier, node distance=2.5cm] (pool) {Add to training pool};
+%DIFDELCMD < 		\node [block, above of=classifier, node distance=2cm] (bandit) {Select heuristic with $b$};
+%DIFDELCMD < 		\node [input, name=heuristic input, left of=bandit, node distance=3cm] {};
+%DIFDELCMD < 		\node [above of=heuristic] (best heuristic) {chosen heursitic $r$};
+%DIFDELCMD <
+
+%DIFDELCMD < 		\draw [active] (pool) -- node[name=training] {$\Labeled_T$} (classifier);
+%DIFDELCMD < 		\draw [active] (classifier) -- node[name=y] {$p(\Y)$} (heuristic);
+%DIFDELCMD < 		\draw [active] (heuristic) -- node[name=y] {} (best);
+%DIFDELCMD < 		\draw [active] (best) |- node[name=x] {$\bm{x}_*$} (oracle);
+%DIFDELCMD < 		\draw [active] (oracle) -- node[name=xy] {$(\bm{x}_*, y_*)$} (pool);
+%DIFDELCMD <
+
+%DIFDELCMD < 		\draw [bandit] (test input) -- node[name=test] {$\Labeled_S$} (classifier);
+%DIFDELCMD < 		\draw [active] (pool) -- node[right, name=training] {$\Unlabeled$} (classifier);
+%DIFDELCMD < 		\draw [bandit] (classifier) -- node[name=reward] {reward $w$} (bandit);
+%DIFDELCMD < 		\draw [bandit] (heuristic input) -- node[name=heuristics] {$\R$} (bandit);
+%DIFDELCMD < 		\draw [bandit] (bandit) -- node[name=heuristics] {} (best heuristic);
+%DIFDELCMD < 		\draw [bandit, dashed] (best heuristic) -- (heuristic);
+%DIFDELCMD <
+
+%DIFDELCMD < 	\end{tikzpicture}
+%DIFDELCMD < 	%%%
+\DIFdelendFL \DIFaddbeginFL \begin{tikzpicture}[auto, node distance=2cm,>=latex', scale=0.8, transform shape]
 		\node [input, name=test input] {};
 		\node [block, right of=test input, node distance=3cm] (classifier) {Train with classifier $h$};
 		\node [block, right of=classifier, node distance=5cm] (heuristic) {Assign scores with $s$};
@@ -545,7 +591,7 @@ minimum height=3em, minimum width=6em, align=left]
 		\node [block, below of=classifier, node distance=2.5cm] (pool) {Add to training pool};
 		\node [block, above of=classifier, node distance=2cm] (bandit) {Select heuristic with $b$};
 		\node [input, name=heuristic input, left of=bandit, node distance=3cm] {};
-		\node [above of=heuristic] (best heuristic) {chosen heursitic $r$};
+		\node [above of=heuristic] (best heuristic) {chosen heuristic $r$};
 
 
 		\draw [active] (pool) -- node[name=training] {$\Labeled_T$} (classifier);
@@ -562,7 +608,7 @@ minimum height=3em, minimum width=6em, align=left]
 		\draw [bandit, dashed] (best heuristic) -- (heuristic);
 
 	\end{tikzpicture}
-	\caption{In the active learning pipeline with bandit algorithms, we
+	\DIFaddendFL \caption{In the active learning pipeline with bandit algorithms, we
 	need to collect rewards $w$ from the test set $\Labeled_S$ in order to
 	decide which heuristic to choose at each time step. This routine is
 	indicated by the red arrows. Notations: $\R$ is the set of heuristics
@@ -596,7 +642,7 @@ minimum height=3em, minimum width=6em, align=left]
 		Retrain the classifier $h(\bm{x})$ using $\Labeled_T$.\;
 		Run the updated classifier on the test set $\Labeled_S$ to compute the
 			increase in the performance $w$. \;
-        Update the parameters of $B$ with \Update$(w)$. \;
+        Update the parameters of $b$ with \Update$(w)$. \;
     }
 	\caption{Pool-based active learning with bandit theory. Note that in
 	addition to the set of active learning heuristics $\R$ and the test set
@@ -808,16 +854,20 @@ regime.
 
 \subsection{Combining Suggestions with Social Choice Theory}
 
-A drawback of the bandit methods is that at each iteration, we could only use
-one suggestion from one particular heuristic. In addition, we also need to keep
-around a test set, which is expensive and sometimes impossible to obtain in
-practice. Since most heuristics require little computation, we could in fact
-run all of them at the same time and then combine the suggestions. This leads
-us to social choice theory. Originally developed by political scientists like
-Nicolas de Condorcet and Jean-Charles de Borda, this field of study is
-concerned with how we aggregate preferences of a group of people to determine,
-for example, the winner in an election~\citep{list13}. It has the nice property
-that everyone (or in our context, every active learning heuristic) has a voice.
+A drawback of the \DIFaddbegin \DIFadd{above }\DIFaddend bandit methods is that at each iteration, we could only
+use one suggestion from one particular heuristic. \DIFdelbegin \DIFdel{In addition, we also }\DIFdelend \DIFaddbegin \DIFadd{EXP4 and EXP4.P algorithms
+can take advice from all heuristics by maintaining a weight on each of them.
+However, being a bandit method, they require designing a reward schema. If the
+reward is the performance on a test set, we would }\DIFaddend need to keep around a
+\DIFdelbegin \DIFdel{test set}\DIFdelend \DIFaddbegin \DIFadd{separate subset of the data}\DIFaddend , which is expensive and sometimes impossible to
+obtain in practice.  \DIFdelbegin \DIFdel{Since most heuristics require little computation, we could in fact
+run all of them at the same time and then combine the suggestions. }\DIFdelend This leads us to social choice theory\DIFdelbegin \DIFdel{. }\DIFdelend \DIFaddbegin \DIFadd{, which can combine
+suggestions like EXP4 and EXP4.P, while not needing the concept of a reward.
+}\DIFaddend Originally developed by political scientists like Nicolas de Condorcet and
+Jean-Charles de Borda, this field of study is concerned with how we aggregate
+preferences of a group of people to determine, for example, the winner in an
+election~\citep{list13}. It has the nice property that everyone (or in our
+context, every active learning heuristic) has a voice.
 
 For each heuristic, we assign a score to every candidate with the score
 function $s(\bm{x}, h)$ like before. We are neither interested in the actual
@@ -836,7 +886,7 @@ ranking,
 		c : \sigma(J_\Unlabeled)^{R} \rightarrow \sigma(J_\Unlabeled)
     \end{align}
 from which we can pick the highest-ranked candidate to annotate. See
-Table~\ref{tab:rank} for an exmaple.
+Table~\ref{tab:rank} for an \DIFdelbegin \DIFdel{exmaple}\DIFdelend \DIFaddbegin \DIFadd{example}\DIFaddend .
 
 \begin{table}[htbp]
 	\caption {An example of how to convert raw scores into a ranking.}
@@ -883,7 +933,7 @@ overview of how social choice theory is used in pool-based active learning.
 	\end{tikzpicture}
 	\caption{In the active learning pipeline with rank aggregation
 	methods, there is only one cycle, in which we aggregate information
-	from all heursitics. Additional notation: $\sigma(J_\Unlabeled)$ is a
+	from all \DIFdelbeginFL \DIFdelFL{heursitics}\DIFdelendFL \DIFaddbeginFL \DIFaddFL{heuristics}\DIFaddendFL . Additional notation: $\sigma(J_\Unlabeled)$ is a
 	permutation (i.e. rank) on the index set of the unlabeled data.}
 	\label{fig:pipeline-choice}
 \end{figure}
@@ -928,7 +978,7 @@ the arithmetic mean.
 
 An alternative approach is to use the geometric mean, where instead of adding
 up the points, we multiply them. \cite{bedo14} showed that the geometric mean
-maximizes the Spearman correlation bewteen the ranks. Note that this method
+maximizes the Spearman correlation \DIFdelbegin \DIFdel{bewteen }\DIFdelend \DIFaddbegin \DIFadd{between }\DIFaddend the ranks. Note that this method
 requires the ranks to be scaled so that they lie strictly between 0 and 1. This
 can be achieved by simply dividing the ranks by $(U + 1)$, where $U$ is the
 number of candidates.
@@ -1154,7 +1204,7 @@ Table~\ref{tab:abbre} for a list of abbreviations associated with the methods.
 		\textsc{borda}
 			& Aggregation & Aggregation with Borda count \\
 		\textsc{geometric}
-			& Aggregation & Aggergation with the geometric mean \\
+			& Aggregation & \DIFdelbeginFL \DIFdelFL{Aggergation }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{Aggregation }\DIFaddendFL with the geometric mean \\
 		\textsc{schulze}
 			& Aggregation & Aggregation with the Schulze method \\
 		\bottomrule
@@ -1199,7 +1249,7 @@ ignore the rewards and explore 100\% of the time. For all bandit and rank
 aggregation methods, we take advice from six representative experts:
 \textsc{passive}, \textsc{confidence}, \textsc{margin}, \textsc{entropy},
 \textsc{qbb-margin}, and \textsc{qbb-kl}. We have not explored how adding the
-heursitics with information density weighting to the bandits would impact
+\DIFdelbegin \DIFdel{heursitics }\DIFdelend \DIFaddbegin \DIFadd{heuristics }\DIFaddend with information density weighting to the bandits would impact
 the performance.
 
 Given that there are 12 datasets, each with 17 learning curves, we
@@ -1340,7 +1390,7 @@ The experimental results allow us to answer the following questions:
 		of candidates. This might lead to memory issues if we need to rank
 		a large number of candidates from the unlabeled pool.
 		\item Before aggregating the rankings, we throw away the score
-		magntitudes, which could cause a loss of information.
+		\DIFdelbegin \DIFdel{magntitudes}\DIFdelend \DIFaddbegin \DIFadd{magnitudes}\DIFaddend , which could cause a loss of information.
 		\item Unlike bandit algorithms, all of the rank aggregators always give
 		each heuristic an equal weight.
 	\end{enumerate}

@@ -264,7 +264,8 @@ and~\ref{subsec:version}. They roughly fall into two categories: uncertainty
 sampling and version space reduction. There are also heuristics that involve
 minimizing the variance or maximizing the classifier certainty of the model
 \citep{schein07}, but we do not consider them in this paper as they are
-computationally inefficient.
+computationally inefficient. A more comprehensive treatment of these active
+learning heuristics can be found in \cite{settles12}.
 
 \subsection{Uncertainty Sampling}~\label{subsec:uncertainty}
 \cite{lewis94} introduced the idea of uncertainty sampling, where we select the
@@ -319,7 +320,7 @@ and another instance $\bm{x}^{(k)}$ using the Gaussian kernel with parameter
 $\gamma$:
 \begin{align}
 	\text{sim}(\bm{x}, \bm{x}^{(k)})
-		&= \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2)
+		&= \exp(\gamma ||\bm{x} - \bm{x}^{(k)}||^2) \label{eqn:kernel}
 \end{align}
 The information density weighting was proposed by~\cite{settles08} to
 discourage the active learner from picking outliers. Although the class
@@ -436,13 +437,13 @@ choice theory).
 \subsection{Combining Suggestions with Bandit Theory}\label{subsec:bandit}
 
 First let us turn our attention to the multi-armed bandit problem in
-probability theory. The colorful name originates from the situation where a
-gambler stands in front of a slot machine with $R$ levers. When pulled, each
-lever gives out a reward according to some unknown distribution. The goal of
-the game is to come up with a strategy that can maximize the gambler's lifetime
-rewards while minimizing the number of pulls. In the context of active
-learning, each lever is a heuristic with a different ability to identify the
-candidate whose labeling information is most valuable.
+probability theory \citep{berry85}. The colorful name originates from the
+situation where a gambler stands in front of a slot machine with $R$ levers.
+When pulled, each lever gives out a reward according to some unknown
+distribution. The goal of the game is to come up with a strategy that can
+maximize the gambler's lifetime rewards while minimizing the number of pulls.
+In the context of active learning, each lever is a heuristic with a different
+ability to identify the candidate whose labeling information is most valuable.
 
 The main problem in multi-armed bandits is the trade-off between exploring
 random heuristics and exploiting the best heuristic so far. There are many
@@ -471,7 +472,7 @@ rewards.
 %\subset \X \times \Y$, which allows us to see how well the model generalizes
 %to unseen data.
 We could, as is common practice in machine learning, use cross validation or
-bootstrap on $\Labeled_T$ to estimate the generalisation performance. However
+bootstrap on $\Labeled_T$ to estimate the generalization performance. However
 for simplicity of presentation we use a separate test set $\Labeled_S$.
 
 Figure~\ref{fig:pipeline-bandit} and Algorithm~\ref{alg:bandit} outline how
@@ -483,10 +484,18 @@ receiving a new reward.
 
 There have been some attempts to combine active learning suggestions in the
 literature.~\cite{baram04} used the EXP4 multi-armed bandit algorithm to
-automate the selection process.~\cite{hsu15} studied an improved version,
-EXP4.P, along with importance weighting to estimate the rewards using only the
-training set. This paper empirically compares the following four algorithms:
-Thompson sampling, OC-UCB, kl-UCB, and EXP3++.
+automate the selection process. They proposed a reward called the
+classification entropy maximization, which can be shown to grow at a similar
+rate to the true accuracy in binary classification with support vector machines
+(SVMs). We will not compare our results directly with those in \cite{baram04}
+since we would like to evaluate algorithms that can work with both binary and
+multi-class classification. Our experiments also use logistic regression which
+produces probability estimates directly, rather than SVMs which only produce
+unnormalized scores. \cite{hsu15} studied an improved version of EXP4, called
+EXP4.P, and used importance weighting to estimate the true classifier
+performance using only the training set. In this paper, we empirically compare
+the following four bandit algorithms: Thompson sampling, OC-UCB, kl-UCB, and
+EXP3++.
 
 \tikzstyle{block} = [draw, fill=white, rectangle,
 minimum height=3em, minimum width=6em, align=left]
@@ -509,7 +518,7 @@ minimum height=3em, minimum width=6em, align=left]
 		\node [block, below of=classifier, node distance=2.5cm] (pool) {Add to training pool};
 		\node [block, above of=classifier, node distance=2cm] (bandit) {Select heuristic with $b$};
 		\node [input, name=heuristic input, left of=bandit, node distance=3cm] {};
-		\node [above of=heuristic] (best heuristic) {chosen heursitic $r$};
+		\node [above of=heuristic] (best heuristic) {chosen heuristic $r$};
 
 
 		\draw [active] (pool) -- node[name=training] {$\Labeled_T$} (classifier);
@@ -677,9 +686,9 @@ heuristic $r_i$ before step $t$, and $n$ is the maximum number of steps that we
 are going to take. There are two tunable parameters, $\alpha$ and $\psi$, which
 the author suggests setting to 3 and 2, respectively.
 
-\cite{cappe13} suggest that we instead consider the KL-divergence when finding
-the upper bound. In the case of normally distributed rewards with known variance
-$\sigma^2$, the chosen heuristic would be
+\cite{cappe13} suggest that we can instead consider the KL-divergence from the
+current estimated reward distribution. In the case of normally distributed
+rewards with known variance $\sigma^2$, the chosen heuristic would be
     \begin{align}
 		r_* = \argmax_{i} \overline{w_i} +
 			  \sqrt{ 2 \sigma^2 \dfrac{\ln\big(T_i(t)\big)}{t} }
@@ -772,16 +781,19 @@ regime.
 
 \subsection{Combining Suggestions with Social Choice Theory}
 
-A drawback of the bandit methods is that at each iteration, we could only use
-one suggestion from one particular heuristic. In addition, we also need to keep
-around a test set, which is expensive and sometimes impossible to obtain in
-practice. Since most heuristics require little computation, we could in fact
-run all of them at the same time and then combine the suggestions. This leads
-us to social choice theory. Originally developed by political scientists like
-Nicolas de Condorcet and Jean-Charles de Borda, this field of study is
-concerned with how we aggregate preferences of a group of people to determine,
-for example, the winner in an election~\citep{list13}. It has the nice property
-that everyone (or in our context, every active learning heuristic) has a voice.
+A drawback of the above bandit methods is that at each iteration, we could only
+use one suggestion from one particular heuristic. EXP4 and EXP4.P algorithms
+can take advice from all heuristics by maintaining a weight on each of them.
+However, being a bandit method, they require designing a reward schema. If the
+reward is the performance on a test set, we would need to keep around a
+separate subset of the data, which is expensive and sometimes impossible to
+obtain in practice.  This leads us to social choice theory, which can combine
+suggestions like EXP4 and EXP4.P, while not needing the concept of a reward.
+Originally developed by political scientists like Nicolas de Condorcet and
+Jean-Charles de Borda, this field of study is concerned with how we aggregate
+preferences of a group of people to determine, for example, the winner in an
+election~\citep{list13}. It has the nice property that everyone (or in our
+context, every active learning heuristic) has a voice.
 
 For each heuristic, we assign a score to every candidate with the score
 function $s(\bm{x}, h)$ like before. We are neither interested in the actual
@@ -800,7 +812,7 @@ ranking,
 		c : \sigma(J_\Unlabeled)^{R} \rightarrow \sigma(J_\Unlabeled)
     \end{align}
 from which we can pick the highest-ranked candidate to annotate. See
-Table~\ref{tab:rank} for an exmaple.
+Table~\ref{tab:rank} for an example.
 
 \begin{table}[htbp]
 	\caption {An example of how to convert raw scores into a ranking.}
@@ -847,7 +859,7 @@ overview of how social choice theory is used in pool-based active learning.
 	\end{tikzpicture}
 	\caption{In the active learning pipeline with rank aggregation
 	methods, there is only one cycle, in which we aggregate information
-	from all heursitics. Additional notation: $\sigma(J_\Unlabeled)$ is a
+	from all heuristics. Additional notation: $\sigma(J_\Unlabeled)$ is a
 	permutation (i.e. rank) on the index set of the unlabeled data.}
 	\label{fig:pipeline-choice}
 \end{figure}
@@ -892,7 +904,7 @@ the arithmetic mean.
 
 An alternative approach is to use the geometric mean, where instead of adding
 up the points, we multiply them. \cite{bedo14} showed that the geometric mean
-maximizes the Spearman correlation bewteen the ranks. Note that this method
+maximizes the Spearman correlation between the ranks. Note that this method
 requires the ranks to be scaled so that they lie strictly between 0 and 1. This
 can be achieved by simply dividing the ranks by $(U + 1)$, where $U$ is the
 number of candidates.
@@ -1117,7 +1129,7 @@ Table~\ref{tab:abbre} for a list of abbreviations associated with the methods.
 		\textsc{borda}
 			& Aggregation & Aggregation with Borda count \\
 		\textsc{geometric}
-			& Aggregation & Aggergation with the geometric mean \\
+			& Aggregation & Aggregation with the geometric mean \\
 		\textsc{schulze}
 			& Aggregation & Aggregation with the Schulze method \\
 		\bottomrule
@@ -1135,7 +1147,7 @@ ignore the rewards and explore 100\% of the time. For all bandit and rank
 aggregation methods, we take advice from six representative experts:
 \textsc{passive}, \textsc{confidence}, \textsc{margin}, \textsc{entropy},
 \textsc{qbb-margin}, and \textsc{qbb-kl}. We have not explored how adding the
-heursitics with information density weighting to the bandits would impact
+heuristics with information density weighting to the bandits would impact
 the performance.
 
 Given that there are 12 datasets, each with 17 learning curves, we
@@ -1148,17 +1160,17 @@ strength of an active learner or a combiner, relative to passive learning, as
     	{\sum_{t=1}^{n}\big(m(\max) - m(\passive, t)\big)}
 \end{align}
 where $m$ is a chosen metric (e.g. accuracy rate, MPBA), $m(\max)$ is the best
-possible performance\footnote{The best possible performance is obtained either
-by training with all the labeled data or by looking at the average performance
-across the 10 trials from all of the iterations of all the methods and taking
-the maximum value.}, and $m(h, t)$ is the performance achieved using the first
-$t$ examples selected by heuristic $h$. We can think of the summation as the
-area between the best possible performance line and the learning curve of $h$.
-The better the heuristic is, the faster it would approach this maximum line,
-and thus the smaller the area. Finally, so that we can compare the performance
-across datasets, we normalize the measure with the area obtained from using
-just passive learning. Refer to Figure~\ref{fig:strength} for a visualization
-of the strength measure.
+possible performance\footnote{The best possible performance in each trial is
+obtained either by the higher of: 1) the performance achieved by using all the
+labeled examples in the training set; and 2) the maximum value of the learning
+curves of all the methods.}, and $m(h, t)$ is the performance achieved using
+the first $t$ examples selected by heuristic $h$. We can think of the summation
+as the area between the best possible performance line and the learning curve
+of $h$. The better the heuristic is, the faster it would approach this maximum
+line, and thus the smaller the area. Finally, so that we can compare the
+performance across datasets, we normalize the measure with the area obtained
+from using just passive learning. Refer to Figure~\ref{fig:strength} for a
+visualization of the strength measure.
 
 We evaluate the algorithm performance with two metrics: the accuracy score and
 the MPBA. The accuracy score is simply the proportion of instances in
@@ -1175,8 +1187,7 @@ the label of all classes equally well.
 	proportional to the shaded area between the (red) passive learning curve
 	and the (blue) active learning curve. The bigger the area is, the more the
 	active learner outperforms the passive learner. The top dotted line
-	indicates the maximum performance achieved by using the entire labeled
-	pool as training data.}
+	indicates the maximum performance achieved.}
 	\label{fig:strength}
 \end{figure}
 
@@ -1224,6 +1235,23 @@ For bandit algorithms, it is interesting to note that \textsc{thompson}
 favors certain heuristics a lot more than others, while the behavior of
 \textsc{exp3++}, \textsc{ocucb}, and \textsc{klucb} is almost indistinguishable
 from \textsc{explore}, where we explore 100\% of the time.
+
+\subsection{Hyperparameters}
+
+In this section, we explore how changing the hyperparameters might affect the
+results. We pick one binary dataset (glass) and one multiclass dataset
+(ionosphere) to investigate. Both of these are small enough to allow us
+to iterate through many hyperparameter values quickly, and as shown in
+Figure \ref{fig:learning_curves-small}, active learning does improve
+over passive learning here.
+
+\subsubsection{Information Density Parameter}
+
+The heuristics with information density weighting has one tunable
+hyperparameter--the $\gamma$ in the Gaussian kernel (see Equation
+\ref{eqn:kernel}). We examine five different values for $\gamma$: the
+50th, 60th, 70th,
+
 
 \subsection{Discussion}
 
@@ -1276,7 +1304,7 @@ The experimental results allow us to answer the following questions:
 		of candidates. This might lead to memory issues if we need to rank
 		a large number of candidates from the unlabeled pool.
 		\item Before aggregating the rankings, we throw away the score
-		magntitudes, which could cause a loss of information.
+		magnitudes, which could cause a loss of information.
 		\item Unlike bandit algorithms, all of the rank aggregators always give
 		each heuristic an equal weight.
 	\end{enumerate}
@@ -1427,6 +1455,43 @@ since we do not need to design a reward scheme.
 	favors uniform exploration more, sampling each heuristic with roughly equal
 	weights. The plots for \textsc{ocucb} and \textsc{klucb} are not shown
 	here, but they are similar to \textsc{exp3++}.}
+	\label{fig:selection}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/strengths-info_density-params}
+	\caption[Effect of gamma in density weighting]{Effect of gamma on
+	\textsc{w-confidence} and \textsc{w-margin}: We test 6 gamma values}
+	\label{fig:selection}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/strengths-thompson-params}
+	\caption[asdf]{Effect of the prior parameters on Thompson sampling}
+	\label{fig:selection}
+\end{figure}
+
+\begin{figure}[tbp]
+	\centering
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/selection-thompson-params-glass}
+		\caption{Glass dataset}
+		\label{fig:selection-thompson-params-glass}
+	\end{subfigure}
+	\begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/selection-thompson-params-ionosphere}
+		\caption{Ionosphere dataset}
+		\label{fig:selection-thompson-params-glass}
+    \end{subfigure}
+	\caption[Effect of hyperparameters on Thompson sampling]{The effect of the
+	the prior mean and variance parameters on \textsc{thompson} using two
+	datasets--glass and ionosphere. The plots show how often each of the
+	heuristics gets selected over time. The selection frequencies are averaged
+	over 10 trials.}
 	\label{fig:selection}
 \end{figure}
 

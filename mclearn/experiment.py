@@ -88,7 +88,10 @@ def sample_from_every_class(y, size, seed=None):
 
 class ActiveExperiment:
     """ Simulate an active learning experiment. """
-    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=10, passive=True, n_jobs=-1, overwrite=False):
+    def __init__(self, X, y, dataset, policy_name, scale=True, n_splits=10,
+                 passive=True, n_jobs=-1, overwrite=False,
+                 gamma_percentile=90, ts_sigma=0.02, ts_tau=0.02, ts_mu=0.5,
+                 save_name=None, candidate_pool_size=None):
         seed = RandomState(1234)
         self.X = np.asarray(X, dtype=np.float64)
         self.y = np.asarray(y)
@@ -98,11 +101,17 @@ class ActiveExperiment:
         self.passive = passive
         self.n_jobs = n_jobs
         self.overwrite = overwrite
+        self.ts_sigma = ts_sigma
+        self.ts_tau = ts_tau
+        self.ts_mu = ts_mu
+        self.save_name = save_name
+        self.candidate_pool_size=candidate_pool_size
 
         # estimate the kernel using the 90th percentile heuristic
         random_idx = seed.choice(X.shape[0], 1000)
         distances = pairwise_distances(self.X[random_idx], metric='l1')
         self.gamma = 1 / np.percentile(distances, 90)
+        self.similarity_gamma = 1 / np.percentile(distances, gamma_percentile)
         transformer = RBFSampler(gamma=self.gamma, random_state=seed, n_components=100)
         self.X_transformed = transformer.fit_transform(self.X)
 
@@ -120,8 +129,10 @@ class ActiveExperiment:
             assert len(self.label_encoder.classes_) == 2, 'COMB only works with binary classification.'
 
     def run_policies(self):
-        save_name = self.policy_name if self.passive else self.policy_name + '-wop'
-        if not self.overwrite and os.path.exists(os.path.join('results', self.dataset, save_name)):
+        if not self.save_name:
+            self.save_name = self.policy_name if self.passive else self.policy_name + '-wop'
+
+        if not self.overwrite and os.path.exists(os.path.join('results', self.dataset, self.save_name)):
             return
 
         start_time = time()
@@ -136,7 +147,7 @@ class ActiveExperiment:
             results[key] = np.asarray(results[key])
             results['time'] = end_time - start_time
 
-        save_results(self.dataset, save_name, results)
+        save_results(self.dataset, self.save_name, results)
 
     def run_asymptote(self):
         if not self.overwrite and os.path.exists(os.path.join('results', self.dataset, 'asymptote')):
@@ -154,7 +165,8 @@ class ActiveExperiment:
             y_test = self.y[test_index]
             n_classes = len(np.unique(y_test))
             seed = RandomState(1234)
-            classifier = LogisticRegression(multi_class='ovr', penalty='l2', C=1000,
+            grid = self.grid_search(seed, X_train, y_train)
+            classifier = LogisticRegression(multi_class='ovr', penalty='l2', C=grid.best_params_['C'],
                                             random_state=seed, class_weight='balanced')
             classifier.fit(X_train, y_train)
             y_pred = classifier.predict(X_test)
@@ -167,23 +179,7 @@ class ActiveExperiment:
 
         save_results(self.dataset, 'asymptote', results)
 
-    def _run_fold(self, train_index, test_index):
-        # reset the seed
-        seed = RandomState(1234)
-
-        # split data into train and test sets
-        pool = self.X_transformed[train_index]
-        oracle = self.y[train_index]
-        labels = np.ma.MaskedArray(oracle, mask=True, copy=True)
-        X_test = self.X_transformed[test_index]
-        y_test = self.y[test_index]
-        n_classes = len(np.unique(y_test))
-        similarity = rbf_kernel(self.X[train_index], gamma=self.gamma)
-        mpba, accuracy, f1 = [], [], []
-        training_size = min(1000, len(pool))
-        initial_n = 10
-        horizon = training_size - initial_n
-
+    def grid_search(self, seed, pool, oracle):
         # Conduct a grid search to find the best C
         classifier = LogisticRegression(multi_class='ovr', penalty='l2', C=1000,
                                         random_state=seed, class_weight='balanced')
@@ -195,6 +191,26 @@ class ActiveExperiment:
         param_grid = dict(C=C_range)
         grid = GridSearchCV(classifier, param_grid)
         grid.fit(pool, oracle)
+        return grid
+
+    def _run_fold(self, train_index, test_index):
+        # reset the seed
+        seed = RandomState(1234)
+
+        # split data into train and test sets
+        pool = self.X_transformed[train_index]
+        oracle = self.y[train_index]
+        labels = np.ma.MaskedArray(oracle, mask=True, copy=True)
+        X_test = self.X_transformed[test_index]
+        y_test = self.y[test_index]
+        n_classes = len(np.unique(y_test))
+        similarity = rbf_kernel(self.X[train_index], gamma=self.similarity_gamma)
+        mpba, accuracy, f1 = [], [], []
+        training_size = min(1000, len(pool))
+        initial_n = 10
+        horizon = training_size - initial_n
+
+        grid = self.grid_search(seed, pool, oracle)
 
         # initialise classifier
         classifier = LogisticRegression(multi_class='ovr', penalty='l2', C=grid.best_params_['C'],
@@ -269,51 +285,65 @@ class ActiveExperiment:
 
         if request == 'passive':
             policy = SingleSuggestion(pool, labels, classifier,
-                                      RandomArm(pool, labels, seed))
+                                      RandomArm(pool, labels, seed),
+                                      n_candidates=self.n_candidates)
 
         elif request in ['margin', 'w-margin']:
             policy = SingleSuggestion(pool, labels, classifier,
-                                      MarginArm(pool, labels, seed, similarity))
+                                      MarginArm(pool, labels, seed, similarity),
+                                      n_candidates=self.n_candidates)
 
         elif request in ['confidence', 'w-confidence']:
             policy = SingleSuggestion(pool, labels, classifier,
-                                      ConfidenceArm(pool, labels, seed, similarity))
+                                      ConfidenceArm(pool, labels, seed, similarity),
+                                      n_candidates=self.n_candidates)
 
         elif request in ['entropy', 'w-entropy']:
             policy = SingleSuggestion(pool, labels, classifier,
-                                      EntropyArm(pool, labels, seed, similarity))
+                                      EntropyArm(pool, labels, seed, similarity),
+                                      n_candidates=self.n_candidates)
 
         elif request == 'qbb-margin':
             policy = SingleSuggestion(pool, labels, classifier,
-                                      QBBMarginArm(pool, labels, committee, 100, seed))
+                                      QBBMarginArm(pool, labels, committee, 100, seed),
+                                      n_candidates=self.n_candidates)
 
         elif request == 'qbb-kl':
             policy = SingleSuggestion(pool, labels, classifier,
-                                      QBBKLArm(pool, labels, committee, 100, seed))
+                                      QBBKLArm(pool, labels, committee, 100, seed),
+                                      n_candidates=self.n_candidates)
 
         elif request == 'thompson':
-            policy = ThompsonSampling(pool, labels, classifier, arms, seed)
+            policy = ThompsonSampling(pool, labels, classifier, arms, seed,
+                                      sigma=self.ts_sigma, tau=self.ts_tau,
+                                      n_candidates=self.n_candidates)
 
         elif request == 'baseline':
-            policy = BaselineCombiner(pool, labels, classifier, arms, seed)
+            policy = BaselineCombiner(pool, labels, classifier, arms, seed,
+                                      n_candidates=self.n_candidates)
 
         elif request == 'ocucb':
-            policy = OCUCB(pool, labels, classifier, arms, seed, horizon=horizon)
+            policy = OCUCB(pool, labels, classifier, arms, seed, horizon=horizon,
+                           n_candidates=self.n_candidates)
 
         elif request == 'klucb':
-            policy = KLUCB(pool, labels, classifier, arms, seed)
+            policy = KLUCB(pool, labels, classifier, arms, seed,
+                           n_candidates=self.n_candidates)
 
         elif request == 'exp++':
-            policy = EXP3PP(pool, labels, classifier, arms, seed)
+            policy = EXP3PP(pool, labels, classifier, arms, seed,
+                            n_candidates=self.n_candidates)
 
         elif request in ['borda', 'geometric']:
-            policy = ActiveAggregator(pool, labels, classifier, arms, request, seed)
+            policy = ActiveAggregator(pool, labels, classifier, arms, request, seed,
+                                      n_candidates=self.n_candidates)
 
         elif request == 'schulze':
             policy = ActiveAggregator(pool, labels, classifier, arms, request, seed, 100)
 
         elif request == 'comb':
-            policy = COMB(pool, labels, classifier, arms, seed)
+            policy = COMB(pool, labels, classifier, arms, seed,
+                          n_candidates=self.n_candidates)
 
         else:
             raise ValueError('The given policy name {} is not recognised'.format(request))

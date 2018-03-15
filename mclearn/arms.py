@@ -153,7 +153,7 @@ class WeightedArm(Arm):
 
         similarity : numpy array of shape [n_samples, n_samples], optional (default=None)
             A similarity matrix of all the examples in the pool. If not given,
-            The information density will not be used.
+            the information density will not be used.
     """
     def __init__(self, pool, labels, random_state=None, similarity=None):
         super().__init__(pool, labels, random_state)

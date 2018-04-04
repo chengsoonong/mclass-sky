@@ -1,7 +1,7 @@
 %% Submissions for peer-review must enable line-numbering
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL combining-active-learners-v1.tex   Sun Feb 25 12:12:15 2018
-%DIF ADD combining-active-learners.tex      Mon Mar 26 16:35:42 2018
+%DIF ADD combining-active-learners-v2.tex   Wed Apr  4 15:35:19 2018
 %% using the lineno option in the \documentclass command.
 %%
 %% Preprints and camera-ready submissions do not need
@@ -245,15 +245,21 @@ aggregate suggestions \DIFaddbegin \DIFadd{from multiple active learners}\DIFadd
 	Survey (SDSS)~\citep{alam15}. The experimental setup and discussion are
 	described in Section~\ref{sec:expt} and~\ref{sec:discuss}.
 	\DIFaddbegin \item \DIFadd{For evaluation, we propose two metrics: the mean posterior balanced
-	accuracy (MPBA) and the strength of an algorithm. The MPBA extends the the
+	accuracy (MPBA) and the strength of an algorithm. The MPBA extends the
 	metric proposed in \mbox{%DIFAUXCMD
 \cite{brodersen10} }\hspace{0pt}%DIFAUXCMD
-and is an accuracy measure that takes
-	class imbalance into account. The strength measure builds on the work of
-	\mbox{%DIFAUXCMD
+from the binary to the multi-class
+	setting. This is an accuracy measure that takes class imbalance into
+	account. The strength measure is a variation on the deficiency measure used
+	in \mbox{%DIFAUXCMD
 \cite{baram04} }\hspace{0pt}%DIFAUXCMD
-and allows us to summarize the performance of an active
-	learner or combiner, relative to passive learning, in one number.
+that allows us to summarize the performance of an active
+	learner or combiner, relative to passive learning, with one number.
+	Compared to \mbox{%DIFAUXCMD
+\cite{baram04}}\hspace{0pt}%DIFAUXCMD
+, our strength measure assigns a higher number
+	for better active learning methods and ensures that it is upper-bounded by
+	1 for easier comparison across datasets.
 }\end{enumerate}
 \DIFaddend 
 

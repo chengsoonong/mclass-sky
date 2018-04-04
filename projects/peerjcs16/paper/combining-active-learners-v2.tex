@@ -210,11 +210,15 @@ This paper makes the following two main contributions:
 	Survey (SDSS)~\citep{alam15}. The experimental setup and discussion are
 	described in Section~\ref{sec:expt} and~\ref{sec:discuss}.
 	\item For evaluation, we propose two metrics: the mean posterior balanced
-	accuracy (MPBA) and the strength of an algorithm. The MPBA extends the the
-	metric proposed in \cite{brodersen10} and is an accuracy measure that takes
-	class imbalance into account. The strength measure builds on the work of
-	\cite{baram04} and allows us to summarize the performance of an active
-	learner or combiner, relative to passive learning, in one number.
+	accuracy (MPBA) and the strength of an algorithm. The MPBA extends the
+	metric proposed in \cite{brodersen10} from the binary to the multi-class
+	setting. This is an accuracy measure that takes class imbalance into
+	account. The strength measure is a variation on the deficiency measure used
+	in \cite{baram04} that allows us to summarize the performance of an active
+	learner or combiner, relative to passive learning, with one number.
+	Compared to \cite{baram04}, our strength measure assigns a higher number
+	for better active learning methods and ensures that it is upper-bounded by
+	1 for easier comparison across datasets.
 \end{enumerate}
 
 

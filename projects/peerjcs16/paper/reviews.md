@@ -17,7 +17,7 @@ A few comments on the structure and on the reporting:
 - Table 4: "Max Performance" -> the metric is not specified.
   - **The metric (MPBA) is now specified.**
 - Figures 4 and 5: It would be helpful to indicate which quantiles are represented by the boxes and the whiskers.
-  - **We have added this to the caption of Figures 4 and 5.**
+  - **We have added this to the caption of (now) Figures 6 and 7.**
 
 [1] R. Reichart et al., Multi-Task Active Learning for Linguistic Annotations, ACL 2008.
 [2] B. Settles, Active Learning, 2012, Morgan & Claypool
@@ -61,7 +61,7 @@ However, I believe that there are important issues in the experimental design, s
     - Thompson sampling: the authors state that it favors certain heuristics a lot more than others. But this is likely going to be very different if $\tau^2_r$ and the initial $\mu_r$ are set differently.
 
       - **We run some additional experiments to investigate how changing \mu,**
-        **\sigma^2 and \tau^2 affects the results. See Figure 10 and 11. Changing these**
+        **\sigma^2 and \tau^2 affects the results. See Figure 5 and 11. Changing these**
         **values does not have much effect on the final performance, while it still**
         **favors certain heuristics over others. This observation has been added to the**
         **end of Section 4.**
@@ -69,7 +69,7 @@ However, I believe that there are important issues in the experimental design, s
     - Poor performance of information-density weighted strategies: this obviously depends a lot on $\gamma$.
 
       - **We run some more experiments to test the effect of \gamma on two of the datasets,**
-        **glass and ionosphere. See Figure 9. The value of \gamma has little effect on**
+        **glass and ionosphere. See Figure 4. The value of \gamma has little effect on**
         **performance of the glass dataset, while for the ionosphere dataset, using the 90th or higher percentile**
         **of the pairwise distances between the data points seems to work better (but**
         **they are still not as good as the heuristics without the information density**
@@ -79,7 +79,7 @@ However, I believe that there are important issues in the experimental design, s
 
       - **Originally,we restricted the candidate pool size to 300 because we included the heuristics that involve minimizingthe variance or maximizing the classifier certainty of the model, both of whichare computationally intensive. We later excluded these heuristics from ourstudy, so now there is no need to have this restriction. Now in ourexperiments, we have assign a score to all examples in the unlabelled pool.**
 
-        **In addition, we have also tested the effect of the unlabelled pool on the resultSee Figure 12. Overall, having a smaller pool does reduce the performance. Thisresult has been added to Section 5.2.**
+        **In addition, we have also tested the effect of the unlabelled pool on the resultSee Figure 12. Overall, having a smaller pool does reduce the performance. This result has been added to Section 6.**
 
     - Regularization strength in Eq. 22: the choice of $C = 1000$ seems somewhat arbitrary and needs to be better explained.
 
@@ -97,7 +97,7 @@ However, I believe that there are important issues in the experimental design, s
 
    **We ran additional experiments and tested the effect of the data size byartificially reducing either the unlabeled pool size or both the unlabeled poolsize and test size.**
 
-   **See Figure 12. It is indeed true that having a smaller unlabeled poolsize reduces the accuracy and having a smaller test size further deceases it.This observation is now added to the Section 5.2.**
+   **See Figure 12. It is indeed true that having a smaller unlabeled poolsize reduces the accuracy and having a smaller test size further deceases it. This observation is now added to the Section 6.**
 
 2. Line 353: "there is no statistical difference between the corresponding heuristic/combiner and passive learning". Clearly, looking e.g. at the median in Fig. 4., there seems to be a difference. Do the authors mean that the difference is not statistically significant?
 
@@ -233,7 +233,7 @@ Small comments:
 - Does the proposed method fulfill the Condorcet criterion?
 
     - **Only the Schulze method fulfill the Condorcet criterion. Borda count and**
-        **geometric mean do not.** 
+        **geometric mean do not.**
 
 ### Experimental design
 - It is not explained how the authors obtained probabilities from the logistic regression base classifier.

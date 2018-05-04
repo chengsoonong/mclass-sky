@@ -1,0 +1,50 @@
+\documentclass[tikz,border=10pt]{standalone}
+
+\usepackage{tikz} % draw diagrams
+\usepackage{bm}
+
+\newcommand{\Labeled}{\mathcal{L}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\Unlabeled}{\mathcal{U}}
+\usetikzlibrary{shapes,arrows}
+
+\begin{document}
+
+\tikzstyle{block} = [draw, fill=white, rectangle,
+minimum height=3em, minimum width=6em, align=left]
+\tikzstyle{sum} = [draw, fill=white, circle, node distance=1cm]
+\tikzstyle{input} = [coordinate]
+\tikzstyle{output} = [coordinate]
+\tikzstyle{pinstyle} = [pin edge={to-,thin,black}]
+
+\tikzstyle{active} = [->, blue]
+\tikzstyle{bandit} = [->, red]
+
+\begin{tikzpicture}[auto, node distance=2cm,>=latex', scale=0.8, transform shape]
+    \node [input, name=test input] {};
+    \node [block, right of=test input, node distance=3cm] (classifier) {Train with classifier $h$};
+    \node [block, right of=classifier, node distance=5cm] (heuristic) {Assign scores with $s$};
+    \node [block, right of=heuristic, node distance=5cm] (best) {Select candidate \\ with highest score};
+    \node [block, below of=heuristic, node distance=2.5cm] (oracle) {Label candidate};
+    \node [block, below of=classifier, node distance=2.5cm] (pool) {Add to training pool};
+    \node [block, above of=classifier, node distance=2cm] (bandit) {Select heuristic with $b$};
+    \node [input, name=heuristic input, left of=bandit, node distance=3cm] {};
+    \node [above of=heuristic] (best heuristic) {chosen heuristic $r$};
+
+
+    \draw [active] (pool) -- node[name=training] {$\Labeled_T$} (classifier);
+    \draw [active] (classifier) -- node[name=y] {$p(\Y)$} (heuristic);
+    \draw [active] (heuristic) -- node[name=y] {} (best);
+    \draw [active] (best) |- node[name=x] {$\bm{x}_*$} (oracle);
+    \draw [active] (oracle) -- node[name=xy] {$(\bm{x}_*, y_*)$} (pool);
+
+    \draw [bandit] (test input) -- node[name=test] {$\Labeled_S$} (classifier);
+    \draw [active] (pool) -- node[right, name=training] {$\Unlabeled$} (classifier);
+    \draw [bandit] (classifier) -- node[name=reward] {reward $w$} (bandit);
+    \draw [bandit] (heuristic input) -- node[name=heuristics] {$\R$} (bandit);
+    \draw [bandit] (bandit) -- node[name=heuristics] {} (best heuristic);
+    \draw [bandit] (best heuristic) -- (heuristic);
+
+\end{tikzpicture}
+\end{document}

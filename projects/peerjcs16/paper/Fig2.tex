@@ -1,0 +1,45 @@
+\documentclass[tikz,border=10pt]{standalone}
+
+\usepackage{tikz} % draw diagrams
+\usepackage{bm}
+
+\newcommand{\Labeled}{\mathcal{L}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\Unlabeled}{\mathcal{U}}
+\usetikzlibrary{shapes,arrows}
+
+\begin{document}
+
+\tikzstyle{block} = [draw, fill=white, rectangle,
+minimum height=3em, minimum width=6em, align=left]
+\tikzstyle{sum} = [draw, fill=white, circle, node distance=1cm]
+\tikzstyle{input} = [coordinate]
+\tikzstyle{output} = [coordinate]
+\tikzstyle{pinstyle} = [pin edge={to-,thin,black}]
+
+\tikzstyle{active} = [->, blue]
+\tikzstyle{bandit} = [->, red]
+
+\begin{tikzpicture}[auto, node distance=2cm,>=latex', scale=0.8, transform shape]
+    \node [block, node distance=3cm] (classifier) {Train with classifier $h$};
+    \node [block, right of=classifier, node distance=7cm] (heuristic) {Assign scores with $s_1$,.., $s_R$};
+    \node [block, right of=heuristic, node distance=7cm] (rank) {Convert to rankings with $k$};
+    \node [block, below of=rank, node distance=2.5cm] (aggregate) {Aggregate rankings with $c$};
+    \node [block, left of=aggregate, node distance=5.5cm] (aggregated) {Select highest \\ ranked candidate};
+    \node [block, below of=classifier, node distance=2.5cm] (pool) {Add to training pool};
+    \node [block, right of=pool, node distance=4.5cm] (oracle) {Label candidate};
+    \node [input, name=heuristic input, above of=heuristic, node distance=1.2cm] {};
+
+    \draw [active] (pool) -- node[name=training] {$\Labeled_T$} (classifier);
+    \draw [active] (pool) -- node[right, name=training] {$\Unlabeled$} (classifier);
+    \draw [active] (classifier) -- node[name=y] {$p(\Y)$} (heuristic);
+    \draw [active] (heuristic) -- node[name=y] {} (rank);
+    \draw [active] (rank) -- node[name=x] {$\sigma_1(J_\Unlabeled), ..., \sigma_R(J_\Unlabeled)$} (aggregate);
+    \draw [active] (aggregate) -- node[name=x] {$\sigma(J_\Unlabeled)$} (aggregated);
+    \draw [active] (aggregated) -- node[name=x] {$\bm{x}_*$} (oracle);
+    \draw [active] (oracle) -- node[name=xy] {$(\bm{x}_*, y_*)$} (pool);
+    \draw [bandit] (heuristic input) -- node[name=heuristics] {$\R$} (heuristic);
+\end{tikzpicture}
+
+\end{document}

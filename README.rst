@@ -9,7 +9,7 @@ mclass-sky
                `Wei Yen Lee <https://weiyen.net>`_
 :License: This package is distributed under a a 3-clause ("Simplified" or "New") BSD license.
 :Source: `<https://github.com/chengsoonong/mclass-sky>`_
-:Doc: `<https://mclearn.readthedocs.org/en/latest/>`_
+:Doc: `<https://mclearn.readthedocs.io/en/latest/>`_
 :Publications: `Combining Active Learning Suggestions <projects/peerjcs16/paper>`_ by Alasdair Tran, Cheng Soon Ong, and Christian Wolf
 
                `Active Learning with Gaussian Processes <projects/jakub/thesis/nabaglo17photometric-redshift.pdf>`_ by Jakub Nabaglo

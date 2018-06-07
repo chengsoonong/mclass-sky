@@ -18,7 +18,7 @@ Due to their size, the following datasets are not included in this repo: ::
   │   sdss_full.h5
   │   sdss_subclass.h5
 
-The main dataset :code:`sdss.h5` is available on `Zenodo <http://dx.doi.org/10.5281/zenodo.58500>`_:
+The main dataset :code:`sdss.h5` is available on `Zenodo <https://doi.org/10.5281/zenodo.58500>`_:
 
 
 Notebooks

@@ -25,7 +25,7 @@ mclass-sky
   :target: https://coveralls.io/github/chengsoonong/mclass-sky?branch=master
 
 .. image:: https://zenodo.org/badge/doi/10.5281/zenodo.58500.svg
-   :target: http://dx.doi.org/10.5281/zenodo.58500
+   :target: https://doi.org/10.5281/zenodo.58500
 
 
 Introduction

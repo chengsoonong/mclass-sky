@@ -29,7 +29,7 @@ There are two main notebooks used to replicate the experiments.
    Run this notebook first to generate process the UCI data and put them
    in the right format for the experiments. In addition to the UCI data,
    you also need to have the SDSS dataset, which can be manually downloaded
-   from [Zenodo](http://dx.doi.org/10.5281/zenodo.58500).
+   from [Zenodo](https://doi.org/10.5281/zenodo.58500).
 
 2. [Active Learning Suggestions](active_learning_suggestions.ipynb):
    The second notebook contains the code used to replicate the experiments

@@ -176,7 +176,7 @@ has been used in the context of multi-task learning for linguistic annotations
 \citep{reichart08}, where we have one active learner selecting examples to
 improve the performance of multiple related tasks (e.g. part-of-speech tagging
 and name entity recognition). Borda count has also been used in multi-label
-learning \citep{reyes18} to combine uncertainty information from multiple
+learning \citep{reyes17} to combine uncertainty information from multiple
 labels. As far as we know, other aggregation methods have not been explored
 and our work is the first time that social choice theory is used to rank and
 aggregate suggestions from multiple active learners.
@@ -1465,7 +1465,7 @@ classifier. This can be as simple as a collection of binary classifiers, each
 of which produces the probability that an example belongs to a particular
 class. For each class, we can use an active learning heuristic to assign a
 score to each unlabeled example as before. However now we need to aggregate the
-scores among the classes. As suggested by \cite{reyes18}, we can use any
+scores among the classes. As suggested by \cite{reyes17}, we can use any
 aggregation method like Borda count to combine these scores. In effect, the
 multi-label learning problem adds an extra layer of aggregation into the
 pipeline.

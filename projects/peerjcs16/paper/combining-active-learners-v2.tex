@@ -1479,10 +1479,13 @@ the $m$ highest ranked objects using our current methods. However, it is
 possible to have two unlabeled objects whose class membership we are currently
 uncertain about, but because they have very similar feature vectors, labeling
 only one of them would allow us to predict the label of the other one easily.
-More sophisticated batch-mode active learning heuristics have been proposed,
-for example by using cluster analysis \citep{xu07} or by maximizing the
-diversity in a batch \citep{brinker03}. How to aggregate suggestions from these
-heuristics is an interesting problem for future work.
+More sophisticated batch-mode active learning approaches have been proposed
+to take into account other factors such as the diversity of a batch and
+the representiveness of each batch example. These approaches include looking at
+the angles between hyperplanes in support vector machines \citep{brinker03},
+using cluster analysis \citep{xu07}, and using an evolutionary algorithm
+\citep{reyes18}. How to aggregate suggestions from these approaches is an
+interesting problem for future work.
 
 \section{Conclusion}
 
